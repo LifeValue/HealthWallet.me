@@ -1795,27 +1795,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get fileNotAvailable => 'Fișier indisponibil pe acest dispozitiv';
 
   @override
-  String couldNotOpenFile(String message) {
-    return 'Fișierul nu a putut fi deschis: $message';
-  }
-
-  @override
-  String errorOpeningFile(String error) {
-    return 'Eroare la deschiderea fișierului: $error';
-  }
-
-  @override
   String get failedToLoadImage => 'Imaginea nu a putut fi încărcată';
-
-  @override
-  String errorLoadingPdf(String error) {
-    return 'Eroare la încărcarea PDF: $error';
-  }
-
-  @override
-  String errorOnPage(String page, String error) {
-    return 'Eroare pe pagina $page: $error';
-  }
 
   @override
   String get notes => 'Notițe';
@@ -1892,6 +1872,10 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get failedToLoadPdf => 'Documentul PDF nu a putut fi încărcat';
+
+  @override
+  String get fileOpenFailed =>
+      'Fișierul nu a putut fi deschis. Încearcă din nou.';
 
   @override
   String get mediaInformation => 'Informații media';
@@ -2617,16 +2601,6 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String sourceUploadedOn(String date) {
     return 'Încărcat $date';
-  }
-
-  @override
-  String couldNotOpenPdf(String message) {
-    return 'PDF-ul nu a putut fi deschis: $message';
-  }
-
-  @override
-  String errorOpeningPdf(String error) {
-    return 'Eroare la deschiderea PDF-ului: $error';
   }
 
   @override

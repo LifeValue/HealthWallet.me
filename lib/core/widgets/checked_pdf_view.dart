@@ -3,6 +3,7 @@ import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:pdfx/pdfx.dart' as pdfx;
 
 /// Opens [filePath] as a PDF before [builder] shows it. The full-screen PDF
@@ -13,19 +14,30 @@ class CheckedPdfView extends StatefulWidget {
   const CheckedPdfView({
     required this.filePath,
     required this.builder,
-    this.canOpen = canOpenPdf,
+    this.canOpen,
     super.key,
   });
 
   final String filePath;
   final WidgetBuilder builder;
 
-  /// Whether the file at a path opens as a PDF with at least one page.
-  final Future<bool> Function(String filePath) canOpen;
+  /// Whether the file at a path opens as a PDF with at least one page;
+  /// [defaultCanOpen] when null.
+  final Future<bool> Function(String filePath)? canOpen;
 
-  static Future<bool> canOpenPdf(String filePath) async {
+  /// The check the viewers use. pdfx refuses to open files on hosts it does
+  /// not support (Linux, where CI runs), so tests replace it.
+  @visibleForTesting
+  static Future<bool> Function(String filePath) defaultCanOpen = canOpenPdf;
+
+  static Future<bool> canOpenPdf(
+    String filePath, {
+    @visibleForTesting
+    Future<pdfx.PdfDocument> Function(String filePath) open =
+        pdfx.PdfDocument.openFile,
+  }) async {
     try {
-      final document = await pdfx.PdfDocument.openFile(filePath);
+      final document = await open(filePath);
       final readable = document.pagesCount > 0;
       await document.close();
       return readable;
@@ -35,12 +47,28 @@ class CheckedPdfView extends StatefulWidget {
     }
   }
 
+  /// For the PDF view's own `onError` and `onPageError`: their text is
+  /// technical English, so it is only logged and the user reads the
+  /// translated "failed to load" message.
+  static void reportViewerError(BuildContext context, Object error) {
+    logger.w('The PDF view failed: $error');
+    if (!context.mounted) return;
+    AppSnackBar.show(
+      context,
+      message: context.l10n.failedToLoadPdf,
+      type: AppSnackBarType.error,
+    );
+  }
+
   @override
   State<CheckedPdfView> createState() => _CheckedPdfViewState();
 }
 
 class _CheckedPdfViewState extends State<CheckedPdfView> {
-  late final Future<bool> _opens = widget.canOpen(widget.filePath);
+  late final Future<bool> _opens =
+      (widget.canOpen ?? CheckedPdfView.defaultCanOpen)(
+        widget.filePath,
+      );
 
   @override
   Widget build(BuildContext context) {

@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:get_it/get_it.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
@@ -87,8 +89,7 @@ class MediaFullscreenViewer extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.hasData) {
-            final isDesktop =
-                Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+            final isDesktop = getIt<AppPlatform>().isDesktop;
             final pdfPath = snapshot.data!.path;
             return CheckedPdfView(
               filePath: pdfPath,
@@ -100,27 +101,13 @@ class MediaFullscreenViewer extends StatelessWidget {
                       swipeHorizontal: true,
                       autoSpacing: true,
                       pageFling: true,
-                      onError: (error) {
-                        if (context.mounted) {
-                          AppSnackBar.show(
+                      onError: (error) =>
+                          CheckedPdfView.reportViewerError(context, error),
+                      onPageError: (page, error) =>
+                          CheckedPdfView.reportViewerError(
                             context,
-                            message: context.l10n.errorLoadingPdf('$error'),
-                            type: AppSnackBarType.error,
-                          );
-                        }
-                      },
-                      onPageError: (page, error) {
-                        if (context.mounted) {
-                          AppSnackBar.show(
-                            context,
-                            message: context.l10n.errorOnPage(
-                              '$page',
-                              '$error',
-                            ),
-                            type: AppSnackBarType.error,
-                          );
-                        }
-                      },
+                            'page $page: $error',
+                          ),
                     ),
             );
           } else {

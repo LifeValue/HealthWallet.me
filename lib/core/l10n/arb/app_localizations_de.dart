@@ -1796,27 +1796,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get fileNotAvailable => 'Datei auf diesem Gerät nicht verfügbar';
 
   @override
-  String couldNotOpenFile(String message) {
-    return 'Datei konnte nicht geöffnet werden: $message';
-  }
-
-  @override
-  String errorOpeningFile(String error) {
-    return 'Fehler beim Öffnen der Datei: $error';
-  }
-
-  @override
   String get failedToLoadImage => 'Bild konnte nicht geladen werden';
-
-  @override
-  String errorLoadingPdf(String error) {
-    return 'Fehler beim Laden der PDF: $error';
-  }
-
-  @override
-  String errorOnPage(String page, String error) {
-    return 'Fehler auf Seite $page: $error';
-  }
 
   @override
   String get notes => 'Notizen';
@@ -1893,6 +1873,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get failedToLoadPdf => 'PDF konnte nicht geladen werden';
+
+  @override
+  String get fileOpenFailed =>
+      'Die Datei konnte nicht geöffnet werden. Bitte versuche es erneut.';
 
   @override
   String get mediaInformation => 'Medieninformationen';
@@ -2623,16 +2607,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String sourceUploadedOn(String date) {
     return 'Hochgeladen $date';
-  }
-
-  @override
-  String couldNotOpenPdf(String message) {
-    return 'PDF konnte nicht geöffnet werden: $message';
-  }
-
-  @override
-  String errorOpeningPdf(String error) {
-    return 'Fehler beim Öffnen des PDFs: $error';
   }
 
   @override

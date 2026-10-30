@@ -854,42 +854,7 @@
     }
   },
   "fileNotAvailable": "File not available on this device",
-  "couldNotOpenFile": "Could not open file: {message}",
-  "@couldNotOpenFile": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "errorOpeningFile": "Error opening file: {error}",
-  "@errorOpeningFile": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "failedToLoadImage": "Failed to load image",
-  "errorLoadingPdf": "Error loading PDF: {error}",
-  "@errorLoadingPdf": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "errorOnPage": "Error on page {page}: {error}",
-  "@errorOnPage": {
-    "placeholders": {
-      "page": {
-        "type": "String"
-      },
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "notes": "Notes",
   "noNotesAttached": "This record has no notes attached",
   "addNote": "Add note",
@@ -928,6 +893,7 @@
   "linkToEncounter": "Link to Encounter",
   "noPdfDataAvailable": "No PDF data available",
   "failedToLoadPdf": "Failed to load PDF document",
+  "fileOpenFailed": "Could not open this file. Please try again.",
   "mediaInformation": "Media Information",
   "mediaInfoTitle": "Title:",
   "mediaInfoType": "Type:",
@@ -1227,22 +1193,6 @@
   "@sourceUploadedOn": {
     "placeholders": {
       "date": {
-        "type": "String"
-      }
-    }
-  },
-  "couldNotOpenPdf": "Could not open PDF: {message}",
-  "@couldNotOpenPdf": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "errorOpeningPdf": "Error opening PDF: {error}",
-  "@errorOpeningPdf": {
-    "placeholders": {
-      "error": {
         "type": "String"
       }
     }

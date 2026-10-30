@@ -3281,35 +3281,11 @@ abstract class AppLocalizations {
   /// **'File not available on this device'**
   String get fileNotAvailable;
 
-  /// No description provided for @couldNotOpenFile.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not open file: {message}'**
-  String couldNotOpenFile(String message);
-
-  /// No description provided for @errorOpeningFile.
-  ///
-  /// In en, this message translates to:
-  /// **'Error opening file: {error}'**
-  String errorOpeningFile(String error);
-
   /// No description provided for @failedToLoadImage.
   ///
   /// In en, this message translates to:
   /// **'Failed to load image'**
   String get failedToLoadImage;
-
-  /// No description provided for @errorLoadingPdf.
-  ///
-  /// In en, this message translates to:
-  /// **'Error loading PDF: {error}'**
-  String errorLoadingPdf(String error);
-
-  /// No description provided for @errorOnPage.
-  ///
-  /// In en, this message translates to:
-  /// **'Error on page {page}: {error}'**
-  String errorOnPage(String page, String error);
 
   /// No description provided for @notes.
   ///
@@ -3454,6 +3430,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to load PDF document'**
   String get failedToLoadPdf;
+
+  /// No description provided for @fileOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open this file. Please try again.'**
+  String get fileOpenFailed;
 
   /// No description provided for @mediaInformation.
   ///
@@ -4816,18 +4798,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Uploaded {date}'**
   String sourceUploadedOn(String date);
-
-  /// No description provided for @couldNotOpenPdf.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not open PDF: {message}'**
-  String couldNotOpenPdf(String message);
-
-  /// No description provided for @errorOpeningPdf.
-  ///
-  /// In en, this message translates to:
-  /// **'Error opening PDF: {error}'**
-  String errorOpeningPdf(String error);
 
   /// No description provided for @shareStatusReadyToShare.
   ///

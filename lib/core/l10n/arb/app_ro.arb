@@ -816,42 +816,7 @@
   "relatedResourcesKeptHint": "Resursele asociate rămân, dacă nu le selectezi mai jos.",
   "relatedResourcesCount": "Resurse asociate ({count})",
   "fileNotAvailable": "Fișier indisponibil pe acest dispozitiv",
-  "couldNotOpenFile": "Fișierul nu a putut fi deschis: {message}",
-  "@couldNotOpenFile": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "errorOpeningFile": "Eroare la deschiderea fișierului: {error}",
-  "@errorOpeningFile": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "failedToLoadImage": "Imaginea nu a putut fi încărcată",
-  "errorLoadingPdf": "Eroare la încărcarea PDF: {error}",
-  "@errorLoadingPdf": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "errorOnPage": "Eroare pe pagina {page}: {error}",
-  "@errorOnPage": {
-    "placeholders": {
-      "page": {
-        "type": "String"
-      },
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "notes": "Notițe",
   "noNotesAttached": "Această înregistrare nu are notițe atașate",
   "addNote": "Adaugă notiță",
@@ -890,6 +855,7 @@
   "linkToEncounter": "Leagă de consultație",
   "noPdfDataAvailable": "Nu sunt date PDF disponibile",
   "failedToLoadPdf": "Documentul PDF nu a putut fi încărcat",
+  "fileOpenFailed": "Fișierul nu a putut fi deschis. Încearcă din nou.",
   "mediaInformation": "Informații media",
   "mediaInfoTitle": "Titlu:",
   "mediaInfoType": "Tip:",
@@ -1151,8 +1117,6 @@
   "desktopFinishedProcessing": "Desktopul a terminat procesarea",
   "biometricAuthReason": "Autentifică-te pentru a accesa HealthWallet.me",
   "sourceUploadedOn": "Încărcat {date}",
-  "couldNotOpenPdf": "PDF-ul nu a putut fi deschis: {message}",
-  "errorOpeningPdf": "Eroare la deschiderea PDF-ului: {error}",
   "shareStatusReadyToShare": "Gata de partajare",
   "shareStatusWaitingForSender": "Se așteaptă expeditorul...",
   "shareStatusPermissionsRequired": "Sunt necesare permisiuni",

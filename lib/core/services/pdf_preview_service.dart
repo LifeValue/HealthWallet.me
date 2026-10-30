@@ -3,13 +3,15 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/checked_pdf_view.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:injectable/injectable.dart';
-import 'package:open_file/open_file.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:pdfx/pdfx.dart' as pdfx;
@@ -60,26 +62,6 @@ class PdfPreviewService {
     return null;
   }
 
-  Future<void> previewPdfFromFile(
-    BuildContext context,
-    String filePath,
-  ) async {
-    try {
-      final result = await OpenFile.open(filePath);
-      if (!context.mounted) return;
-
-      if (result.type != ResultType.done) {
-        _showWarningSnackBar(
-          context,
-          context.l10n.couldNotOpenPdf(result.message),
-        );
-      }
-    } catch (e) {
-      if (!context.mounted) return;
-      _showErrorSnackBar(context, context.l10n.errorOpeningPdf(e.toString()));
-    }
-  }
-
   Future<String> _saveBase64ToTempFile(
     String base64Data,
     String fileName,
@@ -103,6 +85,21 @@ class PdfPreviewService {
 
   void _showErrorSnackBar(BuildContext context, String message) {
     AppSnackBar.show(context, message: message, type: AppSnackBarType.error);
+  }
+
+  /// The name the user knows the file by: the attachment's title, then the
+  /// record's title. Files are stored under a unique name
+  /// (`report_1a2b3c4d.pdf`), so the file name is only the last resort.
+  static String _viewerTitle(IFhirResource resource, String filePath) {
+    final content = resource.rawResource['content'];
+    final first = content is List && content.isNotEmpty ? content.first : null;
+    final attachment = first is Map ? first['attachment'] : null;
+    final attachmentTitle = attachment is Map ? attachment['title'] : null;
+    if (attachmentTitle is String && attachmentTitle.trim().isNotEmpty) {
+      return attachmentTitle;
+    }
+    if (resource.displayTitle.trim().isNotEmpty) return resource.displayTitle;
+    return path.basename(filePath);
   }
 
   Future<void> previewInApp(
@@ -137,6 +134,7 @@ class PdfPreviewService {
         return;
       }
 
+      final title = _viewerTitle(resource, filePath);
       final extension = path.extension(filePath).toLowerCase();
       final isImage = {
         '.jpg',
@@ -150,35 +148,31 @@ class PdfPreviewService {
       if (isImage) {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => _InAppImageViewer(filePath: filePath!),
+            builder: (_) =>
+                _InAppImageViewer(filePath: filePath!, title: title),
           ),
         );
       } else {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => _InAppPdfViewer(filePath: filePath!),
+            builder: (_) => _InAppPdfViewer(filePath: filePath!, title: title),
           ),
         );
       }
-    } catch (e) {
+    } catch (e, s) {
+      logger.w('Could not open the attachment preview', e, s);
       if (!context.mounted) return;
-      _showErrorSnackBar(context, context.l10n.errorOpeningFile(e.toString()));
+      _showErrorSnackBar(context, context.l10n.fileOpenFailed);
     }
-  }
-
-  void _showWarningSnackBar(BuildContext context, String message) {
-    AppSnackBar.show(
-      context,
-      message: message,
-      type: AppSnackBarType.warning,
-    );
   }
 }
 
 class _InAppImageViewer extends StatelessWidget {
   final String filePath;
 
-  const _InAppImageViewer({required this.filePath});
+  final String title;
+
+  const _InAppImageViewer({required this.filePath, required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -187,7 +181,7 @@ class _InAppImageViewer extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: Text(path.basename(filePath)),
+        title: Text(title),
       ),
       body: Center(
         child: InteractiveViewer(
@@ -217,10 +211,11 @@ class _InAppImageViewer extends StatelessWidget {
 class _InAppPdfViewer extends StatelessWidget {
   final String filePath;
 
-  const _InAppPdfViewer({required this.filePath});
+  final String title;
 
-  static bool get _isDesktop =>
-      Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+  const _InAppPdfViewer({required this.filePath, required this.title});
+
+  static bool get _isDesktop => getIt<AppPlatform>().isDesktop;
 
   @override
   Widget build(BuildContext context) {
@@ -229,7 +224,7 @@ class _InAppPdfViewer extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: Text(path.basename(filePath)),
+        title: Text(title),
       ),
       body: CheckedPdfView(
         filePath: filePath,
@@ -241,27 +236,12 @@ class _InAppPdfViewer extends StatelessWidget {
                 swipeHorizontal: true,
                 autoSpacing: true,
                 pageFling: true,
-                onError: (error) {
-                  if (context.mounted) {
-                    AppSnackBar.show(
-                      context,
-                      message: context.l10n.errorLoadingPdf(error.toString()),
-                      type: AppSnackBarType.error,
-                    );
-                  }
-                },
-                onPageError: (page, error) {
-                  if (context.mounted) {
-                    AppSnackBar.show(
-                      context,
-                      message: context.l10n.errorOnPage(
-                        page.toString(),
-                        error.toString(),
-                      ),
-                      type: AppSnackBarType.error,
-                    );
-                  }
-                },
+                onError: (error) =>
+                    CheckedPdfView.reportViewerError(context, error),
+                onPageError: (page, error) => CheckedPdfView.reportViewerError(
+                  context,
+                  'page $page: $error',
+                ),
               ),
       ),
     );

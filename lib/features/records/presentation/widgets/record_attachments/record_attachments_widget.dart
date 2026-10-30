@@ -5,12 +5,14 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/checked_pdf_view.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
@@ -238,18 +240,22 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
   Future<void> _openFileExternal(BuildContext context, String filePath) async {
     try {
       final result = await OpenFile.open(filePath);
-      if (result.type != ResultType.done && context.mounted) {
-        AppSnackBar.show(
-          context,
-          message: context.l10n.couldNotOpenFile(result.message),
-          type: AppSnackBarType.warning,
-        );
+      if (result.type != ResultType.done) {
+        logger.w('Could not open $filePath: ${result.message}');
+        if (context.mounted) {
+          AppSnackBar.show(
+            context,
+            message: context.l10n.fileOpenFailed,
+            type: AppSnackBarType.warning,
+          );
+        }
       }
-    } catch (e) {
+    } catch (e, s) {
+      logger.w('Could not open $filePath', e, s);
       if (context.mounted) {
         AppSnackBar.show(
           context,
-          message: context.l10n.errorOpeningFile('$e'),
+          message: context.l10n.fileOpenFailed,
           type: AppSnackBarType.error,
         );
       }
@@ -438,8 +444,7 @@ class _PdfViewer extends StatelessWidget {
 
   const _PdfViewer({required this.filePath, required this.title});
 
-  static bool get _isDesktop =>
-      Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+  static bool get _isDesktop => getIt<AppPlatform>().isDesktop;
 
   @override
   Widget build(BuildContext context) {
@@ -460,24 +465,12 @@ class _PdfViewer extends StatelessWidget {
                 swipeHorizontal: true,
                 autoSpacing: true,
                 pageFling: true,
-                onError: (error) {
-                  if (context.mounted) {
-                    AppSnackBar.show(
-                      context,
-                      message: context.l10n.errorLoadingPdf('$error'),
-                      type: AppSnackBarType.error,
-                    );
-                  }
-                },
-                onPageError: (page, error) {
-                  if (context.mounted) {
-                    AppSnackBar.show(
-                      context,
-                      message: context.l10n.errorOnPage('$page', '$error'),
-                      type: AppSnackBarType.error,
-                    );
-                  }
-                },
+                onError: (error) =>
+                    CheckedPdfView.reportViewerError(context, error),
+                onPageError: (page, error) => CheckedPdfView.reportViewerError(
+                  context,
+                  'page $page: $error',
+                ),
               ),
       ),
     );
