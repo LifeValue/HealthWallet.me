@@ -96,4 +96,28 @@ void main() {
       expect(infos, contains('Reference Range: 110.23 - 220.46 lbs'));
     },
   );
+
+  test('converts a component with its own LOINC code for the region', () {
+    final observation = entityFromJson(
+      observationJson(
+        code: '85353-1',
+        codeDisplay: 'Vital signs panel',
+        components: [
+          {
+            'code': codeableConcept(
+              text: 'Body weight',
+              codings: [loinc('29463-7', 'Body weight')],
+            ),
+            'valueQuantity': quantity(70, unit: 'kg'),
+          },
+        ],
+      ),
+    ) as Observation;
+
+    final infos = _infos(
+      observation.additionalInfoForRegion(RegionPreset.us, en),
+    );
+
+    expect(infos, contains('Body weight: 154.32 lbs'));
+  });
 }

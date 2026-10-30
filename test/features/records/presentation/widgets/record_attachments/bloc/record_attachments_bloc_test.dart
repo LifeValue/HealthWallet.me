@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:drift/drift.dart' as drift;
 import 'package:drift/native.dart';
@@ -15,11 +16,51 @@ import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 
+import '../../../../../../helpers/log_capture.dart';
 import '../../../../../share_records/share_test_helpers.dart';
 
 /// Reads live DocumentReferences from the test database and soft-deletes
 /// them, like the real repository, plus [extraDocuments] that the database
 /// cannot hold.
+/// A stored attachment that can be read but not deleted.
+class _UndeletableFile extends Fake implements File {
+  _UndeletableFile(this._file);
+
+  final File _file;
+
+  @override
+  String get path => _file.path;
+
+  @override
+  Uri get uri => _file.uri;
+
+  @override
+  Future<bool> exists() => _file.exists();
+
+  @override
+  bool existsSync() => _file.existsSync();
+
+  @override
+  Future<Uint8List> readAsBytes() => _file.readAsBytes();
+
+  @override
+  Future<FileSystemEntity> delete({bool recursive = false}) async =>
+      throw FileSystemException('Operation not permitted', path);
+}
+
+/// Makes every file under [directory] undeletable.
+final class _UndeletableFilesIn extends IOOverrides {
+  _UndeletableFilesIn(this.directory);
+
+  final String directory;
+
+  @override
+  File createFile(String path) {
+    final file = super.createFile(path);
+    return path.startsWith('$directory/') ? _UndeletableFile(file) : file;
+  }
+}
+
 class _FakeRecordsRepository extends Fake implements RecordsRepository {
   _FakeRecordsRepository(this._db);
 
@@ -178,6 +219,7 @@ Map<String, dynamic> _documentJson({
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  final logs = captureLogs();
 
   late Directory root;
   late Directory docs;
@@ -842,6 +884,41 @@ void main() {
       );
       expect(storedFiles(), isEmpty);
     });
+
+    test(
+      'a copy that cannot be removed after a failed save is logged',
+      () async {
+        // The bloc's handlers run in the zone it was created in.
+        await bloc.close();
+        bloc = IOOverrides.runWithIOOverrides(
+          () => RecordAttachmentsBloc(
+            repository,
+            sourceTypeService,
+            syncRepository,
+            db,
+            PathResolver(),
+            strings,
+          ),
+          _UndeletableFilesIn(docs.path),
+        );
+        await open(_observation());
+        await db.customStatement('DROP TABLE fhir_resource');
+
+        final state = await run(
+          RecordAttachmentsFileAttached([picked('a.pdf')]),
+        );
+
+        expect(
+          state.status,
+          RecordAttachmentsStatus.error(strings.l10n.attachFileFailed),
+        );
+        expect(storedFiles(), hasLength(1));
+        expect(
+          logs,
+          loggedWarning('Removing an unsaved attachment copy failed'),
+        );
+      },
+    );
 
     test('when a later file fails, the files saved before it are '
         'listed', () async {

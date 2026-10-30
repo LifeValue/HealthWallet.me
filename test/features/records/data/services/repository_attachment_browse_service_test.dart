@@ -427,5 +427,29 @@ void main() {
       expect(detail.practitionerName, isNull);
       expect(detail.organizationName, isNull);
     });
+
+    test('a related resource that cannot be read is logged and the rest '
+        'are still read', () async {
+      // Malformed JSON can't go through fhir_r4, so build the entities.
+      repository.related = [
+        DocumentReference(
+          id: 'doc-1',
+          resourceId: 'doc-1',
+          rawResource: {
+            'context': {'related': 'not a list'},
+          },
+        ),
+        const Organization(
+          id: 'org-1',
+          rawResource: {'name': 'City Clinic'},
+        ),
+      ];
+
+      final detail = await service.loadDetail(encounter);
+
+      expect(detail.attachments, isEmpty);
+      expect(detail.organizationName, 'City Clinic');
+      expect(logs, loggedWarning('Could not read the related resource doc-1'));
+    });
   });
 }
