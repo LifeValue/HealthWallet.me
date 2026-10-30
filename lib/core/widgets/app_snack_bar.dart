@@ -11,9 +11,7 @@ typedef AppSnackBarType = AppMessageType;
 /// The app's short messages: an [AppMessageCard] with a close button. On a
 /// phone it floats just above the bottom navigation; on a wide desktop screen
 /// it is a centred card of fixed width.
-class AppSnackBar {
-  AppSnackBar._();
-
+abstract final class AppSnackBar {
   static const Key cardKey = AppMessageCard.cardKey;
   static const Key closeKey = AppMessageCard.closeKey;
 

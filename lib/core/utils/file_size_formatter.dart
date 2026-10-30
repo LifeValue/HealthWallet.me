@@ -1,6 +1,4 @@
-class FileSizeFormatter {
-  FileSizeFormatter._();
-
+abstract final class FileSizeFormatter {
   static const List<String> _units = ['KB', 'MB', 'GB', 'TB'];
 
   /// [bytes] in the largest unit that keeps the number at 1 or more, with
