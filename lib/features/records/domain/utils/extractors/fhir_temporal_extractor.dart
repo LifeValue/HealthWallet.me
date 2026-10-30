@@ -102,9 +102,13 @@ class FhirTemporalExtractor {
         final startFormatted = _format(formatter, startDate);
         final endFormatted = _format(formatter, endDate);
 
-        if (startDate.year == endDate.year &&
-            startDate.month == endDate.month &&
-            startDate.day == endDate.day) {
+        // Same day as the user sees it: compare the local dates, not the
+        // recorded UTC ones.
+        final localStart = startDate.toLocal();
+        final localEnd = endDate.toLocal();
+        if (localStart.year == localEnd.year &&
+            localStart.month == localEnd.month &&
+            localStart.day == localEnd.day) {
           final dateFormatter = DateFormat.yMMMd(locale);
           final timeFormatter = DateFormat.jm(locale);
           return '${_format(dateFormatter, startDate)}, ${_format(timeFormatter, startDate)} - ${_format(timeFormatter, endDate)}';

@@ -82,6 +82,28 @@ void main() {
   });
 
   group('extractPeriodFormatted', () {
+    // Whether a period is on one day depends on the user's time zone, not on
+    // the UTC dates it is recorded in: 23:30Z-00:30Z is one day in Romania,
+    // 21:30Z-22:30Z spans two there. Off UTC, both cases differ from the
+    // UTC answer.
+    for (final (start, end) in [
+      ('2024-01-10T23:30:00Z', '2024-01-11T00:30:00Z'),
+      ('2024-01-10T21:30:00Z', '2024-01-10T22:30:00Z'),
+    ]) {
+      test('$start - $end collapses only when it is one local day', () {
+        final sameLocalDay = localDate(start) == localDate(end);
+        expect(
+          FhirTemporalExtractor.extractPeriodFormatted(
+            _period(start: start, end: end),
+          ),
+          sameLocalDay
+              ? '${localDateTime(start)} - ${localTime(end)}'
+              : '${localDateTime(start, separator: ' ')} - '
+                    '${localDateTime(end, separator: ' ')}',
+        );
+      });
+    }
+
     final cases = <(String, fhir.Period?, String?)>[
       ('null period', null, null),
       ('empty period', _period(), null),
