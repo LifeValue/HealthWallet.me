@@ -7,6 +7,7 @@ import 'package:health_wallet/core/data/local/app_database.dart'
 import 'package:health_wallet/features/desktop/lww_sync/data/services/attachment_sync_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/lww_sync_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/domain/entity/sync_delta.dart';
+import 'package:health_wallet/features/records/data/data_source/shared_notes_datasource.dart';
 import 'package:health_wallet/features/records/data/repository/records_repository_impl.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
@@ -54,7 +55,7 @@ void main() {
         AttachmentSyncService(FakePathResolver(docs.path)),
       ),
       syncLocal,
-      RecordsRepositoryImpl(db, syncLocal),
+      RecordsRepositoryImpl(db, syncLocal, SharedNotesDatasource()),
     );
   }
 

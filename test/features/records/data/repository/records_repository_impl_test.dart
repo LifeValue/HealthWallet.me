@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart' show Variable;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/features/records/data/data_source/shared_notes_datasource.dart';
 import 'package:health_wallet/features/records/data/repository/records_repository_impl.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
@@ -26,7 +27,7 @@ void main() {
       db,
       await SharedPreferences.getInstance(),
     );
-    repository = RecordsRepositoryImpl(db, syncLocal);
+    repository = RecordsRepositoryImpl(db, syncLocal, SharedNotesDatasource());
   });
 
   tearDown(() async {

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/features/records/data/data_source/shared_notes_datasource.dart';
 import 'package:health_wallet/features/records/data/repository/records_repository_impl.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
@@ -26,7 +27,11 @@ void main() {
       database,
       await SharedPreferences.getInstance(),
     );
-    repository = RecordsRepositoryImpl(database, syncLocal);
+    repository = RecordsRepositoryImpl(
+      database,
+      syncLocal,
+      SharedNotesDatasource(),
+    );
   });
 
   tearDown(() => database.close());
