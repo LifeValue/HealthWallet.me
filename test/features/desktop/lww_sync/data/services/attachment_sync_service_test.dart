@@ -328,6 +328,53 @@ void main() {
       final file = File('${otherDocs.path}/${url.substring(7)}');
       expect(await file.readAsBytes(), pdfBytes);
     });
+
+    test('two attachments titled alike reach the peer as two files, each '
+        'with its own bytes', () async {
+      final firstBytes = utf8.encode('%PDF-1.7 first report');
+      final secondBytes = utf8.encode('%PDF-1.7 second report');
+      // The phone stores each pick under a unique name but keeps the title
+      // the user picked.
+      await dirs.writeDoc('report_aaaa1111.pdf', firstBytes);
+      await dirs.writeDoc('report_bbbb2222.pdf', secondBytes);
+      final sources = [
+        docRow(id: 'doc-a', [
+          {
+            'url': 'file://report_aaaa1111.pdf',
+            'title': 'report.pdf',
+            'contentType': 'application/pdf',
+          },
+        ]),
+        docRow(id: 'doc-b', [
+          {
+            'url': 'file://report_bbbb2222.pdf',
+            'title': 'report.pdf',
+            'contentType': 'application/pdf',
+          },
+        ]),
+      ];
+      final otherDocs = Directory('${dirs.root.path}/peer/Documents')
+        ..createSync(recursive: true);
+      final peer = AttachmentSyncService(FakePathResolver(otherDocs.path));
+
+      final wire = jsonDecode(
+        jsonEncode(await service.embedAttachments(sources)),
+      ) as List;
+      final restored = await peer.restoreAttachments([
+        for (final r in wire) Map<String, dynamic>.from(r as Map),
+      ]);
+
+      final a = attachmentsOf(restored[0]).single;
+      final b = attachmentsOf(restored[1]).single;
+      expect(a['title'], 'report.pdf');
+      expect(b['title'], 'report.pdf');
+      expect(a['url'], isNot(b['url']));
+      Future<List<int>> bytesOf(Map<String, dynamic> attachment) => File(
+        '${otherDocs.path}/${(attachment['url'] as String).substring(7)}',
+      ).readAsBytes();
+      expect(await bytesOf(a), firstBytes);
+      expect(await bytesOf(b), secondBytes);
+    });
   });
 
   group('resolveFile', () {
