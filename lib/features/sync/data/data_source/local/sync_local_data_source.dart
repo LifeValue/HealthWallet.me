@@ -130,7 +130,8 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
         labelSource: Value(e.labelSource),
         platformType: Value(e.platformType),
         createdAt: Value(e.createdAt),
-        updatedAt: Value(e.updatedAt),
+        // updated_at is stamped by the trigger, in milliseconds like every
+        // other synced row; drift would store seconds.
       );
     }).toList();
     await _appDatabase.batch((batch) {
@@ -194,7 +195,7 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
               (sourceId == 'demo_data' ? 'Demo' : null),
           platformType: _getSourcePlatformType(sourceId, dbSource),
           createdAt: dbSource?.createdAt,
-          updatedAt: dbSource?.updatedAt,
+          updatedAt: _fromStamp(dbSource?.updatedAt),
         );
       },
     ).toList();
@@ -248,7 +249,6 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
             db.SourcesCompanion(
               id: Value(sourceId),
               labelSource: Value(newLabel.isEmpty ? null : newLabel),
-              updatedAt: Value(DateTime.now()),
             ),
           );
     } catch (e) {
@@ -281,7 +281,6 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
               labelSource: const Value('Wallet'),
               platformType: const Value('wallet'),
               createdAt: Value(now),
-              updatedAt: Value(now),
             ),
             mode: InsertMode.insertOrIgnore,
           );
@@ -306,7 +305,6 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
               labelSource: const Value('Demo Data'), // Custom display label
               platformType: const Value('wallet'),
               createdAt: Value(now),
-              updatedAt: Value(now),
             ),
             mode: InsertMode.insertOrReplace,
           );
@@ -339,4 +337,12 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
       )..where((tbl) => tbl.id.equals(sourceId))).go();
     });
   }
+
+  /// `updated_at` holds the sync stamp in milliseconds, which drift's
+  /// DateTime column reads as seconds.
+  static DateTime? _fromStamp(DateTime? read) => read == null
+      ? null
+      : DateTime.fromMillisecondsSinceEpoch(
+          read.millisecondsSinceEpoch ~/ 1000,
+        );
 }

@@ -224,7 +224,8 @@ void main() {
       expect(row.labelSource, 'Renamed');
       expect(row.platformType, 'fasten');
       expect(row.createdAt, DateTime(2024));
-      expect(row.updatedAt, DateTime(2024, 2));
+      // Stamped by the trigger for the desktop sync, not the provider's date.
+      expect(row.updatedAt, isNotNull);
     });
   });
 
@@ -268,6 +269,12 @@ void main() {
           sources.keys,
           unorderedEquals(['fasten-1', 'wallet-abc', 'demo_data', 'remote-9']),
         );
+        final stamp = sources['fasten-1']!.updatedAt!;
+        expect(
+          stamp.difference(DateTime.now()).inMinutes.abs(),
+          lessThan(5),
+          reason: 'the sync stamp, read back in milliseconds',
+        );
         expect(
           sources['fasten-1'],
           Source(
@@ -276,7 +283,7 @@ void main() {
             labelSource: 'Clinic',
             platformType: 'fasten',
             createdAt: DateTime(2024),
-            updatedAt: DateTime(2024, 2),
+            updatedAt: stamp,
           ),
         );
         expect(
