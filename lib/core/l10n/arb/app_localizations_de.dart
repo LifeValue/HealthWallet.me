@@ -1926,9 +1926,8 @@ class AppLocalizationsDe extends AppLocalizations {
       'Mediendatei erfolgreich mit Termin verknüpft';
 
   @override
-  String failedToLinkMedia(String error) {
-    return 'Verknüpfung fehlgeschlagen: $error';
-  }
+  String get linkMediaFailed =>
+      'Die Mediendatei konnte nicht mit dem Termin verknüpft werden. Bitte versuche es erneut.';
 
   @override
   String get link => 'Verknüpfen';

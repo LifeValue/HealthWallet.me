@@ -1901,9 +1901,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mediaLinkedSuccess => 'Media linked to encounter successfully';
 
   @override
-  String failedToLinkMedia(String error) {
-    return 'Failed to link media: $error';
-  }
+  String get linkMediaFailed =>
+      'Could not link the media to the encounter. Please try again.';
 
   @override
   String get link => 'Link';

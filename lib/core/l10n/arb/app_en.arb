@@ -909,14 +909,7 @@
   "encounterId": "Encounter ID",
   "encounterIdHint": "e.g., encounter-123",
   "mediaLinkedSuccess": "Media linked to encounter successfully",
-  "failedToLinkMedia": "Failed to link media: {error}",
-  "@failedToLinkMedia": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
+  "linkMediaFailed": "Could not link the media to the encounter. Please try again.",
   "link": "Link",
   "connectionLabel": "Connection",
   "connectionStatusConnected": "Connected",

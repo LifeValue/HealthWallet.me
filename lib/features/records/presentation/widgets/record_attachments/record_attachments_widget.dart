@@ -13,6 +13,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/core/utils/pdf_open.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/checked_pdf_view.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
@@ -492,7 +493,7 @@ class _DesktopPdfBodyState extends State<_DesktopPdfBody> {
   void initState() {
     super.initState();
     _controller = pdfx.PdfController(
-      document: pdfx.PdfDocument.openFile(widget.filePath),
+      document: openPdfDocument(widget.filePath),
     );
   }
 

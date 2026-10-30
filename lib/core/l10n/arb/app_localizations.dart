@@ -3527,11 +3527,11 @@ abstract class AppLocalizations {
   /// **'Media linked to encounter successfully'**
   String get mediaLinkedSuccess;
 
-  /// No description provided for @failedToLinkMedia.
+  /// No description provided for @linkMediaFailed.
   ///
   /// In en, this message translates to:
-  /// **'Failed to link media: {error}'**
-  String failedToLinkMedia(String error);
+  /// **'Could not link the media to the encounter. Please try again.'**
+  String get linkMediaFailed;
 
   /// No description provided for @link.
   ///

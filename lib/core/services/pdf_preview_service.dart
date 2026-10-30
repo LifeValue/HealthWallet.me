@@ -8,6 +8,7 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/core/utils/pdf_open.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/checked_pdf_view.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
@@ -88,9 +89,10 @@ class PdfPreviewService {
   }
 
   /// The name the user knows the file by: the attachment's title, then the
-  /// record's title. Files are stored under a unique name
-  /// (`report_1a2b3c4d.pdf`), so the file name is only the last resort.
-  static String _viewerTitle(IFhirResource resource, String filePath) {
+  /// record's title (never empty: it falls back to the record type). Files
+  /// are stored under a unique name (`report_1a2b3c4d.pdf`), so the file
+  /// name is never shown.
+  static String _viewerTitle(IFhirResource resource) {
     final content = resource.rawResource['content'];
     final first = content is List && content.isNotEmpty ? content.first : null;
     final attachment = first is Map ? first['attachment'] : null;
@@ -98,8 +100,7 @@ class PdfPreviewService {
     if (attachmentTitle is String && attachmentTitle.trim().isNotEmpty) {
       return attachmentTitle;
     }
-    if (resource.displayTitle.trim().isNotEmpty) return resource.displayTitle;
-    return path.basename(filePath);
+    return resource.displayTitle;
   }
 
   Future<void> previewInApp(
@@ -134,7 +135,7 @@ class PdfPreviewService {
         return;
       }
 
-      final title = _viewerTitle(resource, filePath);
+      final title = _viewerTitle(resource);
       final extension = path.extension(filePath).toLowerCase();
       final isImage = {
         '.jpg',
@@ -263,7 +264,7 @@ class _DesktopPdfBodyState extends State<_DesktopPdfBody> {
   void initState() {
     super.initState();
     _controller = pdfx.PdfController(
-      document: pdfx.PdfDocument.openFile(widget.filePath),
+      document: openPdfDocument(widget.filePath),
     );
   }
 

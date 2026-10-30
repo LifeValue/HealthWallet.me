@@ -17,6 +17,7 @@ import 'package:health_wallet/core/widgets/checked_pdf_view.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/bloc/record_attachments_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/record_attachments_widget.dart';
+import 'package:pdfx/pdfx.dart' as pdfx;
 import 'package:share_plus/share_plus.dart' show XFile;
 
 class _MockRecordAttachmentsBloc
@@ -321,6 +322,31 @@ void main() {
       expect(find.text(_l10n.failedToLoadPdf), findsOne);
       debugDefaultTargetPlatformOverride = null;
     });
+  });
+
+  testWidgets('on the desktop a PDF opens in the desktop PDF view', (
+    tester,
+  ) async {
+    await getIt.unregister<AppPlatform>();
+    getIt.registerSingleton<AppPlatform>(AppPlatform.desktop);
+    CheckedPdfView.defaultCanOpen = (_) async => true;
+    final path = writeFile('report_1a2b3c4d.pdf', utf8.encode('%PDF-1.7'));
+    await open(
+      tester,
+      attachments: [
+        AttachmentInfo(
+          documentReference: const GeneralResource(id: 'doc-1'),
+          title: 'report.pdf',
+          contentType: 'application/pdf',
+          filePath: path,
+        ),
+      ],
+    );
+
+    await tapAndWait(tester, find.byIcon(Icons.remove_red_eye_outlined));
+
+    expect(find.byType(pdfx.PdfView), findsOne);
+    expect(find.widgetWithText(AppBar, 'report.pdf'), findsOne);
   });
 
   group('another file type', () {

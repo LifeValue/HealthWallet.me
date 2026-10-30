@@ -13,6 +13,7 @@ import 'package:health_wallet/core/services/pdf_preview_service.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/checked_pdf_view.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:pdfx/pdfx.dart' as pdfx;
 
 import '../../features/desktop/lww_sync/lww_sync_test_helpers.dart'
     show TestDirs;
@@ -243,6 +244,24 @@ void main() {
     final view = tester.widget<PDFView>(find.byType(PDFView));
     expect(view.filePath, startsWith(dirs.temp.path));
     expect(find.widgetWithText(AppBar, 'Referral'), findsOne);
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('on the desktop a PDF opens in the desktop PDF view', (
+    tester,
+  ) async {
+    await getIt.unregister<AppPlatform>();
+    getIt.registerSingleton<AppPlatform>(AppPlatform.desktop);
+    CheckedPdfView.defaultCanOpen = (_) async => true;
+    store('report_1a2b3c4d.pdf', utf8.encode('%PDF-1.7'));
+
+    await preview(
+      tester,
+      _document(storedName: 'report_1a2b3c4d.pdf', attachmentTitle: 'r.pdf'),
+    );
+
+    expect(find.byType(pdfx.PdfView), findsOne);
+    expect(find.byType(PDFView), findsNothing);
     debugDefaultTargetPlatformOverride = null;
   });
 }

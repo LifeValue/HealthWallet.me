@@ -3,6 +3,7 @@ import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/core/utils/pdf_open.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:pdfx/pdfx.dart' as pdfx;
 
@@ -33,8 +34,7 @@ class CheckedPdfView extends StatefulWidget {
   static Future<bool> canOpenPdf(
     String filePath, {
     @visibleForTesting
-    Future<pdfx.PdfDocument> Function(String filePath) open =
-        pdfx.PdfDocument.openFile,
+    Future<pdfx.PdfDocument> Function(String filePath) open = openPdfDocument,
   }) async {
     try {
       final document = await open(filePath);

@@ -16,6 +16,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/core/utils/pdf_open.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
@@ -26,7 +27,6 @@ import 'package:health_wallet/features/records/presentation/widgets/record_attac
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/record_attachments_widget.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_notes/record_notes_widget.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:pdfx/pdfx.dart' as pdfx;
 
 double _panelHPad(double width) {
   if (width >= 1024) return 48.0;
@@ -329,7 +329,7 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
 
       if (isPdf) {
         try {
-          final doc = await pdfx.PdfDocument.openFile(path);
+          final doc = await openPdfDocument(path);
           final pageCount = doc.pagesCount;
           for (int i = 1; i <= pageCount; i++) {
             final page = await doc.getPage(i);

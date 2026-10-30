@@ -8,6 +8,8 @@ import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/core/utils/pdf_open.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/checked_pdf_view.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
@@ -300,11 +302,12 @@ class MediaFullscreenViewer extends StatelessWidget {
                       type: AppSnackBarType.success,
                     );
                   }
-                } catch (e) {
+                } catch (e, s) {
+                  logger.w('Could not link media ${media.id}', e, s);
                   if (context.mounted) {
                     AppSnackBar.show(
                       context,
-                      message: context.l10n.failedToLinkMedia('$e'),
+                      message: context.l10n.linkMediaFailed,
                       type: AppSnackBarType.error,
                     );
                   }
@@ -334,7 +337,7 @@ class _DesktopPdfBodyState extends State<_DesktopPdfBody> {
   void initState() {
     super.initState();
     _controller = pdfx.PdfController(
-      document: pdfx.PdfDocument.openFile(widget.filePath),
+      document: openPdfDocument(widget.filePath),
     );
   }
 

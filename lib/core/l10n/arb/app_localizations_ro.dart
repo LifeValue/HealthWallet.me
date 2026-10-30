@@ -1925,9 +1925,8 @@ class AppLocalizationsRo extends AppLocalizations {
       'Resursă media legată cu succes de consultație';
 
   @override
-  String failedToLinkMedia(String error) {
-    return 'Legarea a eșuat: $error';
-  }
+  String get linkMediaFailed =>
+      'Resursa media nu a putut fi legată de consultație. Încearcă din nou.';
 
   @override
   String get link => 'Leagă';

@@ -1922,9 +1922,8 @@ class AppLocalizationsEs extends AppLocalizations {
       'Recurso multimedia vinculado exitosamente al encuentro';
 
   @override
-  String failedToLinkMedia(String error) {
-    return 'Error al vincular: $error';
-  }
+  String get linkMediaFailed =>
+      'No se pudo vincular el recurso multimedia al encuentro. Inténtalo de nuevo.';
 
   @override
   String get link => 'Vincular';

@@ -868,14 +868,7 @@
   "encounterId": "Termin-ID",
   "encounterIdHint": "z. B. termin-123",
   "mediaLinkedSuccess": "Mediendatei erfolgreich mit Termin verknüpft",
-  "failedToLinkMedia": "Verknüpfung fehlgeschlagen: {error}",
-  "@failedToLinkMedia": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
+  "linkMediaFailed": "Die Mediendatei konnte nicht mit dem Termin verknüpft werden. Bitte versuche es erneut.",
   "link": "Verknüpfen",
   "connectionLabel": "Verbindung",
   "connectionStatusConnected": "Verbunden",

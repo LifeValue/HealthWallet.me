@@ -872,14 +872,7 @@
   "encounterId": "ID del encuentro",
   "encounterIdHint": "ej., encuentro-123",
   "mediaLinkedSuccess": "Recurso multimedia vinculado exitosamente al encuentro",
-  "failedToLinkMedia": "Error al vincular: {error}",
-  "@failedToLinkMedia": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
+  "linkMediaFailed": "No se pudo vincular el recurso multimedia al encuentro. Inténtalo de nuevo.",
   "link": "Vincular",
   "connectionLabel": "Conexión",
   "connectionStatusConnected": "Conectado",

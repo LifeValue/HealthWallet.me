@@ -871,14 +871,7 @@
   "encounterId": "ID consultație",
   "encounterIdHint": "ex., consultatie-123",
   "mediaLinkedSuccess": "Resursă media legată cu succes de consultație",
-  "failedToLinkMedia": "Legarea a eșuat: {error}",
-  "@failedToLinkMedia": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
+  "linkMediaFailed": "Resursa media nu a putut fi legată de consultație. Încearcă din nou.",
   "link": "Leagă",
   "connectionLabel": "Conexiune",
   "connectionStatusConnected": "Conectat",
