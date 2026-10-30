@@ -35,8 +35,10 @@ class TrayService with TrayListener {
       await trayManager.destroy();
     }
 
-    final iconPath = Platform.isMacOS
-        ? 'assets/icons/tray_icon.png'
+    // Windows loads tray icons with LoadImage(IMAGE_ICON), which needs an
+    // .ico; a .png leaves the tray empty.
+    final iconPath = Platform.isWindows
+        ? 'assets/icons/tray_icon.ico'
         : 'assets/icons/tray_icon.png';
 
     await trayManager.setIcon(iconPath);
