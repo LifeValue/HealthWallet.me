@@ -7,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/discovery_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
+import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart'
+    show ConnectionState;
 import 'package:health_wallet/features/desktop/communication/data/services/transport/communication_service.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 
@@ -47,6 +49,9 @@ class _BlocTcpService extends FakeTcpService {
 
   @override
   void setMpcTransport(CommunicationService? transport) {}
+
+  @override
+  void setUseMpc(bool value) {}
 
   @override
   Future<void> close() async {
@@ -175,5 +180,74 @@ void main() {
 
       expect(lookups, afterClose);
     });
+
+    test('checks again when a phone disconnects, as a full-tunnel VPN '
+        'drops the link', () async {
+      final bloc = CommunicationBloc(
+        AppPlatform.desktop,
+        _UnusedPairingStorage(),
+        tcp,
+        _UnusedDiscoveryService(),
+        // Too long to tick during the test: only the disconnect checks.
+        vpnRecheckInterval: const Duration(hours: 1),
+        listInterfaces: () async {
+          lookups++;
+          return interfaces;
+        },
+      );
+      addTearDown(bloc.close);
+      bloc.emit(
+        bloc.state.copyWith(connectionStatus: ConnectionStatus.connected),
+      );
+      interfaces = [_wifi, _vpn];
+
+      tcp.emitState(ConnectionState.disconnected);
+      await flushEvents();
+
+      expect(lookups, 1);
+      expect(bloc.state.connectionStatus, ConnectionStatus.disconnected);
+      expect(bloc.state.vpnDetected, isTrue);
+    });
+
+    test('a failed interface lookup keeps the last answer', () async {
+      final bloc = CommunicationBloc(
+        AppPlatform.desktop,
+        _UnusedPairingStorage(),
+        tcp,
+        _UnusedDiscoveryService(),
+        vpnRecheckInterval: const Duration(hours: 1),
+        listInterfaces: () async {
+          lookups++;
+          throw const SocketException('Network interfaces unavailable');
+        },
+      );
+      addTearDown(bloc.close);
+      bloc.emit(bloc.state.copyWith(vpnDetected: true));
+
+      bloc.add(const CommunicationVpnChecked());
+      await flushEvents();
+
+      expect(lookups, 1);
+      expect(bloc.state.vpnDetected, isTrue);
+    });
+  });
+
+  test('without an injected lookup, the check reads the real '
+      'interfaces', () async {
+    final bloc = CommunicationBloc(
+      AppPlatform.desktop,
+      _UnusedPairingStorage(),
+      tcp,
+      _UnusedDiscoveryService(),
+      vpnRecheckInterval: const Duration(hours: 1),
+    );
+    addTearDown(bloc.close);
+    final checked = bloc.stream.first.timeout(const Duration(seconds: 5));
+
+    bloc.add(const CommunicationVpnChecked());
+
+    // Whether this machine has a VPN is not known here, only that the
+    // check finished with an answer.
+    expect((await checked).vpnDetected, isA<bool>());
   });
 }
