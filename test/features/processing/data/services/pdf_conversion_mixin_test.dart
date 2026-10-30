@@ -1,17 +1,50 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/features/processing/data/services/pdf_conversion_mixin.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
+import 'package:image/image.dart' as img;
+import 'package:printing/printing.dart';
+// The plugin exports no other way to replace its platform, which the
+// rasterizer needs to run without a native PDF engine.
+// ignore: implementation_imports
+import 'package:printing/src/interface.dart';
 
+import '../../../../helpers/log_capture.dart';
 import '../../../share_records/share_test_helpers.dart';
 
 class _Converter extends Fake
     with PdfConversionMixin
     implements TextRecognitionService {}
 
+/// A rendered page whose PNG comes from [png], or fails when it is null.
+class _Page extends PdfRaster {
+  _Page(this.png) : super(2, 2, Uint8List(16));
+
+  final Uint8List? png;
+
+  @override
+  Future<Uint8List> toPng() async => png ?? (throw Exception('bad page'));
+}
+
+/// Renders the pages it is given instead of running a native PDF engine.
+class _FakePrinting extends PrintingPlatform {
+  _FakePrinting(this.pages);
+
+  final List<PdfRaster> pages;
+
+  @override
+  Stream<PdfRaster> raster(Uint8List document, List<int>? pages, double dpi) =>
+      Stream.fromIterable(this.pages);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  final logs = captureLogs();
   late Directory root;
   late _Converter converter;
 
@@ -101,5 +134,20 @@ void main() {
 
   test('converting an unreadable PDF returns no pages', () async {
     expect(await converter.convertPdfToImages('${root.path}/none.pdf'), []);
+  });
+
+  test('a page that cannot be converted is skipped and logged', () async {
+    final realPrinting = PrintingPlatform.instance;
+    addTearDown(() => PrintingPlatform.instance = realPrinting);
+    final goodPng = img.encodePng(img.Image(width: 2, height: 2));
+    PrintingPlatform.instance = _FakePrinting([_Page(null), _Page(goodPng)]);
+    final pdf = File('${root.path}/scan.pdf')..writeAsBytesSync([1, 2, 3]);
+
+    final pages = await converter.convertPdfToImages(pdf.path);
+
+    expect(pages, hasLength(1));
+    expect(pages.single, endsWith('_2.png'));
+    expect(File(pages.single).existsSync(), isTrue);
+    expect(logs, loggedWarning('Could not convert PDF page 1'));
   });
 }

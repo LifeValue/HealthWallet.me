@@ -20,6 +20,7 @@ import 'package:health_wallet/features/sync/domain/services/source_type_service.
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../helpers/log_capture.dart';
 import '../../../share_records/share_test_helpers.dart';
 
 final _en = lookupAppLocalizations(const Locale('en'));
@@ -32,6 +33,7 @@ class _FakeProcessingRepository extends Fake implements ProcessingRepository {
   Exception? loadError;
   Exception? deleteError;
   Exception? remainingError;
+  Exception? modelCheckError;
   final created = <List<String>>[];
   final edited = <ProcessingSession>[];
 
@@ -55,6 +57,12 @@ class _FakeProcessingRepository extends Fake implements ProcessingRepository {
   Future<int> deleteProcessingSession(ProcessingSession session) async {
     if (deleteError != null) throw deleteError!;
     return 1;
+  }
+
+  @override
+  Future<bool> checkModelExistence() async {
+    if (modelCheckError != null) throw modelCheckError!;
+    return true;
   }
 
   @override
@@ -102,6 +110,7 @@ class _FakeSourceTypeService extends Fake implements SourceTypeService {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  final logs = captureLogs();
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
 
@@ -321,6 +330,31 @@ void main() {
       expect(((await failure) as Failure).reason, PipelineFailureReason.other);
       expect(bloc.state.deletingSessionId, isNull);
       expect(bloc.state.sessions, isEmpty);
+    });
+  });
+
+  group('opening a session', () {
+    test('a failed AI model check leaves it queued and logs why', () async {
+      repository.modelCheckError = Exception('model folder unreadable');
+      final root = mockPathProvider();
+      final page = File('${root.path}/tmp/page.png')..writeAsBytesSync([1]);
+      const queued = ProcessingSession(id: 's1', filePaths: ['/scan.pdf']);
+      seed(
+        ProcessingState(
+          sessions: const [queued],
+          sessionImagePaths: {
+            's1': [page.path],
+          },
+          status: const PipelineStatus.convertingPdfs(),
+        ),
+      );
+
+      final status = await endStatus(const SessionActivated(sessionId: 's1'));
+
+      expect(status, const PipelineStatus.initial());
+      expect(bloc.state.displayedSessionId, 's1');
+      expect(bloc.state.sessions.single.status, ProcessingStatus.pending);
+      expect(logs, loggedWarning('checking for the AI model failed'));
     });
   });
 
