@@ -1629,5 +1629,6 @@
   "appLockMessage": "Entsperre die App, um deine Gesundheitsdaten zu sehen",
   "appLockUnlock": "Entsperren",
   "desktopRestoreSucceededTitle": "Backup wiederhergestellt",
-  "desktopRestoreSucceededMessage": "\"{name}\" wurde wiederhergestellt. Auf diesem Gerät sind jetzt {count} Aufzeichnungen."
+  "desktopRestoreSucceededMessage": "\"{name}\" wurde wiederhergestellt. Auf diesem Gerät sind jetzt {count} Aufzeichnungen.",
+  "desktopBackupSucceededMessage": "\"{name}\" wurde gespeichert. Sie enthält {count} Aufzeichnungen."
 }

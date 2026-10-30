@@ -1,4 +1,6 @@
-import 'package:bloc_test/bloc_test.dart' show MockBloc;
+import 'dart:async';
+
+import 'package:bloc_test/bloc_test.dart' show MockBloc, whenListen;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -32,18 +34,30 @@ final _backup = BackupEntry(
 
 void main() {
   late _MockBackupBloc bloc;
+  late StreamController<BackupState> states;
 
-  setUp(() => bloc = _MockBackupBloc());
+  BackupState cardState({
+    bool isRestoring = false,
+    bool isBackingUp = false,
+    String? error,
+    List<BackupEntry>? history,
+  }) => BackupState(
+    hasUserSelectedPath: true,
+    backupPath: '/tmp',
+    backupHistory: history ?? [_backup],
+    selectedBackup: _backup,
+    isRestoring: isRestoring,
+    isBackingUp: isBackingUp,
+    error: error,
+  );
 
-  BackupState cardState({bool isRestoring = false, String? error}) =>
-      BackupState(
-        hasUserSelectedPath: true,
-        backupPath: '/tmp',
-        backupHistory: [_backup],
-        selectedBackup: _backup,
-        isRestoring: isRestoring,
-        error: error,
-      );
+  setUp(() {
+    bloc = _MockBackupBloc();
+    states = StreamController<BackupState>();
+    whenListen(bloc, states.stream, initialState: cardState());
+  });
+
+  tearDown(() => states.close());
 
   Widget card(BackupState state) => MaterialApp(
     localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -64,6 +78,16 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(card(state ?? cardState()));
+    await tester.pumpAndSettle();
+  }
+
+  /// Sends [sequence] through the bloc, as its handlers emit them, and
+  /// rebuilds the card once with the last, as BlocBuilder would after a
+  /// frame.
+  Future<void> emit(WidgetTester tester, List<BackupState> sequence) async {
+    sequence.forEach(states.add);
+    await tester.pump();
+    await tester.pumpWidget(card(sequence.last));
     await tester.pumpAndSettle();
   }
 
@@ -176,15 +200,11 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(dialogButton(_l10n.desktopRestore));
       await tester.pumpAndSettle();
-      // The bloc reports the restore running, then finished.
-      await tester.pumpWidget(card(cardState(isRestoring: true)));
-      await tester.pump();
     }
 
     testWidgets('a successful restore is announced', (tester) async {
       await confirmRestore(tester);
-      await tester.pumpWidget(card(cardState()));
-      await tester.pumpAndSettle();
+      await emit(tester, [cardState(isRestoring: true), cardState()]);
 
       expect(find.text(_l10n.desktopRestoreSucceededTitle), findsOne);
       expect(
@@ -199,10 +219,24 @@ void main() {
       expect(find.byType(Dialog), findsNothing);
     });
 
+    testWidgets('a restore that starts and finishes within one frame is '
+        'still announced', (tester) async {
+      await confirmRestore(tester);
+      // No rebuild between the two states: only the listener sees both.
+      states
+        ..add(cardState(isRestoring: true))
+        ..add(cardState());
+      await tester.pumpAndSettle();
+
+      expect(find.text(_l10n.desktopRestoreSucceededTitle), findsOne);
+    });
+
     testWidgets('a failed restore shows no success message', (tester) async {
       await confirmRestore(tester);
-      await tester.pumpWidget(card(cardState(error: 'Restore failed')));
-      await tester.pumpAndSettle();
+      await emit(tester, [
+        cardState(isRestoring: true),
+        cardState(error: 'Restore failed'),
+      ]);
 
       expect(find.text(_l10n.desktopRestoreSucceededTitle), findsNothing);
       expect(find.text('Restore failed'), findsOne);
@@ -211,18 +245,93 @@ void main() {
     testWidgets('a restore the user did not start here is not announced', (
       tester,
     ) async {
-      tester.view.physicalSize = const Size(1200, 1000);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
-      // The progress indicator never settles, so pump a frame instead.
-      await tester.pumpWidget(card(cardState(isRestoring: true)));
-      await tester.pump();
-      await tester.pumpWidget(card(cardState()));
-      await tester.pumpAndSettle();
+      await pumpCard(tester);
+      await emit(tester, [cardState(isRestoring: true), cardState()]);
 
       expect(find.text(_l10n.desktopRestoreSucceededTitle), findsNothing);
     });
   });
+
+  group('after a backup', () {
+    final created = BackupEntry(
+      id: 'b2',
+      name: 'nightly',
+      timestamp: DateTime(2026, 10, 30, 11, 27),
+      sizeBytes: 2048,
+      recordCount: 31,
+      checksum: 'def',
+      filePath: '/tmp/nightly.db',
+    );
+
+    Finder successCard() => find.ancestor(
+      of: find.text(_l10n.desktopBackupSucceededMessage('nightly', 31)),
+      matching: find.byKey(AppMessageCard.cardKey),
+    );
+
+    testWidgets('a successful backup shows a success card with its name and '
+        'record count', (tester) async {
+      await pumpCard(tester);
+      await emit(tester, [
+        cardState(isBackingUp: true),
+        cardState(history: [created, _backup]),
+      ]);
+
+      expect(successCard(), findsOne);
+    });
+
+    testWidgets('closing the success card hides it', (tester) async {
+      await pumpCard(tester);
+      await emit(tester, [
+        cardState(isBackingUp: true),
+        cardState(history: [created, _backup]),
+      ]);
+
+      await tester.tap(
+        find.descendant(
+          of: successCard(),
+          matching: find.byKey(AppMessageCard.closeKey),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(successCard(), findsNothing);
+    });
+
+    testWidgets('the next backup or restore clears the success card', (
+      tester,
+    ) async {
+      await pumpCard(tester);
+      await emit(tester, [
+        cardState(isBackingUp: true),
+        cardState(history: [created, _backup]),
+      ]);
+
+      // The progress bar never settles while restoring, so pump frames.
+      states.add(cardState(isRestoring: true));
+      await tester.pump();
+      await tester.pumpWidget(card(cardState(isRestoring: true)));
+      await tester.pump();
+
+      expect(successCard(), findsNothing);
+    });
+
+    testWidgets('a failed backup shows its error, not a success card', (
+      tester,
+    ) async {
+      await pumpCard(tester);
+      await emit(tester, [
+        cardState(isBackingUp: true),
+        cardState(error: 'Backup failed'),
+      ]);
+
+      expect(find.text('Backup failed'), findsOne);
+      expect(
+        find.text(_l10n.desktopBackupSucceededMessage('nightly', 31)),
+        findsNothing,
+      );
+    });
+  });
+
   group('an error', () {
     Finder errorCard(String message) => find.ancestor(
       of: find.text(message),
@@ -253,18 +362,16 @@ void main() {
       expect(find.text('Restore failed'), findsNothing);
     });
 
-    testWidgets('a retry that fails with the same message shows it again', (
-      tester,
-    ) async {
+    testWidgets('a retry that fails with the same message shows it again, '
+        'even within one frame', (tester) async {
       await pumpCard(tester, cardState(error: 'Restore failed'));
       await tester.tap(find.byKey(AppMessageCard.closeKey));
       await tester.pumpAndSettle();
 
-      // The retry clears the error, then fails the same way.
-      await tester.pumpWidget(card(cardState(isRestoring: true)));
-      await tester.pump();
-      await tester.pumpWidget(card(cardState(error: 'Restore failed')));
-      await tester.pumpAndSettle();
+      await emit(tester, [
+        cardState(isRestoring: true),
+        cardState(error: 'Restore failed'),
+      ]);
 
       expect(errorCard('Restore failed'), findsOne);
     });

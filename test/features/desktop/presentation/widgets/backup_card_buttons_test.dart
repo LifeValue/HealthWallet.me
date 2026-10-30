@@ -1,4 +1,4 @@
-import 'package:bloc_test/bloc_test.dart' show MockBloc;
+import 'package:bloc_test/bloc_test.dart' show MockBloc, whenListen;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -20,6 +20,8 @@ void main() {
     required Locale locale,
     required BackupState state,
   }) async {
+    final bloc = _MockBackupBloc();
+    whenListen(bloc, const Stream<BackupState>.empty(), initialState: state);
     tester.view.physicalSize = const Size(1200, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -35,7 +37,7 @@ void main() {
               width: 500,
               height: 600,
               child: BlocProvider<BackupBloc>.value(
-                value: _MockBackupBloc(),
+                value: bloc,
                 child: BackupCard(
                   syncState: const DesktopSyncState(),
                   backupState: state,

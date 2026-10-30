@@ -7684,6 +7684,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'\"{name}\" has been restored. {count} records are now on this device.'**
   String desktopRestoreSucceededMessage(String name, int count);
+
+  /// No description provided for @desktopBackupSucceededMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" has been saved. It holds {count} records.'**
+  String desktopBackupSucceededMessage(String name, int count);
 }
 
 class _AppLocalizationsDelegate

@@ -4357,4 +4357,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String desktopRestoreSucceededMessage(String name, int count) {
     return 'Se restauró \"$name\". Ahora hay $count registros en este dispositivo.';
   }
+
+  @override
+  String desktopBackupSucceededMessage(String name, int count) {
+    return 'Se guardó \"$name\". Contiene $count registros.';
+  }
 }

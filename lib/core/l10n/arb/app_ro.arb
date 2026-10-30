@@ -1628,5 +1628,6 @@
   "appLockMessage": "Deblochează pentru a-ți vedea înregistrările medicale",
   "appLockUnlock": "Deblochează",
   "desktopRestoreSucceededTitle": "Copie de siguranță restaurată",
-  "desktopRestoreSucceededMessage": "\"{name}\" a fost restaurată. Acum sunt {count} înregistrări pe acest dispozitiv."
+  "desktopRestoreSucceededMessage": "\"{name}\" a fost restaurată. Acum sunt {count} înregistrări pe acest dispozitiv.",
+  "desktopBackupSucceededMessage": "\"{name}\" a fost salvată. Conține {count} înregistrări."
 }

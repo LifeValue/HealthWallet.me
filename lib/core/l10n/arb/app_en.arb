@@ -2147,5 +2147,16 @@
         "type": "int"
       }
     }
+  },
+  "desktopBackupSucceededMessage": "\"{name}\" has been saved. It holds {count} records.",
+  "@desktopBackupSucceededMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

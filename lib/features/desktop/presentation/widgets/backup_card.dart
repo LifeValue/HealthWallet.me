@@ -42,8 +42,13 @@ class _BackupCardState extends State<BackupCard> {
   /// The backup whose restore the user confirmed, until it finishes.
   BackupEntry? _restoring;
 
-  /// The error the user closed; it stays hidden until a different one.
+  /// The error the user closed; it stays hidden until the next backup or
+  /// restore.
   String? _dismissedError;
+
+  /// The message of a backup that just finished, until it is closed or the
+  /// next backup or restore starts.
+  String? _backupSucceeded;
 
   @override
   void dispose() {
@@ -51,31 +56,41 @@ class _BackupCardState extends State<BackupCard> {
     super.dispose();
   }
 
-  @override
-  void didUpdateWidget(BackupCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Each backup or restore starts by clearing the error, so a failed retry
-    // shows its message again even when the text is the same.
-    if (widget.backupState.error == null) _dismissedError = null;
+  bool _isWorking(BackupState state) => state.isBackingUp || state.isRestoring;
+
+  /// A backup or restore started: clear what the last one left, so a failed
+  /// retry shows its message again even when the text is the same.
+  void _onStarted(BuildContext context, BackupState state) => setState(() {
+    _dismissedError = null;
+    _backupSucceeded = null;
+  });
+
+  void _onBackupFinished(BuildContext context, BackupState state) {
+    if (state.error != null || state.backupHistory.isEmpty) return;
+    // The history is sorted newest first, so the new backup leads it.
+    final created = state.backupHistory.first;
+    setState(
+      () => _backupSucceeded = context.l10n.desktopBackupSucceededMessage(
+        _backupDisplayName(context, created),
+        created.recordCount,
+      ),
+    );
+  }
+
+  void _onRestoreFinished(BuildContext context, BackupState state) {
     final restored = _restoring;
-    final finished =
-        oldWidget.backupState.isRestoring && !widget.backupState.isRestoring;
-    if (restored == null || !finished) return;
     _restoring = null;
     // A failed restore shows its error in the card; only success is
     // announced here, so the user knows the data was replaced.
-    if (widget.backupState.error != null) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      AppSimpleDialog.showSuccess(
-        context: context,
-        title: context.l10n.desktopRestoreSucceededTitle,
-        message: context.l10n.desktopRestoreSucceededMessage(
-          _backupDisplayName(context, restored),
-          restored.recordCount,
-        ),
-      );
-    });
+    if (restored == null || state.error != null) return;
+    AppSimpleDialog.showSuccess(
+      context: context,
+      title: context.l10n.desktopRestoreSucceededTitle,
+      message: context.l10n.desktopRestoreSucceededMessage(
+        _backupDisplayName(context, restored),
+        restored.recordCount,
+      ),
+    );
   }
 
   void _create() {
@@ -157,246 +172,280 @@ class _BackupCardState extends State<BackupCard> {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (isWorking)
+    // Listeners see every state, unlike a rebuild: a quick backup or
+    // restore can start and finish between two frames.
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<BackupBloc, BackupState>(
+          listenWhen: (prev, curr) => !_isWorking(prev) && _isWorking(curr),
+          listener: _onStarted,
+        ),
+        BlocListener<BackupBloc, BackupState>(
+          listenWhen: (prev, curr) => prev.isBackingUp && !curr.isBackingUp,
+          listener: _onBackupFinished,
+        ),
+        BlocListener<BackupBloc, BackupState>(
+          listenWhen: (prev, curr) => prev.isRestoring && !curr.isRestoring,
+          listener: _onRestoreFinished,
+        ),
+      ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isWorking)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
+              child: LinearProgressIndicator(
+                value: widget.backupState.progress > 0
+                    ? widget.backupState.progress
+                    : null,
+                minHeight: 3,
+              ),
+            ),
+          if (error != null && error != _dismissedError)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Insets.medium,
+                Insets.normal,
+                Insets.medium,
+                0,
+              ),
+              child: AppMessageCard(
+                message: error,
+                type: AppMessageType.error,
+                onClose: () => setState(() => _dismissedError = error),
+              ),
+            ),
+          if (_backupSucceeded case final message?)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Insets.medium,
+                Insets.normal,
+                Insets.medium,
+                0,
+              ),
+              child: AppMessageCard(
+                message: message,
+                type: AppMessageType.success,
+                onClose: () => setState(() => _backupSucceeded = null),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.only(
+              left: Insets.medium,
+              right: Insets.medium,
+              top: Insets.normal,
+            ),
+            child: Text(
+              context.l10n.desktopBackupLocation,
+              style: AppTextStyle.labelSmall.copyWith(
+                color: context.colorScheme.onSurface.withValues(alpha: 0.5),
+                fontSize: 11,
+              ),
+            ),
+          ),
+          const SizedBox(height: Insets.extraSmall),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
-            child: LinearProgressIndicator(
-              value: widget.backupState.progress > 0
-                  ? widget.backupState.progress
-                  : null,
-              minHeight: 3,
+            child: _BackupLocationRow(
+              path: widget.backupState.backupPath,
+              isWorking: isWorking,
             ),
           ),
-        if (error != null && error != _dismissedError)
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              Insets.medium,
-              Insets.normal,
-              Insets.medium,
-              0,
+            padding: const EdgeInsets.only(
+              left: Insets.medium,
+              right: Insets.medium,
+              top: Insets.normal,
+              bottom: Insets.small,
             ),
-            child: AppMessageCard(
-              message: error,
-              type: AppMessageType.error,
-              onClose: () => setState(() => _dismissedError = error),
-            ),
-          ),
-        Padding(
-          padding: const EdgeInsets.only(
-            left: Insets.medium,
-            right: Insets.medium,
-            top: Insets.normal,
-          ),
-          child: Text(
-            context.l10n.desktopBackupLocation,
-            style: AppTextStyle.labelSmall.copyWith(
-              color: context.colorScheme.onSurface.withValues(alpha: 0.5),
-              fontSize: 11,
+            child: Text(
+              context.l10n.desktopBackupHistory,
+              style: AppTextStyle.labelSmall.copyWith(
+                color: context.colorScheme.onSurface.withValues(alpha: 0.5),
+                fontSize: 11,
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: Insets.extraSmall),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
-          child: _BackupLocationRow(
-            path: widget.backupState.backupPath,
-            isWorking: isWorking,
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(
-            left: Insets.medium,
-            right: Insets.medium,
-            top: Insets.normal,
-            bottom: Insets.small,
-          ),
-          child: Text(
-            context.l10n.desktopBackupHistory,
-            style: AppTextStyle.labelSmall.copyWith(
-              color: context.colorScheme.onSurface.withValues(alpha: 0.5),
-              fontSize: 11,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
-            child: selected != null
-                ? SingleChildScrollView(
-                    child: _BackupPreview(
-                      backup: selected,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
+              child: selected != null
+                  ? SingleChildScrollView(
+                      child: _BackupPreview(
+                        backup: selected,
+                        isWorking: isWorking,
+                        isConnected: isConnected,
+                        onRestoreConfirmed: (backup) => _restoring = backup,
+                      ),
+                    )
+                  : _BackupList(
+                      backups: widget.backupState.backupHistory,
                       isWorking: isWorking,
-                      isConnected: isConnected,
-                      onRestoreConfirmed: (backup) => _restoring = backup,
                     ),
-                  )
-                : _BackupList(
-                    backups: widget.backupState.backupHistory,
-                    isWorking: isWorking,
-                  ),
+            ),
           ),
-        ),
-        if (selected == null) ...[
-          Divider(height: 1, color: context.theme.dividerColor),
-          Padding(
-            padding: const EdgeInsets.all(Insets.medium),
-            child: Column(
-              children: [
-                if (!_showForm) ...[
-                  Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(minWidth: 200),
-                      child: AppButton(
-                        label: isWorking
-                            ? context.l10n.desktopBackingUp
-                            : context.l10n.desktopCreateBackup,
-                        onPressed: !isWorking
-                            ? () => setState(() => _showForm = true)
-                            : null,
-                        fullWidth: false,
-                        height: 36,
-                      ),
-                    ),
-                  ),
-                ] else ...[
-                  TextField(
-                    controller: _nameController,
-                    autofocus: true,
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      color: context.colorScheme.onSurface,
-                      fontSize: 13,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: defaultName,
-                      hintStyle: AppTextStyle.bodyMedium.copyWith(
-                        color: context.colorScheme.onSurface.withValues(
-                          alpha: 0.2,
-                        ),
-                        fontSize: 13,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: context.colorScheme.onSurface.withValues(
-                            alpha: 0.08,
-                          ),
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: context.colorScheme.onSurface.withValues(
-                            alpha: 0.08,
-                          ),
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: context.colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                    onSubmitted: (_) => _create(),
-                  ),
-                  const SizedBox(height: Insets.normal),
-                  GestureDetector(
-                    onTap: isConnected
-                        ? () => setState(() => _syncFirst = !_syncFirst)
-                        : null,
-                    behavior: HitTestBehavior.opaque,
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 12,
-                          height: 12,
-                          child: Checkbox(
-                            value: isConnected ? _syncFirst : false,
-                            onChanged: isConnected
-                                ? (v) => setState(() => _syncFirst = v ?? false)
-                                : null,
-                            activeColor: context.colorScheme.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(3),
-                            ),
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // One wrapping text, so longer translations go onto a
-                        // second line instead of overflowing the row.
-                        Flexible(
-                          child: Text.rich(
-                            TextSpan(
-                              text: context.l10n.desktopSyncWithPhoneFirst,
-                              style: AppTextStyle.labelSmall.copyWith(
-                                color: context.colorScheme.onSurface.withValues(
-                                  alpha: isConnected ? 0.5 : 0.2,
-                                ),
-                                fontSize: 11,
-                              ),
-                              children: [
-                                if (!isConnected)
-                                  TextSpan(
-                                    text:
-                                        '  ${context.l10n.desktopNotConnected}',
-                                    style: AppTextStyle.labelSmall.copyWith(
-                                      color: context.colorScheme.onSurface
-                                          .withValues(alpha: 0.15),
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: Insets.normal),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => setState(() {
-                          _showForm = false;
-                          _nameController.clear();
-                        }),
-                        child: Text(
-                          context.l10n.cancel,
-                          style: TextStyle(
-                            color: context.colorScheme.onSurface.withValues(
-                              alpha: 0.4,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(minWidth: 160),
+          if (selected == null) ...[
+            Divider(height: 1, color: context.theme.dividerColor),
+            Padding(
+              padding: const EdgeInsets.all(Insets.medium),
+              child: Column(
+                children: [
+                  if (!_showForm) ...[
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(minWidth: 200),
                         child: AppButton(
-                          label: context.l10n.desktopStartBackup,
-                          onPressed: _create,
+                          label: isWorking
+                              ? context.l10n.desktopBackingUp
+                              : context.l10n.desktopCreateBackup,
+                          onPressed: !isWorking
+                              ? () => setState(() => _showForm = true)
+                              : null,
                           fullWidth: false,
                           height: 36,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ] else ...[
+                    TextField(
+                      controller: _nameController,
+                      autofocus: true,
+                      style: AppTextStyle.bodyMedium.copyWith(
+                        color: context.colorScheme.onSurface,
+                        fontSize: 13,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: defaultName,
+                        hintStyle: AppTextStyle.bodyMedium.copyWith(
+                          color: context.colorScheme.onSurface.withValues(
+                            alpha: 0.2,
+                          ),
+                          fontSize: 13,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: context.colorScheme.onSurface.withValues(
+                              alpha: 0.08,
+                            ),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: context.colorScheme.onSurface.withValues(
+                              alpha: 0.08,
+                            ),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: context.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                      onSubmitted: (_) => _create(),
+                    ),
+                    const SizedBox(height: Insets.normal),
+                    GestureDetector(
+                      onTap: isConnected
+                          ? () => setState(() => _syncFirst = !_syncFirst)
+                          : null,
+                      behavior: HitTestBehavior.opaque,
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: Checkbox(
+                              value: isConnected ? _syncFirst : false,
+                              onChanged: isConnected
+                                  ? (v) =>
+                                        setState(() => _syncFirst = v ?? false)
+                                  : null,
+                              activeColor: context.colorScheme.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // One wrapping text, so longer translations go onto a
+                          // second line instead of overflowing the row.
+                          Flexible(
+                            child: Text.rich(
+                              TextSpan(
+                                text: context.l10n.desktopSyncWithPhoneFirst,
+                                style: AppTextStyle.labelSmall.copyWith(
+                                  color: context.colorScheme.onSurface
+                                      .withValues(
+                                        alpha: isConnected ? 0.5 : 0.2,
+                                      ),
+                                  fontSize: 11,
+                                ),
+                                children: [
+                                  if (!isConnected)
+                                    TextSpan(
+                                      text:
+                                          '  ${context.l10n.desktopNotConnected}',
+                                      style: AppTextStyle.labelSmall.copyWith(
+                                        color: context.colorScheme.onSurface
+                                            .withValues(alpha: 0.15),
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: Insets.normal),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => setState(() {
+                            _showForm = false;
+                            _nameController.clear();
+                          }),
+                          child: Text(
+                            context.l10n.cancel,
+                            style: TextStyle(
+                              color: context.colorScheme.onSurface.withValues(
+                                alpha: 0.4,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(minWidth: 160),
+                          child: AppButton(
+                            label: context.l10n.desktopStartBackup,
+                            onPressed: _create,
+                            fullWidth: false,
+                            height: 36,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }

@@ -1633,5 +1633,6 @@
   "appLockMessage": "Desbloquea para ver tus registros de salud",
   "appLockUnlock": "Desbloquear",
   "desktopRestoreSucceededTitle": "Respaldo restaurado",
-  "desktopRestoreSucceededMessage": "Se restauró \"{name}\". Ahora hay {count} registros en este dispositivo."
+  "desktopRestoreSucceededMessage": "Se restauró \"{name}\". Ahora hay {count} registros en este dispositivo.",
+  "desktopBackupSucceededMessage": "Se guardó \"{name}\". Contiene {count} registros."
 }

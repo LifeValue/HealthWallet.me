@@ -4369,4 +4369,9 @@ class AppLocalizationsRo extends AppLocalizations {
   String desktopRestoreSucceededMessage(String name, int count) {
     return '\"$name\" a fost restaurată. Acum sunt $count înregistrări pe acest dispozitiv.';
   }
+
+  @override
+  String desktopBackupSucceededMessage(String name, int count) {
+    return '\"$name\" a fost salvată. Conține $count înregistrări.';
+  }
 }
