@@ -279,6 +279,20 @@ void main() {
       expect(successCard(), findsOne);
     });
 
+    testWidgets('the success card hides itself after a while', (
+      tester,
+    ) async {
+      await pumpCard(tester);
+      await emit(tester, [
+        cardState(isBackingUp: true),
+        cardState(history: [created, _backup]),
+      ]);
+
+      await tester.pump(BackupCard.messageDuration);
+      await tester.pump();
+      expect(successCard(), findsNothing);
+    });
+
     testWidgets('closing the success card hides it', (tester) async {
       await pumpCard(tester);
       await emit(tester, [
@@ -376,10 +390,69 @@ void main() {
       expect(errorCard('Restore failed'), findsOne);
     });
 
+    testWidgets('hides itself after a while', (tester) async {
+      await pumpCard(tester, cardState(error: 'Restore failed'));
+
+      await tester.pump(const Duration(seconds: 1));
+      expect(errorCard('Restore failed'), findsOne);
+
+      await tester.pump(BackupCard.messageDuration);
+      await tester.pump();
+      expect(find.text('Restore failed'), findsNothing);
+    });
+
+    testWidgets('a new error after a retry starts its own timer', (
+      tester,
+    ) async {
+      await pumpCard(tester);
+      await emit(tester, [
+        cardState(isRestoring: true),
+        cardState(error: 'Restore failed'),
+      ]);
+
+      await tester.pump(BackupCard.messageDuration);
+      await tester.pump();
+      expect(find.text('Restore failed'), findsNothing);
+    });
+
     testWidgets('no error, no card', (tester) async {
       await pumpCard(tester);
 
       expect(find.byKey(AppMessageCard.cardKey), findsNothing);
+    });
+  });
+
+  group('a backup\'s details', () {
+    testWidgets('the way back to the list is the first row, above the '
+        'location', (tester) async {
+      await pumpCard(tester);
+
+      final back = tester.getRect(find.text(_l10n.desktopAllBackups));
+      final location = tester.getRect(find.text(_l10n.desktopBackupLocation));
+      final name = tester.getRect(find.text('backup-28-10-2026'));
+      expect(back.bottom, lessThan(location.top));
+      expect(back.bottom, lessThan(name.top));
+    });
+
+    testWidgets('tapping it goes back to the list', (tester) async {
+      await pumpCard(tester);
+
+      await tester.tap(find.text(_l10n.desktopAllBackups));
+
+      expect(bloc.events, contains(const BackupSelected(null)));
+    });
+
+    testWidgets('the list has no way back', (tester) async {
+      await pumpCard(
+        tester,
+        BackupState(
+          hasUserSelectedPath: true,
+          backupPath: '/tmp',
+          backupHistory: [_backup],
+        ),
+      );
+
+      expect(find.text(_l10n.desktopAllBackups), findsNothing);
     });
   });
 }

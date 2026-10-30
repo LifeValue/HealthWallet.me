@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -30,6 +31,9 @@ class BackupCard extends StatefulWidget {
     required this.backupState,
   });
 
+  /// How long an error or success card stays before it hides itself.
+  static const messageDuration = Duration(seconds: 6);
+
   @override
   State<BackupCard> createState() => _BackupCardState();
 }
@@ -50,20 +54,46 @@ class _BackupCardState extends State<BackupCard> {
   /// next backup or restore starts.
   String? _backupSucceeded;
 
+  Timer? _errorTimer;
+  Timer? _successTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    final error = widget.backupState.error;
+    if (error != null) _hideErrorLater(error);
+  }
+
   @override
   void dispose() {
+    _errorTimer?.cancel();
+    _successTimer?.cancel();
     _nameController.dispose();
     super.dispose();
   }
+
+  void _hideErrorLater(String error) {
+    _errorTimer?.cancel();
+    _errorTimer = Timer(BackupCard.messageDuration, () {
+      if (mounted) setState(() => _dismissedError = error);
+    });
+  }
+
+  void _onError(BuildContext context, BackupState state) =>
+      _hideErrorLater(state.error!);
 
   bool _isWorking(BackupState state) => state.isBackingUp || state.isRestoring;
 
   /// A backup or restore started: clear what the last one left, so a failed
   /// retry shows its message again even when the text is the same.
-  void _onStarted(BuildContext context, BackupState state) => setState(() {
-    _dismissedError = null;
-    _backupSucceeded = null;
-  });
+  void _onStarted(BuildContext context, BackupState state) {
+    _errorTimer?.cancel();
+    _successTimer?.cancel();
+    setState(() {
+      _dismissedError = null;
+      _backupSucceeded = null;
+    });
+  }
 
   void _onBackupFinished(BuildContext context, BackupState state) {
     if (state.error != null || state.backupHistory.isEmpty) return;
@@ -75,6 +105,10 @@ class _BackupCardState extends State<BackupCard> {
         created.recordCount,
       ),
     );
+    _successTimer?.cancel();
+    _successTimer = Timer(BackupCard.messageDuration, () {
+      if (mounted) setState(() => _backupSucceeded = null);
+    });
   }
 
   void _onRestoreFinished(BuildContext context, BackupState state) {
@@ -181,6 +215,11 @@ class _BackupCardState extends State<BackupCard> {
           listener: _onStarted,
         ),
         BlocListener<BackupBloc, BackupState>(
+          listenWhen: (prev, curr) =>
+              curr.error != null && curr.error != prev.error,
+          listener: _onError,
+        ),
+        BlocListener<BackupBloc, BackupState>(
           listenWhen: (prev, curr) => prev.isBackingUp && !curr.isBackingUp,
           listener: _onBackupFinished,
         ),
@@ -201,6 +240,16 @@ class _BackupCardState extends State<BackupCard> {
                     : null,
                 minHeight: 3,
               ),
+            ),
+          if (selected != null)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(
+                Insets.medium,
+                Insets.normal,
+                Insets.medium,
+                0,
+              ),
+              child: _BackToListLink(),
             ),
           if (error != null && error != _dismissedError)
             Padding(
@@ -615,33 +664,6 @@ class _BackupPreview extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            InkWell(
-              onTap: () =>
-                  context.read<BackupBloc>().add(const BackupSelected(null)),
-              borderRadius: BorderRadius.circular(4),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.arrow_back,
-                    size: 16,
-                    color: context.colorScheme.primary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    context.l10n.desktopAllBackups,
-                    style: AppTextStyle.labelSmall.copyWith(
-                      color: context.colorScheme.primary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: Insets.normal),
         Text(
           displayName,
           style: AppTextStyle.bodyMedium.copyWith(
@@ -836,3 +858,40 @@ String _backupDisplayName(BuildContext context, BackupEntry backup) =>
     backup.name.isNotEmpty
     ? backup.name
     : '${context.l10n.desktopBackupFrom} ${DateFormat.yMMMd().format(backup.timestamp)}';
+
+/// Leaves a backup's details for the list; sits at the top of the card so it
+/// is the first thing seen.
+class _BackToListLink extends StatelessWidget {
+  const _BackToListLink();
+
+  static const Key linkKey = Key('backup_card_back_to_list');
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      key: linkKey,
+      onTap: () => context.read<BackupBloc>().add(const BackupSelected(null)),
+      borderRadius: BorderRadius.circular(Insets.extraSmall),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: Insets.extraSmall),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.arrow_back,
+              size: 16,
+              color: context.colorScheme.primary,
+            ),
+            const SizedBox(width: Insets.extraSmall),
+            Text(
+              context.l10n.desktopAllBackups,
+              style: AppTextStyle.labelSmall.copyWith(
+                color: context.colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
