@@ -340,6 +340,8 @@ void main() {
         final entry = await service.createSnapshot();
         await editBackup(entry, (b) async {
           await b.customStatement('DROP TRIGGER record_notes_insert_uuid');
+          await b.customStatement('DROP TRIGGER record_notes_insert_outbox');
+          await b.customStatement('DROP TRIGGER record_notes_update_outbox');
           await b.customStatement(
             'DROP TRIGGER record_notes_update_updated_at',
           );

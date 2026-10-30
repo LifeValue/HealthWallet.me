@@ -99,23 +99,7 @@ class SyncStatusCard extends StatelessWidget {
           ],
           if (isSyncing) ...[
             const SizedBox(height: Insets.small),
-            if (syncState.currentTable != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(
-                  context.l10n.desktopSyncingTable(
-                    _formatTableName(context, syncState.currentTable!),
-                  ),
-                  style: AppTextStyle.labelSmall.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ),
-            LinearProgressIndicator(
-              value: syncState.totalTables > 0
-                  ? syncState.completedTables / syncState.totalTables
-                  : null,
-            ),
+            const LinearProgressIndicator(),
           ],
           const SizedBox(height: Insets.normal),
           AppButton(
@@ -148,20 +132,5 @@ class SyncStatusCard extends StatelessWidget {
     }
     if (connected) return (AppColors.success, context.l10n.desktopSyncReady);
     return (AppColors.error, context.l10n.desktopSyncOffline);
-  }
-
-  String _formatTableName(BuildContext context, String tableName) {
-    switch (tableName) {
-      case 'fhir_resource':
-        return context.l10n.desktopTableHealthRecords;
-      case 'sources':
-        return context.l10n.desktopTableSources;
-      case 'record_notes':
-        return context.l10n.desktopTableNotes;
-      case 'processing_sessions':
-        return context.l10n.desktopTableSessions;
-      default:
-        return tableName;
-    }
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -14,7 +15,6 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
-import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/connection_dialog.dart';
@@ -41,8 +41,8 @@ class SyncSection extends StatelessWidget {
           return BlocBuilder<CommunicationBloc, DesktopSyncState>(
             builder: (context, commState) {
               return BlocBuilder<LwwSyncBloc, LwwSyncState>(
-                builder: (context, lwwState) {
-                  return BlocBuilder<BackupBloc, BackupState>(
+                builder: (context, lwwState) => _EveryHalfMinute(
+                  builder: (context) => BlocBuilder<BackupBloc, BackupState>(
                     builder: (context, backupState) {
                       final hasEhrSync = ehrSyncState.hasSyncedData;
                       final hasDesktopPairing = commState.pairedDevice != null;
@@ -449,8 +449,8 @@ class SyncSection extends StatelessWidget {
                         ),
                       );
                     },
-                  );
-                },
+                  ),
+                ),
               );
             },
           );
@@ -460,51 +460,52 @@ class SyncSection extends StatelessWidget {
   }
 
   String _getConnectionStatus(DesktopSyncState comm, AppLocalizations l10n) {
-    if (comm.connectionStatus == ConnectionStatus.connected) {
-      return comm.connectedDeviceName ?? l10n.connectionStatusConnected;
-    }
-    if (comm.connectionStatus == ConnectionStatus.discovering) {
-      return l10n.connectionStatusConnecting;
-    }
-    if (comm.pairedDevice != null) return l10n.connectionStatusDisconnected;
-    return l10n.connectionStatusNotPaired;
+    return switch (comm.connectionStatus) {
+      ConnectionStatus.connected =>
+        comm.connectedDeviceName ?? l10n.connectionStatusConnected,
+      ConnectionStatus.discovering => l10n.connectionStatusConnecting,
+      ConnectionStatus.awaitingApproval => l10n.desktopWaitingForApproval,
+      ConnectionStatus.disconnected =>
+        comm.pairedDevice != null
+            ? l10n.connectionStatusDisconnected
+            : l10n.connectionStatusNotPaired,
+    };
   }
 
   Color _getConnectionColor(DesktopSyncState comm) {
-    if (comm.connectionStatus == ConnectionStatus.connected) {
-      return AppColors.success;
-    }
-    if (comm.connectionStatus == ConnectionStatus.discovering) {
-      return AppColors.warning;
-    }
-    if (comm.pairedDevice != null) return AppColors.error;
-    return AppColors.textSecondary;
+    return switch (comm.connectionStatus) {
+      ConnectionStatus.connected => AppColors.success,
+      ConnectionStatus.discovering ||
+      ConnectionStatus.awaitingApproval => AppColors.warning,
+      ConnectionStatus.disconnected =>
+        comm.pairedDevice != null ? AppColors.error : AppColors.textSecondary,
+    };
   }
 
+  /// What the sync row says. "In sync" only when both sides agree and
+  /// nothing is waiting; otherwise what is waiting, or when rows last moved.
   String _getSyncStatus(
     DesktopSyncState comm,
     LwwSyncState lww,
     AppLocalizations l10n,
   ) {
-    final isConnected = comm.connectionStatus == ConnectionStatus.connected;
     if (lww.syncStatus == LwwSyncStatus.syncing) return l10n.syncStatusSyncing;
-    if (lww.isSynced && isConnected) return l10n.syncStatusInSync;
-    if (isConnected) return l10n.connectionStatusConnected;
+    if (lww.isSynced) return l10n.syncStatusInSync;
     if (lww.pendingChangeCount > 0) {
       return l10n.syncStatusPending(lww.pendingChangeCount);
     }
-    if (lww.lastSyncTime != null) {
-      return DateFormatUtils.getSincePretty(lww.lastSyncTime!, l10n);
-    }
-    return l10n.connectionStatusNotPaired;
+    if (lww.syncStatus == LwwSyncStatus.error) return l10n.desktopSyncFailed;
+    final last = lww.lastSyncTime;
+    if (last != null) return DateFormatUtils.getSincePretty(last, l10n);
+    return comm.pairedDevice != null
+        ? l10n.syncStatusNotSynced
+        : l10n.connectionStatusNotPaired;
   }
 
   Color _getSyncColor(DesktopSyncState comm, LwwSyncState lww) {
     if (lww.syncStatus == LwwSyncStatus.syncing) return AppColors.primary;
     if (lww.isSynced) return AppColors.success;
-    if (comm.connectionStatus == ConnectionStatus.connected) {
-      return AppColors.success;
-    }
+    if (lww.syncStatus == LwwSyncStatus.error) return AppColors.error;
     if (lww.pendingChangeCount > 0) return AppColors.warning;
     return AppColors.textSecondary;
   }
@@ -547,16 +548,7 @@ class SyncSection extends StatelessWidget {
   }
 
   void _requestRemoteBackup(BuildContext context, DesktopSyncState commState) {
-    try {
-      context.read<LwwSyncBloc>().add(const SyncTriggered());
-    } catch (_) {
-      getIt<LwwSyncBloc>().add(const SyncTriggered());
-    }
-
-    getIt<BackupBloc>().add(
-      const RemoteBackupStatusChanged(isBackingUp: true),
-    );
-    getIt<TcpService>().sendData('backup.request', {});
+    getIt<BackupBloc>().add(const PhoneBackupRequested());
   }
 }
 
@@ -691,4 +683,36 @@ class _BackupLocationRow extends StatelessWidget {
       context.read<BackupBloc>().add(BackupLocationChanged(result));
     }
   }
+}
+
+/// Rebuilds every half minute, so "2 min ago" stays true while the sheet is
+/// open.
+class _EveryHalfMinute extends StatefulWidget {
+  const _EveryHalfMinute({required this.builder});
+
+  final WidgetBuilder builder;
+
+  @override
+  State<_EveryHalfMinute> createState() => _EveryHalfMinuteState();
+}
+
+class _EveryHalfMinuteState extends State<_EveryHalfMinute> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(context);
 }

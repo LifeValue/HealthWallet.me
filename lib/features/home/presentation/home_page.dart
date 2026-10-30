@@ -90,10 +90,7 @@ class HomePage extends StatelessWidget {
           ),
           BlocListener<LwwSyncBloc, LwwSyncState>(
             listenWhen: (previous, current) =>
-                current.receivedRows > previous.receivedRows ||
-                (previous.syncStatus == LwwSyncStatus.syncing &&
-                    current.syncStatus == LwwSyncStatus.idle &&
-                    current.receivedRows > 0),
+                previous.recordsVersion != current.recordsVersion,
             listener: (context, state) {
               context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
             },
@@ -349,16 +346,22 @@ class HomeViewState extends State<HomeView> {
                 ],
               ],
             ),
-            const Positioned.fill(
+            Positioned.fill(
               child: Center(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _ConnectionMiniCard(),
-                    SizedBox(width: 8),
-                    _SyncMiniCard(),
-                    SizedBox(width: 8),
-                    _BackupMiniCard(),
+                    const _ConnectionMiniCard(),
+                    const SizedBox(width: 8),
+                    _PeriodicBuilder(
+                      builder: (_, tick) =>
+                          _SyncMiniCard(key: ValueKey('sync_$tick')),
+                    ),
+                    const SizedBox(width: 8),
+                    _PeriodicBuilder(
+                      builder: (_, tick) =>
+                          _BackupMiniCard(key: ValueKey('backup_$tick')),
+                    ),
                   ],
                 ),
               ),
@@ -598,21 +601,27 @@ class _SyncMiniCard extends StatelessWidget {
       child: BlocBuilder<LwwSyncBloc, LwwSyncState>(
         builder: (context, syncState) {
           final isSyncing = syncState.syncStatus == LwwSyncStatus.syncing;
+          // Red only for a failure; no phone or nothing compared yet is not
+          // one.
           final color = isSyncing
               ? AppColors.primary
               : syncState.isSynced
               ? AppColors.success
+              : syncState.syncStatus == LwwSyncStatus.error
+              ? AppColors.error
               : syncState.pendingChangeCount > 0
               ? AppColors.warning
-              : AppColors.error;
+              : AppColors.textSecondary;
 
+          final last = syncState.lastSyncTime;
           final subtitle = isSyncing
               ? context.l10n.syncStatusSyncing
-              : syncState.lastSyncTime != null
-              ? DateFormatUtils.getSincePretty(
-                  syncState.lastSyncTime!,
-                  context.l10n,
-                )
+              : syncState.isSynced
+              ? context.l10n.syncStatusInSync
+              : syncState.pendingChangeCount > 0
+              ? context.l10n.syncStatusPending(syncState.pendingChangeCount)
+              : last != null
+              ? DateFormatUtils.getSincePretty(last, context.l10n)
               : context.l10n.syncStatusNotSynced;
 
           return _MiniStatusCard(

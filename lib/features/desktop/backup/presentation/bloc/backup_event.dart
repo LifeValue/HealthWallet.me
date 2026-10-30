@@ -14,6 +14,10 @@ sealed class BackupEvent with _$BackupEvent {
       BackupLocationChanged;
   const factory BackupEvent.backupLocationReset() = BackupLocationReset;
   const factory BackupEvent.remoteBackupRequested() = RemoteBackupRequested;
+
+  /// Phone: ask the desktop for a backup, once this phone's changes reached
+  /// it.
+  const factory BackupEvent.phoneBackupRequested() = PhoneBackupRequested;
   const factory BackupEvent.remoteBackupStatusChanged({
     required bool isBackingUp,
     String? error,

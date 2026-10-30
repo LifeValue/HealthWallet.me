@@ -362,10 +362,7 @@ class _RecordsViewState extends State<RecordsView> {
           ),
           BlocListener<LwwSyncBloc, LwwSyncState>(
             listenWhen: (previous, current) =>
-                current.receivedRows > previous.receivedRows ||
-                (previous.syncStatus == LwwSyncStatus.syncing &&
-                    current.syncStatus == LwwSyncStatus.idle &&
-                    current.receivedRows > 0),
+                previous.recordsVersion != current.recordsVersion,
             listener: (context, _) => _reloadRecords(context),
           ),
           BlocListener<RecordsBloc, RecordsState>(

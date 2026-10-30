@@ -133,6 +133,7 @@ class TrayBloc extends Bloc<TrayEvent, TrayState> {
     TrayQuitRequested event,
     Emitter<TrayState> emit,
   ) async {
+    await _windowLifecycleService.runBeforeQuit();
     await _trayService.dispose();
     _windowLifecycleService.dispose();
     exit(0);
