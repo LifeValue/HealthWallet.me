@@ -9,6 +9,7 @@ import 'package:health_wallet/core/widgets/app_message_card.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
+import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/backup_card.dart';
 
 /// Records the events the card sends instead of running them.
@@ -18,6 +19,15 @@ class _MockBackupBloc extends MockBloc<BackupEvent, BackupState>
 
   @override
   void add(BackupEvent event) => events.add(event);
+}
+
+/// Records the syncs the card starts before a backup.
+class _MockLwwSyncBloc extends MockBloc<LwwSyncEvent, LwwSyncState>
+    implements LwwSyncBloc {
+  final events = <LwwSyncEvent>[];
+
+  @override
+  void add(LwwSyncEvent event) => events.add(event);
 }
 
 final _l10n = lookupAppLocalizations(const Locale('en'));
@@ -34,6 +44,7 @@ final _backup = BackupEntry(
 
 void main() {
   late _MockBackupBloc bloc;
+  late _MockLwwSyncBloc lwwBloc;
   late StreamController<BackupState> states;
 
   BackupState cardState({
@@ -55,29 +66,42 @@ void main() {
     bloc = _MockBackupBloc();
     states = StreamController<BackupState>();
     whenListen(bloc, states.stream, initialState: cardState());
+    lwwBloc = _MockLwwSyncBloc();
+    whenListen(
+      lwwBloc,
+      const Stream<LwwSyncState>.empty(),
+      initialState: LwwSyncState.initial(),
+    );
   });
 
   tearDown(() => states.close());
 
-  Widget card(BackupState state) => MaterialApp(
+  Widget card(
+    BackupState state, {
+    DesktopSyncState syncState = const DesktopSyncState(),
+  }) => MaterialApp(
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: Scaffold(
-      body: BlocProvider<BackupBloc>.value(
-        value: bloc,
-        child: BackupCard(
-          syncState: const DesktopSyncState(),
-          backupState: state,
-        ),
+      body: MultiBlocProvider(
+        providers: [
+          BlocProvider<BackupBloc>.value(value: bloc),
+          BlocProvider<LwwSyncBloc>.value(value: lwwBloc),
+        ],
+        child: BackupCard(syncState: syncState, backupState: state),
       ),
     ),
   );
 
-  Future<void> pumpCard(WidgetTester tester, [BackupState? state]) async {
+  Future<void> pumpCard(
+    WidgetTester tester, [
+    BackupState? state,
+    DesktopSyncState syncState = const DesktopSyncState(),
+  ]) async {
     tester.view.physicalSize = const Size(1200, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(card(state ?? cardState()));
+    await tester.pumpWidget(card(state ?? cardState(), syncState: syncState));
     await tester.pumpAndSettle();
   }
 
@@ -453,6 +477,159 @@ void main() {
       );
 
       expect(find.text(_l10n.desktopAllBackups), findsNothing);
+    });
+  });
+
+  group('while a backup runs', () {
+    final running = BackupState(
+      hasUserSelectedPath: true,
+      backupPath: '/tmp',
+      backupHistory: [_backup],
+      isBackingUp: true,
+      progress: 0.4,
+    );
+
+    testWidgets('the progress bar shows how far it got', (tester) async {
+      await pumpCard(tester, running);
+
+      final bar = tester.widget<LinearProgressIndicator>(
+        find.byType(LinearProgressIndicator),
+      );
+      expect(bar.value, 0.4);
+    });
+
+    testWidgets('the progress bar runs without a value before the first '
+        'step', (tester) async {
+      tester.view.physicalSize = const Size(1200, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      // An indeterminate bar never settles, so pump a single frame.
+      await tester.pumpWidget(card(running.copyWith(progress: 0)));
+
+      final bar = tester.widget<LinearProgressIndicator>(
+        find.byType(LinearProgressIndicator),
+      );
+      expect(bar.value, isNull);
+    });
+
+    testWidgets('the create button says it is backing up and is disabled', (
+      tester,
+    ) async {
+      await pumpCard(tester, running);
+
+      expect(find.text(_l10n.desktopCreateBackup), findsNothing);
+      final button = find.ancestor(
+        of: find.text(_l10n.desktopBackingUp),
+        matching: find.byWidgetPredicate((w) => w is ButtonStyleButton),
+      );
+      expect(tester.widget<ButtonStyleButton>(button).onPressed, isNull);
+    });
+  });
+
+  group('the create form', () {
+    final list = BackupState(
+      hasUserSelectedPath: true,
+      backupPath: '/tmp',
+      backupHistory: [_backup],
+    );
+    const connected = DesktopSyncState(
+      connectionStatus: ConnectionStatus.connected,
+    );
+
+    Future<void> openForm(
+      WidgetTester tester, {
+      DesktopSyncState syncState = const DesktopSyncState(),
+    }) async {
+      await pumpCard(tester, list, syncState);
+      await tester.tap(find.text(_l10n.desktopCreateBackup));
+      await tester.pumpAndSettle();
+    }
+
+    Checkbox syncFirstBox(WidgetTester tester) =>
+        tester.widget<Checkbox>(find.byType(Checkbox));
+
+    testWidgets('submitting the name from the keyboard starts the backup', (
+      tester,
+    ) async {
+      await openForm(tester);
+
+      await tester.enterText(find.byType(TextField), '  nightly  ');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(bloc.events, [const BackupRequested(name: 'nightly')]);
+      expect(find.byType(TextField), findsNothing);
+      expect(find.text(_l10n.desktopCreateBackup), findsOne);
+    });
+
+    testWidgets('with a phone connected, syncing first is on and both the '
+        'label and the box toggle it', (tester) async {
+      await openForm(tester, syncState: connected);
+      expect(syncFirstBox(tester).value, isTrue);
+      expect(find.textContaining(_l10n.desktopNotConnected), findsNothing);
+
+      await tester.tap(find.textContaining(_l10n.desktopSyncWithPhoneFirst));
+      await tester.pump();
+      expect(syncFirstBox(tester).value, isFalse);
+
+      await tester.tap(find.byType(Checkbox));
+      await tester.pump();
+      expect(syncFirstBox(tester).value, isTrue);
+
+      await tester.tap(find.text(_l10n.desktopStartBackup));
+      await tester.pumpAndSettle();
+
+      expect(lwwBloc.events, [const SyncTriggered()]);
+      expect(bloc.events.single, isA<BackupRequested>());
+    });
+
+    testWidgets('with syncing first turned off, the backup starts without a '
+        'sync', (tester) async {
+      await openForm(tester, syncState: connected);
+
+      await tester.tap(find.byType(Checkbox));
+      await tester.pump();
+      await tester.tap(find.text(_l10n.desktopStartBackup));
+      await tester.pumpAndSettle();
+
+      expect(lwwBloc.events, isEmpty);
+      expect(bloc.events.single, isA<BackupRequested>());
+    });
+
+    testWidgets('without a phone, syncing first is off and cannot be turned '
+        'on', (tester) async {
+      await openForm(tester);
+      expect(syncFirstBox(tester).value, isFalse);
+      expect(syncFirstBox(tester).onChanged, isNull);
+      expect(find.textContaining(_l10n.desktopNotConnected), findsOne);
+
+      await tester.tap(find.textContaining(_l10n.desktopSyncWithPhoneFirst));
+      await tester.pump();
+      expect(syncFirstBox(tester).value, isFalse);
+
+      await tester.tap(find.text(_l10n.desktopStartBackup));
+      await tester.pumpAndSettle();
+      expect(lwwBloc.events, isEmpty);
+    });
+
+    testWidgets('Cancel closes the form, clears the name and starts nothing', (
+      tester,
+    ) async {
+      await openForm(tester);
+      await tester.enterText(find.byType(TextField), 'nightly');
+
+      await tester.tap(find.text(_l10n.cancel));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TextField), findsNothing);
+      expect(bloc.events, isEmpty);
+
+      await tester.tap(find.text(_l10n.desktopCreateBackup));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        isEmpty,
+      );
     });
   });
 }
