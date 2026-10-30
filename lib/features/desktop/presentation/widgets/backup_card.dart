@@ -10,6 +10,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/core/widgets/app_message_card.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
 import 'package:health_wallet/features/desktop/backup/domain/utils/backup_name_date.dart';
@@ -41,6 +42,9 @@ class _BackupCardState extends State<BackupCard> {
   /// The backup whose restore the user confirmed, until it finishes.
   BackupEntry? _restoring;
 
+  /// The error the user closed; it stays hidden until a different one.
+  String? _dismissedError;
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -50,6 +54,9 @@ class _BackupCardState extends State<BackupCard> {
   @override
   void didUpdateWidget(BackupCard oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // Each backup or restore starts by clearing the error, so a failed retry
+    // shows its message again even when the text is the same.
+    if (widget.backupState.error == null) _dismissedError = null;
     final restored = _restoring;
     final finished =
         oldWidget.backupState.isRestoring && !widget.backupState.isRestoring;
@@ -98,6 +105,7 @@ class _BackupCardState extends State<BackupCard> {
     final isWorking =
         widget.backupState.isBackingUp || widget.backupState.isRestoring;
     final selected = widget.backupState.selectedBackup;
+    final error = widget.backupState.error;
     final defaultName =
         '${context.l10n.desktopBackup} ${backupNameDate(DateTime.now(), context.l10n.localeName)}';
 
@@ -162,16 +170,18 @@ class _BackupCardState extends State<BackupCard> {
               minHeight: 3,
             ),
           ),
-        if (widget.backupState.error != null)
+        if (error != null && error != _dismissedError)
           Padding(
-            padding: const EdgeInsets.only(
-              left: Insets.medium,
-              right: Insets.medium,
-              bottom: Insets.small,
+            padding: const EdgeInsets.fromLTRB(
+              Insets.medium,
+              Insets.normal,
+              Insets.medium,
+              0,
             ),
-            child: Text(
-              widget.backupState.error!,
-              style: TextStyle(color: context.colorScheme.error, fontSize: 12),
+            child: AppMessageCard(
+              message: error,
+              type: AppMessageType.error,
+              onClose: () => setState(() => _dismissedError = error),
             ),
           ),
         Padding(

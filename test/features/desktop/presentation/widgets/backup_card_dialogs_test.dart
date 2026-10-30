@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/widgets/app_message_card.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
@@ -220,6 +221,58 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text(_l10n.desktopRestoreSucceededTitle), findsNothing);
+    });
+  });
+  group('an error', () {
+    Finder errorCard(String message) => find.ancestor(
+      of: find.text(message),
+      matching: find.byKey(AppMessageCard.cardKey),
+    );
+
+    testWidgets('shows in the app message card with a close button', (
+      tester,
+    ) async {
+      await pumpCard(tester, cardState(error: 'Restore failed'));
+
+      expect(errorCard('Restore failed'), findsOne);
+      expect(
+        find.descendant(
+          of: errorCard('Restore failed'),
+          matching: find.byKey(AppMessageCard.closeKey),
+        ),
+        findsOne,
+      );
+    });
+
+    testWidgets('closing it hides it', (tester) async {
+      await pumpCard(tester, cardState(error: 'Restore failed'));
+
+      await tester.tap(find.byKey(AppMessageCard.closeKey));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Restore failed'), findsNothing);
+    });
+
+    testWidgets('a retry that fails with the same message shows it again', (
+      tester,
+    ) async {
+      await pumpCard(tester, cardState(error: 'Restore failed'));
+      await tester.tap(find.byKey(AppMessageCard.closeKey));
+      await tester.pumpAndSettle();
+
+      // The retry clears the error, then fails the same way.
+      await tester.pumpWidget(card(cardState(isRestoring: true)));
+      await tester.pump();
+      await tester.pumpWidget(card(cardState(error: 'Restore failed')));
+      await tester.pumpAndSettle();
+
+      expect(errorCard('Restore failed'), findsOne);
+    });
+
+    testWidgets('no error, no card', (tester) async {
+      await pumpCard(tester);
+
+      expect(find.byKey(AppMessageCard.cardKey), findsNothing);
     });
   });
 }
