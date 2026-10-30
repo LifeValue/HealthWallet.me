@@ -118,7 +118,7 @@ context:
 - **Empty catches:** grep found 61 bare ones plus 13 comment-only ones, 74 rather than 75. All bare ones are now logged, shown (6) or commented (the 8 extractor ones included). The `patient_source_utils` and `sync_repository_impl` comments already state a reason and were kept.
 - **Attachments:** the stored name is always the sanitized name plus an 8-character suffix (`report_1a2b3c4d.pdf`), and ids are UUIDs. A copy whose database save fails is deleted again. Attach and delete failures carry `attachFileFailed`/`attachmentDeleteFailed`, shown by `RecordAttachmentsWidget` and the attachment detail panel.
 - **Wallet pass:** a status without a code is matched on its text. MedicationStatement takes its name from the title, then the medication; MedicationRequest from the medication, then the title. Statements come before requests when names are de-duplicated.
-- **Delete sync:** the SQL lives in the `SoftDelete` extension (`lib/core/data/local/soft_delete.dart`). "Any save clears `deleted_at`" means upserts and replaces; single-column updates (raw JSON, specialty, note text, encounter link) leave it alone. The demo and wallet source rows now leave `updated_at` to the trigger (ms), so a re-created source beats its tombstone. Share sessions call `deleteRecordNote`, so their cleanup now sends tombstones too; `share_records` itself is untouched.
+- **Delete sync:** the SQL lives in the `SoftDelete` extension (`lib/core/data/local/soft_delete.dart`). "Any save clears `deleted_at`" means upserts and replaces; single-column updates (raw JSON, specialty, note text, encounter link) leave it alone. The demo and wallet source rows now leave `updated_at` to the trigger (ms), so a re-created source beats its tombstone. Share sessions called `deleteRecordNote`, so their cleanup sent tombstones; since `develop` was merged on 2026-10-30, received notes are served from memory (`SharedNotesDatasource`) and never written, so shares leave no tombstones. `share_records` itself is untouched.
 - **New `BUG:` pins (skipped):**
   - the note-id collision across devices;
   - `DocumentReferenceService` ids colliding within one millisecond;
@@ -164,6 +164,7 @@ context:
     - The attachment panel tests counted pdfx channel calls, which differ by host; they now check what the user sees.
     - The viewer tests waited a fixed 100 ms for real file I/O; they now poll until the work is done.
     - The same pass replaced the media viewer's "Failed to link media: <exception>" with the translated `linkMediaFailed`, and dropped the viewer title's file-name fallback, which no record can reach.
+  - **Merged `origin/develop`** (8bb2cca9, 15 commits: end-to-end share encryption, notes from a share kept in memory, proximity sharing hidden on the desktop). No conflicts. The generated translations regenerate unchanged. The repository tests now pass the new `SharedNotesDatasource` (c9366b6a). After the merge, all CI jobs, the Linux run and the builds were repeated.
   - **Static helpers** (c423dd43): `AppSnackBar` and `FileSizeFormatter` are `abstract final`, so they need no private constructor that no test can reach.
   - **Tests for the screens left at low coverage:** record page (delete flow through `DeleteRecordDialog` and the confirmation), records page, attachment panel, attachment and media viewers, PDF preview, source label dialog, record cards in the region units, the desktop backup and connection dialogs, and the remaining logged error paths.
 
@@ -222,14 +223,18 @@ Review pass 1: three layers (blind, edge case, verification gap). 28 findings: 1
 **Manual checks:**
 - On a phone paired with the desktop: delete a record on each side, then reconnect; both stay gone.
 
-**Final validation (2026-10-30, HEAD 07bd6ca6, 98 commits on `develop`):**
+**Final validation (2026-10-30, after merging `origin/develop` at 07cf3f78; branch HEAD c9366b6a plus this docs commit):**
 - **CI jobs run locally as CI runs them:**
-  - `checks`: format of every tracked Dart file, analyze with 0 issues, and 2,411 tests passing with 17 skipped on macOS. The suite also passed on Linux in Docker (`buildpack-deps:bookworm`, Flutter 3.47.7, empty `.env`, fresh build_runner): 2,410 tests at 25a6d75b, one commit before the last test was added.
+  - `checks`: format of every tracked Dart file, analyze with 0 issues, and 2,453 tests passing with 17 skipped on macOS.
+  - Linux in Docker (`buildpack-deps:bookworm`, Flutter 3.47.7, empty `.env`, fresh build_runner): analyze clean, every test of this branch passes. One share test from `develop` fails there: in `share_records_bloc_transfer_test.dart`, "selecting a peer again deletes the previous payload" fails with "Bad state: seal() must run first" from `SecureShareSession`.
+    - Plain `origin/develop` fails the same file on Linux in 5 of 5 runs, on its neighbouring test "two quick peer selections run one after the other" (1 payload instead of 2).
+    - Both tests pass on macOS. It is a timing race in the new share encryption, which belongs to the share feature and is left to its owner.
+    - CI runs on Linux, so the `checks` job can fail on these tests, as it can on `develop`.
   - `lint`: pre-commit on the files changed since `develop`.
   - `lint:commits`: commitlint.
   - `scan:secrets`: gitleaks, no leaks.
   - `scan:dependencies`: osv-scanner, no issues.
-- **Coverage:** 1,183 of the 1,189 executable lines this branch adds or changes are covered on macOS (99.5%; 82.7% before the validation). Whole app: 44.3% (baseline 30.0%).
+- **Coverage:** 1,183 of the 1,189 executable lines this branch adds or changes are covered on macOS (99.5%; 82.7% before the validation). Whole app: 44.7% after the merge (baseline 30.0%).
   - Not covered: 5 lines no test can reach (see `deferred-work.md`), and the unsupported-platform throw in `pdf_open.dart`, which runs only on Linux, so CI covers it.
 - **End to end:** `integration_test/app_l10n_test.dart` passes on the iOS simulator. `extraction_bench_test.dart` is a benchmark that needs the AI model and a dataset; it was not run, and this branch changes only error messages in that pipeline.
 - **Builds:** iOS release, macOS desktop release (`lib/main_desktop.dart`) and Android debug APK (JDK 17) all succeed. Windows cannot be built on a Mac and is built only by its manual CI job.
