@@ -304,6 +304,8 @@ void main() {
 
   group('record notes', () {
     test('add, list newest first, and edit', () async {
+      // The app always notes a record of a source it has stored.
+      await insertSource(db, id: 'src-1');
       final first = await repository.addRecordNote(
         resourceId: 'obs-1',
         sourceId: 'src-1',

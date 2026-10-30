@@ -1039,6 +1039,46 @@ void main() {
     },
   );
 
+  test('cleanupTombstones purges a deleted source together with its deleted '
+      'notes, with foreign keys on as in the app', () async {
+    final old = ms(DateTime.now().subtract(const Duration(days: 40)));
+    await insertSource(db, id: 'clinic', updatedAt: old, deletedAt: old);
+    await insertNote(
+      db,
+      id: 1,
+      content: 'note of a deleted source',
+      sourceId: 'clinic',
+      updatedAt: old,
+      deletedAt: old,
+    );
+
+    expect(await service.cleanupTombstones(), 2);
+
+    expect(await countRows(db, 'sources'), 0);
+    expect(await countRows(db, 'record_notes'), 0);
+  });
+
+  test('cleanupTombstones keeps a deleted source that a newer note still '
+      'points at, and purges it once the note is gone', () async {
+    final old = ms(DateTime.now().subtract(const Duration(days: 40)));
+    final recent = ms(DateTime.now().subtract(const Duration(days: 2)));
+    await insertSource(db, id: 'clinic', updatedAt: old, deletedAt: old);
+    await insertNote(
+      db,
+      id: 1,
+      content: 'live note',
+      sourceId: 'clinic',
+      updatedAt: recent,
+    );
+
+    expect(await service.cleanupTombstones(), 0);
+    expect(await countRows(db, 'sources'), 1);
+
+    await db.customStatement('DELETE FROM record_notes');
+    expect(await service.cleanupTombstones(), 1);
+    expect(await countRows(db, 'sources'), 0);
+  });
+
   test(
     'backfillExistingRows stamps rows that predate the sync columns',
     () async {
