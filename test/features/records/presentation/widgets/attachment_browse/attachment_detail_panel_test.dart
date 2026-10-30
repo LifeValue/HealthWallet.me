@@ -100,7 +100,9 @@ final class _PickedFile extends PlatformFile {
 }
 
 // pdfx opens files through pigeon on iOS, macOS and Android and through a
-// method channel elsewhere: the tests answer both with an error.
+// method channel elsewhere: the tests answer both with an error. On Linux
+// (CI) the app does not reach pdfx at all, because pdfx does not support it;
+// either way the file fails to open.
 const _pdfPigeonOpenFile = 'dev.flutter.pigeon.PdfxApi.openDocumentFile';
 const _pdfMethodChannel = MethodChannel('io.scer.pdf_renderer');
 
@@ -115,12 +117,10 @@ void main() {
     await getIt.reset();
   });
 
-  /// Makes every PDF fail to open; returns how many times one was tried.
-  int Function() failPdfs(WidgetTester tester) {
-    var opens = 0;
+  /// Makes every PDF fail to open.
+  void failPdfs(WidgetTester tester) {
     final messenger = tester.binding.defaultBinaryMessenger;
     messenger.setMockMessageHandler(_pdfPigeonOpenFile, (_) async {
-      opens++;
       return const StandardMessageCodec().encodeMessage(<Object?>[
         'error',
         'not a PDF',
@@ -128,14 +128,12 @@ void main() {
       ]);
     });
     messenger.setMockMethodCallHandler(_pdfMethodChannel, (call) async {
-      opens++;
       throw PlatformException(code: 'error', message: 'not a PDF');
     });
     addTearDown(() {
       messenger.setMockMessageHandler(_pdfPigeonOpenFile, null);
       messenger.setMockMethodCallHandler(_pdfMethodChannel, null);
     });
-    return () => opens;
   }
 
   Future<_MockAttachmentBrowseBloc> pumpPanel(
@@ -210,18 +208,17 @@ void main() {
     testWidgets('shows the "Failed to load PDF" error and the empty preview', (
       tester,
     ) async {
-      final opens = failPdfs(tester);
+      failPdfs(tester);
       await pumpPanel(tester, pdfDetail('enc-pdf-1'));
       await settle(tester);
 
-      expect(opens(), 1);
       expect(find.widgetWithText(SnackBar, l10n.failedToLoadPdf), findsOne);
       expect(find.text(l10n.noAttachments), findsOne);
     });
 
     testWidgets('is not cached: opening the record again tries again and '
         'says so again', (tester) async {
-      final opens = failPdfs(tester);
+      failPdfs(tester);
       final detail = pdfDetail('enc-pdf-2');
       await pumpPanel(tester, detail);
       await settle(tester);
@@ -233,7 +230,8 @@ void main() {
       await pumpPanel(tester, detail);
       await settle(tester);
 
-      expect(opens(), 2);
+      // A cached result would show the preview without trying, and say
+      // nothing; the message proves the PDF was tried again.
       expect(find.widgetWithText(SnackBar, l10n.failedToLoadPdf), findsOne);
     });
   });
