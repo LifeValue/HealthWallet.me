@@ -223,13 +223,15 @@ Review pass 1: three layers (blind, edge case, verification gap). 28 findings: 1
 **Manual checks:**
 - On a phone paired with the desktop: delete a record on each side, then reconnect; both stay gone.
 
-**Final validation (2026-10-30, after merging `origin/develop` at 07cf3f78; branch HEAD c9366b6a plus this docs commit):**
+**Final validation (2026-10-30, after merging `origin/develop` at 07cf3f78):**
 - **CI jobs run locally as CI runs them:**
-  - `checks`: format of every tracked Dart file, analyze with 0 issues, and 2,453 tests passing with 17 skipped on macOS.
-  - Linux in Docker (`buildpack-deps:bookworm`, Flutter 3.47.7, empty `.env`, fresh build_runner): analyze clean, every test of this branch passes. One share test from `develop` fails there: in `share_records_bloc_transfer_test.dart`, "selecting a peer again deletes the previous payload" fails with "Bad state: seal() must run first" from `SecureShareSession`.
-    - Plain `origin/develop` fails the same file on Linux in 5 of 5 runs, on its neighbouring test "two quick peer selections run one after the other" (1 payload instead of 2).
-    - Both tests pass on macOS. It is a timing race in the new share encryption, which belongs to the share feature and is left to its owner.
-    - CI runs on Linux, so the `checks` job can fail on these tests, as it can on `develop`.
+  - `checks`: format of every tracked Dart file, analyze with 0 issues, and 2,456 tests passing with 17 skipped, on macOS and on Linux in Docker (`buildpack-deps:bookworm`, Flutter 3.47.7, empty `.env`, fresh build_runner).
+  - **Share transfer race** (7c0e1d03): after the merge, a share test from `develop` failed on Linux ("Bad state: seal() must run first"), and plain `develop` failed the same file in 5 of 5 Linux runs.
+    - The cause is real: when the share screen closed while a payload was being sealed, the handler resumed on the disposed session. It started a key exchange that threw, and it left the payload file behind, because the bloc's cleanup had already run.
+    - The handler now deletes that payload and stops. A disposed `SecureShareSession` cancels instead of throwing, and keeps no keys sealed after disposal.
+    - The two tests wait for the handler instead of assuming one event-queue pass, and a new test pins the close-while-writing case.
+    - The share tests then passed 5 of 5 more times on Linux.
+    - The user approved this change to `share_records`, which this spec otherwise leaves alone, to get the pipeline green.
   - `lint`: pre-commit on the files changed since `develop`.
   - `lint:commits`: commitlint.
   - `scan:secrets`: gitleaks, no leaks.
