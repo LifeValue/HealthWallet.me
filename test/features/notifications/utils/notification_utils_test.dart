@@ -85,4 +85,30 @@ void main() {
 
     expect(logs, loggedWarning('processing notification'));
   });
+
+  testWidgets('logs instead of throwing when there is no navigator to show '
+      'it in', (tester) async {
+    // Localizations build the flushbar; pushing it then fails.
+    late BuildContext context;
+    await tester.pumpWidget(
+      Localizations(
+        locale: const Locale('en'),
+        delegates: AppLocalizations.localizationsDelegates,
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: Builder(
+            builder: (c) {
+              context = c;
+              return const SizedBox();
+            },
+          ),
+        ),
+      ),
+    );
+
+    showProcessingDoneNotification(context, notification);
+    await tester.pump();
+
+    expect(logs, loggedWarning('failed while showing'));
+  });
 }
