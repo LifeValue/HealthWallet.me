@@ -131,12 +131,15 @@ class _BackupCardState extends State<BackupCard> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: Insets.normal),
-              SizedBox(
-                width: 200,
+              // A minimum width, not a fixed one: longer translations
+              // widen the button instead of wrapping and being cut off.
+              ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 200),
                 child: AppButton(
                   label: context.l10n.desktopChooseLocation,
                   onPressed: () =>
                       _BackupLocationRow.pickAndSetDirectory(context),
+                  fullWidth: false,
                   height: 36,
                 ),
               ),
@@ -234,8 +237,8 @@ class _BackupCardState extends State<BackupCard> {
               children: [
                 if (!_showForm) ...[
                   Center(
-                    child: SizedBox(
-                      width: 200,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minWidth: 200),
                       child: AppButton(
                         label: isWorking
                             ? context.l10n.desktopBackingUp
@@ -243,6 +246,7 @@ class _BackupCardState extends State<BackupCard> {
                         onPressed: !isWorking
                             ? () => setState(() => _showForm = true)
                             : null,
+                        fullWidth: false,
                         height: 36,
                       ),
                     ),
@@ -317,31 +321,33 @@ class _BackupCardState extends State<BackupCard> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          context.l10n.desktopSyncWithPhoneFirst,
-                          style: AppTextStyle.labelSmall.copyWith(
-                            color: isConnected
-                                ? context.colorScheme.onSurface.withValues(
-                                    alpha: 0.5,
-                                  )
-                                : context.colorScheme.onSurface.withValues(
-                                    alpha: 0.2,
-                                  ),
-                            fontSize: 11,
-                          ),
-                        ),
-                        if (!isConnected) ...[
-                          const SizedBox(width: 6),
-                          Text(
-                            context.l10n.desktopNotConnected,
-                            style: AppTextStyle.labelSmall.copyWith(
-                              color: context.colorScheme.onSurface.withValues(
-                                alpha: 0.15,
+                        // One wrapping text, so longer translations go onto a
+                        // second line instead of overflowing the row.
+                        Flexible(
+                          child: Text.rich(
+                            TextSpan(
+                              text: context.l10n.desktopSyncWithPhoneFirst,
+                              style: AppTextStyle.labelSmall.copyWith(
+                                color: context.colorScheme.onSurface.withValues(
+                                  alpha: isConnected ? 0.5 : 0.2,
+                                ),
+                                fontSize: 11,
                               ),
-                              fontSize: 11,
+                              children: [
+                                if (!isConnected)
+                                  TextSpan(
+                                    text:
+                                        '  ${context.l10n.desktopNotConnected}',
+                                    style: AppTextStyle.labelSmall.copyWith(
+                                      color: context.colorScheme.onSurface
+                                          .withValues(alpha: 0.15),
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
-                        ],
+                        ),
                       ],
                     ),
                   ),
@@ -364,11 +370,12 @@ class _BackupCardState extends State<BackupCard> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      SizedBox(
-                        width: 160,
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(minWidth: 160),
                         child: AppButton(
                           label: context.l10n.desktopStartBackup,
                           onPressed: _create,
+                          fullWidth: false,
                           height: 36,
                         ),
                       ),
