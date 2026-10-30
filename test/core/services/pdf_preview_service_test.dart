@@ -103,10 +103,19 @@ void main() {
         ),
       ),
     );
-    await tester.runAsync(() async {
-      await tester.tap(find.text('view'));
-      await Future<void>.delayed(const Duration(milliseconds: 150));
-    });
+    await tester.tap(find.text('view'));
+    // The preview reads real files: let that run until it shows a message or
+    // opens a viewer (which hides the button), however long it takes.
+    for (var i = 0; i < 150; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pump();
+      if (find.byKey(AppSnackBar.cardKey).evaluate().isNotEmpty ||
+          find.text('view').evaluate().isEmpty) {
+        break;
+      }
+    }
     await tester.pumpAndSettle();
   }
 

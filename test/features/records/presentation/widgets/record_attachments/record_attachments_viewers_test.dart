@@ -162,12 +162,21 @@ void main() {
     await tester.pump(const Duration(milliseconds: 750));
   }
 
-  /// Taps [finder] and lets the real file check behind it finish.
+  /// Taps [finder] and lets the real file check behind it finish: until a
+  /// message shows or a viewer covers the list, or about 3 s for a file
+  /// handed to another app, which changes nothing on screen.
   Future<void> tapAndWait(WidgetTester tester, Finder finder) async {
-    await tester.runAsync(() async {
-      await tester.tap(finder);
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-    });
+    await tester.tap(finder);
+    for (var i = 0; i < 150; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pump();
+      if (find.byKey(AppSnackBar.cardKey).evaluate().isNotEmpty ||
+          find.byType(RecordAttachmentsWidget).evaluate().isEmpty) {
+        break;
+      }
+    }
     await tester.pumpAndSettle();
   }
 

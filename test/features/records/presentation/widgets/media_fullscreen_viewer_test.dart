@@ -71,17 +71,23 @@ void main() {
   });
 
   Future<void> open(WidgetTester tester, Media media) async {
-    await tester.runAsync(() async {
-      await tester.pumpWidget(
-        MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: MediaFullscreenViewer(media: media),
-        ),
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: MediaFullscreenViewer(media: media),
+      ),
+    );
+    // The PDF is written to a temporary file first, with real file I/O:
+    // let it run until the loading spinner is gone, however long the machine
+    // takes (a fixed wait failed on a slower Linux host).
+    for (var i = 0; i < 150; i++) {
+      if (find.byType(CircularProgressIndicator).evaluate().isEmpty) break;
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
       );
-      // The PDF is written to a temporary file first.
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-    });
+      await tester.pump();
+    }
     await tester.pumpAndSettle();
   }
 
