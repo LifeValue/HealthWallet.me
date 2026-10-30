@@ -473,7 +473,9 @@ LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'db.sqlite'));
-    return NativeDatabase(
+    // On its own isolate: a sync batch, an import or a search doesn't
+    // freeze the UI.
+    return NativeDatabase.createInBackground(
       file,
       setup: (database) {
         database.execute('PRAGMA foreign_keys = ON');
