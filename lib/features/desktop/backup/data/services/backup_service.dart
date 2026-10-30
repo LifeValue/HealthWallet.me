@@ -162,6 +162,10 @@ class BackupService {
           .toList();
 
       await _database.transaction(() async {
+        // Tables are replaced one by one, so midway a note can still point at
+        // a source that is already gone. Check foreign keys once, at commit,
+        // against the restored data.
+        await _database.customStatement('PRAGMA defer_foreign_keys = ON');
         for (final name in tables) {
           await _database.customStatement('DELETE FROM main."$name"');
           await _database.customStatement(
