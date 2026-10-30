@@ -774,6 +774,12 @@ abstract class AppLocalizations {
   /// **'Clear all'**
   String get clearAll;
 
+  /// No description provided for @deselectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect all'**
+  String get deselectAll;
+
   /// No description provided for @save.
   ///
   /// In en, this message translates to:
@@ -3256,6 +3262,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete + {count} related'**
   String deletePlusRelated(int count);
+
+  /// No description provided for @relatedResourcesKeptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Related resources are kept unless you select them below.'**
+  String get relatedResourcesKeptHint;
+
+  /// No description provided for @relatedResourcesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Related resources ({count})'**
+  String relatedResourcesCount(int count);
 
   /// No description provided for @fileNotAvailable.
   ///

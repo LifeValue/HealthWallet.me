@@ -111,6 +111,7 @@
   "vitals": "Signos vitales",
   "selectAll": "Seleccionar todo",
   "clearAll": "Limpiar todo",
+  "deselectAll": "Deseleccionar todo",
   "save": "Guardar",
   "noRecordsFound": "No se encontraron registros",
   "tryDifferentKeywords": "Intenta buscar con palabras clave diferentes",
@@ -813,6 +814,8 @@
       }
     }
   },
+  "relatedResourcesKeptHint": "Los recursos relacionados se conservan a menos que los selecciones abajo.",
+  "relatedResourcesCount": "Recursos relacionados ({count})",
   "fileNotAvailable": "Archivo no disponible en este dispositivo",
   "couldNotOpenFile": "No se pudo abrir el archivo: {message}",
   "@couldNotOpenFile": {

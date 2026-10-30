@@ -118,6 +118,7 @@
   "vitals": "Vitals",
   "selectAll": "Select all",
   "clearAll": "Clear all",
+  "deselectAll": "Deselect all",
   "save": "Save",
   "noRecordsFound": "No records found",
   "noRecords": "No records",
@@ -837,6 +838,15 @@
   "relatedResources": "Related resources",
   "deletePlusRelated": "Delete + {count} related",
   "@deletePlusRelated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relatedResourcesKeptHint": "Related resources are kept unless you select them below.",
+  "relatedResourcesCount": "Related resources ({count})",
+  "@relatedResourcesCount": {
     "placeholders": {
       "count": {
         "type": "int"

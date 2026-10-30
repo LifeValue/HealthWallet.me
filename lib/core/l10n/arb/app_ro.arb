@@ -108,6 +108,7 @@
   "vitals": "Semne Vitale",
   "selectAll": "Selectează tot",
   "clearAll": "Șterge tot",
+  "deselectAll": "Deselectează tot",
   "save": "Salvează",
   "noRecordsFound": "Nu s-au găsit înregistrări",
   "noRecords": "Fără înregistrări",
@@ -812,6 +813,8 @@
       }
     }
   },
+  "relatedResourcesKeptHint": "Resursele asociate rămân, dacă nu le selectezi mai jos.",
+  "relatedResourcesCount": "Resurse asociate ({count})",
   "fileNotAvailable": "Fișier indisponibil pe acest dispozitiv",
   "couldNotOpenFile": "Fișierul nu a putut fi deschis: {message}",
   "@couldNotOpenFile": {

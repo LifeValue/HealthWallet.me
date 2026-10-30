@@ -107,6 +107,7 @@
   "vitals": "Vitalzeichen",
   "selectAll": "Alle auswählen",
   "clearAll": "Alle löschen",
+  "deselectAll": "Alle abwählen",
   "save": "Speichern",
   "noRecordsFound": "Keine Aufzeichnungen gefunden",
   "tryDifferentKeywords": "Versuche es mit anderen Suchbegriffen",
@@ -809,6 +810,8 @@
       }
     }
   },
+  "relatedResourcesKeptHint": "Zugehörige Einträge bleiben erhalten, außer du wählst sie unten aus.",
+  "relatedResourcesCount": "Zugehörige Einträge ({count})",
   "fileNotAvailable": "Datei auf diesem Gerät nicht verfügbar",
   "couldNotOpenFile": "Datei konnte nicht geöffnet werden: {message}",
   "@couldNotOpenFile": {

@@ -371,6 +371,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearAll => 'Clear all';
 
   @override
+  String get deselectAll => 'Deselect all';
+
+  @override
   String get save => 'Save';
 
   @override
@@ -1755,6 +1758,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String deletePlusRelated(int count) {
     return 'Delete + $count related';
+  }
+
+  @override
+  String get relatedResourcesKeptHint =>
+      'Related resources are kept unless you select them below.';
+
+  @override
+  String relatedResourcesCount(int count) {
+    return 'Related resources ($count)';
   }
 
   @override

@@ -376,6 +376,9 @@ class AppLocalizationsRo extends AppLocalizations {
   String get clearAll => 'Șterge tot';
 
   @override
+  String get deselectAll => 'Deselectează tot';
+
+  @override
   String get save => 'Salvează';
 
   @override
@@ -1777,6 +1780,15 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String deletePlusRelated(int count) {
     return 'Șterge + $count asociate';
+  }
+
+  @override
+  String get relatedResourcesKeptHint =>
+      'Resursele asociate rămân, dacă nu le selectezi mai jos.';
+
+  @override
+  String relatedResourcesCount(int count) {
+    return 'Resurse asociate ($count)';
   }
 
   @override
