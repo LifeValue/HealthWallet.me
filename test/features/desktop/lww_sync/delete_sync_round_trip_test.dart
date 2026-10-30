@@ -161,6 +161,76 @@ void main() {
     }
   });
 
+  test('after the 30-day purge nothing reappears, whichever device purges '
+      'first', () async {
+    await seedAndSync();
+    await phone.records.deleteResource('obs-2');
+    await send(phone, desktop, since: at(1));
+
+    /// Moves every delete on [d] 31 days into the past, as if that device
+    /// had not been opened for a month.
+    Future<void> ageDeletes(_Device d) async {
+      final old = ms(DateTime.now().subtract(const Duration(days: 31)));
+      for (final table in LwwSyncService.syncedTables) {
+        await d.db.customStatement(
+          'UPDATE $table SET deleted_at = ?, updated_at = ? '
+          'WHERE deleted_at IS NOT NULL',
+          [old, old],
+        );
+      }
+    }
+
+    Future<int> rowsIn(_Device d, String table) async =>
+        (await d.db
+                    .customSelect('SELECT COUNT(*) AS c FROM $table')
+                    .getSingle())
+                .data['c']
+            as int;
+
+    // The desktop is restarted a month later and purges; the phone still
+    // holds its tombstones.
+    await ageDeletes(desktop);
+    expect(await desktop.sync.cleanupTombstones(), greaterThan(0));
+    expect(await rowsIn(desktop, 'record_notes'), 0);
+
+    // Full-table resends both ways: the phone's tombstones come back to the
+    // desktop as tombstones, never as live records.
+    await send(phone, desktop);
+    await send(desktop, phone);
+    for (final d in [phone, desktop]) {
+      expect(await d.recordIds(), ['lab-1', 'obs-1']);
+      expect(await d.noteContents('obs-2'), isEmpty);
+    }
+
+    // Then both have purged: the deleted rows are gone for good, and another
+    // exchange brings nothing back.
+    await ageDeletes(phone);
+    await ageDeletes(desktop);
+    await phone.sync.cleanupTombstones();
+    await desktop.sync.cleanupTombstones();
+    await send(phone, desktop);
+    await send(desktop, phone);
+
+    for (final d in [phone, desktop]) {
+      expect(await d.recordIds(), ['lab-1', 'obs-1']);
+      expect(await d.noteContents('obs-2'), isEmpty);
+      expect(await d.sourceIds(), ['clinic', 'lab']);
+      expect(await rowsIn(d, 'record_notes'), 0);
+      expect(
+        await d.db
+            .customSelect(
+              'SELECT id FROM fhir_resource WHERE deleted_at IS NOT NULL',
+            )
+            .get(),
+        isEmpty,
+      );
+    }
+    expect(
+      await desktop.sync.getTableRowCounts(),
+      await phone.sync.getTableRowCounts(),
+    );
+  });
+
   test('a record deleted on the desktop stays deleted on the phone', () async {
     await seedAndSync();
 
