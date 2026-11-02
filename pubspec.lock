@@ -14,7 +14,7 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: adba3ff23d4b57b143f49e65950e36145c6a09ab
+      resolved-ref: "1c136197270103a938f8755d52330a11b2ba4b02"
       url: "ssh://git@git.techstackapps.com:2822/mobile/flutter/packages/flutter-airdrop.git"
     source: git
     version: "1.0.0"
