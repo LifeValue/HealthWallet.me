@@ -51,7 +51,7 @@ Patient-controlled health record app in Flutter: FHIR R4 records from providers 
 
 ## Known pitfalls
 
-- `lib/main.dart` clears `lww_offline_queue` on every mobile start; never rely on queued LWW changes surviving an app restart.
+- Unsent LWW changes live in the `sync_outbox` table, filled by triggers; `lib/main.dart` only removes the `lww_offline_queue` preference older versions left. A write that must not be sent back to the peer goes through `LwwSyncService`'s `_withoutOutbox`.
 - In `.gitlab-ci.yml`, keep the Android jobs on the pinned Temurin JDK (`ANDROID_JDK_*`, set through `org.gradle.java.home`); the JDK Flutter picks on the Mac mini (Android Studio's JBR 17.0.9) crashes the Gradle daemon. Keep one `resource_group` per upload job so overlapping pipelines don't take the same build number.
 
 <!-- /bmad:context -->
