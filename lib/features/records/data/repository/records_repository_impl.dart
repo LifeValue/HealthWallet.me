@@ -4,7 +4,6 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:fhir_ips_export/fhir_ips_export.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
@@ -565,7 +564,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
           )
           .toList();
 
-      unawaited(_syncLocalDataSource.cacheFhirResources(processedResources));
+      await _syncLocalDataSource.cacheFhirResources(processedResources);
 
       await _attachDemoPdf();
     } catch (e, stackTrace) {
@@ -632,9 +631,9 @@ class RecordsRepositoryImpl implements RecordsRepository {
         'change_type': 'created',
       }).populateEncounterIdFromRaw().populateSubjectIdFromRaw();
 
-      unawaited(_syncLocalDataSource.cacheFhirResources([dto]));
+      await _syncLocalDataSource.cacheFhirResources([dto]);
     } catch (e) {
-      debugPrint('[DEMO] Failed to attach demo PDF: $e');
+      logger.w('Failed to attach the demo PDF', e);
     }
   }
 

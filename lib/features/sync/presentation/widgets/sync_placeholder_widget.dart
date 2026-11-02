@@ -540,15 +540,21 @@ class _DemoDataFlowDialogState extends State<_DemoDataFlowDialog> {
         ? AppColors.borderDark
         : AppColors.border;
 
+    // Moves on when this load finishes, whatever was loaded or synced
+    // before; a failure (shown by SyncErrorListener) goes back to the first
+    // step, from which the dialog can be closed.
     return BlocListener<SyncBloc, SyncState>(
-      listenWhen: (prev, curr) => curr.hasDemoData && !curr.hasSyncedData,
+      listenWhen: (prev, curr) =>
+          prev.demoLoads != curr.demoLoads ||
+          (curr.errorMessage != null && prev.errorMessage != curr.errorMessage),
       listener: (ctx, state) {
-        if (_step == 1 && state.hasDemoData) {
-          setState(() => _step = 2);
-        }
+        if (_step != 1) return;
+        setState(
+          () => _step = state.errorMessage == null && state.hasDemoData ? 2 : 0,
+        );
       },
       child: PopScope(
-        canPop: false,
+        canPop: _step == 0,
         child: Dialog(
           backgroundColor: context.colorScheme.surface,
           shape: RoundedRectangleBorder(

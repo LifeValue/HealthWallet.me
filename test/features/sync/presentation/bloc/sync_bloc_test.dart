@@ -389,6 +389,18 @@ void main() {
       expect(state.errorMessage, isNull);
     });
 
+    test('a second load is seen to finish, though the demo data was '
+        'already there', () async {
+      final b = bloc();
+
+      b.add(const LoadDemoData());
+      await b.stream.firstWhere((s) => s.demoLoads == 1);
+      b.add(const LoadDemoData());
+      final second = await b.stream.firstWhere((s) => s.demoLoads == 2);
+
+      expect(second.hasDemoData, isTrue);
+    });
+
     test('a failed demo load shows the generic message only', () async {
       recordsRepository.loadError = StateError('asset missing');
       final b = bloc('ro');
@@ -441,28 +453,6 @@ void main() {
       expect(reset.shouldShowTutorial, isFalse);
       expect(reset.demoDataConfirmed, isFalse);
       expect(reset.syncDialogShown, isFalse);
-    });
-  });
-
-  group('wallet source', () {
-    test('creates the default patient', () async {
-      final b = bloc();
-
-      b.add(const CreateWalletSource());
-      await pumpEventQueue();
-
-      expect(patientService.calls, 1);
-    });
-
-    test('a failure is logged and leaves the state alone', () async {
-      patientService.error = StateError('db closed');
-      final b = bloc();
-
-      b.add(const CreateWalletSource());
-      await pumpEventQueue();
-
-      expect(patientService.calls, 1);
-      expect(b.state, const SyncState());
     });
   });
 

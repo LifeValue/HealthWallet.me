@@ -51,6 +51,10 @@ abstract class SyncState with _$SyncState {
     String? lastSyncTime,
     String? successMessage,
     @Default(false) bool hasDemoData,
+
+    /// Counts finished demo data loads, so a second load is seen to finish
+    /// too, though [hasDemoData] was already true.
+    @Default(0) int demoLoads,
     // Tutorial state
     @Default(false) bool shouldShowTutorial,
     @Default(false) bool hasSyncedData,
