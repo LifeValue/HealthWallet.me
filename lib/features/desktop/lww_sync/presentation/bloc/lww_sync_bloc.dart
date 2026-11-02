@@ -56,6 +56,10 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
   int? _inFlight;
   Timer? _ackTimer;
   Timer? _settleTimer;
+
+  /// Set while this side waits for the peer's answer to its digest, so a
+  /// check that moves no rows still shows as running.
+  Timer? _digestTimer;
   bool _sentSinceVerify = false;
   final _manifestsSent = <String>{};
   final _awaitingFiles = <String>{};
@@ -94,6 +98,16 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
             emit(
               state.copyWith(
                 sending: false,
+                syncStatus: LwwSyncStatus.error,
+                error: 'no answer from the other device',
+              ),
+            );
+          }
+        case LwwDigestTimedOut():
+          if (_digestTimer != null) {
+            _digestTimer = null;
+            emit(
+              state.copyWith(
                 syncStatus: LwwSyncStatus.error,
                 error: 'no answer from the other device',
               ),
@@ -172,6 +186,8 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
     _manifestsSent.clear();
     _inFlight = null;
     _ackTimer?.cancel();
+    _digestTimer?.cancel();
+    _digestTimer = null;
     for (final path in _awaitingFiles) {
       await _syncService.discardPartial(path);
     }
@@ -273,8 +289,29 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
     await _refreshPending(emit);
   }
 
+  /// Asks the peer to compare (or, with [reply], answers its request).
+  Future<void> _confirmedInSync(Emitter<LwwSyncState> emit) async {
+    final peer = _peer;
+    if (peer == null) return;
+    final updated = peer.copyWith(lastSyncAt: DateTime.now());
+    _peer = updated;
+    await _syncService.savePeerState(updated);
+    emit(
+      state.copyWith(
+        lastSyncTime: updated.lastSyncAt,
+        lastSyncPeerName: updated.peerName,
+      ),
+    );
+  }
+
   Future<void> _sendDigest({required bool reply}) async {
     final digest = await _syncService.computeDigest();
+    if (!reply) {
+      _digestTimer?.cancel();
+      _digestTimer = Timer(ackTimeout, () {
+        if (!isClosed) add(const LwwDigestTimedOut());
+      });
+    }
     await _send('sync.digest', {
       'reply': reply,
       'tables': {
@@ -417,7 +454,14 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
           theirs['hash'] == mine.hash;
       if (!match) differing.add(table);
     }
+    if (payload['reply'] == true) {
+      _digestTimer?.cancel();
+      _digestTimer = null;
+    }
     emit(state.copyWith(tablesMatch: differing.isEmpty));
+    // Both devices hold the same rows: that is a sync, even with nothing to
+    // move.
+    if (differing.isEmpty) await _confirmedInSync(emit);
 
     for (final table in differing) {
       // Once per connection: a row that keeps failing on one side would
@@ -516,7 +560,10 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
 
   void _syncStatusFromWork(Emitter<LwwSyncState> emit) {
     final busy =
-        _inFlight != null || state.receiving || _awaitingFiles.isNotEmpty;
+        _inFlight != null ||
+        _digestTimer != null ||
+        state.receiving ||
+        _awaitingFiles.isNotEmpty;
     if (busy) {
       if (state.syncStatus != LwwSyncStatus.syncing) {
         emit(state.copyWith(syncStatus: LwwSyncStatus.syncing));
@@ -573,6 +620,7 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
       sub.cancel();
     }
     _ackTimer?.cancel();
+    _digestTimer?.cancel();
     _settleTimer?.cancel();
     _changeWatcher.stopWatching();
     return super.close();

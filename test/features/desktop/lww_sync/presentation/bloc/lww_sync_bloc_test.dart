@@ -167,6 +167,42 @@ void main() {
     );
   });
 
+  test('Sync Now with nothing to send still checks with the other device and '
+      'counts as a sync on both', () async {
+    await insertFhir(phone.db, id: 'same', updatedAt: ms(at(1)));
+    await insertFhir(desktop.db, id: 'same', updatedAt: ms(at(1)));
+    await start();
+    await connect();
+    final before = DateTime.now();
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+
+    final statuses = <LwwSyncStatus>[];
+    final sub = phone.bloc.stream.listen((s) => statuses.add(s.syncStatus));
+    addTearDown(sub.cancel);
+    phone.bloc.add(const SyncTriggered());
+
+    await until(
+      () =>
+          phone.bloc.state.lastSyncTime!.isAfter(before) &&
+          desktop.bloc.state.lastSyncTime!.isAfter(before),
+      reason: 'both stamped by the check',
+    );
+    await until(() => phone.bloc.state.syncStatus == LwwSyncStatus.idle);
+    expect(statuses, contains(LwwSyncStatus.syncing), reason: 'it shows');
+    expect(phone.bloc.state.isSynced, isTrue);
+    expect(phone.bloc.state.sentRows, 0);
+  });
+
+  test('a check the other device never answers ends with an error', () async {
+    await start();
+    await connect();
+    desktop.link.dropTypes.add('sync.digest');
+
+    phone.bloc.add(const SyncTriggered());
+
+    await until(() => phone.bloc.state.syncStatus == LwwSyncStatus.error);
+  });
+
   test('an edit sent into a dropped link is sent again, not lost', () async {
     await start();
     await connect();

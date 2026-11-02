@@ -20,6 +20,9 @@ sealed class LwwSyncEvent with _$LwwSyncEvent {
   const factory LwwSyncEvent.ackTimedOut({required int batchId}) =
       LwwAckTimedOut;
 
+  /// The peer did not answer this side's digest.
+  const factory LwwSyncEvent.digestTimedOut() = LwwDigestTimedOut;
+
   /// Received rows stopped arriving for a moment; screens reload once.
   const factory LwwSyncEvent.recordsSettled() = LwwRecordsSettled;
 }
