@@ -16,6 +16,7 @@ abstract class SyncLocalDataSource {
   Future<String?> getLastSyncTimestamp();
   Future<void> setLastSyncTimestamp(String timestamp);
   Future<void> cacheSources(List<domain.Source> sources);
+  Future<void> cacheProviderSources(List<domain.Source> sources);
   Future<List<domain.Source>> getSources({String? patientId});
   Future<void> deleteAllSources();
   Future<void> markResourcesAsDeleted(List<FhirResourceDto> deletions);
@@ -77,6 +78,26 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
         'an id',
       );
     }
+    // A source the user deleted stays deleted: a provider sync that lists
+    // its records again doesn't bring them back.
+    final deleted = {
+      for (final row
+          in await (_appDatabase.select(_appDatabase.sources)..where(
+                (s) =>
+                    s.deletedAt.isNotNull() &
+                    s.id.isIn(withId.map((e) => e.sourceId ?? '').toSet()),
+              ))
+              .get())
+        row.id,
+    };
+    if (deleted.isNotEmpty) {
+      final skipped = withId.where((e) => deleted.contains(e.sourceId));
+      logger.i(
+        'Skipped ${skipped.length} resources of deleted sources '
+        '${deleted.join(', ')}',
+      );
+      withId.removeWhere((e) => deleted.contains(e.sourceId));
+    }
     final rowIds = await _rowIds(withId);
 
     final resources = withId.indexed.map((entry) {
@@ -119,6 +140,50 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
   @override
   Future<void> setLastSyncTimestamp(String timestamp) {
     return _sharedPreferences.setString('lastSyncTimestamp', timestamp);
+  }
+
+  /// The sources a provider lists. A new one is added with the provider's
+  /// label; one already here gets only the provider's own fields, so the
+  /// label the user gave it, its holder and a delete stay. Unchanged rows
+  /// aren't written, so a fetch doesn't send every source to the desktop.
+  @override
+  Future<void> cacheProviderSources(List<domain.Source> sources) async {
+    final existing = {
+      for (final row in await (_appDatabase.select(
+        _appDatabase.sources,
+      )..where((s) => s.id.isIn(sources.map((s) => s.id)))).get())
+        row.id: row,
+    };
+    await _appDatabase.batch((batch) {
+      for (final source in sources) {
+        final row = existing[source.id];
+        if (row == null) {
+          batch.insert(
+            _appDatabase.sources,
+            db.SourcesCompanion.insert(
+              id: source.id,
+              platformName: Value(source.platformName),
+              logo: Value(source.logo),
+              labelSource: Value(source.labelSource),
+              platformType: Value(source.platformType),
+              createdAt: Value(source.createdAt),
+            ),
+          );
+        } else if (row.platformName != source.platformName ||
+            row.logo != source.logo ||
+            row.platformType != source.platformType) {
+          batch.update(
+            _appDatabase.sources,
+            db.SourcesCompanion(
+              platformName: Value(source.platformName),
+              logo: Value(source.logo),
+              platformType: Value(source.platformType),
+            ),
+            where: (s) => s.id.equals(source.id),
+          );
+        }
+      }
+    });
   }
 
   /// Writes the sources, clearing a tombstone, and keeps the holder a
@@ -209,26 +274,29 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
   }
 
   String? _getSourcePlatformName(String sourceId) {
-    if (sourceId.startsWith('wallet-')) return 'wallet';
     if (sourceId == 'demo_data') return 'wallet-manual';
+    if (_isWalletId(sourceId)) return 'wallet';
     return sourceId;
   }
 
-  /// Determines the platform type based on source ID and database record
-  /// Following the clean architecture:
-  /// - WALLET sources (wallet, demo_data) are 'wallet' type
-  /// - All other sources (from Fasten API) are 'fasten' type
+  /// The type of a source: its row's, or for records without a row, the
+  /// wallet for the app's own ids and otherwise a provider's. Records only
+  /// arrive without their source row from the one provider integration so
+  /// far, hence 'fasten'; the app only asks whether a source is the wallet.
   String _getSourcePlatformType(String sourceId, db.Source? dbSource) {
-    // Check if database has explicit platformType
     if (dbSource?.platformType != null) {
       return dbSource!.platformType;
     }
-
-    if (sourceId.startsWith('wallet-') || sourceId == 'demo_data') {
-      return 'wallet';
-    }
-    return 'fasten';
+    return _isWalletId(sourceId) ? 'wallet' : 'fasten';
   }
+
+  /// The app's own sources: per-person wallets, the demo data, and the one
+  /// `wallet` source of versions before 9, whose records an upgrade could
+  /// leave without a row.
+  static bool _isWalletId(String sourceId) =>
+      sourceId.startsWith('wallet-') ||
+      sourceId == 'wallet' ||
+      sourceId == 'demo_data';
 
   @override
   Future<void> markResourcesAsDeleted(List<FhirResourceDto> deletions) async {

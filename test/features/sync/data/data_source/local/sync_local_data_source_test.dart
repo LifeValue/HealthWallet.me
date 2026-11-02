@@ -247,6 +247,81 @@ void main() {
     });
   });
 
+  group('cacheProviderSources', () {
+    const fetched = Source(
+      id: 'src-1',
+      platformName: 'Epic',
+      labelSource: 'City Hospital',
+      platformType: 'fasten',
+    );
+
+    test("adds a new source with the provider's name", () async {
+      await dataSource.cacheProviderSources([fetched]);
+      expect((await sourceRows()).single.labelSource, 'City Hospital');
+    });
+
+    test("keeps the user's name for it, its holder and its delete", () async {
+      await dataSource.cacheProviderSources([fetched]);
+      await dataSource.updateSourceLabel('src-1', 'My GP');
+      await database.customStatement(
+        "UPDATE sources SET holder_id = 'jane' WHERE id = 'src-1'",
+      );
+      await dataSource.deleteSource('src-1');
+      final before = (await sourceRows()).single;
+
+      await dataSource.cacheProviderSources([
+        fetched.copyWith(logo: 'https://logo'),
+      ]);
+
+      final row = (await sourceRows()).single;
+      expect(row.labelSource, 'My GP');
+      expect(row.holderId, 'jane');
+      expect(row.deletedAt, before.deletedAt);
+      expect(row.logo, 'https://logo');
+    });
+
+    test('writes nothing for a source that did not change', () async {
+      await dataSource.cacheProviderSources([fetched]);
+      final stamp = (await sourceRows()).single.updatedAt;
+      await database.customStatement('DELETE FROM sync_outbox');
+
+      await dataSource.cacheProviderSources([fetched]);
+
+      expect((await sourceRows()).single.updatedAt, stamp);
+      expect(
+        await database.customSelect('SELECT * FROM sync_outbox').get(),
+        isEmpty,
+      );
+    });
+  });
+
+  test('records of a source the user deleted are not stored again', () async {
+    await dataSource.cacheSources(const [Source(id: 'src-1')]);
+    await dataSource.cacheFhirResources([resource('o1', sourceId: 'src-1')]);
+    await dataSource.deleteSource('src-1');
+
+    await dataSource.cacheFhirResources([
+      resource('o1', sourceId: 'src-1'),
+      resource('o2', sourceId: 'src-1'),
+      resource('o3', sourceId: 'src-2'),
+    ]);
+
+    final live = [
+      for (final r in await resourceRows())
+        if (r.deletedAt == null) r.id,
+    ];
+    expect(live, ['o3']);
+  });
+
+  test(
+    'records of the wallet source of versions before 9 are the wallet',
+    () async {
+      await dataSource.cacheFhirResources([resource('o1', sourceId: 'wallet')]);
+      final source = (await dataSource.getSources()).single;
+      expect(source.platformType, 'wallet');
+    },
+  );
+
   test('deleteAllSources empties the sources table', () async {
     await dataSource.cacheSources(const [Source(id: 'a'), Source(id: 'b')]);
     await dataSource.deleteAllSources();

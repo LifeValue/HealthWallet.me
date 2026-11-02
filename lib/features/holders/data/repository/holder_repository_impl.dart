@@ -139,6 +139,7 @@ class HolderRepositoryImpl implements HolderRepository {
   /// The type `getSources` reports for a source without a row.
   static String _platformTypeOf(String sourceId) =>
       sourceId.startsWith(HolderSource.walletPrefix) ||
+          sourceId == 'wallet' ||
           sourceId == HolderSource.demoId
       ? 'wallet'
       : 'fasten';
