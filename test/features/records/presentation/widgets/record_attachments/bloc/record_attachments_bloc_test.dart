@@ -9,6 +9,7 @@ import 'package:health_wallet/core/data/local/app_database.dart' hide Source;
 import 'package:health_wallet/core/data/local/soft_delete.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/bloc/record_attachments_bloc.dart';
@@ -91,6 +92,35 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
             ))
             .get();
     return [...rows.map(IFhirResource.fromLocalDto), ...extraDocuments];
+  }
+
+  /// The documents linked to [resource]: by encounter for an encounter,
+  /// by `context.related` for any other record.
+  @override
+  Future<List<IFhirResource>> getAttachedDocuments(
+    IFhirResource resource,
+  ) async {
+    final documents = await getResources(
+      resourceTypes: [FhirType.DocumentReference],
+    );
+    bool refersTo(Object? references) =>
+        references is List &&
+        references.any(
+          (r) =>
+              r is Map &&
+              FhirReferenceUtils.extractReferenceId(
+                    r['reference']?.toString(),
+                  ) ==
+                  resource.resourceId,
+        );
+    return [
+      for (final doc in documents)
+        if (resource.fhirType == FhirType.Encounter
+            ? doc.encounterId == resource.resourceId ||
+                  refersTo(doc.rawResource['context']?['encounter'])
+            : refersTo(doc.rawResource['context']?['related']))
+          doc,
+    ];
   }
 
   @override

@@ -1239,7 +1239,14 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String desktopSyncPendingValue(int count) {
-    return '$count modificări';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de modificări',
+      few: '$count modificări',
+      one: '1 modificare',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1986,7 +1993,14 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String syncStatusPending(int count) {
-    return '$count în așteptare';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de modificări în așteptare',
+      few: '$count modificări în așteptare',
+      one: '1 modificare în așteptare',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2009,6 +2023,18 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get backupStatusNotConnected => 'Neconectat';
+
+  @override
+  String get backupStatusNoFolder => 'Fără folder de backup';
+
+  @override
+  String get backupStatusNoDesktopFolder => 'Fără folder pe desktop';
+
+  @override
+  String get backupNoFolderChosen => 'Niciun folder ales';
+
+  @override
+  String get chooseLabel => 'Alege';
 
   @override
   String get exportIpsPdf => 'Exportă IPS (PDF)';
@@ -3779,6 +3805,150 @@ class AppLocalizationsRo extends AppLocalizations {
   String get fieldStatusReason => 'Motivul stării';
 
   @override
+  String get fhirStatusActive => 'Activ';
+
+  @override
+  String get fhirStatusInactive => 'Inactiv';
+
+  @override
+  String get fhirStatusResolved => 'Rezolvat';
+
+  @override
+  String get fhirStatusRecurrence => 'Recurență';
+
+  @override
+  String get fhirStatusRelapse => 'Recădere';
+
+  @override
+  String get fhirStatusRemission => 'Remisie';
+
+  @override
+  String get fhirStatusUnconfirmed => 'Neconfirmat';
+
+  @override
+  String get fhirStatusProvisional => 'Provizoriu';
+
+  @override
+  String get fhirStatusDifferential => 'Diferențial';
+
+  @override
+  String get fhirStatusConfirmed => 'Confirmat';
+
+  @override
+  String get fhirStatusRefuted => 'Infirmat';
+
+  @override
+  String get fhirStatusEnteredInError => 'Înregistrat din eroare';
+
+  @override
+  String get fhirStatusOnHold => 'Suspendat temporar';
+
+  @override
+  String get fhirStatusCancelled => 'Anulat';
+
+  @override
+  String get fhirStatusCompleted => 'Finalizat';
+
+  @override
+  String get fhirStatusStopped => 'Întrerupt';
+
+  @override
+  String get fhirStatusDraft => 'Ciornă';
+
+  @override
+  String get fhirStatusUnknown => 'Necunoscut';
+
+  @override
+  String get fhirStatusIntended => 'Planificat';
+
+  @override
+  String get fhirStatusNotTaken => 'Nu a fost luat';
+
+  @override
+  String get fhirStatusInProgress => 'În desfășurare';
+
+  @override
+  String get fhirStatusNotDone => 'Neefectuat';
+
+  @override
+  String get fhirStatusPreparation => 'În pregătire';
+
+  @override
+  String get fhirStatusDeclined => 'Refuzat';
+
+  @override
+  String get fhirStatusRegistered => 'Înregistrat';
+
+  @override
+  String get fhirStatusPreliminary => 'Preliminar';
+
+  @override
+  String get fhirStatusFinal => 'Final';
+
+  @override
+  String get fhirStatusAmended => 'Modificat';
+
+  @override
+  String get fhirStatusCorrected => 'Corectat';
+
+  @override
+  String get fieldInterpretation => 'Interpretare';
+
+  @override
+  String get interpretationHigh => 'Crescut';
+
+  @override
+  String get interpretationLow => 'Scăzut';
+
+  @override
+  String get interpretationNormal => 'Normal';
+
+  @override
+  String get interpretationAbnormal => 'Anormal';
+
+  @override
+  String get interpretationCriticallyAbnormal => 'Critic anormal';
+
+  @override
+  String get interpretationCriticallyHigh => 'Critic crescut';
+
+  @override
+  String get interpretationCriticallyLow => 'Critic scăzut';
+
+  @override
+  String get interpretationSignificantlyHigh => 'Semnificativ crescut';
+
+  @override
+  String get interpretationSignificantlyLow => 'Semnificativ scăzut';
+
+  @override
+  String get interpretationIntermediate => 'Intermediar';
+
+  @override
+  String get interpretationResistant => 'Rezistent';
+
+  @override
+  String get interpretationSusceptible => 'Sensibil';
+
+  @override
+  String get interpretationPositive => 'Pozitiv';
+
+  @override
+  String get interpretationNegative => 'Negativ';
+
+  @override
+  String get interpretationDetected => 'Detectat';
+
+  @override
+  String get interpretationNotDetected => 'Nedetectat';
+
+  @override
+  String get interpretationIndeterminate => 'Nedeterminat';
+
+  @override
+  String get interpretationEquivocal => 'Echivoc';
+
+  @override
   String get fieldStrength => 'Concentrație';
 
   @override
@@ -4390,6 +4560,61 @@ class AppLocalizationsRo extends AppLocalizations {
   String desktopRestoreSucceededMessage(String name, int count) {
     return '\"$name\" a fost restaurată. Acum sunt $count înregistrări pe acest dispozitiv.';
   }
+
+  @override
+  String get sharedFileNotPreviewable =>
+      'Acest tip de fișier nu poate fi afișat în înregistrările partajate.';
+
+  @override
+  String get desktopWaitingForApproval =>
+      'Se așteaptă ca desktopul să accepte acest telefon…';
+
+  @override
+  String get desktopPairingRejected =>
+      'Desktopul nu mai recunoaște acest telefon. Scanează din nou codul său QR.';
+
+  @override
+  String get desktopPairingDeclined => 'Desktopul a refuzat acest telefon.';
+
+  @override
+  String get desktopUpdateDesktopApp =>
+      'Actualizează HealthWallet pe desktop, apoi încearcă din nou.';
+
+  @override
+  String get desktopUpdatePhoneApp =>
+      'Un telefon cu o versiune mai veche de HealthWallet a încercat să se conecteze. Actualizează aplicația pe telefon.';
+
+  @override
+  String get desktopQrOutdated =>
+      'Acest cod QR provine dintr-o versiune mai veche de HealthWallet. Actualizează aplicația pe desktop și scanează noul cod.';
+
+  @override
+  String get desktopQrInvalid =>
+      'Acest cod QR nu poate fi folosit pentru asociere. Afișează unul nou pe desktop.';
+
+  @override
+  String get desktopNoNetwork =>
+      'Acest desktop nu este conectat la o rețea. Conectează-l la Wi-Fi pentru a asocia un telefon.';
+
+  @override
+  String get desktopFirewallHint =>
+      'Dacă telefonul nu găsește acest desktop, permite HealthWallet în Windows Firewall pentru rețelele private.';
+
+  @override
+  String desktopApprovePhoneMessage(String phone, String current) {
+    return '„$phone” vrea să se conecteze la acest desktop.\n\nVa înlocui „$current” și va primi fișele medicale stocate aici.\n\nPermiți?';
+  }
+
+  @override
+  String get desktopPairedPhone => 'Telefon asociat';
+
+  @override
+  String get desktopNewQrUnpairsHint =>
+      'Un cod QR nou dezasociază acest telefon; folosește-l pentru a asocia altul.';
+
+  @override
+  String get desktopNotFound =>
+      'Desktopul nu a fost găsit. Verifică dacă HealthWallet este deschis pe el și dacă ambele dispozitive sunt în aceeași rețea.';
 
   @override
   String desktopBackupSucceededMessage(String name, int count) {

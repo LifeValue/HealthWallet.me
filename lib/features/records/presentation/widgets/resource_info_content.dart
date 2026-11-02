@@ -6,6 +6,7 @@ import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/records/presentation/widgets/media_fullscreen_viewer.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 
@@ -37,11 +38,7 @@ class ResourceInfoContent extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          ...resource
-              .additionalInfoIn(
-                context.read<UserBloc>().state.regionPreset,
-                context.l10n,
-              )
+          ..._infoLines(context)
               .where((infoLine) => !infoLine.isSection)
               .take(maxInfoLines)
               .map(
@@ -72,6 +69,19 @@ class ResourceInfoContent extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// An observation shows the same converted values as on the detail page.
+  /// Without the app's [UserBloc] (widget tests) values stay as reported.
+  List<RecordInfoLine> _infoLines(BuildContext context) {
+    try {
+      final region = context.select(
+        (UserBloc bloc) => bloc.state.regionPreset,
+      );
+      return resource.additionalInfoIn(region, context.l10n);
+    } on ProviderNotFoundException {
+      return resource.additionalInfo(context.l10n);
+    }
   }
 
   void _defaultNavigation(BuildContext context) {

@@ -39,6 +39,29 @@ class PatientSourceUtils {
     return null;
   }
 
+  /// Whose records the Records screen shows: the source picked on Home, or
+  /// else the selected patient's sources. Until the patients are loaded it
+  /// is an empty list, which matches nothing, so another patient's records
+  /// never show while the selection is unknown. With no patients at all
+  /// there is no one to keep apart, so it is every record.
+  static ({String? sourceId, List<String>? sourceIds}) recordsScope(
+    String selectedSource,
+    PatientState patientState,
+  ) {
+    if (selectedSource.isNotEmpty && selectedSource != 'All') {
+      return (sourceId: selectedSource, sourceIds: null);
+    }
+    if (patientState.status == const PatientStatus.initial() ||
+        (patientState.status == const PatientStatus.loading() &&
+            patientState.patientGroups.isEmpty)) {
+      return (sourceId: null, sourceIds: const []);
+    }
+    final selectedPatientId = patientState.selectedPatientId;
+    if (selectedPatientId == null) return (sourceId: null, sourceIds: null);
+    final group = patientState.patientGroups[selectedPatientId];
+    return (sourceId: null, sourceIds: group?.sourceIds ?? const []);
+  }
+
   /// Validate that a source exists for the patient, fallback to "All" if not
   static String validateSourceForPatient(
     String currentSource,

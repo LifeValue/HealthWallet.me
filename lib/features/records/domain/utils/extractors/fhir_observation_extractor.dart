@@ -18,15 +18,7 @@ class FhirObservationExtractor {
     AppLocalizations? l10n,
   }) {
     final valueQuantity = valueX?.isAs<fhir_r4.Quantity>();
-    if (valueQuantity != null) {
-      final value = FhirCommonExtractor.quantityValue(valueQuantity);
-      if (value == null) return null;
-      return _withUnit(
-        value,
-        FhirCommonExtractor.quantityUnit(valueQuantity),
-        l10n,
-      );
-    }
+    if (valueQuantity != null) return _quantityText(valueQuantity, l10n);
 
     final valueCodeableConcept = valueX?.isAs<fhir_r4.CodeableConcept>();
     if (valueCodeableConcept != null) {
@@ -53,8 +45,8 @@ class FhirObservationExtractor {
     final valueRange = valueX?.isAs<fhir_r4.Range>();
     if (valueRange != null) {
       return FhirCommonExtractor.formatRange(
-        FhirCommonExtractor.quantityValue(valueRange.low),
-        FhirCommonExtractor.quantityValue(valueRange.high),
+        _quantityText(valueRange.low, l10n),
+        _quantityText(valueRange.high, l10n),
       );
     }
 
@@ -112,11 +104,9 @@ class FhirObservationExtractor {
       if (_inFeetAndInches(rawUnit, ucumCode, region, measured)) {
         return converted.unit;
       }
+      final comparator = FhirCommonExtractor.comparatorOf(valueQuantity);
       return _withUnit(
-        FhirCommonExtractor.formatQuantityValue(
-          converted.value,
-          source: rawValue,
-        ),
+        '$comparator${FhirCommonExtractor.formatQuantityValue(converted.value, source: rawValue)}',
         converted.unit,
         l10n,
       );
@@ -156,6 +146,16 @@ class FhirObservationExtractor {
 
   static String _unit(String unit, AppLocalizations? l10n) =>
       l10n == null ? unit : localizedUnit(unit, l10n);
+
+  /// "[value] [unit]" of [quantity]; null when it has no value.
+  static String? _quantityText(
+    fhir_r4.Quantity? quantity,
+    AppLocalizations? l10n,
+  ) {
+    final value = FhirCommonExtractor.quantityValue(quantity);
+    if (value == null) return null;
+    return _withUnit(value, FhirCommonExtractor.quantityUnit(quantity), l10n);
+  }
 
   /// "[value] [unit]", or the bare value when there is no unit.
   static String _withUnit(String value, String? unit, AppLocalizations? l10n) {

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
@@ -8,6 +9,10 @@ import 'package:window_manager/window_manager.dart';
 @lazySingleton
 class WindowLifecycleService with WindowListener {
   Function(bool isVisible)? onWindowVisibilityChanged;
+
+  /// Runs before the app exits, e.g. to let a sync batch finish and tell the
+  /// phone. Bounded, so a stuck step can't keep the app from quitting.
+  Future<void> Function()? beforeQuit;
 
   bool _minimizeToTrayEnabled = true;
   bool _isVisible = true;
@@ -44,7 +49,18 @@ class WindowLifecycleService with WindowListener {
     onWindowVisibilityChanged?.call(false);
   }
 
+  Future<void> runBeforeQuit() async {
+    final hook = beforeQuit;
+    if (hook == null) return;
+    try {
+      await hook().timeout(const Duration(seconds: 5));
+    } catch (e) {
+      logger.w('[Window] quitting without finishing the shutdown steps', e);
+    }
+  }
+
   Future<void> quitApp() async {
+    await runBeforeQuit();
     await windowManager.setPreventClose(false);
     await windowManager.close();
     exit(0);

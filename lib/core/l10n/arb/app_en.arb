@@ -549,7 +549,7 @@
     }
   },
   "desktopSyncPending": "Pending",
-  "desktopSyncPendingValue": "{count} changes",
+  "desktopSyncPendingValue": "{count, plural, =1{1 change} other{{count} changes}}",
   "@desktopSyncPendingValue": {
     "placeholders": {
       "count": {
@@ -927,7 +927,7 @@
   "syncStatusSyncing": "Syncing...",
   "syncStatusNotSynced": "Not synced",
   "syncStatusInSync": "In sync",
-  "syncStatusPending": "{count} pending",
+  "syncStatusPending": "{count, plural, =1{1 change waiting} other{{count} changes waiting}}",
   "@syncStatusPending": {
     "placeholders": {
       "count": {
@@ -942,6 +942,10 @@
   "backupStatusRestoring": "Restoring...",
   "backupStatusWaiting": "Waiting...",
   "backupStatusNotConnected": "Not connected",
+  "backupStatusNoFolder": "No backup folder",
+  "backupStatusNoDesktopFolder": "No folder on desktop",
+  "backupNoFolderChosen": "No folder chosen",
+  "chooseLabel": "Choose",
   "exportIpsPdf": "Export IPS (PDF)",
   "addIpsToAppleWallet": "Add IPS to Apple Wallet",
   "addIpsToGoogleWallet": "Add IPS to Google Wallet",
@@ -1717,6 +1721,198 @@
   "fieldStatusDate": "Status Date",
   "fieldStatusHistory": "Status History",
   "fieldStatusReason": "Status Reason",
+  "fhirStatusActive": "Active",
+  "@fhirStatusActive": {
+    "description": "FHIR status code 'active' of a record (condition, allergy, medication)"
+  },
+  "fhirStatusInactive": "Inactive",
+  "@fhirStatusInactive": {
+    "description": "FHIR status code 'inactive'"
+  },
+  "fhirStatusResolved": "Resolved",
+  "@fhirStatusResolved": {
+    "description": "FHIR clinical status 'resolved' of a condition or allergy"
+  },
+  "fhirStatusRecurrence": "Recurrence",
+  "@fhirStatusRecurrence": {
+    "description": "FHIR clinical status 'recurrence' of a condition"
+  },
+  "fhirStatusRelapse": "Relapse",
+  "@fhirStatusRelapse": {
+    "description": "FHIR clinical status 'relapse' of a condition"
+  },
+  "fhirStatusRemission": "Remission",
+  "@fhirStatusRemission": {
+    "description": "FHIR clinical status 'remission' of a condition"
+  },
+  "fhirStatusUnconfirmed": "Unconfirmed",
+  "@fhirStatusUnconfirmed": {
+    "description": "FHIR verification status 'unconfirmed'"
+  },
+  "fhirStatusProvisional": "Provisional",
+  "@fhirStatusProvisional": {
+    "description": "FHIR verification status 'provisional' of a condition"
+  },
+  "fhirStatusDifferential": "Differential",
+  "@fhirStatusDifferential": {
+    "description": "FHIR verification status 'differential' of a condition"
+  },
+  "fhirStatusConfirmed": "Confirmed",
+  "@fhirStatusConfirmed": {
+    "description": "FHIR verification status 'confirmed'"
+  },
+  "fhirStatusRefuted": "Refuted",
+  "@fhirStatusRefuted": {
+    "description": "FHIR verification status 'refuted': the condition or allergy was ruled out"
+  },
+  "fhirStatusEnteredInError": "Entered in error",
+  "@fhirStatusEnteredInError": {
+    "description": "FHIR status 'entered-in-error': the record is not valid"
+  },
+  "fhirStatusOnHold": "On hold",
+  "@fhirStatusOnHold": {
+    "description": "FHIR status 'on-hold'"
+  },
+  "fhirStatusCancelled": "Cancelled",
+  "@fhirStatusCancelled": {
+    "description": "FHIR status 'cancelled'"
+  },
+  "fhirStatusCompleted": "Completed",
+  "@fhirStatusCompleted": {
+    "description": "FHIR status 'completed'"
+  },
+  "fhirStatusStopped": "Stopped",
+  "@fhirStatusStopped": {
+    "description": "FHIR status 'stopped', e.g. a medication that is no longer taken"
+  },
+  "fhirStatusDraft": "Draft",
+  "@fhirStatusDraft": {
+    "description": "FHIR status 'draft'"
+  },
+  "fhirStatusUnknown": "Unknown",
+  "@fhirStatusUnknown": {
+    "description": "FHIR status 'unknown'"
+  },
+  "fhirStatusIntended": "Intended",
+  "@fhirStatusIntended": {
+    "description": "FHIR medication statement status 'intended'"
+  },
+  "fhirStatusNotTaken": "Not taken",
+  "@fhirStatusNotTaken": {
+    "description": "FHIR medication statement status 'not-taken'"
+  },
+  "fhirStatusInProgress": "In progress",
+  "@fhirStatusInProgress": {
+    "description": "FHIR status 'in-progress'"
+  },
+  "fhirStatusNotDone": "Not done",
+  "@fhirStatusNotDone": {
+    "description": "FHIR status 'not-done', e.g. an immunization that was not given"
+  },
+  "fhirStatusPreparation": "Preparation",
+  "@fhirStatusPreparation": {
+    "description": "FHIR status 'preparation'"
+  },
+  "fhirStatusDeclined": "Declined",
+  "@fhirStatusDeclined": {
+    "description": "FHIR medication dispense status 'declined'"
+  },
+  "fhirStatusRegistered": "Registered",
+  "@fhirStatusRegistered": {
+    "description": "FHIR observation status 'registered'"
+  },
+  "fhirStatusPreliminary": "Preliminary",
+  "@fhirStatusPreliminary": {
+    "description": "FHIR observation status 'preliminary'"
+  },
+  "fhirStatusFinal": "Final",
+  "@fhirStatusFinal": {
+    "description": "FHIR observation status 'final'"
+  },
+  "fhirStatusAmended": "Amended",
+  "@fhirStatusAmended": {
+    "description": "FHIR observation status 'amended'"
+  },
+  "fhirStatusCorrected": "Corrected",
+  "@fhirStatusCorrected": {
+    "description": "FHIR observation status 'corrected'"
+  },
+  "fieldInterpretation": "Interpretation",
+  "@fieldInterpretation": {
+    "description": "Label of an observation's interpretation flag (high, low, critical)"
+  },
+  "interpretationHigh": "High",
+  "@interpretationHigh": {
+    "description": "Observation interpretation code H"
+  },
+  "interpretationLow": "Low",
+  "@interpretationLow": {
+    "description": "Observation interpretation code L"
+  },
+  "interpretationNormal": "Normal",
+  "@interpretationNormal": {
+    "description": "Observation interpretation code N"
+  },
+  "interpretationAbnormal": "Abnormal",
+  "@interpretationAbnormal": {
+    "description": "Observation interpretation code A"
+  },
+  "interpretationCriticallyAbnormal": "Critically abnormal",
+  "@interpretationCriticallyAbnormal": {
+    "description": "Observation interpretation code AA"
+  },
+  "interpretationCriticallyHigh": "Critically high",
+  "@interpretationCriticallyHigh": {
+    "description": "Observation interpretation code HH"
+  },
+  "interpretationCriticallyLow": "Critically low",
+  "@interpretationCriticallyLow": {
+    "description": "Observation interpretation code LL"
+  },
+  "interpretationSignificantlyHigh": "Significantly high",
+  "@interpretationSignificantlyHigh": {
+    "description": "Observation interpretation code HU"
+  },
+  "interpretationSignificantlyLow": "Significantly low",
+  "@interpretationSignificantlyLow": {
+    "description": "Observation interpretation code LU"
+  },
+  "interpretationIntermediate": "Intermediate",
+  "@interpretationIntermediate": {
+    "description": "Observation interpretation code I (antimicrobial susceptibility)"
+  },
+  "interpretationResistant": "Resistant",
+  "@interpretationResistant": {
+    "description": "Observation interpretation code R (antimicrobial susceptibility)"
+  },
+  "interpretationSusceptible": "Susceptible",
+  "@interpretationSusceptible": {
+    "description": "Observation interpretation code S (antimicrobial susceptibility)"
+  },
+  "interpretationPositive": "Positive",
+  "@interpretationPositive": {
+    "description": "Observation interpretation code POS"
+  },
+  "interpretationNegative": "Negative",
+  "@interpretationNegative": {
+    "description": "Observation interpretation code NEG"
+  },
+  "interpretationDetected": "Detected",
+  "@interpretationDetected": {
+    "description": "Observation interpretation code DET"
+  },
+  "interpretationNotDetected": "Not detected",
+  "@interpretationNotDetected": {
+    "description": "Observation interpretation code ND"
+  },
+  "interpretationIndeterminate": "Indeterminate",
+  "@interpretationIndeterminate": {
+    "description": "Observation interpretation code IND"
+  },
+  "interpretationEquivocal": "Equivocal",
+  "@interpretationEquivocal": {
+    "description": "Observation interpretation code E"
+  },
   "fieldStrength": "Strength",
   "fieldSubpotent": "Subpotent",
   "fieldSubrogation": "Subrogation",
@@ -2104,6 +2300,33 @@
       }
     }
   },
+  "sharedFileNotPreviewable": "This type of file can't be shown in shared records.",
+  "@sharedFileNotPreviewable": {
+    "description": "Shown in a received share when the receiver taps a file that is neither an image nor a PDF; it is not handed to other apps."
+  },
+  "desktopWaitingForApproval": "Waiting for the desktop to accept this phone…",
+  "desktopPairingRejected": "The desktop no longer recognises this phone. Scan its QR code again.",
+  "desktopPairingDeclined": "The desktop declined this phone.",
+  "desktopUpdateDesktopApp": "Update HealthWallet on the desktop, then try again.",
+  "desktopUpdatePhoneApp": "A phone with an older version of HealthWallet tried to connect. Update the app on the phone.",
+  "desktopQrOutdated": "This QR code is from an older version of HealthWallet. Update the app on the desktop and scan its new code.",
+  "desktopQrInvalid": "This QR code can't be used for pairing. Show a new one on the desktop.",
+  "desktopNoNetwork": "This desktop isn't connected to a network. Connect it to Wi-Fi to pair a phone.",
+  "desktopFirewallHint": "If your phone can't find this desktop, allow HealthWallet through Windows Firewall on private networks.",
+  "desktopApprovePhoneMessage": "\"{phone}\" wants to connect to this desktop.\n\nIt will replace \"{current}\" and receive the health records stored here.\n\nAllow it?",
+  "@desktopApprovePhoneMessage": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      },
+      "current": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopPairedPhone": "Paired phone",
+  "desktopNewQrUnpairsHint": "A new QR code unpairs this phone; use it to pair a different one.",
+  "desktopNotFound": "Desktop not found. Make sure HealthWallet is open on it and both devices are on the same network.",
   "desktopBackupSucceededMessage": "\"{name}\" has been saved. It holds {count} records.",
   "@desktopBackupSucceededMessage": {
     "placeholders": {

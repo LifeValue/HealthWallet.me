@@ -145,6 +145,12 @@ void main() {
           ),
           'From 2024-03',
         );
+        expect(
+          FhirTemporalExtractor.extractPeriodFormatted(
+            _period(start: '2024', end: '2024-01-12T17:15:00Z'),
+          ),
+          startsWith('2024 - '),
+        );
       },
     );
   });
@@ -157,12 +163,13 @@ void main() {
       );
     });
 
-    test('a mixed full and partial period falls back to both raw bounds', () {
+    test('a mixed full and partial period formats the full bound and keeps '
+        'the partial one as written', () {
       expect(
         FhirTemporalExtractor.extractPeriodFormatted(
           _period(start: '2024-03', end: '2024-04-02T10:00:00Z'),
         ),
-        '2024-03 - 2024-04-02T10:00:00Z',
+        '2024-03 - ${localDateTime('2024-04-02T10:00:00Z', separator: ' ')}',
       );
     });
 
@@ -184,12 +191,13 @@ void main() {
       );
     });
 
-    test('a full start with a partial end falls back to both raw bounds', () {
+    test('a full start with a partial end formats the full bound and keeps '
+        'the partial one as written', () {
       expect(
         FhirTemporalExtractor.extractPeriodFormatted(
           _period(start: '2024-04-02T10:00:00Z', end: '2025'),
         ),
-        '2024-04-02T10:00:00Z - 2025',
+        '${localDateTime('2024-04-02T10:00:00Z', separator: ' ')} - 2025',
       );
     });
   });
@@ -333,7 +341,7 @@ void main() {
         });
         expect(
           FhirTemporalExtractor.extractOnsetX(onset),
-          isNot(contains('null')),
+          '≤ 50',
         );
       },
     );
@@ -463,13 +471,19 @@ void main() {
 
   group('formatFhirDateTime / formatFhirDate / formatFhirInstant', () {
     final dateTimeCases = <(String, String)>[
-      // A time in UTC or with an offset is shown in the phone's time zone.
       ('2024-03-15T10:30:00Z', localDateTime('2024-03-15T10:30:00Z')),
-      ('2024-03-15T10:30:00+02:00', localDateTime('2024-03-15T10:30:00+02:00')),
-      // A time without an offset is already local.
       ('2024-03-15T22:05:00', 'Mar 15, 2024, 10:05 PM'),
-      // A date-only value is shown with a synthetic midnight time.
-      ('2024-03-15', 'Mar 15, 2024, 12:00 AM'),
+      // A time with an offset is shown in the device's time zone.
+      (
+        '2024-03-15T10:30:00+02:00',
+        localDateTime('2024-03-15T10:30:00+02:00'),
+      ),
+      (
+        '2023-07-14T21:30:00-04:00',
+        localDateTime('2023-07-14T21:30:00-04:00'),
+      ),
+      // A date-only value is that calendar day, with no time.
+      ('2024-03-15', 'Mar 15, 2024'),
       // Partial dates cannot be parsed and are returned verbatim.
       ('2024-03', '2024-03'),
       ('2024', '2024'),
@@ -536,6 +550,28 @@ void main() {
           fhir.FhirInstant.fromJson(_dataAbsent),
         ),
         isNull,
+      );
+    });
+  });
+
+  group('recordDay / formatRecordDate', () {
+    test('a date stored as midnight UTC is that calendar day in any zone', () {
+      // A date-only "2024-03-05" synced as 2024-03-05T00:00:00Z is the
+      // evening of March 4 west of UTC; it must still read March 5.
+      final stored = DateTime.utc(2024, 3, 5).toLocal();
+      expect(FhirTemporalExtractor.recordDay(stored), DateTime(2024, 3, 5));
+      expect(
+        FhirTemporalExtractor.formatRecordDate(stored, null),
+        'March 5, 2024',
+      );
+    });
+
+    test('any other time is the local day', () {
+      final stored = DateTime.utc(2024, 3, 5, 14, 30);
+      final local = stored.toLocal();
+      expect(
+        FhirTemporalExtractor.recordDay(stored),
+        DateTime(local.year, local.month, local.day),
       );
     });
   });

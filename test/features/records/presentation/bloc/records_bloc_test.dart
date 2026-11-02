@@ -55,6 +55,7 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
     required String query,
     List<FhirType> resourceTypes = const [],
     String? sourceId,
+    List<String>? sourceIds,
     int limit = 50,
   }) async {
     searches.add(query);
@@ -215,12 +216,12 @@ void main() {
       expect(state.activeFilters, isEmpty);
     });
 
-    test('media ignore the chosen source', () async {
+    test('media keep to the chosen source', () async {
       await run(const RecordsSourceChanged('s1'));
 
       await run(const RecordsFiltersApplied([FhirType.Media]));
 
-      expect(repository.queries.last.sourceId, isNull);
+      expect(repository.queries.last.sourceId, 's1');
     });
   });
 

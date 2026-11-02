@@ -86,6 +86,21 @@ void main() {
       expect('\n'.allMatches(await buffer.readPersistedLogs()), hasLength(505));
     });
 
+    test('lines logged during a write follow it in the file', () async {
+      final buffer = ProcessingLogBuffer.forTesting(
+        enabled: true,
+        directory: docs,
+      )..log('a');
+      // The first write has started.
+      await Future<void>.delayed(Duration.zero);
+
+      buffer
+        ..log('b')
+        ..log('c');
+
+      expect(await buffer.readPersistedLogs(), 'a\nb\nc\n');
+    });
+
     test('log and clear notify listeners; clear keeps the file', () async {
       final buffer = ProcessingLogBuffer.forTesting(
         enabled: true,

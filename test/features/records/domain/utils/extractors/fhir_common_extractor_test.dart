@@ -242,6 +242,12 @@ void main() {
           ),
           '0.004 ng/mL',
         );
+        expect(
+          FhirCommonExtractor.extractQuantity(
+            fhir.Quantity.fromJson(quantity(1.234, unit: 'mmol/L')),
+          ),
+          '1.234 mmol/L',
+        );
       },
     );
   });

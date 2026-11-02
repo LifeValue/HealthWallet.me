@@ -1242,7 +1242,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String desktopSyncPendingValue(int count) {
-    return '$count Änderungen';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Änderungen',
+      one: '1 Änderung',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1987,7 +1993,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String syncStatusPending(int count) {
-    return '$count ausstehend';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Änderungen ausstehend',
+      one: '1 Änderung ausstehend',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2010,6 +2022,18 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get backupStatusNotConnected => 'Nicht verbunden';
+
+  @override
+  String get backupStatusNoFolder => 'Kein Backup-Ordner';
+
+  @override
+  String get backupStatusNoDesktopFolder => 'Kein Ordner am Desktop';
+
+  @override
+  String get backupNoFolderChosen => 'Kein Ordner gewählt';
+
+  @override
+  String get chooseLabel => 'Auswählen';
 
   @override
   String get exportIpsPdf => 'IPS exportieren (PDF)';
@@ -3790,6 +3814,150 @@ class AppLocalizationsDe extends AppLocalizations {
   String get fieldStatusReason => 'Grund für den Status';
 
   @override
+  String get fhirStatusActive => 'Aktiv';
+
+  @override
+  String get fhirStatusInactive => 'Inaktiv';
+
+  @override
+  String get fhirStatusResolved => 'Abgeklungen';
+
+  @override
+  String get fhirStatusRecurrence => 'Wiederauftreten';
+
+  @override
+  String get fhirStatusRelapse => 'Rückfall';
+
+  @override
+  String get fhirStatusRemission => 'Remission';
+
+  @override
+  String get fhirStatusUnconfirmed => 'Unbestätigt';
+
+  @override
+  String get fhirStatusProvisional => 'Vorläufig';
+
+  @override
+  String get fhirStatusDifferential => 'Differenzialdiagnose';
+
+  @override
+  String get fhirStatusConfirmed => 'Bestätigt';
+
+  @override
+  String get fhirStatusRefuted => 'Widerlegt';
+
+  @override
+  String get fhirStatusEnteredInError => 'Irrtümlich erfasst';
+
+  @override
+  String get fhirStatusOnHold => 'Pausiert';
+
+  @override
+  String get fhirStatusCancelled => 'Abgebrochen';
+
+  @override
+  String get fhirStatusCompleted => 'Abgeschlossen';
+
+  @override
+  String get fhirStatusStopped => 'Abgesetzt';
+
+  @override
+  String get fhirStatusDraft => 'Entwurf';
+
+  @override
+  String get fhirStatusUnknown => 'Unbekannt';
+
+  @override
+  String get fhirStatusIntended => 'Geplant';
+
+  @override
+  String get fhirStatusNotTaken => 'Nicht eingenommen';
+
+  @override
+  String get fhirStatusInProgress => 'Laufend';
+
+  @override
+  String get fhirStatusNotDone => 'Nicht durchgeführt';
+
+  @override
+  String get fhirStatusPreparation => 'In Vorbereitung';
+
+  @override
+  String get fhirStatusDeclined => 'Abgelehnt';
+
+  @override
+  String get fhirStatusRegistered => 'Registriert';
+
+  @override
+  String get fhirStatusPreliminary => 'Vorläufig';
+
+  @override
+  String get fhirStatusFinal => 'Endgültig';
+
+  @override
+  String get fhirStatusAmended => 'Geändert';
+
+  @override
+  String get fhirStatusCorrected => 'Korrigiert';
+
+  @override
+  String get fieldInterpretation => 'Bewertung';
+
+  @override
+  String get interpretationHigh => 'Erhöht';
+
+  @override
+  String get interpretationLow => 'Erniedrigt';
+
+  @override
+  String get interpretationNormal => 'Normal';
+
+  @override
+  String get interpretationAbnormal => 'Abnormal';
+
+  @override
+  String get interpretationCriticallyAbnormal => 'Kritisch abnormal';
+
+  @override
+  String get interpretationCriticallyHigh => 'Kritisch erhöht';
+
+  @override
+  String get interpretationCriticallyLow => 'Kritisch erniedrigt';
+
+  @override
+  String get interpretationSignificantlyHigh => 'Deutlich erhöht';
+
+  @override
+  String get interpretationSignificantlyLow => 'Deutlich erniedrigt';
+
+  @override
+  String get interpretationIntermediate => 'Intermediär';
+
+  @override
+  String get interpretationResistant => 'Resistent';
+
+  @override
+  String get interpretationSusceptible => 'Sensibel';
+
+  @override
+  String get interpretationPositive => 'Positiv';
+
+  @override
+  String get interpretationNegative => 'Negativ';
+
+  @override
+  String get interpretationDetected => 'Nachgewiesen';
+
+  @override
+  String get interpretationNotDetected => 'Nicht nachgewiesen';
+
+  @override
+  String get interpretationIndeterminate => 'Unbestimmt';
+
+  @override
+  String get interpretationEquivocal => 'Grenzwertig';
+
+  @override
   String get fieldStrength => 'Wirkstärke';
 
   @override
@@ -4392,6 +4560,62 @@ class AppLocalizationsDe extends AppLocalizations {
   String desktopRestoreSucceededMessage(String name, int count) {
     return '\"$name\" wurde wiederhergestellt. Auf diesem Gerät sind jetzt $count Aufzeichnungen.';
   }
+
+  @override
+  String get sharedFileNotPreviewable =>
+      'Dieser Dateityp kann in geteilten Unterlagen nicht angezeigt werden.';
+
+  @override
+  String get desktopWaitingForApproval =>
+      'Warte, bis der Desktop dieses Telefon annimmt …';
+
+  @override
+  String get desktopPairingRejected =>
+      'Der Desktop erkennt dieses Telefon nicht mehr. Scanne seinen QR-Code erneut.';
+
+  @override
+  String get desktopPairingDeclined =>
+      'Der Desktop hat dieses Telefon abgelehnt.';
+
+  @override
+  String get desktopUpdateDesktopApp =>
+      'Aktualisiere HealthWallet auf dem Desktop und versuche es erneut.';
+
+  @override
+  String get desktopUpdatePhoneApp =>
+      'Ein Telefon mit einer älteren HealthWallet-Version wollte sich verbinden. Aktualisiere die App auf dem Telefon.';
+
+  @override
+  String get desktopQrOutdated =>
+      'Dieser QR-Code stammt von einer älteren HealthWallet-Version. Aktualisiere die App auf dem Desktop und scanne den neuen Code.';
+
+  @override
+  String get desktopQrInvalid =>
+      'Dieser QR-Code kann nicht zum Koppeln verwendet werden. Zeige auf dem Desktop einen neuen an.';
+
+  @override
+  String get desktopNoNetwork =>
+      'Dieser Desktop ist mit keinem Netzwerk verbunden. Verbinde ihn mit einem WLAN, um ein Telefon zu koppeln.';
+
+  @override
+  String get desktopFirewallHint =>
+      'Wenn dein Telefon diesen Desktop nicht findet, erlaube HealthWallet in der Windows-Firewall für private Netzwerke.';
+
+  @override
+  String desktopApprovePhoneMessage(String phone, String current) {
+    return '„$phone“ möchte sich mit diesem Desktop verbinden.\n\nEs ersetzt „$current“ und erhält die hier gespeicherten Gesundheitsdaten.\n\nZulassen?';
+  }
+
+  @override
+  String get desktopPairedPhone => 'Gekoppeltes Telefon';
+
+  @override
+  String get desktopNewQrUnpairsHint =>
+      'Ein neuer QR-Code entkoppelt dieses Telefon; damit koppelst du ein anderes.';
+
+  @override
+  String get desktopNotFound =>
+      'Desktop nicht gefunden. Prüfe, ob HealthWallet dort geöffnet ist und beide Geräte im selben Netzwerk sind.';
 
   @override
   String desktopBackupSucceededMessage(String name, int count) {

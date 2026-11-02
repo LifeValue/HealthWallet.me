@@ -8,6 +8,8 @@ import 'package:health_wallet/features/sync/data/data_source/local/sync_local_da
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../records_test_helpers.dart' show DocumentsPathResolver;
+
 const _aboRh = '34530-6';
 const _abo = '883-9';
 const _rh = '10331-7';
@@ -31,6 +33,7 @@ void main() {
       database,
       syncLocal,
       SharedNotesDatasource(),
+      DocumentsPathResolver('/nonexistent'),
     );
   });
 
@@ -131,15 +134,6 @@ void main() {
       ]);
 
       expect(await bloodTypeIds(), isEmpty);
-    });
-
-    test('falls back to the first patient for an unknown id', () async {
-      await syncLocal.cacheFhirResources([
-        patient('pat-7'),
-        observation('obs-1', subject: 'Patient/pat-7'),
-      ]);
-
-      expect(await bloodTypeIds(patientId: 'missing'), ['obs-1']);
     });
 
     test(

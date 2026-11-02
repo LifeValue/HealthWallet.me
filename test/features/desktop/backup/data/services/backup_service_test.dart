@@ -52,7 +52,12 @@ void main() {
   setUp(() async {
     dir = await Directory.systemTemp.createTemp('backup_service_test');
     SharedPreferences.setMockInitialValues({'backupDirectory': dir.path});
-    db = AppDatabase(NativeDatabase.memory());
+    // Foreign keys on, as the app opens its database.
+    db = AppDatabase(
+      NativeDatabase.memory(
+        setup: (raw) => raw.execute('PRAGMA foreign_keys = ON'),
+      ),
+    );
     folderAccess = _FakeFolderAccess();
     service = BackupService(db, folderAccess);
   });
@@ -209,12 +214,13 @@ void main() {
         final entry = await service.createSnapshot();
         File('${entry.filePath}.meta.json').deleteSync();
 
-        // A backup from an older schema: one column fewer.
-        final old = AppDatabase(NativeDatabase(File(entry.filePath)));
-        await old.customStatement(
-          'ALTER TABLE fhir_resource DROP COLUMN specialty_override',
+        // A damaged backup: a note whose source isn't in it.
+        final damaged = AppDatabase(NativeDatabase(File(entry.filePath)));
+        await damaged.customStatement(
+          'INSERT INTO record_notes (resource_id, source_id, content, timestamp) '
+          "VALUES ('r1', 'ghost', 'note', 0)",
         );
-        await old.close();
+        await damaged.close();
 
         await expectLater(
           service.restoreFromFile(entry.filePath),
@@ -307,6 +313,64 @@ void main() {
       expect(sources.map((r) => r.data['id']), ['s1']);
       expect(await attachedSchemas(), isNot(contains('backup_db')));
     });
+
+    test('restores notes that refer to their source', () async {
+      await db.customStatement(
+        "INSERT INTO sources (id, platform_name) VALUES ('s1', 'Clinic')",
+      );
+      await db.customStatement(
+        'INSERT INTO record_notes (resource_id, source_id, content, timestamp) '
+        "VALUES ('r1', 's1', 'note', 0)",
+      );
+      final entry = await service.createSnapshot();
+
+      await service.restoreFromFile(entry.filePath);
+
+      expect(await notes(db), ['note']);
+    });
+
+    test('restores a backup from an older schema, one column fewer', () async {
+      await insertResource(db, 'from-backup');
+      final entry = await service.createSnapshot();
+      await editBackup(
+        entry,
+        (b) => b.customStatement(
+          'ALTER TABLE fhir_resource DROP COLUMN specialty_override',
+        ),
+      );
+      await db.customStatement('DELETE FROM fhir_resource');
+
+      await service.restoreFromFile(entry.filePath);
+
+      expect(await resourceIds(db), ['from-backup']);
+    });
+
+    test(
+      'restores a backup made before notes had a key of their own',
+      () async {
+        await insertNote(db, 'old note');
+        final entry = await service.createSnapshot();
+        await editBackup(entry, (b) async {
+          await b.customStatement('DROP TRIGGER record_notes_insert_uuid');
+          await b.customStatement('DROP TRIGGER record_notes_insert_outbox');
+          await b.customStatement('DROP TRIGGER record_notes_update_outbox');
+          await b.customStatement(
+            'DROP TRIGGER record_notes_update_updated_at',
+          );
+          await b.customStatement('DROP INDEX record_notes_uuid');
+          await b.customStatement('ALTER TABLE record_notes DROP COLUMN uuid');
+        });
+        await db.customStatement('DELETE FROM record_notes');
+
+        await service.restoreFromFile(entry.filePath);
+
+        final row = await db
+            .customSelect('SELECT id, content, uuid FROM record_notes')
+            .getSingle();
+        expect(row.data['content'], 'old note');
+        expect(row.data['uuid'], 'legacy-${row.data['id']}');
+      },
+    );
 
     group('with foreign keys on, as in the app', () {
       late AppDatabase fkDb;

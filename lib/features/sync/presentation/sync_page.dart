@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,7 +9,6 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/desktop/communication/data/models/device_pairing.dart';
-import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
@@ -110,63 +107,27 @@ class _SyncPageState extends State<SyncPage> {
   }
 
   void _handleQRCodeDetected(BuildContext context, String qrData) {
-    debugPrint(
-      '[QR_SCAN] Raw QR data (${qrData.length} chars): ${qrData.substring(0, qrData.length > 200 ? 200 : qrData.length)}...',
-    );
+    final messenger = ScaffoldMessenger.of(context);
+    void tell(String message, {AppSnackBarType type = AppSnackBarType.error}) =>
+        AppSnackBar.showOn(messenger, message: message, type: type);
 
-    try {
-      final json = jsonDecode(qrData) as Map<String, dynamic>;
-      debugPrint('[QR_SCAN] Parsed JSON keys: ${json.keys.toList()}');
-
-      if (json.containsKey('pairing_key') && json.containsKey('device_id')) {
-        debugPrint('[QR_SCAN] Detected: Desktop pairing QR');
-        final pairing = DevicePairing(
-          deviceId: json['device_id'] as String,
-          deviceName: json['device_name'] as String,
-          pairingKey: json['pairing_key'] as String,
-          lastIp: json['ip'] as String,
-          lastPort: json['port'] as int,
-          pairedAt: DateTime.now(),
-          os: json['os'] as String?,
+    switch (DevicePairing.parseQr(qrData)) {
+      case ValidPairingQr(:final pairing):
+        context.read<SyncBloc>().add(const SyncCancel());
+        tell(
+          context.l10n.pairedWithDevice(pairing.deviceName),
+          type: AppSnackBarType.success,
         );
-
-        _handleBackupPairing(context, pairing);
-        return;
-      }
-
-      if (json.containsKey('token') || json.containsKey('bearer')) {
-        debugPrint('[QR_SCAN] Detected: Fasten Health sync QR');
-      } else {
-        debugPrint('[QR_SCAN] Unknown JSON QR format, forwarding to SyncBloc');
-      }
-    } catch (e) {
-      debugPrint('[QR_SCAN] Not valid JSON: $e');
-      debugPrint('[QR_SCAN] Forwarding raw data to SyncBloc');
+        getIt<CommunicationBloc>().add(
+          CommunicationPairingCompleted(pairing: pairing),
+        );
+      case OutdatedPairingQr():
+        tell(context.l10n.desktopQrOutdated);
+      case InvalidPairingQr():
+        tell(context.l10n.desktopQrInvalid);
+      case NotPairingQr():
+        context.read<SyncBloc>().add(SyncData(qrData: qrData));
     }
-
-    debugPrint('[QR_SCAN] Dispatching SyncData event');
-    context.read<SyncBloc>().add(SyncData(qrData: qrData));
-  }
-
-  Future<void> _handleBackupPairing(
-    BuildContext context,
-    DevicePairing pairing,
-  ) async {
-    final pairingStorage = getIt<PairingStorageService>();
-
-    await pairingStorage.savePairing(pairing);
-    if (context.mounted) {
-      context.read<SyncBloc>().add(const SyncCancel());
-
-      AppSnackBar.show(
-        context,
-        message: context.l10n.pairedWithDevice(pairing.deviceName),
-        type: AppSnackBarType.success,
-      );
-    }
-
-    final commBloc = getIt<CommunicationBloc>();
-    commBloc.add(CommunicationPairingCompleted(pairing: pairing));
   }
 
   Future<void> _handleSyncCompletion(BuildContext context) async {

@@ -13,7 +13,13 @@ void main() {
   setUp(() => ssdp = SsdpService());
   tearDown(() => ssdp.stopAdvertising());
 
-  Future<String?> mSearch(String body) async {
+  /// Sends [body] to the advertiser and returns its reply, or null when none
+  /// comes within [wait]. A reply can take a while on a busy machine; checks
+  /// that expect none pass a shorter [wait].
+  Future<String?> mSearch(
+    String body, {
+    Duration wait = const Duration(seconds: 10),
+  }) async {
     final socket = await RawDatagramSocket.bind(
       InternetAddress.loopbackIPv4,
       0,
@@ -28,10 +34,7 @@ void main() {
     });
     socket.send(utf8.encode(body), InternetAddress.loopbackIPv4, 1900);
     try {
-      return await reply.future.timeout(
-        const Duration(seconds: 2),
-        onTimeout: () => null,
-      );
+      return await reply.future.timeout(wait, onTimeout: () => null);
     } finally {
       await sub.cancel();
       socket.close();
@@ -72,6 +75,7 @@ void main() {
 
     final reply = await mSearch(
       search.replaceAll('healthwallet:device:desktop', 'other:thing'),
+      wait: const Duration(seconds: 2),
     );
 
     expect(reply, isNull);
@@ -80,7 +84,7 @@ void main() {
   test('stopAdvertising releases the socket and can restart', () async {
     await ssdp.startAdvertising(ip: '10.0.0.1', port: 1, deviceId: 'a');
     await ssdp.stopAdvertising();
-    expect(await mSearch(search), isNull);
+    expect(await mSearch(search, wait: const Duration(seconds: 2)), isNull);
 
     await ssdp.startAdvertising(ip: '10.0.0.2', port: 2, deviceId: 'b');
     expect(await mSearch(search), contains('tcp://10.0.0.2:2'));
@@ -109,11 +113,60 @@ void main() {
     );
 
     // Multicast loopback depends on the host network; when it works the
-    // answer must be parsed exactly.
+    // answer must be parsed exactly. The address is the one the answer came
+    // from, an address of this host, not the one the advertiser names.
     if (result != null) {
-      expect(result.ip, '192.168.1.50');
+      final hostAddresses = {
+        InternetAddress.loopbackIPv4.address,
+        for (final interface in await NetworkInterface.list(
+          type: InternetAddressType.IPv4,
+          includeLoopback: true,
+        ))
+          for (final address in interface.addresses) address.address,
+      };
+      expect(hostAddresses, contains(result.ip));
+      expect(result.ip, isNot('192.168.1.50'));
       expect(result.port, 49153);
       expect(result.deviceId, 'local-desk');
     }
+  });
+
+  test('search takes the address the answer came from, not the one it '
+      'names', () async {
+    final responder = await RawDatagramSocket.bind(
+      InternetAddress.loopbackIPv4,
+      0,
+    );
+    addTearDown(responder.close);
+    final searchSocket = Completer<(InternetAddress, int)>();
+    // A stand-in for the multicast group: answers the first M-SEARCH sent to
+    // it with a LOCATION pointing elsewhere.
+    responder.listen((event) {
+      if (event != RawSocketEvent.read) return;
+      final datagram = responder.receive();
+      if (datagram != null && !searchSocket.isCompleted) {
+        searchSocket.complete((datagram.address, datagram.port));
+      }
+    });
+
+    final result = ssdp.search(
+      timeout: const Duration(seconds: 5),
+      expectedDeviceId: 'desk',
+      target: (InternetAddress.loopbackIPv4, responder.port),
+    );
+    final (address, port) = await searchSocket.future;
+    responder.send(
+      utf8.encode(
+        'HTTP/1.1 200 OK\r\n'
+        'ST: urn:healthwallet:device:desktop:1\r\n'
+        'LOCATION: tcp://203.0.113.9:49153\r\n'
+        'USN: uuid:desk::urn:healthwallet:device:desktop:1\r\n'
+        '\r\n',
+      ),
+      address,
+      port,
+    );
+
+    expect(await result, (ip: '127.0.0.1', port: 49153, deviceId: 'desk'));
   });
 }

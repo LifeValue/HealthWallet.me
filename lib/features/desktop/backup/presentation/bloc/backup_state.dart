@@ -10,7 +10,10 @@ abstract class BackupState with _$BackupState {
     BackupEntry? selectedBackup,
     String? backupPath,
     @Default(false) bool hasUserSelectedPath,
-    @Default(false) bool desktopBackupReady,
+
+    /// Phone: whether the desktop has a backup folder, as it last reported;
+    /// null until it reports on this connection.
+    bool? desktopBackupReady,
     @Default(0) int desktopBackupCount,
     DateTime? desktopLastBackupTime,
     String? error,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,6 +9,7 @@ import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/services/temp_file_sweeper.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/pdf_open.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
@@ -19,13 +21,50 @@ import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdfx/pdfx.dart' as pdfx;
 
-class MediaFullscreenViewer extends StatelessWidget {
+class MediaFullscreenViewer extends StatefulWidget {
   final entities.Media media;
 
   const MediaFullscreenViewer({
     super.key,
     required this.media,
   });
+
+  @override
+  State<MediaFullscreenViewer> createState() => _MediaFullscreenViewerState();
+}
+
+class _MediaFullscreenViewerState extends State<MediaFullscreenViewer> {
+  entities.Media get media => widget.media;
+
+  /// The decoded PDF, written once and deleted when the viewer closes.
+  Future<File>? _pdfFile;
+
+  bool get _hasPdfData =>
+      media.content?.contentType?.valueString?.toLowerCase() ==
+          'application/pdf' &&
+      media.content?.data?.valueString != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_hasPdfData) _pdfFile = _createTempPdfFile();
+  }
+
+  @override
+  void dispose() {
+    unawaited(_deletePdfFile());
+    super.dispose();
+  }
+
+  Future<void> _deletePdfFile() async {
+    try {
+      final file = await _pdfFile;
+      if (file != null && await file.exists()) await file.delete();
+    } catch (e, s) {
+      // The startup sweep deletes it next time.
+      logger.w('Deleting a viewed Media PDF failed', e, s);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,9 +115,7 @@ class MediaFullscreenViewer extends StatelessWidget {
   }
 
   Widget _buildPdfViewer(BuildContext context) {
-    if (media.content?.contentType?.valueString?.toLowerCase() !=
-            'application/pdf' ||
-        media.content?.data?.valueString == null) {
+    if (_pdfFile == null) {
       return _buildPlaceholder(
         context,
         Icons.picture_as_pdf,
@@ -87,7 +124,7 @@ class MediaFullscreenViewer extends StatelessWidget {
     }
 
     return FutureBuilder<File>(
-      future: _createTempPdfFile(),
+      future: _pdfFile,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.hasData) {
@@ -130,7 +167,7 @@ class MediaFullscreenViewer extends StatelessWidget {
     final bytes = base64Decode(media.content!.data!.valueString!);
     final dir = await getTemporaryDirectory();
     final file = File(
-      '${dir.path}/${media.displayTitle.replaceAll(' ', '_')}.pdf',
+      '${dir.path}/${TempFileSweeper.recordPreviewName('pdf')}',
     );
     await file.writeAsBytes(bytes, flush: true);
     if (!await file.exists()) {

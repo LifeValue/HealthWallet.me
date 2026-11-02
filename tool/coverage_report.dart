@@ -16,6 +16,8 @@ const criticalAreas = <String, String>{
   'Handover': 'lib/features/desktop/handover/data/',
   'Database + migrations': 'lib/core/data/local/',
   'FHIR record extractors': 'lib/features/records/domain/utils/',
+  'Records data': 'lib/features/records/data/',
+  'Records BLoCs': 'lib/features/records/presentation/bloc/',
   'Scan → FHIR mapping':
       'lib/features/processing/domain/entity/mapping_resources/',
   'Patient services': 'lib/features/user/domain/services/',

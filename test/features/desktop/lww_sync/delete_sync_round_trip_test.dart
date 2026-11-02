@@ -6,7 +6,7 @@ import 'package:health_wallet/core/data/local/app_database.dart'
     show AppDatabase;
 import 'package:health_wallet/features/desktop/lww_sync/data/services/attachment_sync_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/lww_sync_service.dart';
-import 'package:health_wallet/features/desktop/lww_sync/domain/entity/sync_delta.dart';
+import 'package:health_wallet/features/desktop/lww_sync/domain/entity/sync_batch.dart';
 import 'package:health_wallet/features/records/data/data_source/shared_notes_datasource.dart';
 import 'package:health_wallet/features/records/data/repository/records_repository_impl.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
@@ -25,6 +25,9 @@ class _Device {
   final LwwSyncService sync;
   final SyncLocalDataSourceImpl syncLocal;
   final RecordsRepositoryImpl records;
+
+  /// The outbox position the other device acknowledged.
+  int acked = 0;
 
   Future<List<String>> recordIds() async =>
       (await records.getResources(limit: 100)).map((r) => r.id).toList()
@@ -55,7 +58,12 @@ void main() {
         AttachmentSyncService(FakePathResolver(docs.path)),
       ),
       syncLocal,
-      RecordsRepositoryImpl(db, syncLocal, SharedNotesDatasource()),
+      RecordsRepositoryImpl(
+        db,
+        syncLocal,
+        SharedNotesDatasource(),
+        FakePathResolver(docs.path),
+      ),
     );
   }
 
@@ -74,18 +82,28 @@ void main() {
     await dirs.dispose();
   });
 
-  /// Sends every row [from] changed since [since] to [to] through the JSON
-  /// wire format, as `sync.delta` does.
-  Future<int> send(_Device from, _Device to, {DateTime? since}) async {
+  /// Sends what [from] has waiting in its outbox to [to] through the JSON
+  /// wire format, one acknowledged batch at a time, as `sync.batch` does.
+  /// With [reconcile], [from] first queues every row [to] lacks or holds an
+  /// older copy of, as a digest mismatch on connecting makes it do.
+  Future<int> send(_Device from, _Device to, {bool reconcile = false}) async {
+    if (reconcile) {
+      for (final table in LwwSyncService.syncedTables) {
+        await from.sync.queueRowsNewerThan(
+          table,
+          await to.sync.manifest(table),
+        );
+      }
+    }
     var applied = 0;
-    final deltas = await from.sync.computeAllDeltas(
-      since ?? DateTime.fromMillisecondsSinceEpoch(0),
-    );
-    for (final delta in deltas) {
-      final wire = jsonDecode(jsonEncode(delta.toJson()));
-      applied += await to.sync.applyDelta(
-        SyncDelta.fromJson(wire as Map<String, dynamic>),
-      );
+    while (true) {
+      final batch = await from.sync.nextBatch(from.acked);
+      if (batch == null) break;
+      final wire = jsonDecode(jsonEncode(batch.toJson()));
+      applied += (await to.sync.applyBatch(
+        SyncBatch.fromJson(wire as Map<String, dynamic>),
+      )).count;
+      from.acked = batch.id;
     }
     return applied;
   }
@@ -125,7 +143,7 @@ void main() {
         [ms(at(0))],
       );
     }
-    await send(phone, desktop);
+    await send(phone, desktop, reconcile: true);
     expect(await desktop.recordIds(), ['lab-1', 'obs-1', 'obs-2']);
   }
 
@@ -139,7 +157,7 @@ void main() {
     await phone.records.deleteResource('obs-1');
     await phone.records.deleteRecordNote(drop);
     await phone.syncLocal.deleteSource('lab');
-    await send(phone, desktop, since: at(1));
+    await send(phone, desktop);
 
     for (final d in [phone, desktop]) {
       expect(await d.recordIds(), ['obs-2']);
@@ -147,13 +165,13 @@ void main() {
       expect(await d.sourceIds(), ['clinic']);
     }
     expect(
-      await desktop.sync.getTableRowCounts(),
-      await phone.sync.getTableRowCounts(),
+      await desktop.sync.computeDigest(),
+      await phone.sync.computeDigest(),
     );
 
-    // The desktop resends its whole tables, as a count mismatch makes it do.
-    await send(desktop, phone);
-    await send(phone, desktop);
+    // Both reconcile everything, as on the next connection.
+    await send(desktop, phone, reconcile: true);
+    await send(phone, desktop, reconcile: true);
 
     for (final d in [phone, desktop]) {
       expect(await d.recordIds(), ['obs-2']);
@@ -166,7 +184,7 @@ void main() {
       'first', () async {
     await seedAndSync();
     await phone.records.deleteResource('obs-2');
-    await send(phone, desktop, since: at(1));
+    await send(phone, desktop);
 
     /// Moves every delete on [d] 31 days into the past, as if that device
     /// had not been opened for a month.
@@ -194,10 +212,10 @@ void main() {
     expect(await desktop.sync.cleanupTombstones(), greaterThan(0));
     expect(await rowsIn(desktop, 'record_notes'), 0);
 
-    // Full-table resends both ways: the phone's tombstones come back to the
+    // Reconciling both ways: the phone's tombstones come back to the
     // desktop as tombstones, never as live records.
-    await send(phone, desktop);
-    await send(desktop, phone);
+    await send(phone, desktop, reconcile: true);
+    await send(desktop, phone, reconcile: true);
     for (final d in [phone, desktop]) {
       expect(await d.recordIds(), ['lab-1', 'obs-1']);
       expect(await d.noteContents('obs-2'), isEmpty);
@@ -209,8 +227,8 @@ void main() {
     await ageDeletes(desktop);
     await phone.sync.cleanupTombstones();
     await desktop.sync.cleanupTombstones();
-    await send(phone, desktop);
-    await send(desktop, phone);
+    await send(phone, desktop, reconcile: true);
+    await send(desktop, phone, reconcile: true);
 
     for (final d in [phone, desktop]) {
       expect(await d.recordIds(), ['lab-1', 'obs-1']);
@@ -227,8 +245,8 @@ void main() {
       );
     }
     expect(
-      await desktop.sync.getTableRowCounts(),
-      await phone.sync.getTableRowCounts(),
+      await desktop.sync.computeDigest(),
+      await phone.sync.computeDigest(),
     );
   });
 
@@ -236,8 +254,8 @@ void main() {
     await seedAndSync();
 
     await desktop.records.deleteResourcesByIds(['obs-2']);
-    await send(desktop, phone, since: at(1));
-    await send(phone, desktop);
+    await send(desktop, phone);
+    await send(phone, desktop, reconcile: true);
 
     expect(await phone.recordIds(), ['lab-1', 'obs-1']);
     expect(await phone.noteContents('obs-2'), isEmpty);
@@ -258,8 +276,8 @@ void main() {
       "WHERE id = 'obs-1'",
       [tombstone + 1],
     );
-    await send(phone, desktop, since: at(1));
-    await send(desktop, phone, since: at(1));
+    await send(phone, desktop);
+    await send(desktop, phone);
 
     for (final d in [phone, desktop]) {
       expect(await d.recordIds(), ['lab-1', 'obs-1', 'obs-2']);
@@ -274,40 +292,34 @@ void main() {
       'desktop', () async {
     await seedAndSync();
     await phone.records.deleteResource('obs-1');
-    await send(phone, desktop, since: at(1));
-    await phone.db.customStatement(
-      'UPDATE fhir_resource SET updated_at = updated_at - 2000 '
-      "WHERE id = 'obs-1'",
-    );
-    await desktop.db.customStatement(
-      'UPDATE fhir_resource SET updated_at = updated_at - 2000 '
-      "WHERE id = 'obs-1'",
-    );
+    await send(phone, desktop);
 
+    // A re-added row is stamped when it is inserted; in the same
+    // millisecond as the delete it would tie with the tombstone.
+    await Future<void>.delayed(const Duration(milliseconds: 2));
     await phone.syncLocal.cacheFhirResources([observation('obs-1')]);
-    await send(phone, desktop, since: at(1));
-
-    expect(await desktop.recordIds(), ['lab-1', 'obs-1', 'obs-2']);
-  });
-
-  test('mixed versions: a hard delete on an old peer comes back from the '
-      'updated peer', () async {
-    await seedAndSync();
-
-    // What a peer without the delete sync change does.
-    await desktop.db.customStatement(
-      "DELETE FROM fhir_resource WHERE id = 'obs-1'",
-    );
     await send(phone, desktop);
 
     expect(await desktop.recordIds(), ['lab-1', 'obs-1', 'obs-2']);
   });
 
-  test('BUG: deleting a note deletes a different note with the same id on '
-      'the other device', () async {
-    // Each device numbers its notes with its own autoincrement, so the
-    // desktop's note #1 and the phone's note #1 are different notes that
-    // LWW treats as one row.
+  test('a row hard-deleted on one device comes back from the other', () async {
+    await seedAndSync();
+
+    // A local wipe, which is not a delete the other device learns of.
+    await desktop.db.customStatement(
+      "DELETE FROM fhir_resource WHERE id = 'obs-1'",
+    );
+    await send(phone, desktop, reconcile: true);
+
+    expect(await desktop.recordIds(), ['lab-1', 'obs-1', 'obs-2']);
+  });
+
+  test('deleting a note leaves a different note with the same id on the '
+      'other device', () async {
+    // Each device numbers its notes with its own autoincrement; they sync on
+    // their uuid, so the desktop's note #1 and the phone's note #1 stay two
+    // notes.
     await phone.records.addRecordNote(resourceId: 'obs-1', content: 'phone');
     await desktop.records.addRecordNote(
       resourceId: 'obs-9',
@@ -316,8 +328,8 @@ void main() {
     final phoneNote = (await phone.records.getRecordNotes('obs-1')).single;
 
     await phone.records.deleteRecordNote(phoneNote);
-    await send(phone, desktop);
+    await send(phone, desktop, reconcile: true);
 
     expect(await desktop.noteContents('obs-9'), ['desktop']);
-  }, skip: 'record_notes ids collide across devices; deferred');
+  });
 }

@@ -2271,7 +2271,7 @@ abstract class AppLocalizations {
   /// No description provided for @desktopSyncPendingValue.
   ///
   /// In en, this message translates to:
-  /// **'{count} changes'**
+  /// **'{count, plural, =1{1 change} other{{count} changes}}'**
   String desktopSyncPendingValue(int count);
 
   /// No description provided for @desktopSyncingTable.
@@ -3638,7 +3638,7 @@ abstract class AppLocalizations {
   /// No description provided for @syncStatusPending.
   ///
   /// In en, this message translates to:
-  /// **'{count} pending'**
+  /// **'{count, plural, =1{1 change waiting} other{{count} changes waiting}}'**
   String syncStatusPending(int count);
 
   /// No description provided for @backupLabel.
@@ -3682,6 +3682,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not connected'**
   String get backupStatusNotConnected;
+
+  /// No description provided for @backupStatusNoFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'No backup folder'**
+  String get backupStatusNoFolder;
+
+  /// No description provided for @backupStatusNoDesktopFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'No folder on desktop'**
+  String get backupStatusNoDesktopFolder;
+
+  /// No description provided for @backupNoFolderChosen.
+  ///
+  /// In en, this message translates to:
+  /// **'No folder chosen'**
+  String get backupNoFolderChosen;
+
+  /// No description provided for @chooseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose'**
+  String get chooseLabel;
 
   /// No description provided for @exportIpsPdf.
   ///
@@ -6917,6 +6941,294 @@ abstract class AppLocalizations {
   /// **'Status Reason'**
   String get fieldStatusReason;
 
+  /// FHIR status code 'active' of a record (condition, allergy, medication)
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get fhirStatusActive;
+
+  /// FHIR status code 'inactive'
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get fhirStatusInactive;
+
+  /// FHIR clinical status 'resolved' of a condition or allergy
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get fhirStatusResolved;
+
+  /// FHIR clinical status 'recurrence' of a condition
+  ///
+  /// In en, this message translates to:
+  /// **'Recurrence'**
+  String get fhirStatusRecurrence;
+
+  /// FHIR clinical status 'relapse' of a condition
+  ///
+  /// In en, this message translates to:
+  /// **'Relapse'**
+  String get fhirStatusRelapse;
+
+  /// FHIR clinical status 'remission' of a condition
+  ///
+  /// In en, this message translates to:
+  /// **'Remission'**
+  String get fhirStatusRemission;
+
+  /// FHIR verification status 'unconfirmed'
+  ///
+  /// In en, this message translates to:
+  /// **'Unconfirmed'**
+  String get fhirStatusUnconfirmed;
+
+  /// FHIR verification status 'provisional' of a condition
+  ///
+  /// In en, this message translates to:
+  /// **'Provisional'**
+  String get fhirStatusProvisional;
+
+  /// FHIR verification status 'differential' of a condition
+  ///
+  /// In en, this message translates to:
+  /// **'Differential'**
+  String get fhirStatusDifferential;
+
+  /// FHIR verification status 'confirmed'
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get fhirStatusConfirmed;
+
+  /// FHIR verification status 'refuted': the condition or allergy was ruled out
+  ///
+  /// In en, this message translates to:
+  /// **'Refuted'**
+  String get fhirStatusRefuted;
+
+  /// FHIR status 'entered-in-error': the record is not valid
+  ///
+  /// In en, this message translates to:
+  /// **'Entered in error'**
+  String get fhirStatusEnteredInError;
+
+  /// FHIR status 'on-hold'
+  ///
+  /// In en, this message translates to:
+  /// **'On hold'**
+  String get fhirStatusOnHold;
+
+  /// FHIR status 'cancelled'
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get fhirStatusCancelled;
+
+  /// FHIR status 'completed'
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get fhirStatusCompleted;
+
+  /// FHIR status 'stopped', e.g. a medication that is no longer taken
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get fhirStatusStopped;
+
+  /// FHIR status 'draft'
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get fhirStatusDraft;
+
+  /// FHIR status 'unknown'
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get fhirStatusUnknown;
+
+  /// FHIR medication statement status 'intended'
+  ///
+  /// In en, this message translates to:
+  /// **'Intended'**
+  String get fhirStatusIntended;
+
+  /// FHIR medication statement status 'not-taken'
+  ///
+  /// In en, this message translates to:
+  /// **'Not taken'**
+  String get fhirStatusNotTaken;
+
+  /// FHIR status 'in-progress'
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get fhirStatusInProgress;
+
+  /// FHIR status 'not-done', e.g. an immunization that was not given
+  ///
+  /// In en, this message translates to:
+  /// **'Not done'**
+  String get fhirStatusNotDone;
+
+  /// FHIR status 'preparation'
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation'**
+  String get fhirStatusPreparation;
+
+  /// FHIR medication dispense status 'declined'
+  ///
+  /// In en, this message translates to:
+  /// **'Declined'**
+  String get fhirStatusDeclined;
+
+  /// FHIR observation status 'registered'
+  ///
+  /// In en, this message translates to:
+  /// **'Registered'**
+  String get fhirStatusRegistered;
+
+  /// FHIR observation status 'preliminary'
+  ///
+  /// In en, this message translates to:
+  /// **'Preliminary'**
+  String get fhirStatusPreliminary;
+
+  /// FHIR observation status 'final'
+  ///
+  /// In en, this message translates to:
+  /// **'Final'**
+  String get fhirStatusFinal;
+
+  /// FHIR observation status 'amended'
+  ///
+  /// In en, this message translates to:
+  /// **'Amended'**
+  String get fhirStatusAmended;
+
+  /// FHIR observation status 'corrected'
+  ///
+  /// In en, this message translates to:
+  /// **'Corrected'**
+  String get fhirStatusCorrected;
+
+  /// Label of an observation's interpretation flag (high, low, critical)
+  ///
+  /// In en, this message translates to:
+  /// **'Interpretation'**
+  String get fieldInterpretation;
+
+  /// Observation interpretation code H
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get interpretationHigh;
+
+  /// Observation interpretation code L
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get interpretationLow;
+
+  /// Observation interpretation code N
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get interpretationNormal;
+
+  /// Observation interpretation code A
+  ///
+  /// In en, this message translates to:
+  /// **'Abnormal'**
+  String get interpretationAbnormal;
+
+  /// Observation interpretation code AA
+  ///
+  /// In en, this message translates to:
+  /// **'Critically abnormal'**
+  String get interpretationCriticallyAbnormal;
+
+  /// Observation interpretation code HH
+  ///
+  /// In en, this message translates to:
+  /// **'Critically high'**
+  String get interpretationCriticallyHigh;
+
+  /// Observation interpretation code LL
+  ///
+  /// In en, this message translates to:
+  /// **'Critically low'**
+  String get interpretationCriticallyLow;
+
+  /// Observation interpretation code HU
+  ///
+  /// In en, this message translates to:
+  /// **'Significantly high'**
+  String get interpretationSignificantlyHigh;
+
+  /// Observation interpretation code LU
+  ///
+  /// In en, this message translates to:
+  /// **'Significantly low'**
+  String get interpretationSignificantlyLow;
+
+  /// Observation interpretation code I (antimicrobial susceptibility)
+  ///
+  /// In en, this message translates to:
+  /// **'Intermediate'**
+  String get interpretationIntermediate;
+
+  /// Observation interpretation code R (antimicrobial susceptibility)
+  ///
+  /// In en, this message translates to:
+  /// **'Resistant'**
+  String get interpretationResistant;
+
+  /// Observation interpretation code S (antimicrobial susceptibility)
+  ///
+  /// In en, this message translates to:
+  /// **'Susceptible'**
+  String get interpretationSusceptible;
+
+  /// Observation interpretation code POS
+  ///
+  /// In en, this message translates to:
+  /// **'Positive'**
+  String get interpretationPositive;
+
+  /// Observation interpretation code NEG
+  ///
+  /// In en, this message translates to:
+  /// **'Negative'**
+  String get interpretationNegative;
+
+  /// Observation interpretation code DET
+  ///
+  /// In en, this message translates to:
+  /// **'Detected'**
+  String get interpretationDetected;
+
+  /// Observation interpretation code ND
+  ///
+  /// In en, this message translates to:
+  /// **'Not detected'**
+  String get interpretationNotDetected;
+
+  /// Observation interpretation code IND
+  ///
+  /// In en, this message translates to:
+  /// **'Indeterminate'**
+  String get interpretationIndeterminate;
+
+  /// Observation interpretation code E
+  ///
+  /// In en, this message translates to:
+  /// **'Equivocal'**
+  String get interpretationEquivocal;
+
   /// No description provided for @fieldStrength.
   ///
   /// In en, this message translates to:
@@ -7732,6 +8044,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'\"{name}\" has been restored. {count} records are now on this device.'**
   String desktopRestoreSucceededMessage(String name, int count);
+
+  /// Shown in a received share when the receiver taps a file that is neither an image nor a PDF; it is not handed to other apps.
+  ///
+  /// In en, this message translates to:
+  /// **'This type of file can\'t be shown in shared records.'**
+  String get sharedFileNotPreviewable;
+
+  /// No description provided for @desktopWaitingForApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the desktop to accept this phone…'**
+  String get desktopWaitingForApproval;
+
+  /// No description provided for @desktopPairingRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'The desktop no longer recognises this phone. Scan its QR code again.'**
+  String get desktopPairingRejected;
+
+  /// No description provided for @desktopPairingDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'The desktop declined this phone.'**
+  String get desktopPairingDeclined;
+
+  /// No description provided for @desktopUpdateDesktopApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Update HealthWallet on the desktop, then try again.'**
+  String get desktopUpdateDesktopApp;
+
+  /// No description provided for @desktopUpdatePhoneApp.
+  ///
+  /// In en, this message translates to:
+  /// **'A phone with an older version of HealthWallet tried to connect. Update the app on the phone.'**
+  String get desktopUpdatePhoneApp;
+
+  /// No description provided for @desktopQrOutdated.
+  ///
+  /// In en, this message translates to:
+  /// **'This QR code is from an older version of HealthWallet. Update the app on the desktop and scan its new code.'**
+  String get desktopQrOutdated;
+
+  /// No description provided for @desktopQrInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'This QR code can\'t be used for pairing. Show a new one on the desktop.'**
+  String get desktopQrInvalid;
+
+  /// No description provided for @desktopNoNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'This desktop isn\'t connected to a network. Connect it to Wi-Fi to pair a phone.'**
+  String get desktopNoNetwork;
+
+  /// No description provided for @desktopFirewallHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If your phone can\'t find this desktop, allow HealthWallet through Windows Firewall on private networks.'**
+  String get desktopFirewallHint;
+
+  /// No description provided for @desktopApprovePhoneMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{phone}\" wants to connect to this desktop.\n\nIt will replace \"{current}\" and receive the health records stored here.\n\nAllow it?'**
+  String desktopApprovePhoneMessage(String phone, String current);
+
+  /// No description provided for @desktopPairedPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Paired phone'**
+  String get desktopPairedPhone;
+
+  /// No description provided for @desktopNewQrUnpairsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A new QR code unpairs this phone; use it to pair a different one.'**
+  String get desktopNewQrUnpairsHint;
+
+  /// No description provided for @desktopNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Desktop not found. Make sure HealthWallet is open on it and both devices are on the same network.'**
+  String get desktopNotFound;
 
   /// No description provided for @desktopBackupSucceededMessage.
   ///

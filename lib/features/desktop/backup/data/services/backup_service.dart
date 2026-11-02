@@ -162,20 +162,38 @@ class BackupService {
           .toList();
 
       await _database.transaction(() async {
-        // Tables are replaced one by one, so midway a note can still point at
-        // a source that is already gone. Check foreign keys once, at commit,
-        // against the restored data.
+        // Tables are declared parents first: delete in reverse so no row is
+        // left pointing at a deleted one, then insert in order. Foreign keys
+        // are still checked once, at commit, against the restored data, in
+        // case a backup holds a row whose parent comes later.
         await _database.customStatement('PRAGMA defer_foreign_keys = ON');
-        for (final name in tables) {
+        for (final name in tables.reversed) {
           await _database.customStatement('DELETE FROM main."$name"');
+        }
+        for (final name in tables) {
+          // Only the columns both have, so a backup from an older schema
+          // restores; newer columns take their defaults and triggers.
+          final backupColumns = await _columnNames('backup_db', name);
+          final columns = [
+            for (final c in await _columnNames('main', name))
+              if (backupColumns.contains(c)) '"$c"',
+          ].join(', ');
           await _database.customStatement(
-            'INSERT INTO main."$name" SELECT * FROM backup_db."$name"',
+            'INSERT INTO main."$name" ($columns) '
+            'SELECT $columns FROM backup_db."$name"',
           );
         }
       });
     } finally {
       await _database.customStatement('DETACH DATABASE backup_db');
     }
+  }
+
+  Future<List<String>> _columnNames(String schema, String table) async {
+    final rows = await _database
+        .customSelect('PRAGMA $schema.table_info("$table")')
+        .get();
+    return [for (final r in rows) r.data['name'] as String];
   }
 
   Future<Set<String>> _tableNames(String schema) async {

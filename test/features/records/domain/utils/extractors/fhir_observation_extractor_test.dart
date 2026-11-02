@@ -135,6 +135,64 @@ void main() {
       },
     );
 
+    test('keeps the comparator of a Quantity', () {
+      expect(
+        FhirObservationExtractor.extractObservationValue(
+          _value({
+            'valueQuantity': {
+              ...quantity(60, unit: 'mL/min/1.73m2'),
+              'comparator': '>',
+            },
+          }),
+        ),
+        '>60.00 mL/min/1.73m2',
+      );
+      expect(
+        FhirObservationExtractor.extractObservationValueForRegion(
+          _value({
+            'valueQuantity': {
+              ...quantity(20, unit: 'copies/mL'),
+              'comparator': '<',
+            },
+          }),
+          RegionPreset.europe,
+          measured: null,
+        ),
+        '<20.00 copies/mL',
+      );
+      expect(
+        FhirObservationExtractor.extractObservationValueForRegion(
+          _value({
+            'valueQuantity': {
+              ...quantity(70, unit: 'mg/dL'),
+              'comparator': '<=',
+            },
+          }),
+          RegionPreset.europe,
+          measured: PatientVitalType.bloodGlucose,
+        ),
+        '<=3.88 mmol/L',
+      );
+    });
+
+    test('falls back to the UCUM code of a Quantity without unit', () {
+      expect(
+        FhirObservationExtractor.extractObservationValue(
+          _value({'valueQuantity': quantity(7.2, code: 'mmol/L')}),
+        ),
+        '7.20 mmol/L',
+      );
+    });
+
+    test('returns null for a Quantity without value', () {
+      expect(
+        FhirObservationExtractor.extractObservationValue(
+          _value({'valueQuantity': quantity(null, unit: 'mmHg')}),
+        ),
+        isNull,
+      );
+    });
+
     test(
       'does not print "null" for an open Range',
       () {
@@ -144,7 +202,15 @@ void main() {
               'valueRange': {'high': quantity(5)},
             }),
           ),
-          isNot(contains('null')),
+          '≤ 5.00',
+        );
+        expect(
+          FhirObservationExtractor.extractObservationValue(
+            _value({
+              'valueRange': {'low': quantity(1, unit: 'mmol/L')},
+            }),
+          ),
+          '≥ 1.00 mmol/L',
         );
       },
     );
@@ -407,6 +473,17 @@ void main() {
       );
     });
 
+    test('shows a non-glucose mg/dL lab as reported', () {
+      expect(
+        FhirObservationExtractor.extractObservationValueForRegion(
+          _value({'valueQuantity': quantity(200, unit: 'mg/dL')}),
+          RegionPreset.europe,
+          measured: null,
+        ),
+        '200.00 mg/dL',
+      );
+    });
+
     test('returns only the ft/in display for heights in the US', () {
       expect(
         FhirObservationExtractor.extractObservationValueForRegion(
@@ -423,6 +500,17 @@ void main() {
           measured: PatientVitalType.height,
         ),
         '175.00 cm',
+      );
+    });
+
+    test('keeps a length that is not a body height', () {
+      expect(
+        FhirObservationExtractor.extractObservationValueForRegion(
+          _value({'valueQuantity': quantity(2.3, unit: 'cm')}),
+          RegionPreset.us,
+          measured: null,
+        ),
+        '2.30 cm',
       );
     });
 

@@ -2,294 +2,687 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
-import 'dart:math';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/desktop/communication/data/services/link_protocol.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/transport/communication_service.dart';
 import 'package:injectable/injectable.dart';
-import 'package:pointycastle/export.dart';
 
-enum MessageType {
-  hello(0x01),
-  ack(0x02),
-  ping(0x03),
-  pong(0x04),
-  data(0x05),
-  kill(0xFF);
+export 'link_protocol.dart'
+    show
+        LinkException,
+        LinkFailure,
+        LinkNotConnectedException,
+        LinkTimings,
+        MessageType,
+        PeerInfo,
+        TcpMessage,
+        discoveryToken,
+        isValidPairingKey;
 
-  final int code;
-  const MessageType(this.code);
+enum ConnectionState { disconnected, connecting, awaitingApproval, connected }
 
-  static MessageType fromCode(int code) {
-    return MessageType.values.firstWhere(
-      (t) => t.code == code,
-      orElse: () => throw ArgumentError('Unknown message type: $code'),
-    );
-  }
+enum LinkTransport { tcp, mpc }
+
+/// A phone that proved it holds the pairing key but isn't the paired one;
+/// the desktop's user decides.
+class PendingApproval {
+  const PendingApproval(this.peer);
+
+  final PeerInfo peer;
 }
 
-class TcpMessage {
-  final MessageType type;
-  final Uint8List payload;
-
-  const TcpMessage({required this.type, required this.payload});
-
-  TcpMessage.fromString({required this.type, required String data})
-    : payload = Uint8List.fromList(utf8.encode(data));
-
-  String get payloadString => utf8.decode(payload);
-}
-
-enum ConnectionState { disconnected, connecting, connected }
-
-class _IsolateServerConfig {
-  final SendPort mainPort;
-  final int port;
-
-  _IsolateServerConfig(this.mainPort, this.port);
-}
-
+/// The link between the phone and the desktop, over TCP or MPC: the phone
+/// connects as a client, the desktop listens. One verified session is active
+/// at a time; on the desktop the newest verified one replaces the previous,
+/// so a phone that reconnects after a drop is never locked out by its own
+/// half-open socket.
 @lazySingleton
 class TcpService {
   static const defaultPort = 49152;
 
-  /// Largest frame accepted from a server client before its hello is
-  /// verified. A hello is a few hundred bytes.
-  static const maxUnauthenticatedFrameBytes = 64 * 1024;
+  /// Sockets the desktop holds at once, verified or not.
+  static const maxServerSockets = 8;
 
-  /// Largest frame accepted once the peer is known (large LWW deltas and
-  /// `file_data` messages).
-  static const maxFrameBytes = 1024 * 1024 * 1024;
-
-  static const _maxPendingBytes = maxUnauthenticatedFrameBytes + 4;
-
-  /// How long a server client has to send a valid hello before it is closed.
-  /// Generous for slow networks and phones just waking up; a paired phone
-  /// sends its hello right after connecting.
   @visibleForTesting
-  Duration helloTimeout = const Duration(seconds: 15);
+  LinkTimings timings = const LinkTimings();
 
-  /// How often a client pings the server, and how long it waits for the
-  /// pong before treating the link as dead.
-  @visibleForTesting
-  Duration pingInterval = const Duration(seconds: 10);
-  @visibleForTesting
-  Duration pingTimeout = const Duration(seconds: 5);
+  /// The name sent in the hello; the device's own name when unset.
+  String? deviceDisplayName;
 
-  Isolate? _serverIsolate;
-  SendPort? _isolateSendPort;
-  Socket? _clientSocket;
-  Timer? _pingTimer;
-  Timer? _pingTimeoutTimer;
-
-  String? _pairingKey;
   final _messageController = StreamController<TcpMessage>.broadcast();
   final _connectionStateController =
       StreamController<ConnectionState>.broadcast();
-  final _pendingClientController = StreamController<String>.broadcast();
+  final _approvalController = StreamController<PendingApproval?>.broadcast();
+  final _approvedController = StreamController<PeerInfo>.broadcast();
+  final _serverFailureController = StreamController<LinkFailure>.broadcast();
 
   ConnectionState _state = ConnectionState.disconnected;
-  Uint8List _buffer = Uint8List(0);
-  Completer<void>? _writeLock;
+  bool _disposed = false;
+  SecureChannel? _active;
+  LinkTransport? _activeTransport;
 
-  /// The server isolate's id for the current client, null without one.
-  int? _serverClientId;
+  // Client (phone).
+  SecureChannel? _clientChannel;
 
-  /// Whether the current server client has sent a hello with the pairing
-  /// key's hash. Until then only a hello is read from it.
-  bool _serverClientVerified = false;
-  Timer? _helloTimer;
+  // Server (desktop).
+  Isolate? _serverIsolate;
+  SendPort? _isolatePort;
+  ReceivePort? _receivePort;
+  final _serverSockets = <int, _ServerSocket>{};
+  List<String> _serverKeys = const [];
+  String? _serverId;
+  String _serverName = '';
+  String? _pairedPeerId;
+  SecureChannel? _pendingApproval;
 
-  CommunicationService? _mpcTransport;
+  // MPC.
+  CommunicationService? _mpc;
+  bool _mpcAsServer = false;
+  StreamSubscription? _mpcStateSub;
   StreamSubscription? _mpcDataSub;
-  bool _useMpc = false;
+  SecureChannel? _mpcChannel;
+  MpcFramer? _mpcFramer;
+  _ClientConfig? _mpcClientConfig;
 
-  void setMpcTransport(CommunicationService? transport) {
-    _mpcDataSub?.cancel();
-    _mpcTransport = transport;
-    if (transport != null) {
-      _mpcDataSub = transport.dataStream.listen(_onMpcData);
-    }
-  }
-
-  void setUseMpc(bool value) {
-    _useMpc = value;
-    if (value) {
-      debugPrint('[TCP] Routing data through MPC transport');
-    }
-  }
-
-  void setPairingKeyForMpc(String key) {
-    _pairingKey = key;
-  }
-
-  Future<void> sendMpcHello() async {
-    var name = deviceDisplayName;
-    if (name == null || name.isEmpty || name == 'localhost') {
-      name = await _getDeviceName();
-    }
-    debugPrint('[MPC] Sending hello as: "$name"');
-    await sendMessage(
-      TcpMessage.fromString(
-        type: MessageType.hello,
-        data: jsonEncode({
-          'pairing_key_hash': _pairingKey != null ? _hashKey(_pairingKey!) : '',
-          'device_name': name,
-        }),
-      ),
-    );
-  }
-
-  void _onMpcData(Uint8List data) {
-    try {
-      final decrypted = _decrypt(data);
-      final type = MessageType.fromCode(decrypted[0]);
-      final payload = decrypted.sublist(1);
-
-      final message = TcpMessage(type: type, payload: payload);
-      if (type != MessageType.ping && type != MessageType.pong) {
-        debugPrint('[MPC] Received: ${type.name}');
-      }
-      _handleMessage(message);
-    } catch (e) {
-      debugPrint('[MPC] Decrypt/parse failed: $e');
-    }
-  }
-
+  /// Application (`data`) messages of the verified session.
   Stream<TcpMessage> get messages => _messageController.stream;
   Stream<ConnectionState> get connectionState =>
       _connectionStateController.stream;
-  Stream<String> get pendingClients => _pendingClientController.stream;
   ConnectionState get currentState => _state;
   bool get isConnected => _state == ConnectionState.connected;
 
-  Future<({String ip, int port})> startServer({
+  /// The verified device at the other end, while connected.
+  PeerInfo? get peer => _active?.peer;
+  LinkTransport? get transport => _active == null ? null : _activeTransport;
+
+  /// Why the other side ended the last verified session, when it said:
+  /// `user` (its user disconnected) or `shutdown` (the app quit).
+  String? lastPeerCloseReason;
+
+  /// Phone: why its last session ended, e.g. [LinkFailure.declined] after
+  /// waiting for the desktop's user.
+  LinkFailure? lastClientFailure;
+
+  /// Which pairing key the connected phone used: 0 the current one, 1 the
+  /// one the desktop is moving to.
+  int? get activeKeyIndex => _active?.keyIndex;
+
+  /// Desktop: a phone waiting for the user's decision, or null once decided.
+  Stream<PendingApproval?> get approvalRequests => _approvalController.stream;
+  PendingApproval? get pendingApproval {
+    final peer = _pendingApproval?.peer;
+    return peer == null ? null : PendingApproval(peer);
+  }
+
+  /// Desktop: a phone that became the paired one, by approval or as the first
+  /// phone to pair.
+  Stream<PeerInfo> get peerApproved => _approvedController.stream;
+
+  /// Desktop: why connections that never became ready ended.
+  Stream<LinkFailure> get serverFailures => _serverFailureController.stream;
+
+  // ---------------------------------------------------------------------------
+  // Sending
+
+  /// Sends an application message on the verified session. Throws
+  /// [LinkNotConnectedException] without one.
+  Future<void> sendData(String type, Map<String, dynamic> payload) async {
+    final channel = _active;
+    if (channel == null || !channel.isReady) {
+      throw const LinkNotConnectedException();
+    }
+    final data = utf8.encode(jsonEncode({'type': type, 'payload': payload}));
+    await channel.send(MessageType.data, Uint8List.fromList(data));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Client (phone)
+
+  /// Connects to the desktop at [ip]:[port] and completes once it accepted
+  /// the session, or once it asks its user to accept this phone (the state is
+  /// then [ConnectionState.awaitingApproval]). Throws [LinkException] when the
+  /// desktop rejects the phone or doesn't answer, and [SocketException] when
+  /// nothing listens there.
+  Future<void> connectToServer({
+    required String ip,
+    required int port,
     required String pairingKey,
+    required String expectedDeviceId,
+    required String localDeviceId,
+    Duration timeout = const Duration(seconds: 10),
+  }) async {
+    await _closeClient();
+    _updateState(ConnectionState.connecting);
+
+    final Socket socket;
+    try {
+      socket = await Socket.connect(
+        ip,
+        port,
+        timeout: const Duration(seconds: 5),
+      );
+    } catch (e) {
+      _refreshState();
+      rethrow;
+    }
+
+    final endpoint = _SocketEndpoint(socket);
+    final SecureChannel channel;
+    try {
+      channel = SecureChannel.client(
+        endpoint: endpoint,
+        pairingKey: pairingKey,
+        localId: localDeviceId,
+        localName: await _localName(),
+        expectedPeerId: expectedDeviceId,
+        timings: timings,
+      );
+    } on FormatException {
+      socket.destroy();
+      _refreshState();
+      rethrow;
+    }
+    _clientChannel = channel;
+    final reader = FrameReader(
+      maxFrame: () => channel.maxFrame,
+      onFrame: channel.receive,
+      onTooLarge: (length) => channel.lowerClosed(),
+    );
+    socket.listen(
+      reader.add,
+      onError: (Object e) => channel.lowerClosed(),
+      onDone: channel.lowerClosed,
+      cancelOnError: true,
+    );
+    _track(channel, LinkTransport.tcp, server: false);
+    channel.start();
+
+    await _await(channel, timeout);
+  }
+
+  Future<void> _await(SecureChannel channel, Duration timeout) async {
+    try {
+      await channel.established.timeout(timeout);
+    } on TimeoutException {
+      await channel.close(sendKill: false);
+      throw const LinkException(LinkFailure.noAnswer, 'timed out');
+    }
+  }
+
+  Future<void> _closeClient() async {
+    final channel = _clientChannel;
+    _clientChannel = null;
+    await channel?.close();
+  }
+
+  Future<String> _localName() async {
+    final name = deviceDisplayName;
+    if (name != null && name.isNotEmpty && name != 'localhost') return name;
+    return _getDeviceName();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Server (desktop)
+
+  /// Listens for phones on [port] (a free port when it is taken) on every
+  /// interface, so a new address after a network change still reaches it.
+  /// [pairingKeys] are the current key and, while the desktop moves to a new
+  /// one, that key. Returns the port.
+  Future<int> startServer({
+    required List<String> pairingKeys,
+    required String deviceId,
+    required String deviceName,
+    required String? pairedPeerId,
     int port = defaultPort,
   }) async {
     await stopServer();
-    _pairingKey = pairingKey;
+    _serverKeys = pairingKeys;
+    _serverId = deviceId;
+    _serverName = deviceName;
+    _pairedPeerId = pairedPeerId;
 
     final receivePort = ReceivePort();
-    final config = _IsolateServerConfig(receivePort.sendPort, port);
-
-    _serverIsolate = await Isolate.spawn(_isolateServer, config);
-
-    final completer = Completer<({String ip, int port})>();
+    _receivePort = receivePort;
+    final listening = Completer<int>();
 
     receivePort.listen((message) {
-      if (message is Map) {
-        final type = message['type'] as String;
-
-        if (type == 'listening') {
-          final actualPort = message['port'] as int;
-          final ip = message['ip'] as String;
-          completer.complete((ip: ip, port: actualPort));
-        } else if (type == 'sendPort') {
-          _isolateSendPort = message['sendPort'] as SendPort;
-        } else if (type == 'clientConnected') {
-          _onServerClientConnected(message['id'] as int?);
-        } else if (type == 'newClientPending') {
-          final address = message['address'] as String? ?? 'unknown';
-          _pendingClientController.add(address);
-        } else if (type == 'data') {
-          final data = Uint8List.fromList(
-            (message['bytes'] as List).cast<int>(),
-          );
-          _onData(data);
-        } else if (type == 'clientDisconnected') {
-          _onServerClientDisconnected();
-        }
+      if (message is! Map) return;
+      switch (message['type']) {
+        case 'commands':
+          _isolatePort = message['port'] as SendPort;
+        case 'listening':
+          if (!listening.isCompleted) {
+            listening.complete(message['port'] as int);
+          }
+        case 'error':
+          final error = message['message'] as String? ?? 'unknown';
+          logger.e('[TCP] server failed: $error');
+          if (!listening.isCompleted) {
+            listening.completeError(SocketException(error));
+          }
+        case 'opened':
+          _onSocketOpened(message['id'] as int);
+        case 'data':
+          final bytes = (message['bytes'] as TransferableTypedData)
+              .materialize()
+              .asUint8List();
+          _serverSockets[message['id']]?.reader.add(bytes);
+        case 'flushed':
+          _serverSockets[message['id']]?.endpoint.flushed();
+        case 'closed':
+          final socket = _serverSockets.remove(message['id']);
+          socket?.reader.stop();
+          socket?.endpoint.closedBelow();
+          socket?.channel.lowerClosed();
+        case 'stopped':
+          break;
       }
     });
 
-    return completer.future;
+    _serverIsolate = await Isolate.spawn(
+      _isolateServer,
+      _IsolateServerConfig(receivePort.sendPort, port, maxServerSockets),
+    );
+
+    try {
+      return await listening.future.timeout(const Duration(seconds: 10));
+    } catch (e) {
+      await stopServer();
+      rethrow;
+    }
   }
 
+  /// Desktop: the keys a phone may use, after a pairing or a key change.
+  void updateServerKeys(List<String> pairingKeys) {
+    _serverKeys = pairingKeys;
+  }
+
+  /// Desktop: the phone that connects without asking, null for "none yet"
+  /// (the first phone to pair is accepted).
+  void setPairedPeer(String? deviceId) {
+    _pairedPeerId = deviceId;
+  }
+
+  bool _isPairedPeer(String deviceId) =>
+      _pairedPeerId == null || _pairedPeerId == deviceId;
+
+  void _onSocketOpened(int id) {
+    final endpoint = _IsolateEndpoint(id, this);
+    final SecureChannel channel;
+    try {
+      channel = SecureChannel.server(
+        endpoint: endpoint,
+        pairingKeys: _serverKeys,
+        localId: _serverId!,
+        localName: _serverName,
+        isPairedPeer: _isPairedPeer,
+        timings: timings,
+      );
+    } catch (e) {
+      logger.e('[TCP] server keys unusable', e);
+      _isolatePort?.send({'type': 'close', 'id': id});
+      return;
+    }
+    final reader = FrameReader(
+      maxFrame: () => channel.maxFrame,
+      onFrame: channel.receive,
+      onTooLarge: (length) => channel.close(sendKill: false),
+    );
+    _serverSockets[id] = _ServerSocket(endpoint, channel, reader);
+    _track(channel, LinkTransport.tcp, server: true);
+    channel.start();
+  }
+
+  /// Desktop: the user accepted the waiting phone.
+  void approvePending() {
+    final channel = _pendingApproval;
+    _pendingApproval = null;
+    _emit(_approvalController, null);
+    channel?.approve();
+  }
+
+  /// Desktop: the user declined the waiting phone.
+  void declinePending() {
+    final channel = _pendingApproval;
+    _pendingApproval = null;
+    _emit(_approvalController, null);
+    channel?.decline();
+  }
+
+  Future<void> stopServer() async {
+    final isolate = _serverIsolate;
+    final port = _isolatePort;
+    _serverIsolate = null;
+    _isolatePort = null;
+    for (final socket in _serverSockets.values.toList()) {
+      await socket.channel.close(sendKill: socket.channel == _active);
+    }
+    _serverSockets.clear();
+    if (isolate != null) {
+      final exited = ReceivePort();
+      isolate.addOnExitListener(exited.sendPort);
+      port?.send({'type': 'stop'});
+      // The isolate closes its sockets and exits by itself; it is killed
+      // only if it hangs.
+      await exited.first.timeout(
+        const Duration(seconds: 3),
+        onTimeout: () {
+          isolate.kill(priority: Isolate.immediate);
+          return null;
+        },
+      );
+      exited.close();
+    }
+    _receivePort?.close();
+    _receivePort = null;
+    if (_pendingApproval != null) {
+      _pendingApproval = null;
+      _emit(_approvalController, null);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // MPC
+
+  /// Routes the MPC transport through the same handshake: the desktop
+  /// ([asServer]) answers phones, the phone connects with
+  /// [connectOverMpc].
+  void attachMpc(CommunicationService? transport, {required bool asServer}) {
+    _mpcStateSub?.cancel();
+    _mpcDataSub?.cancel();
+    _mpc = transport;
+    _mpcAsServer = asServer;
+    if (transport == null) return;
+    _mpcStateSub = transport.stateStream.listen((state) {
+      if (state == CommunicationState.connected) {
+        unawaited(_onMpcConnected());
+      } else if (state == CommunicationState.disconnected) {
+        _mpcFramer?.stop();
+        _mpcChannel?.lowerClosed();
+      }
+    });
+    _mpcDataSub = transport.dataStream.listen(
+      (piece) => _mpcFramer?.add(piece),
+    );
+  }
+
+  /// Phone: runs the handshake over MPC once the transport connects, within
+  /// [timeout].
+  Future<void> connectOverMpc({
+    required String pairingKey,
+    required String expectedDeviceId,
+    required String localDeviceId,
+    Duration timeout = const Duration(seconds: 15),
+  }) async {
+    final mpc = _mpc;
+    if (mpc == null) throw const LinkException(LinkFailure.noAnswer, 'no MPC');
+    final config = _ClientConfig(
+      pairingKey: pairingKey,
+      expectedDeviceId: expectedDeviceId,
+      localDeviceId: localDeviceId,
+    );
+    _mpcClientConfig = config;
+    _updateState(ConnectionState.connecting);
+    if (mpc.currentState == CommunicationState.connected &&
+        _mpcChannel == null) {
+      unawaited(_onMpcConnected());
+    }
+    final deadline = DateTime.now().add(timeout);
+    while (_mpcChannel == null || _mpcChannel!.state == ChannelState.closed) {
+      if (DateTime.now().isAfter(deadline) || _mpcClientConfig != config) {
+        _mpcClientConfig = null;
+        _refreshState();
+        throw const LinkException(LinkFailure.noAnswer, 'MPC not connected');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+    final remaining = deadline.difference(DateTime.now());
+    await _await(
+      _mpcChannel!,
+      remaining.isNegative ? Duration.zero : remaining,
+    );
+  }
+
+  /// Phone: stops waiting for or using MPC.
+  void cancelMpcClient() {
+    _mpcClientConfig = null;
+    _mpcChannel?.close(sendKill: false);
+  }
+
+  Future<void> _onMpcConnected() async {
+    final mpc = _mpc;
+    if (mpc == null) return;
+    // Cleared first, so closing the old session doesn't disconnect the new
+    // MPC link.
+    final old = _mpcChannel;
+    _mpcChannel = null;
+    unawaited(old?.close(sendKill: false));
+
+    if (!_mpcAsServer) {
+      final config = _mpcClientConfig;
+      // Not asked for, or the phone already has a working TCP link.
+      if (config == null || (_active?.isReady ?? false)) {
+        unawaited(mpc.disconnect());
+        return;
+      }
+    }
+
+    final endpoint = _MpcEndpoint(mpc);
+    final SecureChannel channel;
+    try {
+      if (_mpcAsServer) {
+        channel = SecureChannel.server(
+          endpoint: endpoint,
+          pairingKeys: _serverKeys,
+          localId: _serverId!,
+          localName: _serverName,
+          isPairedPeer: _isPairedPeer,
+          timings: timings,
+        );
+      } else {
+        final config = _mpcClientConfig!;
+        channel = SecureChannel.client(
+          endpoint: endpoint,
+          pairingKey: config.pairingKey,
+          localId: config.localDeviceId,
+          localName: await _localName(),
+          expectedPeerId: config.expectedDeviceId,
+          timings: timings,
+        );
+      }
+    } catch (e) {
+      logger.e('[MPC] no usable pairing key', e);
+      unawaited(mpc.disconnect());
+      return;
+    }
+    _mpcChannel = channel;
+    _mpcFramer = MpcFramer(
+      maxFrame: () => channel.maxFrame,
+      onFrame: channel.receive,
+      onTooLarge: (length) => channel.close(sendKill: false),
+    );
+    _track(channel, LinkTransport.mpc, server: _mpcAsServer);
+    channel.start();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Sessions
+
+  void _track(
+    SecureChannel channel,
+    LinkTransport transport, {
+    required bool server,
+  }) {
+    channel.messages.listen((message) {
+      if (channel == _active) _emit(_messageController, message);
+    });
+    channel.states.listen(
+      (state) => _onChannelState(channel, transport, state, server: server),
+    );
+  }
+
+  void _onChannelState(
+    SecureChannel channel,
+    LinkTransport transport,
+    ChannelState state, {
+    required bool server,
+  }) {
+    switch (state) {
+      case ChannelState.handshaking:
+        break;
+      case ChannelState.awaitingApproval:
+        if (server) {
+          final previous = _pendingApproval;
+          _pendingApproval = channel;
+          // A newer request replaces an unanswered older one.
+          previous?.decline();
+          _emit(_approvalController, PendingApproval(channel.peer!));
+        } else {
+          _refreshState();
+        }
+      case ChannelState.ready:
+        final previous = _active;
+        _active = channel;
+        _activeTransport = transport;
+        if (previous != null && previous != channel) {
+          unawaited(previous.close());
+        }
+        if (server) {
+          final peer = channel.peer!;
+          if (_pairedPeerId != peer.deviceId) {
+            _pairedPeerId = peer.deviceId;
+            _emit(_approvedController, peer);
+          }
+        } else if (transport == LinkTransport.tcp) {
+          // A working TCP link; MPC isn't needed.
+          cancelMpcClient();
+        }
+        _refreshState();
+      case ChannelState.closed:
+        if (channel == _pendingApproval) {
+          _pendingApproval = null;
+          _emit(_approvalController, null);
+        }
+        final failure = channel.failure;
+        if (server &&
+            (failure == LinkFailure.version ||
+                failure == LinkFailure.unknownKey)) {
+          _emit(_serverFailureController, failure!);
+        }
+        if (!server) lastClientFailure = channel.failure;
+        if (channel == _clientChannel) _clientChannel = null;
+        if (channel == _mpcChannel) {
+          _mpcChannel = null;
+          _mpcFramer = null;
+          // The desktop advertises again; the phone stops browsing.
+          final mpc = _mpc;
+          if (mpc != null) unawaited(mpc.disconnect());
+        }
+        if (channel == _active) {
+          _active = null;
+          _activeTransport = null;
+          lastPeerCloseReason = channel.peerCloseReason;
+        }
+        _refreshState();
+    }
+  }
+
+  /// Derives the state from the sessions: connected while one is verified,
+  /// otherwise what the phone's attempt is doing.
+  void _refreshState() {
+    final ConnectionState next;
+    if (_active?.isReady ?? false) {
+      next = ConnectionState.connected;
+    } else if (_clientChannel?.state == ChannelState.awaitingApproval ||
+        (!_mpcAsServer &&
+            _mpcChannel?.state == ChannelState.awaitingApproval)) {
+      next = ConnectionState.awaitingApproval;
+    } else if (_clientChannel != null ||
+        (!_mpcAsServer && (_mpcClientConfig != null || _mpcChannel != null))) {
+      next = ConnectionState.connecting;
+    } else {
+      next = ConnectionState.disconnected;
+    }
+    _updateState(next);
+  }
+
+  void _updateState(ConnectionState state) {
+    if (_state == state) return;
+    _state = state;
+    if (!_disposed) _connectionStateController.add(state);
+  }
+
+  /// Ends the verified session, telling the peer why ([reason]: `user` by
+  /// default, `shutdown` when the app quits). The desktop keeps listening.
+  Future<void> disconnect({String reason = 'user'}) async {
+    final active = _active;
+    _mpcClientConfig = null;
+    await active?.close(reason: reason);
+    final client = _clientChannel;
+    _clientChannel = null;
+    await client?.close(reason: reason);
+    await _mpcChannel?.close(reason: reason);
+    _refreshState();
+  }
+
+  void dispose() {
+    _disposed = true;
+    unawaited(stopServer());
+    unawaited(disconnect());
+    _mpcStateSub?.cancel();
+    _mpcDataSub?.cancel();
+    _messageController.close();
+    _connectionStateController.close();
+    _approvalController.close();
+    _approvedController.close();
+    _serverFailureController.close();
+  }
+
+  void _emit<T>(StreamController<T> controller, T value) {
+    if (!_disposed && !controller.isClosed) controller.add(value);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Isolate
+
   static Future<void> _isolateServer(_IsolateServerConfig config) async {
-    unawaited(runZonedGuarded(() => _isolateServerImpl(config), (_, _) {}));
+    await runZonedGuarded(() => _isolateServerImpl(config), (e, stack) {
+      config.mainPort.send({'type': 'error', 'message': '$e'});
+    });
   }
 
   static Future<void> _isolateServerImpl(_IsolateServerConfig config) async {
-    final commandPort = ReceivePort();
-    config.mainPort.send({
-      'type': 'sendPort',
-      'sendPort': commandPort.sendPort,
-    });
-
-    final ip = await _getLocalIpStatic();
-    final bindAddress = InternetAddress(ip);
+    final commands = ReceivePort();
+    config.mainPort.send({'type': 'commands', 'port': commands.sendPort});
 
     ServerSocket server;
     try {
-      server = await ServerSocket.bind(bindAddress, config.port);
+      server = await ServerSocket.bind(InternetAddress.anyIPv4, config.port);
     } on SocketException {
-      try {
-        server = await ServerSocket.bind(bindAddress, 0);
-      } on SocketException {
-        server = await ServerSocket.bind(InternetAddress.anyIPv4, 0);
-      }
+      server = await ServerSocket.bind(InternetAddress.anyIPv4, 0);
     }
-    config.mainPort.send({'type': 'listening', 'port': server.port, 'ip': ip});
+    config.mainPort.send({'type': 'listening', 'port': server.port});
 
-    Socket? clientSocket;
-    var clientId = 0;
-    Socket? pendingSocket;
-    final pendingBuffer = <List<int>>[];
-    var pendingBytes = 0;
+    final sockets = <int, Socket>{};
+    final queues = <int, Future<void>>{};
+    var nextId = 0;
 
-    void clearPending() {
-      pendingSocket = null;
-      pendingBuffer.clear();
-      pendingBytes = 0;
-    }
-
-    void activate(Socket client, String address) {
-      clientSocket = client;
-      clientId++;
-      config.mainPort.send({
-        'type': 'clientConnected',
-        'address': address,
-        'id': clientId,
-      });
-    }
-
-    // One listener per socket, routed by the role the socket has when the
-    // event arrives: a replaced or rejected socket reports nothing.
-    void closed(Socket client, String reason) {
-      if (client == clientSocket) {
-        clientSocket = null;
-        config.mainPort.send({'type': 'clientDisconnected', 'reason': reason});
-      } else if (client == pendingSocket) {
-        clearPending();
-      }
-    }
-
-    void listenTo(Socket client) {
-      client.listen(
-        (data) {
-          if (client == clientSocket) {
-            config.mainPort.send({'type': 'data', 'bytes': data});
-          } else if (client == pendingSocket) {
-            pendingBytes += data.length;
-            if (pendingBytes > _maxPendingBytes) {
-              // A waiting phone sends only its hello; anything bigger is
-              // not one.
-              clearPending();
-              client.destroy();
-            } else {
-              pendingBuffer.add(data);
-            }
-          }
-        },
-        onError: (Object e) => closed(client, e.toString()),
-        onDone: () => closed(client, 'done'),
-        cancelOnError: true,
-      );
+    void closed(int id) {
+      if (sockets.remove(id) == null) return;
+      queues.remove(id);
+      config.mainPort.send({'type': 'closed', 'id': id});
     }
 
     server.listen((client) {
+      if (sockets.length >= config.maxSockets) {
+        client.destroy();
+        return;
+      }
+      final id = nextId++;
+      sockets[id] = client;
       String address;
       try {
         address = client.remoteAddress.address;
@@ -297,73 +690,58 @@ class TcpService {
         // The socket closed before its address could be read.
         address = 'unknown';
       }
-
-      if (clientSocket == null) {
-        activate(client, address);
-        listenTo(client);
-        return;
-      }
-
-      pendingSocket?.destroy();
-      clearPending();
-      pendingSocket = client;
-      listenTo(client);
-
-      config.mainPort.send({
-        'type': 'newClientPending',
-        'address': address,
-      });
+      config.mainPort.send({'type': 'opened', 'id': id, 'address': address});
+      client.listen(
+        (data) => config.mainPort.send({
+          'type': 'data',
+          'id': id,
+          'bytes': TransferableTypedData.fromList([data]),
+        }),
+        onError: (Object _) => closed(id),
+        onDone: () => closed(id),
+        cancelOnError: true,
+      );
     });
 
-    commandPort.listen((message) {
-      if (message is Map) {
-        final type = message['type'] as String;
-        if (type == 'send') {
-          final bytes = Uint8List.fromList(
-            (message['bytes'] as List).cast<int>(),
-          );
-          final client = clientSocket;
-          try {
-            client?.add(bytes);
-          } catch (_) {
-            // The write failed: treat the client as gone.
-            client?.destroy();
-            if (client != null) closed(client, 'write_failed');
-          }
-        } else if (type == 'dropClient') {
-          final client = clientSocket;
-          if (client != null && message['id'] == clientId) {
-            client.destroy();
-            closed(client, 'dropped');
-          }
-        } else if (type == 'acceptPending') {
-          final next = pendingSocket;
-          // The pending client already hung up: keep the current one.
-          if (next == null) return;
-          final old = clientSocket;
-          final buffered = List<List<int>>.of(pendingBuffer);
-          clearPending();
-          clientSocket = null;
-          old?.destroy();
-
-          config.mainPort.send({
-            'type': 'clientDisconnected',
-            'reason': 'replaced',
+    commands.listen((message) async {
+      if (message is! Map) return;
+      final id = message['id'];
+      switch (message['type']) {
+        case 'send':
+          final socket = sockets[id];
+          final bytes = (message['bytes'] as TransferableTypedData)
+              .materialize()
+              .asUint8List();
+          queues[id] = (queues[id] ?? Future.value()).then((_) async {
+            try {
+              socket?.add(bytes);
+              await socket?.flush();
+            } catch (_) {
+              // The write failed: the socket is gone.
+              socket?.destroy();
+              closed(id as int);
+            }
+            config.mainPort.send({'type': 'flushed', 'id': id});
           });
-
-          activate(next, 'pending-accepted');
-          for (final data in buffered) {
-            config.mainPort.send({'type': 'data', 'bytes': data});
+        case 'close':
+          final socket = sockets[id];
+          await (queues[id] ?? Future.value());
+          try {
+            await socket?.close().timeout(const Duration(seconds: 2));
+          } catch (_) {
+            // Closing politely failed; drop it.
           }
-        } else if (type == 'rejectPending') {
-          pendingSocket?.destroy();
-          clearPending();
-        }
-      } else if (message == 'stop') {
-        pendingSocket?.destroy();
-        clientSocket?.destroy();
-        server.close();
-        Isolate.exit();
+          socket?.destroy();
+          if (id is int) closed(id);
+        case 'stop':
+          for (final socket in sockets.values.toList()) {
+            socket.destroy();
+          }
+          sockets.clear();
+          await server.close();
+          config.mainPort.send({'type': 'stopped'});
+          commands.close();
+          Isolate.exit();
       }
     });
   }
@@ -392,22 +770,31 @@ class TcpService {
         hostname = hostname.substring(0, hostname.length - 6);
       }
       return hostname.replaceAll('-', ' ');
-    } catch (_) {
+    } catch (e) {
+      logger.w('[TCP] device name unavailable', e);
       return Platform.localHostname
           .replaceAll('.local', '')
           .replaceAll('-', ' ');
     }
   }
 
-  static Future<String> _getLocalIpStatic() async {
-    final interfaces = await NetworkInterface.list(
-      type: InternetAddressType.IPv4,
-      includeLoopback: false,
-    );
-    if (interfaces.isEmpty) return '127.0.0.1';
+  static Future<List<NetworkInterface>> ipv4Interfaces() =>
+      NetworkInterface.list(
+        type: InternetAddressType.IPv4,
+        includeLoopback: false,
+      );
 
-    final vpnPrefixes = ['utun', 'tun', 'tap', 'ppp', 'ipsec', 'wg'];
-    final virtualKeywords = [
+  /// The address phones should use for this computer: a Wi-Fi, then
+  /// Ethernet, then any other IPv4 address that isn't a VPN, virtual
+  /// adapter, loopback or link-local; null without one. Also whether a VPN
+  /// is up. Reads [interfaces], this computer's IPv4 ones by default.
+  static Future<({String? ip, bool vpnDetected})> localAddress([
+    List<NetworkInterface>? interfaces,
+  ]) async {
+    interfaces ??= await ipv4Interfaces();
+
+    const vpnPrefixes = ['utun', 'tun', 'tap', 'ppp', 'ipsec', 'wg'];
+    const virtualKeywords = [
       'vethernet',
       'vmware',
       'virtualbox',
@@ -419,10 +806,15 @@ class TcpService {
         vpnPrefixes.any((p) => name.toLowerCase().startsWith(p));
     bool isVirtual(String name) =>
         virtualKeywords.any((k) => name.toLowerCase().contains(k));
-    bool isUsable(NetworkInterface iface) =>
-        !isVpn(iface.name) &&
-        !isVirtual(iface.name) &&
-        iface.addresses.isNotEmpty;
+    String? usableAddress(NetworkInterface iface) {
+      if (isVpn(iface.name) || isVirtual(iface.name)) return null;
+      for (final address in iface.addresses) {
+        if (address.isLoopback || address.isLinkLocal) continue;
+        return address.address;
+      }
+      return null;
+    }
+
     bool isWifi(String name) {
       final lower = name.toLowerCase();
       return lower.startsWith('en') ||
@@ -430,404 +822,139 @@ class TcpService {
           lower.startsWith('wi-fi');
     }
 
-    bool isEthernet(String name) {
-      final lower = name.toLowerCase();
-      return lower.startsWith('eth');
-    }
-
-    for (final iface in interfaces) {
-      if (isWifi(iface.name) && isUsable(iface)) {
-        final addr = iface.addresses.first.address;
-        if (!addr.startsWith('169.254.')) return addr;
+    final hasVpn = interfaces.any((i) => isVpn(i.name));
+    for (final match in [
+      isWifi,
+      (String name) => name.toLowerCase().startsWith('eth'),
+      (String _) => true,
+    ]) {
+      for (final iface in interfaces) {
+        if (!match(iface.name)) continue;
+        final address = usableAddress(iface);
+        if (address != null) return (ip: address, vpnDetected: hasVpn);
       }
     }
+    return (ip: null, vpnDetected: hasVpn);
+  }
+}
 
-    for (final iface in interfaces) {
-      if (isEthernet(iface.name) && isUsable(iface)) {
-        final addr = iface.addresses.first.address;
-        if (!addr.startsWith('169.254.')) return addr;
-      }
-    }
+class _ClientConfig {
+  const _ClientConfig({
+    required this.pairingKey,
+    required this.expectedDeviceId,
+    required this.localDeviceId,
+  });
 
-    for (final iface in interfaces) {
-      if (isUsable(iface)) {
-        return iface.addresses.first.address;
-      }
-    }
+  final String pairingKey;
+  final String expectedDeviceId;
+  final String localDeviceId;
+}
 
-    return interfaces.first.addresses.first.address;
+class _IsolateServerConfig {
+  const _IsolateServerConfig(this.mainPort, this.port, this.maxSockets);
+
+  final SendPort mainPort;
+  final int port;
+  final int maxSockets;
+}
+
+class _ServerSocket {
+  _ServerSocket(this.endpoint, this.channel, this.reader);
+
+  final _IsolateEndpoint endpoint;
+  final SecureChannel channel;
+  final FrameReader reader;
+}
+
+class _SocketEndpoint implements LinkEndpoint {
+  _SocketEndpoint(this._socket);
+
+  final Socket _socket;
+  bool _closed = false;
+
+  @override
+  Future<void> sendBody(Uint8List body) async {
+    if (_closed) throw const LinkNotConnectedException();
+    _socket.add(FrameReader.frame(body));
+    await _socket.flush();
   }
 
-  String? deviceDisplayName;
-
-  Future<void> connectToServer({
-    required String ip,
-    required int port,
-    required String pairingKey,
-  }) async {
-    _pairingKey = pairingKey;
-    _updateState(ConnectionState.connecting);
-
-    try {
-      _clientSocket = await Socket.connect(
-        ip,
-        port,
-        timeout: const Duration(seconds: 5),
-      );
-      _setupClientSocket(_clientSocket!);
-      _updateState(ConnectionState.connected);
-      debugPrint('[TCP] Connected to $ip:$port, sending hello');
-
-      var name = deviceDisplayName;
-      if (name == null || name.isEmpty || name == 'localhost') {
-        name = await _getDeviceName();
-      }
-      debugPrint('[TCP] Sending hello as: "$name"');
-
-      await sendMessage(
-        TcpMessage.fromString(
-          type: MessageType.hello,
-          data: jsonEncode({
-            'pairing_key_hash': _hashKey(pairingKey),
-            'device_name': name,
-          }),
-        ),
-      );
-
-      _startPingTimer();
-    } catch (e) {
-      _updateState(ConnectionState.disconnected);
-      rethrow;
-    }
-  }
-
-  void _setupClientSocket(Socket socket) {
-    _buffer = Uint8List(0);
-    socket.listen(
-      (data) {
-        _onData(Uint8List.fromList(data));
-      },
-      onError: (_) {
-        _handleDisconnect();
-      },
-      onDone: _handleDisconnect,
+  @override
+  void close() {
+    if (_closed) return;
+    _closed = true;
+    unawaited(
+      _socket
+          .close()
+          .timeout(const Duration(seconds: 2))
+          .catchError((Object _) => _socket)
+          .whenComplete(_socket.destroy),
     );
   }
+}
 
-  bool get _isServerMode => _isolateSendPort != null;
+/// A desktop socket held by the server isolate. A send completes once the
+/// isolate flushed it, so a long transfer can't pile up in memory.
+class _IsolateEndpoint implements LinkEndpoint {
+  _IsolateEndpoint(this._id, this._service);
 
-  void _onServerClientConnected(int? id) {
-    _buffer = Uint8List(0);
-    _serverClientId = id;
-    _serverClientVerified = false;
-    _helloTimer?.cancel();
-    _helloTimer = Timer(helloTimeout, () {
-      if (_serverClientId == id && !_serverClientVerified) {
-        debugPrint('[TCP] Rejected: no valid hello in time');
-        _dropServerClient();
-      }
+  final int _id;
+  final TcpService _service;
+  final _flushes = <Completer<void>>[];
+  bool _closed = false;
+
+  @override
+  Future<void> sendBody(Uint8List body) {
+    final port = _service._isolatePort;
+    if (_closed || port == null) {
+      return Future.error(const LinkNotConnectedException());
+    }
+    final done = Completer<void>();
+    _flushes.add(done);
+    port.send({
+      'type': 'send',
+      'id': _id,
+      'bytes': TransferableTypedData.fromList([FrameReader.frame(body)]),
     });
+    return done.future;
   }
 
-  void _onServerClientDisconnected() {
-    _buffer = Uint8List(0);
-    _serverClientId = null;
-    _serverClientVerified = false;
-    _helloTimer?.cancel();
-    _handleDisconnect();
+  void flushed() {
+    if (_flushes.isNotEmpty) _flushes.removeAt(0).complete();
   }
 
-  /// Closes the current server client; the isolate then reports it gone.
-  void _dropServerClient() {
-    _buffer = Uint8List(0);
-    _serverClientVerified = false;
-    _helloTimer?.cancel();
-    final id = _serverClientId;
-    if (id != null) {
-      _isolateSendPort?.send({'type': 'dropClient', 'id': id});
+  void closedBelow() {
+    _closed = true;
+    for (final pending in _flushes) {
+      pending.completeError(const LinkNotConnectedException());
+    }
+    _flushes.clear();
+  }
+
+  @override
+  void close() {
+    if (_closed) return;
+    _closed = true;
+    _service._isolatePort?.send({'type': 'close', 'id': _id});
+  }
+}
+
+class _MpcEndpoint implements LinkEndpoint {
+  _MpcEndpoint(this._mpc);
+
+  final CommunicationService _mpc;
+  bool _closed = false;
+
+  @override
+  Future<void> sendBody(Uint8List body) async {
+    for (final piece in MpcFramer.split(body)) {
+      if (_closed) throw const LinkNotConnectedException();
+      await _mpc.send(piece);
     }
   }
 
-  void _rejectPeer() {
-    if (_isServerMode) {
-      _dropServerClient();
-    } else {
-      _buffer = Uint8List(0);
-      _handleDisconnect();
-    }
-  }
-
-  void _onData(Uint8List data) {
-    final combined = Uint8List(_buffer.length + data.length);
-    combined.setAll(0, _buffer);
-    combined.setAll(_buffer.length, data);
-    _buffer = combined;
-
-    while (_buffer.length >= 4) {
-      final length = ByteData.sublistView(_buffer, 0, 4).getUint32(0);
-      final unverified = _isServerMode && !_serverClientVerified;
-      final cap = unverified ? maxUnauthenticatedFrameBytes : maxFrameBytes;
-      if (length > cap) {
-        debugPrint('[TCP] Rejected: frame of $length bytes over $cap');
-        _rejectPeer();
-        return;
-      }
-      if (_buffer.length < 4 + length) break;
-
-      final encrypted = _buffer.sublist(4, 4 + length);
-      _buffer = _buffer.sublist(4 + length);
-
-      final TcpMessage message;
-      try {
-        final decrypted = _decrypt(encrypted);
-        final type = MessageType.fromCode(decrypted[0]);
-        message = TcpMessage(type: type, payload: decrypted.sublist(1));
-      } catch (e) {
-        debugPrint('[TCP] Decrypt/parse failed: $e');
-        if (unverified) {
-          _rejectPeer();
-          return;
-        }
-        continue;
-      }
-
-      if (unverified) {
-        // Nothing from an unknown client is read until its hello.
-        if (message.type != MessageType.hello) continue;
-        if (!_isValidHello(message)) {
-          debugPrint('[TCP] Rejected: invalid hello');
-          _rejectPeer();
-          return;
-        }
-        _serverClientVerified = true;
-        _helloTimer?.cancel();
-      }
-
-      if (message.type != MessageType.ping &&
-          message.type != MessageType.pong) {
-        debugPrint('[TCP] ${message.type.name}');
-      }
-      _handleMessage(message, viaServerSocket: _isServerMode);
-      // A rejected hello drops the client; stop reading its bytes.
-      if (_isServerMode && !_serverClientVerified) return;
-    }
-  }
-
-  /// A hello that carries the hash of this side's pairing key.
-  bool _isValidHello(TcpMessage message) {
-    final key = _pairingKey;
-    if (key == null) return false;
-    try {
-      final json = jsonDecode(message.payloadString);
-      if (json is! Map<String, dynamic>) return false;
-      final remoteHash = json['pairing_key_hash'];
-      return remoteHash is String && remoteHash == _hashKey(key);
-    } catch (e) {
-      debugPrint('[TCP] Unreadable hello: $e');
-      return false;
-    }
-  }
-
-  void _handleMessage(TcpMessage message, {bool viaServerSocket = false}) {
-    switch (message.type) {
-      case MessageType.ping:
-        sendMessage(TcpMessage(type: MessageType.pong, payload: Uint8List(0)));
-        return;
-      case MessageType.pong:
-        _pingTimeoutTimer?.cancel();
-        return;
-      case MessageType.kill:
-        sendMessage(TcpMessage(type: MessageType.ack, payload: Uint8List(0)));
-        _handleDisconnect();
-        return;
-      case MessageType.hello:
-        if (_pairingKey != null && _clientSocket == null) {
-          if (!_isValidHello(message)) {
-            debugPrint('[TCP] Rejected: pairing key mismatch');
-            if (viaServerSocket) {
-              _dropServerClient();
-            } else {
-              _handleDisconnect();
-            }
-            return;
-          }
-        }
-        _updateState(ConnectionState.connected);
-        sendMessage(TcpMessage(type: MessageType.ack, payload: Uint8List(0)));
-        _messageController.add(message);
-        return;
-      default:
-        _messageController.add(message);
-    }
-  }
-
-  Future<void> sendMessage(TcpMessage message) async {
-    while (_writeLock != null) {
-      await _writeLock!.future;
-    }
-    _writeLock = Completer<void>();
-
-    try {
-      final typeAndPayload = Uint8List(1 + message.payload.length);
-      typeAndPayload[0] = message.type.code;
-      typeAndPayload.setAll(1, message.payload);
-
-      final encrypted = _encrypt(typeAndPayload);
-
-      if (_useMpc && _mpcTransport != null) {
-        await _mpcTransport!.send(encrypted);
-        return;
-      }
-
-      final frame = Uint8List(4 + encrypted.length);
-      ByteData.sublistView(frame, 0, 4).setUint32(0, encrypted.length);
-      frame.setAll(4, encrypted);
-
-      if (_isolateSendPort != null) {
-        _isolateSendPort!.send({'type': 'send', 'bytes': frame.toList()});
-      } else if (_clientSocket != null) {
-        _clientSocket!.add(frame);
-        await _clientSocket!.flush();
-      }
-    } finally {
-      final lock = _writeLock;
-      _writeLock = null;
-      lock?.complete();
-    }
-  }
-
-  Future<void> sendData(String type, Map<String, dynamic> payload) async {
-    final data = jsonEncode({'type': type, 'payload': payload});
-    await sendMessage(
-      TcpMessage.fromString(type: MessageType.data, data: data),
-    );
-  }
-
-  Uint8List _encrypt(Uint8List plaintext) {
-    if (_pairingKey == null) return plaintext;
-
-    final key = _deriveKey(_pairingKey!);
-    final nonce = _generateNonce();
-
-    final cipher = GCMBlockCipher(AESEngine())
-      ..init(true, AEADParameters(KeyParameter(key), 128, nonce, Uint8List(0)));
-
-    final output = Uint8List(cipher.getOutputSize(plaintext.length));
-    final len = cipher.processBytes(plaintext, 0, plaintext.length, output, 0);
-    final finalLen = cipher.doFinal(output, len);
-    final ciphertext = output.sublist(0, len + finalLen);
-
-    final result = Uint8List(nonce.length + ciphertext.length);
-    result.setAll(0, nonce);
-    result.setAll(nonce.length, ciphertext);
-    return result;
-  }
-
-  Uint8List _decrypt(Uint8List data) {
-    if (_pairingKey == null) return data;
-
-    final key = _deriveKey(_pairingKey!);
-    final nonce = data.sublist(0, 12);
-    final ciphertext = data.sublist(12);
-
-    final cipher = GCMBlockCipher(
-      AESEngine(),
-    )..init(false, AEADParameters(KeyParameter(key), 128, nonce, Uint8List(0)));
-
-    final plaintext = Uint8List(cipher.getOutputSize(ciphertext.length));
-    final len = cipher.processBytes(
-      ciphertext,
-      0,
-      ciphertext.length,
-      plaintext,
-      0,
-    );
-    final finalLen = cipher.doFinal(plaintext, len);
-
-    return plaintext.sublist(0, len + finalLen);
-  }
-
-  Uint8List _deriveKey(String pairingKey) {
-    final keyBytes = base64Url.decode(pairingKey);
-    if (keyBytes.length >= 32) {
-      return Uint8List.fromList(keyBytes.sublist(0, 32));
-    }
-    final padded = Uint8List(32);
-    padded.setAll(0, keyBytes);
-    return padded;
-  }
-
-  Uint8List _generateNonce() {
-    final random = Random.secure();
-    return Uint8List.fromList(List.generate(12, (_) => random.nextInt(256)));
-  }
-
-  String _hashKey(String key) {
-    final digest = SHA256Digest();
-    final keyBytes = Uint8List.fromList(utf8.encode(key));
-    return base64Url.encode(digest.process(keyBytes));
-  }
-
-  void _startPingTimer() {
-    _pingTimer?.cancel();
-    _pingTimer = Timer.periodic(pingInterval, (_) {
-      sendMessage(TcpMessage(type: MessageType.ping, payload: Uint8List(0)));
-      _pingTimeoutTimer = Timer(pingTimeout, _handleDisconnect);
-    });
-  }
-
-  void _handleDisconnect() {
-    _pingTimer?.cancel();
-    _pingTimeoutTimer?.cancel();
-    if (_clientSocket != null) _buffer = Uint8List(0);
-    _clientSocket?.destroy();
-    _clientSocket = null;
-    _updateState(ConnectionState.disconnected);
-  }
-
-  void _updateState(ConnectionState state) {
-    if (_state == state) return;
-    _state = state;
-    _connectionStateController.add(state);
-  }
-
-  Future<void> stopServer() async {
-    _pingTimer?.cancel();
-    _pingTimeoutTimer?.cancel();
-    _helloTimer?.cancel();
-    _buffer = Uint8List(0);
-    _serverClientId = null;
-    _serverClientVerified = false;
-    _clientSocket?.destroy();
-    _clientSocket = null;
-    _isolateSendPort?.send('stop');
-    _isolateSendPort = null;
-    _serverIsolate?.kill();
-    _serverIsolate = null;
-    _updateState(ConnectionState.disconnected);
-  }
-
-  void acceptPendingClient() {
-    _isolateSendPort?.send({'type': 'acceptPending'});
-  }
-
-  void rejectPendingClient() {
-    _isolateSendPort?.send({'type': 'rejectPending'});
-  }
-
-  Future<void> disconnect() async {
-    try {
-      await sendMessage(
-        TcpMessage(type: MessageType.kill, payload: Uint8List(0)),
-      );
-    } catch (_) {}
-    _handleDisconnect();
-  }
-
-  void dispose() {
-    stopServer();
-    _messageController.close();
-    _connectionStateController.close();
-    _pendingClientController.close();
+  @override
+  void close() {
+    _closed = true;
   }
 }

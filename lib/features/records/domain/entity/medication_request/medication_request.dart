@@ -6,12 +6,12 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_code_labels.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
 
 part 'medication_request.freezed.dart';
 
@@ -140,6 +140,12 @@ abstract class MedicationRequest
       return title;
     }
 
+    final medicationName = FhirFieldExtractor.extractMedicationName(
+      medicationX,
+      rawResource,
+    );
+    if (medicationName != null) return medicationName;
+
     final displayText = FhirFieldExtractor.extractCodeableConceptText(category);
     if (displayText != null) return displayText;
 
@@ -151,9 +157,21 @@ abstract class MedicationRequest
     final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader(l10n.fieldHowToTake));
 
+    // Status first, so a stopped or cancelled medication can't be read as
+    // a current one on the card.
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      FhirCodeLabels.statusLine(
+        status?.valueString,
+        l10n,
+        prefix: l10n.fieldStatus,
+      ),
+    );
+
     // Medication Name
-    final medicationDisplay = FhirFieldExtractor.extractCodeableConceptText(
-      medicationX?.isAs<CodeableConcept>(),
+    final medicationDisplay = FhirFieldExtractor.extractMedicationName(
+      medicationX,
+      rawResource,
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
@@ -237,16 +255,6 @@ abstract class MedicationRequest
 
     infoLines.add(
       ResourceFieldMapper.createSectionHeader(l10n.fieldBasicInformation),
-    );
-
-    // Status
-    final statusDisplay = status?.display?.valueString;
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createStatusLine(
-        statusDisplay,
-        prefix: l10n.fieldStatus,
-      ),
     );
 
     // Prescribed Date (Authored On)
@@ -399,7 +407,7 @@ abstract class MedicationRequest
       infoLines.add(
         RecordInfoLine(
           icon: Assets.icons.calendar,
-          info: DateFormat.yMMMMd(l10n.localeName).format(date!),
+          info: FhirFieldExtractor.formatRecordDate(date!, l10n.localeName),
         ),
       );
     }

@@ -145,10 +145,16 @@ class FakeRecordsRepository extends Fake implements RecordsRepository {
   Future<void> updatePatient(IFhirResource patient) async {}
 
   @override
+  Future<List<IFhirResource>> getAttachedDocuments(
+    IFhirResource resource,
+  ) async => [];
+
+  @override
   Future<List<IFhirResource>> searchResources({
     required String query,
     List<FhirType> resourceTypes = const [],
     String? sourceId,
+    List<String>? sourceIds,
     int limit = 50,
   }) async => [];
 

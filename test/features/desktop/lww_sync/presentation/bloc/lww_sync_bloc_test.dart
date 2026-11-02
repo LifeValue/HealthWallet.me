@@ -1,906 +1,381 @@
 import 'dart:convert';
+import 'dart:io';
 
-import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
-import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart'
-    as tcp;
+import 'package:health_wallet/features/desktop/communication/data/services/message_router.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/attachment_sync_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/change_watcher_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/lww_sync_service.dart';
-import 'package:health_wallet/features/desktop/lww_sync/data/services/offline_queue_service.dart';
-import 'package:health_wallet/features/desktop/lww_sync/domain/entity/sync_delta.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../lww_sync_test_helpers.dart';
 
-class FakeChangeWatcherService extends Fake implements ChangeWatcherService {
-  int starts = 0;
-  int stops = 0;
+/// A phone or a desktop: its own database, preferences, files and sync.
+class _Device {
+  _Device._(this.db, this.service, this.link, this.bloc, this.docs);
 
-  @override
-  void startWatching() => starts++;
+  final AppDatabase db;
+  final LwwSyncService service;
+  final LinkedTcpService link;
+  final LwwSyncBloc bloc;
+  final String docs;
 
-  @override
-  void stopWatching() => stops++;
+  static Future<_Device> create(String id, TestDirs dirs, String docs) async {
+    final db = openTestDatabase();
+    final prefs = _MemoryPrefs({'lww_local_device_id': id});
+    final service = LwwSyncService(
+      db,
+      prefs,
+      AttachmentSyncService(FakePathResolver(docs)),
+    );
+    final link = LinkedTcpService(id, 'Device $id');
+    final bloc = LwwSyncBloc(
+      service,
+      ChangeWatcherService(db),
+      link,
+      MessageRouter(link),
+    );
+    return _Device._(db, service, link, bloc, docs);
+  }
+
+  Future<void> dispose() async {
+    await bloc.close();
+    await link.close();
+    await db.close();
+  }
 }
 
-TypeMatcher<LwwSyncState> stateWhere({
-  LwwSyncStatus? status,
-  Object? currentTable = _unset,
-  int? completedTables,
-  int? totalTables,
-  int? sentRows,
-  int? receivedRows,
-  bool? isSynced,
-  int? pending,
-}) {
-  var m = isA<LwwSyncState>();
-  if (status != null) m = m.having((s) => s.syncStatus, 'status', status);
-  if (currentTable != _unset) {
-    m = m.having((s) => s.currentTable, 'currentTable', currentTable);
+/// SharedPreferences for one device; the platform mock is shared by all.
+class _MemoryPrefs extends Fake implements SharedPreferences {
+  _MemoryPrefs(Map<String, Object> initial) : _values = {...initial};
+
+  final Map<String, Object> _values;
+
+  @override
+  String? getString(String key) => _values[key] as String?;
+
+  @override
+  Future<bool> setString(String key, String value) async {
+    _values[key] = value;
+    return true;
   }
-  if (completedTables != null) {
-    m = m.having((s) => s.completedTables, 'completed', completedTables);
+
+  @override
+  Future<bool> remove(String key) async {
+    _values.remove(key);
+    return true;
   }
-  if (totalTables != null) {
-    m = m.having((s) => s.totalTables, 'total', totalTables);
-  }
-  if (sentRows != null) m = m.having((s) => s.sentRows, 'sentRows', sentRows);
-  if (receivedRows != null) {
-    m = m.having((s) => s.receivedRows, 'receivedRows', receivedRows);
-  }
-  if (isSynced != null) m = m.having((s) => s.isSynced, 'isSynced', isSynced);
-  if (pending != null) {
-    m = m.having((s) => s.pendingChangeCount, 'pending', pending);
-  }
-  return m;
 }
 
-const _unset = Object();
+Future<void> until(bool Function() condition, {String? reason}) async {
+  final deadline = DateTime.now().add(const Duration(seconds: 10));
+  while (!condition()) {
+    if (DateTime.now().isAfter(deadline)) {
+      fail('timed out waiting${reason == null ? '' : ' for $reason'}');
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+  }
+}
+
+Future<void> untilAsync(Future<bool> Function() condition) async {
+  final deadline = DateTime.now().add(const Duration(seconds: 10));
+  while (!await condition()) {
+    if (DateTime.now().isAfter(deadline)) fail('timed out waiting');
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+  }
+}
 
 void main() {
   late TestDirs dirs;
-  late AppDatabase db;
-  late SharedPreferences prefs;
-  late FakeTcpService link;
-  late FakeChangeWatcherService watcher;
-  late LwwSyncService sync;
-  late OfflineQueueService queue;
-
-  final pdfBytes = utf8.encode('%PDF-1.7 fake');
-
-  LwwSyncBloc buildBloc() => LwwSyncBloc(sync, watcher, queue, link);
-
-  SyncDelta remoteDelta(String table, List<Map<String, dynamic>> rows) =>
-      SyncDelta(
-        tableName: table,
-        rows: rows,
-        deviceId: 'device-m',
-        timestamp: at(100),
-      );
-
-  Map<String, dynamic> sourceRow(String id, int updatedAt) => {
-    'id': id,
-    'label_source': 'remote',
-    'platform_type': 'wallet',
-    'updated_at': updatedAt,
-  };
-
-  List<String> sentTypes() => [for (final m in link.sent) m.type];
+  late _Device phone;
+  late _Device desktop;
 
   setUp(() async {
     dirs = await TestDirs.create();
-    db = openTestDatabase();
-    SharedPreferences.setMockInitialValues({
-      'lww_local_device_id': 'device-local',
-    });
-    prefs = await SharedPreferences.getInstance();
-    link = FakeTcpService();
-    watcher = FakeChangeWatcherService();
-    sync = LwwSyncService(
-      db,
-      prefs,
-      AttachmentSyncService(FakePathResolver(dirs.docs.path)),
-    );
-    queue = OfflineQueueService(prefs, link);
+    final phoneDocs = '${dirs.root.path}/phone';
+    final desktopDocs = '${dirs.root.path}/desktop';
+    await Directory(phoneDocs).create(recursive: true);
+    await Directory(desktopDocs).create(recursive: true);
+    phone = await _Device.create('phone-a', dirs, phoneDocs);
+    desktop = await _Device.create('desktop-z', dirs, desktopDocs);
+    LwwSyncBloc.ackTimeout = const Duration(seconds: 2);
+    LwwSyncBloc.settleDelay = const Duration(milliseconds: 200);
   });
 
   tearDown(() async {
-    await link.close();
-    await db.close();
+    await phone.dispose();
+    await desktop.dispose();
     await dirs.dispose();
   });
 
-  test('starts idle with nothing synced', () {
-    final bloc = buildBloc();
-    addTearDown(bloc.close);
+  Future<void> start() async {
+    phone.bloc.add(const LwwSyncInitialised());
+    desktop.bloc.add(const LwwSyncInitialised());
+    await until(() => true);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+  }
 
-    expect(bloc.state, const LwwSyncState());
-    expect(bloc.state.syncStatus, LwwSyncStatus.idle);
-    expect(bloc.state.isSynced, isFalse);
-  });
-
-  group('LwwSyncInitialised', () {
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'restores last sync time and queue size, then prepares the database',
-      setUp: () async {
-        await sync.setLastSyncTimestamp(at(3));
-        await queue.enqueue(remoteDelta('sources', const []));
-        await dropSyncTriggers(db);
-        await insertFhir(db, id: 'legacy');
-        final old = ms(DateTime.now().subtract(const Duration(days: 45)));
-        await insertFhir(db, id: 'tomb', updatedAt: old, deletedAt: old);
-      },
-      build: buildBloc,
-      act: (bloc) => bloc.add(const LwwSyncInitialised()),
-      wait: const Duration(milliseconds: 50),
-      expect: () => [
-        isA<LwwSyncState>()
-            .having((s) => s.lastSyncTime, 'lastSyncTime', at(3).toLocal())
-            .having((s) => s.pendingChangeCount, 'pending', 1),
-      ],
-      verify: (_) async {
-        expect(watcher.starts, 1);
-        expect(
-          (await fetchRow(db, 'fhir_resource', 'legacy'))!['updated_at'],
-          isNotNull,
-          reason: 'backfilled',
-        );
-        expect(await fetchRow(db, 'fhir_resource', 'tomb'), isNull);
-      },
+  Future<void> connect() async {
+    LinkedTcpService.link(phone.link, desktop.link);
+    await until(
+      () => phone.bloc.state.isSynced && desktop.bloc.state.isSynced,
+      reason: 'both in sync',
     );
+  }
 
-    test('listens to the link until closed, then stops watching', () async {
-      final bloc = buildBloc()..add(const LwwSyncInitialised());
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-      expect(link.hasListeners, isTrue);
-      expect(watcher.stops, 0);
+  Future<String?> titleOn(_Device d, String id) async =>
+      (await fetchRow(d.db, 'fhir_resource', id))?['title'] as String?;
 
-      await bloc.close();
+  test('different tables on the two devices converge on connecting, and '
+      'both then say in sync', () async {
+    await insertFhir(phone.db, id: 'p', title: 'from phone');
+    await insertFhir(desktop.db, id: 'd', title: 'from desktop');
+    await insertFhir(phone.db, id: 'both', updatedAt: ms(at(1)), title: 'old');
+    await insertFhir(
+      desktop.db,
+      id: 'both',
+      updatedAt: ms(at(2)),
+      title: 'new',
+    );
+    await start();
+    await connect();
 
-      expect(watcher.stops, 1);
-      expect(link.hasListeners, isFalse);
-    });
+    expect(await titleOn(desktop, 'p'), 'from phone');
+    expect(await titleOn(phone, 'd'), 'from desktop');
+    expect(await titleOn(phone, 'both'), 'new');
+    expect(
+      await phone.service.computeDigest(),
+      await desktop.service.computeDigest(),
+    );
+    expect(phone.bloc.state.pendingChangeCount, 0);
+    expect(phone.bloc.state.lastSyncPeerName, 'Device desktop-z');
   });
 
-  group('incoming link messages (after LwwSyncInitialised)', () {
-    Future<void> init(LwwSyncBloc bloc) async {
-      bloc.add(const LwwSyncInitialised());
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+  test('an edit made while connected arrives, and both sides return to in '
+      'sync instead of staying out of it', () async {
+    await start();
+    await connect();
+
+    await insertFhir(phone.db, id: 'new', title: 'scan');
+    await until(() => desktop.bloc.state.recordsVersion > 0);
+    expect(await titleOn(desktop, 'new'), 'scan');
+    await until(
+      () => phone.bloc.state.isSynced && desktop.bloc.state.isSynced,
+      reason: 'in sync again',
+    );
+  });
+
+  test('Sync Now with nothing to send still checks with the other device and '
+      'counts as a sync on both', () async {
+    await insertFhir(phone.db, id: 'same', updatedAt: ms(at(1)));
+    await insertFhir(desktop.db, id: 'same', updatedAt: ms(at(1)));
+    await start();
+    await connect();
+    final before = DateTime.now();
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+
+    final statuses = <LwwSyncStatus>[];
+    final sub = phone.bloc.stream.listen((s) => statuses.add(s.syncStatus));
+    addTearDown(sub.cancel);
+    phone.bloc.add(const SyncTriggered());
+
+    await until(
+      () =>
+          phone.bloc.state.lastSyncTime!.isAfter(before) &&
+          desktop.bloc.state.lastSyncTime!.isAfter(before),
+      reason: 'both stamped by the check',
+    );
+    await until(() => phone.bloc.state.syncStatus == LwwSyncStatus.idle);
+    expect(statuses, contains(LwwSyncStatus.syncing), reason: 'it shows');
+    expect(phone.bloc.state.isSynced, isTrue);
+    expect(phone.bloc.state.sentRows, 0);
+  });
+
+  test('a check the other device never answers ends with an error', () async {
+    await start();
+    await connect();
+    desktop.link.dropTypes.add('sync.digest');
+
+    phone.bloc.add(const SyncTriggered());
+
+    await until(() => phone.bloc.state.syncStatus == LwwSyncStatus.error);
+  });
+
+  test('an edit sent into a dropped link is sent again, not lost', () async {
+    await start();
+    await connect();
+
+    phone.link.dropTypes.add('sync.batch');
+    await insertFhir(phone.db, id: 'lost', title: 'first try');
+    await until(() => phone.link.sentOfType('sync.batch').isNotEmpty);
+    expect(phone.bloc.state.pendingChangeCount, 1);
+
+    phone.link.unlink();
+    phone.link.dropTypes.clear();
+    await until(() => !phone.bloc.state.connected);
+    expect(phone.bloc.state.pendingChangeCount, 1, reason: 'still waiting');
+
+    await connect();
+    expect(await titleOn(desktop, 'lost'), 'first try');
+    expect(phone.bloc.state.pendingChangeCount, 0);
+  });
+
+  test(
+    'changes made offline wait in the outbox and go out on reconnect',
+    () async {
+      await start();
+      await connect();
+      phone.link.unlink();
+      await until(() => !phone.bloc.state.connected);
+
+      await insertFhir(phone.db, id: 'offline-1');
+      await insertNote(
+        phone.db,
+        content: 'offline note',
+        resourceId: 'offline-1',
+      );
+      await until(() => phone.bloc.state.pendingChangeCount == 2);
+      expect(phone.bloc.state.isSynced, isFalse);
+
+      await connect();
+      expect(
+        await fetchRow(desktop.db, 'fhir_resource', 'offline-1'),
+        isNotNull,
+      );
+      expect(await countRows(desktop.db, 'record_notes'), 1);
+    },
+  );
+
+  test(
+    'receiving rows does not skip a local edit made at the same time',
+    () async {
+      await start();
+      await connect();
+
+      await insertFhir(desktop.db, id: 'from-desk');
+      await insertFhir(phone.db, id: 'from-phone');
+      await untilAsync(
+        () async =>
+            await fetchRow(desktop.db, 'fhir_resource', 'from-phone') != null &&
+            await fetchRow(phone.db, 'fhir_resource', 'from-desk') != null,
+      );
+      await until(
+        () => phone.bloc.state.isSynced && desktop.bloc.state.isSynced,
+        reason: 'in sync',
+      );
+    },
+  );
+
+  test('a batch nobody acknowledges is not counted as delivered', () async {
+    await start();
+    await connect();
+
+    desktop.link.dropTypes.add('sync.ack');
+    await insertFhir(phone.db, id: 'unacked');
+    await until(() => phone.bloc.state.syncStatus == LwwSyncStatus.error);
+    expect(phone.bloc.state.pendingChangeCount, 1);
+    expect(phone.bloc.state.isSynced, isFalse);
+
+    desktop.link.dropTypes.clear();
+    phone.bloc.add(const SyncTriggered());
+    await until(() => phone.bloc.state.pendingChangeCount == 0);
+  });
+
+  test('missing attachment files follow on request, in chunks', () async {
+    await File('${phone.docs}/report.pdf').writeAsBytes(
+      List.generate(LwwSyncService.fileChunkBytes + 99, (i) => i % 256),
+    );
+    await insertFhir(
+      phone.db,
+      id: 'doc',
+      resourceType: 'DocumentReference',
+      raw: documentReferenceRaw([
+        {'url': 'file://report.pdf', 'title': 'Report'},
+      ]),
+    );
+    await start();
+    await connect();
+
+    await until(() => File('${desktop.docs}/report.pdf').existsSync());
+    expect(
+      File('${desktop.docs}/report.pdf').lengthSync(),
+      LwwSyncService.fileChunkBytes + 99,
+    );
+    expect(phone.link.sentOfType('sync.file_chunk'), hasLength(2));
+    expect(
+      phone.link.sent.every(
+        (m) =>
+            !jsonEncode(m.payload).contains('"data"') ||
+            m.type == 'sync.file_chunk',
+      ),
+      isTrue,
+      reason: 'no file travels inside a row',
+    );
+  });
+
+  test('a peer that is not the last one starts over', () async {
+    await insertFhir(phone.db, id: 'a');
+    await start();
+    await connect();
+    phone.link.unlink();
+
+    final otherDesktop = await _Device.create(
+      'desktop-y',
+      dirs,
+      '${dirs.root.path}/phone',
+    );
+    otherDesktop.bloc.add(const LwwSyncInitialised());
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    LinkedTcpService.link(phone.link, otherDesktop.link);
+    await until(
+      () => otherDesktop.bloc.state.isSynced && phone.bloc.state.isSynced,
+    );
+    expect(await fetchRow(otherDesktop.db, 'fhir_resource', 'a'), isNotNull);
+    expect(phone.bloc.state.lastSyncPeerName, 'Device desktop-y');
+    await otherDesktop.dispose();
+  });
+
+  test('waitUntilDrained returns once every change was acknowledged', () async {
+    await start();
+    await connect();
+    await insertFhir(phone.db, id: 'before-backup');
+    expect(await phone.bloc.waitUntilDrained(), isTrue);
+    expect(
+      await fetchRow(desktop.db, 'fhir_resource', 'before-backup'),
+      isNotNull,
+    );
+  });
+
+  test('lists reload once per burst of received rows', () async {
+    await start();
+    await connect();
+    final before = desktop.bloc.state.recordsVersion;
+    for (var i = 0; i < LwwSyncService.maxBatchRows * 2; i++) {
+      await insertFhir(phone.db, id: 'bulk-$i');
     }
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'sync.delta applies the rows and acknowledges the delta',
-      build: buildBloc,
-      act: (bloc) async {
-        await init(bloc);
-        link.receiveData(
-          'sync.delta',
-          remoteDelta('sources', [sourceRow('s1', ms(at(1)))]).toJson(),
-        );
-      },
-      wait: const Duration(milliseconds: 100),
-      verify: (bloc) async {
-        expect(
-          (await fetchRow(db, 'sources', 's1'))!['label_source'],
-          'remote',
-        );
-        expect(link.sentOfType('sync.ack').single.payload, {
-          'table_name': 'sources',
-          'timestamp': ms(at(100)),
-        });
-        expect(bloc.state.receivedRows, 1);
-        expect(bloc.state.syncStatus, LwwSyncStatus.idle);
-      },
+    await untilAsync(
+      () async =>
+          await countRows(desktop.db, 'fhir_resource') ==
+          LwwSyncService.maxBatchRows * 2,
     );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'sync.ack removes acknowledged deltas from the offline queue',
-      setUp: () async {
-        await queue.enqueue(remoteDelta('sources', const []));
-        await queue.enqueue(
-          remoteDelta('sources', const []).copyWith(timestamp: at(200)),
-        );
-      },
-      build: buildBloc,
-      act: (bloc) async {
-        await init(bloc);
-        link.receiveData('sync.ack', {
-          'table_name': 'sources',
-          'timestamp': ms(at(100)),
-        });
-      },
-      wait: const Duration(milliseconds: 50),
-      verify: (_) => expect(queue.pendingCount, 1),
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'sync.status starts reconciliation and sync.verify reports the result',
-      setUp: () => insertSource(db, id: 's', updatedAt: ms(at(1))),
-      build: buildBloc,
-      act: (bloc) async {
-        await init(bloc);
-        link.receiveData('sync.status', {
-          'fhir_resource': 0,
-          'sources': 0,
-          'record_notes': 0,
-        });
-        await Future<void>.delayed(const Duration(milliseconds: 50));
-        link.receiveData('sync.verify', {
-          'fhir_resource': 0,
-          'sources': 1.0,
-          'record_notes': 0,
-        });
-      },
-      // Covers the 1 s pause before the reconciliation's own sync.verify.
-      wait: const Duration(milliseconds: 1300),
-      verify: (bloc) {
-        expect(sentTypes(), ['sync.delta', 'sync.verify']);
-        expect(bloc.state.isSynced, isTrue);
-      },
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'sync.file_request answers with the files it has',
-      setUp: () => dirs.writeDoc('a.pdf', pdfBytes),
-      build: buildBloc,
-      act: (bloc) async {
-        await init(bloc);
-        link.receiveData('sync.file_request', {
-          'paths': ['a.pdf', 'missing.pdf'],
-        });
-      },
-      wait: const Duration(milliseconds: 100),
-      verify: (_) {
-        final data = link.sentOfType('sync.file_data').single.payload;
-        expect(data.keys, ['a.pdf']);
-        expect(base64Decode(data['a.pdf'] as String), pdfBytes);
-      },
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'sync.file_request with no known file sends nothing',
-      build: buildBloc,
-      act: (bloc) async {
-        await init(bloc);
-        link.receiveData('sync.file_request', {
-          'paths': ['missing.pdf'],
-        });
-      },
-      wait: const Duration(milliseconds: 100),
-      verify: (_) => expect(link.sent, isEmpty),
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'sync.file_data stores the received files',
-      build: buildBloc,
-      act: (bloc) async {
-        await init(bloc);
-        link.receiveData('sync.file_data', {'x.pdf': base64Encode(pdfBytes)});
-      },
-      wait: const Duration(milliseconds: 100),
-      verify: (_) async {
-        expect(await dirs.docFile('x.pdf').readAsBytes(), pdfBytes);
-      },
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'a connected link state starts a sync',
-      build: buildBloc,
-      act: (bloc) async {
-        await init(bloc);
-        link.emitState(tcp.ConnectionState.connected);
-      },
-      wait: const Duration(milliseconds: 400),
-      verify: (bloc) {
-        expect(sentTypes(), ['sync.status', 'sync.status']);
-        expect(bloc.state.isSynced, isTrue);
-      },
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'ignores non-data frames, malformed JSON, unknown types and bad '
-      'payloads',
-      build: buildBloc,
-      act: (bloc) async {
-        await init(bloc);
-        link
-          ..receiveRaw(
-            tcp.MessageType.ping,
-            jsonEncode({'type': 'sync.verify', 'payload': <String, int>{}}),
-          )
-          ..receiveRaw(tcp.MessageType.data, '{not json')
-          ..receiveData('backup.status', {'ready': true})
-          ..receiveData('sync.delta', {'tableName': 'sources'})
-          ..receiveData('sync.ack', {'table_name': 'sources'})
-          ..receiveData('sync.status', {'sources': 'many'});
-      },
-      wait: const Duration(milliseconds: 100),
-      expect: () => [isA<LwwSyncState>()],
-      verify: (bloc) {
-        expect(link.sent, isEmpty);
-        expect(bloc.state.syncStatus, LwwSyncStatus.idle);
-        expect(bloc.state.isSynced, isFalse);
-      },
-    );
+    await Future<void>.delayed(LwwSyncBloc.settleDelay * 3);
+    expect(desktop.bloc.state.recordsVersion, before + 1);
   });
 
-  group('SyncTriggered', () {
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'sends each table delta and reports progress table by table',
-      setUp: () async {
-        await insertFhir(db, id: 'f', updatedAt: ms(at(1)));
-        await insertNote(db, id: 1, content: 'n', updatedAt: ms(at(1)));
-        await insertNote(db, id: 2, content: 'n', updatedAt: ms(at(1)));
-      },
-      build: buildBloc,
-      act: (bloc) => bloc.add(const SyncTriggered()),
-      wait: const Duration(milliseconds: 50),
-      expect: () => [
-        stateWhere(
-          status: LwwSyncStatus.syncing,
-          currentTable: null,
-          completedTables: 0,
-          totalTables: 3,
-          sentRows: 0,
-          isSynced: false,
-        ),
-        stateWhere(currentTable: 'fhir_resource', completedTables: 0),
-        stateWhere(currentTable: 'fhir_resource', sentRows: 1),
-        stateWhere(currentTable: 'sources', completedTables: 1),
-        stateWhere(currentTable: 'record_notes', completedTables: 2),
-        stateWhere(currentTable: 'record_notes', sentRows: 3),
-        stateWhere(
-          status: LwwSyncStatus.idle,
-          currentTable: null,
-          completedTables: 3,
-          sentRows: 3,
-          isSynced: false,
-          pending: 0,
-        ).having((s) => s.lastSyncTime, 'lastSyncTime', isNotNull),
-      ],
-      verify: (bloc) async {
-        expect(sentTypes(), ['sync.delta', 'sync.delta', 'sync.status']);
-        expect(link.sent[1].payload['tableName'], 'record_notes');
-        expect(link.sent.last.payload, {
-          'fhir_resource': 1,
-          'sources': 0,
-          'record_notes': 2,
-        });
-        expect(
-          (await sync.getLastSyncTimestamp())!.millisecondsSinceEpoch,
-          bloc.state.lastSyncTime!.millisecondsSinceEpoch,
-        );
-      },
+  test('a peer that sends something unreadable gets a failed ack, and '
+      'nothing is stuck syncing', () async {
+    await start();
+    await connect();
+    await desktop.link.sendData('sync.batch', {'id': 7, 'tables': 'nonsense'});
+    await until(
+      () =>
+          desktop.link.sentOfType('sync.ack').isNotEmpty ||
+          phone.link.sentOfType('sync.ack').isNotEmpty,
     );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'only sends rows changed since the last sync time in state',
-      setUp: () async {
-        await insertFhir(db, id: 'old', updatedAt: ms(at(1)));
-        await insertFhir(db, id: 'new', updatedAt: ms(at(6)));
-      },
-      build: buildBloc,
-      seed: () => LwwSyncState(lastSyncTime: at(5)),
-      act: (bloc) => bloc.add(const SyncTriggered()),
-      wait: const Duration(milliseconds: 50),
-      verify: (_) {
-        final delta = SyncDelta.fromJson(link.sent.first.payload);
-        expect(delta.rows.map((r) => r['id']), ['new']);
-      },
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'with nothing to send it ends synced',
-      build: buildBloc,
-      act: (bloc) => bloc.add(const SyncTriggered()),
-      wait: const Duration(milliseconds: 50),
-      expect: () => [
-        stateWhere(status: LwwSyncStatus.syncing),
-        stateWhere(currentTable: 'fhir_resource'),
-        stateWhere(currentTable: 'sources'),
-        stateWhere(currentTable: 'record_notes'),
-        stateWhere(status: LwwSyncStatus.idle, isSynced: true, sentRows: 0),
-      ],
-      verify: (_) => expect(sentTypes(), ['sync.status']),
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'queues deltas while disconnected',
-      setUp: () async {
-        link.connected = false;
-        await insertFhir(db, id: 'f', updatedAt: ms(at(1)));
-        await insertSource(db, id: 's', updatedAt: ms(at(1)));
-      },
-      build: buildBloc,
-      act: (bloc) => bloc.add(const SyncTriggered()),
-      wait: const Duration(milliseconds: 50),
-      verify: (bloc) {
-        expect(link.sent, isEmpty);
-        expect(queue.pendingCount, 2);
-        expect(bloc.state.pendingChangeCount, 2);
-        expect(bloc.state.sentRows, 2);
-        expect(bloc.state.syncStatus, LwwSyncStatus.idle);
-      },
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'is ignored while a sync is already running',
-      setUp: () => insertFhir(db, id: 'f', updatedAt: ms(at(1))),
-      build: buildBloc,
-      seed: () => const LwwSyncState(syncStatus: LwwSyncStatus.syncing),
-      act: (bloc) => bloc.add(const SyncTriggered()),
-      wait: const Duration(milliseconds: 50),
-      expect: () => <LwwSyncState>[],
-      verify: (_) => expect(link.sent, isEmpty),
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'a send failure ends in the error state without moving the last sync '
-      'time',
-      setUp: () async {
-        link.failAfter = 0;
-        await insertFhir(db, id: 'f', updatedAt: ms(at(1)));
-      },
-      build: buildBloc,
-      act: (bloc) => bloc.add(const SyncTriggered()),
-      wait: const Duration(milliseconds: 50),
-      expect: () => [
-        stateWhere(status: LwwSyncStatus.syncing),
-        stateWhere(currentTable: 'fhir_resource'),
-        stateWhere(
-          status: LwwSyncStatus.error,
-          currentTable: null,
-        ).having((s) => s.error, 'error', contains('link dropped')),
-      ],
-      verify: (_) async {
-        expect(await sync.getLastSyncTimestamp(), isNull);
-        expect(queue.pendingCount, 0, reason: 'the failed delta is not kept');
-      },
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'a new sync clears a previous error',
-      build: buildBloc,
-      seed: () => const LwwSyncState(
-        syncStatus: LwwSyncStatus.error,
-        error: 'old failure',
-      ),
-      act: (bloc) => bloc.add(const SyncTriggered()),
-      wait: const Duration(milliseconds: 50),
-      verify: (bloc) {
-        expect(bloc.state.error, isNull);
-        expect(bloc.state.syncStatus, LwwSyncStatus.idle);
-      },
-    );
-  });
-
-  group('DeltaReceived', () {
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'applies newer rows, keeps newer local rows and acknowledges',
-      setUp: () async {
-        await insertSource(db, id: 'keep', updatedAt: ms(at(9)));
-        await insertSource(db, id: 'take', updatedAt: ms(at(1)));
-      },
-      build: buildBloc,
-      act: (bloc) => bloc.add(
-        DeltaReceived(
-          delta: remoteDelta('sources', [
-            sourceRow('keep', ms(at(5))),
-            sourceRow('take', ms(at(5))),
-            sourceRow('new', ms(at(5))),
-          ]),
-        ),
-      ),
-      wait: const Duration(milliseconds: 50),
-      expect: () => [
-        stateWhere(
-          status: LwwSyncStatus.syncing,
-          currentTable: 'sources',
-          isSynced: false,
-        ),
-        stateWhere(receivedRows: 2),
-        stateWhere(
-          status: LwwSyncStatus.idle,
-          currentTable: null,
-        ).having((s) => s.lastSyncTime, 'lastSyncTime', isNotNull),
-      ],
-      verify: (bloc) async {
-        expect((await fetchRow(db, 'sources', 'keep'))!['label_source'], null);
-        expect(
-          (await fetchRow(db, 'sources', 'take'))!['label_source'],
-          'remote',
-        );
-        expect(sentTypes(), ['sync.ack']);
-        expect(
-          (await sync.getLastSyncTimestamp())!.millisecondsSinceEpoch,
-          bloc.state.lastSyncTime!.millisecondsSinceEpoch,
-        );
-      },
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'accumulates received rows across deltas and skips the ack offline',
-      setUp: () => link.connected = false,
-      build: buildBloc,
-      seed: () => const LwwSyncState(receivedRows: 4),
-      act: (bloc) => bloc.add(
-        DeltaReceived(
-          delta: remoteDelta('sources', [sourceRow('s', ms(at(1)))]),
-        ),
-      ),
-      wait: const Duration(milliseconds: 50),
-      verify: (bloc) {
-        expect(bloc.state.receivedRows, 5);
-        expect(link.sent, isEmpty);
-      },
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'a fhir_resource delta also repairs broken attachment urls',
-      setUp: () async {
-        await dirs.writeDoc('scan.pdf', pdfBytes);
-        await insertFhir(
-          db,
-          id: 'doc',
-          updatedAt: ms(at(1)),
-          resourceType: 'DocumentReference',
-          raw: documentReferenceRaw([
-            {'url': 'file:///old/container/Documents/scan.pdf'},
-          ]),
-        );
-      },
-      build: buildBloc,
-      act: (bloc) => bloc.add(
-        DeltaReceived(
-          delta: remoteDelta('fhir_resource', [
-            {
-              'id': 'obs',
-              'resource_raw': '{}',
-              'resource_type': 'Observation',
-              'updated_at': ms(at(1)),
-            },
-          ]),
-        ),
-      ),
-      wait: const Duration(milliseconds: 50),
-      verify: (_) async {
-        expect(await fetchRow(db, 'fhir_resource', 'obs'), isNotNull);
-        expect(
-          (await fetchRow(db, 'fhir_resource', 'doc'))!['resource_raw'],
-          contains('"file://scan.pdf"'),
-        );
-      },
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'a delta that cannot be applied ends in the error state, unacknowledged',
-      build: buildBloc,
-      act: (bloc) => bloc.add(
-        DeltaReceived(
-          delta: remoteDelta('sources', [
-            {...sourceRow('s', ms(at(1))), 'column_from_v99': 1},
-          ]),
-        ),
-      ),
-      wait: const Duration(milliseconds: 50),
-      expect: () => [
-        stateWhere(status: LwwSyncStatus.syncing),
-        stateWhere(
-          status: LwwSyncStatus.error,
-          currentTable: null,
-        ).having((s) => s.error, 'error', contains('column_from_v99')),
-      ],
-      verify: (_) => expect(link.sent, isEmpty),
-    );
-  });
-
-  group('ConnectionChanged', () {
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'connected: resets counters, sends counts, flushes the queue, syncs',
-      setUp: () async {
-        await queue.enqueue(
-          remoteDelta('sources', [sourceRow('queued', ms(at(1)))]),
-        );
-        await insertSource(db, id: 's', updatedAt: ms(at(1)));
-      },
-      build: buildBloc,
-      seed: () => const LwwSyncState(
-        isSynced: true,
-        sentRows: 5,
-        receivedRows: 2,
-        pendingChangeCount: 1,
-      ),
-      act: (bloc) => bloc.add(const ConnectionChanged(isConnected: true)),
-      wait: const Duration(milliseconds: 400),
-      verify: (bloc) {
-        expect(bloc.state.pendingChangeCount, 0);
-        expect(sentTypes(), [
-          'sync.status',
-          'sync.delta',
-          'sync.delta',
-          'sync.status',
-        ]);
-        expect(link.sent.first.payload, {
-          'fhir_resource': 0,
-          'sources': 1,
-          'record_notes': 0,
-        });
-        final flushed = SyncDelta.fromJson(link.sent[1].payload);
-        expect(flushed.rows.single['id'], 'queued');
-        final synced = SyncDelta.fromJson(link.sent[2].payload);
-        expect(synced.rows.single['id'], 's');
-        expect(bloc.state.receivedRows, 0);
-        expect(bloc.state.sentRows, 1);
-      },
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'connected: emits the counter reset first',
-      build: buildBloc,
-      seed: () => const LwwSyncState(isSynced: true, sentRows: 5),
-      act: (bloc) => bloc.add(const ConnectionChanged(isConnected: true)),
-      wait: const Duration(milliseconds: 400),
-      expect: () => [
-        stateWhere(isSynced: false, sentRows: 0, receivedRows: 0),
-        stateWhere(status: LwwSyncStatus.syncing),
-        stateWhere(currentTable: 'fhir_resource'),
-        stateWhere(currentTable: 'sources'),
-        stateWhere(currentTable: 'record_notes'),
-        stateWhere(status: LwwSyncStatus.idle, isSynced: true),
-      ],
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'connected: a failing status send does not stop the queue flush',
-      setUp: () async {
-        await queue.enqueue(remoteDelta('sources', const []));
-        link.failAfter = 0;
-      },
-      build: buildBloc,
-      act: (bloc) => bloc.add(const ConnectionChanged(isConnected: true)),
-      wait: const Duration(milliseconds: 400),
-      verify: (bloc) {
-        expect(queue.pendingCount, 1);
-        expect(bloc.state.pendingChangeCount, 1);
-      },
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'disconnected: marks not synced and shows the queue size',
-      setUp: () async {
-        await queue.enqueue(remoteDelta('sources', const []));
-        await queue.enqueue(remoteDelta('fhir_resource', const []));
-      },
-      build: buildBloc,
-      seed: () => const LwwSyncState(isSynced: true),
-      act: (bloc) => bloc.add(const ConnectionChanged(isConnected: false)),
-      expect: () => [
-        stateWhere(isSynced: false, pending: 0),
-        stateWhere(isSynced: false, pending: 2),
-      ],
-      verify: (_) => expect(link.sent, isEmpty),
-    );
-  });
-
-  group('TableStatusReceived', () {
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'resends whole tables whose counts differ, then sends sync.verify',
-      setUp: () async {
-        await sync.setLastSyncTimestamp(at(50));
-        await insertFhir(db, id: 'f1', updatedAt: ms(at(1)));
-        await insertFhir(db, id: 'f2', updatedAt: ms(at(2)));
-        await insertSource(db, id: 's', updatedAt: ms(at(1)));
-      },
-      build: buildBloc,
-      act: (bloc) => bloc.add(
-        const TableStatusReceived(
-          remoteCounts: {'fhir_resource': 1, 'sources': 1, 'record_notes': 7},
-        ),
-      ),
-      wait: const Duration(milliseconds: 1300),
-      expect: () => [
-        stateWhere(
-          status: LwwSyncStatus.syncing,
-          currentTable: 'fhir_resource',
-        ),
-        stateWhere(sentRows: 2),
-        stateWhere(status: LwwSyncStatus.idle, currentTable: null),
-      ],
-      verify: (_) async {
-        expect(sentTypes(), ['sync.delta', 'sync.verify']);
-        final delta = SyncDelta.fromJson(link.sent.first.payload);
-        expect(delta.tableName, 'fhir_resource');
-        expect(
-          delta.rows.map((r) => r['id']),
-          unorderedEquals(['f1', 'f2']),
-          reason: 'rows older than the last sync are included',
-        );
-        expect(link.sent.last.payload, {
-          'fhir_resource': 2,
-          'sources': 1,
-          'record_notes': 0,
-        });
-        expect(
-          (await sync.getLastSyncTimestamp())!.isAfter(at(50)),
-          isTrue,
-        );
-      },
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'matching counts send nothing but the verify',
-      setUp: () async {
-        await sync.setLastSyncTimestamp(at(50));
-        await insertSource(db, id: 's', updatedAt: ms(at(1)));
-      },
-      build: buildBloc,
-      act: (bloc) => bloc.add(
-        const TableStatusReceived(
-          remoteCounts: {'fhir_resource': 0, 'sources': 1},
-        ),
-      ),
-      wait: const Duration(milliseconds: 1300),
-      // Only the closing "idle" emission, identical to the initial state.
-      expect: () => [stateWhere(status: LwwSyncStatus.idle, sentRows: 0)],
-      verify: (_) async {
-        expect(sentTypes(), ['sync.verify']);
-        expect(await sync.getLastSyncTimestamp(), at(50).toLocal());
-      },
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'offline it neither sends the delta nor the verify',
-      setUp: () async {
-        link.connected = false;
-        await insertSource(db, id: 's', updatedAt: ms(at(1)));
-      },
-      build: buildBloc,
-      act: (bloc) => bloc.add(
-        const TableStatusReceived(remoteCounts: {'sources': 3}),
-      ),
-      wait: const Duration(milliseconds: 1300),
-      expect: () => [
-        stateWhere(status: LwwSyncStatus.syncing, currentTable: 'sources'),
-        stateWhere(status: LwwSyncStatus.idle, currentTable: null),
-      ],
-      verify: (_) async {
-        expect(link.sent, isEmpty);
-        expect(await sync.getLastSyncTimestamp(), isNull);
-      },
-    );
-  });
-
-  group('SyncVerifyReceived', () {
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'matching counts mark the devices as synced',
-      setUp: () => insertSource(db, id: 's', updatedAt: ms(at(1))),
-      build: buildBloc,
-      act: (bloc) => bloc.add(
-        const SyncVerifyReceived(
-          remoteCounts: {'fhir_resource': 0, 'sources': 1, 'record_notes': 0},
-        ),
-      ),
-      wait: const Duration(milliseconds: 50),
-      expect: () => [stateWhere(isSynced: true)],
-      verify: (_) => expect(link.sent, isEmpty),
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'a count mismatch marks the devices as not synced',
-      build: buildBloc,
-      seed: () => const LwwSyncState(isSynced: true),
-      act: (bloc) => bloc.add(
-        const SyncVerifyReceived(remoteCounts: {'record_notes': 1}),
-      ),
-      wait: const Duration(milliseconds: 50),
-      expect: () => [stateWhere(isSynced: false)],
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'requests attachment files that are missing locally',
-      setUp: () => insertFhir(
-        db,
-        id: 'doc',
-        updatedAt: ms(at(1)),
-        resourceType: 'DocumentReference',
-        raw: documentReferenceRaw([
-          {'url': 'file://lost.pdf'},
-        ]),
-      ),
-      build: buildBloc,
-      act: (bloc) => bloc.add(
-        const SyncVerifyReceived(remoteCounts: {'fhir_resource': 1}),
-      ),
-      wait: const Duration(milliseconds: 50),
-      verify: (_) {
-        expect(link.sentOfType('sync.file_request').single.payload, {
-          'paths': ['lost.pdf'],
-        });
-      },
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'does not request files while offline',
-      setUp: () async {
-        link.connected = false;
-        await insertFhir(
-          db,
-          id: 'doc',
-          updatedAt: ms(at(1)),
-          resourceType: 'DocumentReference',
-          raw: documentReferenceRaw([
-            {'url': 'file://lost.pdf'},
-          ]),
-        );
-      },
-      build: buildBloc,
-      act: (bloc) => bloc.add(
-        const SyncVerifyReceived(remoteCounts: {'fhir_resource': 1}),
-      ),
-      wait: const Duration(milliseconds: 50),
-      verify: (_) => expect(link.sent, isEmpty),
-    );
-  });
-
-  group('known issues', () {
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'KNOWN ISSUE: receiving any delta moves the last sync time past an '
-      'unsent local edit, which is then never sent',
-      setUp: () async {
-        await sync.setLastSyncTimestamp(at(0));
-        // Edited locally two seconds ago, after the last sync, not yet sent
-        // (the change watcher's debounce had not fired, or the link was down).
-        await insertFhir(
-          db,
-          id: 'local-edit',
-          updatedAt: ms(DateTime.now().subtract(const Duration(seconds: 2))),
-        );
-      },
-      build: buildBloc,
-      seed: () => LwwSyncState(lastSyncTime: at(0)),
-      act: (bloc) async {
-        bloc.add(
-          DeltaReceived(
-            delta: remoteDelta('sources', [sourceRow('s', ms(at(1)))]),
-          ),
-        );
-        await Future<void>.delayed(const Duration(milliseconds: 50));
-        bloc.add(const SyncTriggered());
-      },
-      wait: const Duration(milliseconds: 100),
-      verify: (_) async {
-        expect(link.sentOfType('sync.delta'), isEmpty);
-        // The edit is still only local, and the row counts match, so neither
-        // incremental sync nor count reconciliation will ever send it.
-        expect(await fetchRow(db, 'fhir_resource', 'local-edit'), isNotNull);
-      },
-    );
-
-    blocTest<LwwSyncBloc, LwwSyncState>(
-      'KNOWN ISSUE: an offline sync advances the last sync time, so changes '
-      'live only in the offline queue that mobile clears on start',
-      setUp: () async {
-        link.connected = false;
-        await insertFhir(db, id: 'offline-edit', updatedAt: ms(at(1)));
-      },
-      build: buildBloc,
-      act: (bloc) async {
-        bloc.add(const SyncTriggered());
-        await Future<void>.delayed(const Duration(milliseconds: 50));
-        expect(queue.pendingCount, 1);
-        // lib/main.dart removes lww_offline_queue on every mobile start.
-        await queue.clear();
-        link.connected = true;
-        bloc.add(const SyncTriggered());
-      },
-      wait: const Duration(milliseconds: 100),
-      verify: (_) {
-        expect(link.sentOfType('sync.delta'), isEmpty);
-        expect(sentTypes(), ['sync.status']);
-      },
-    );
+    final ack = phone.link.sentOfType('sync.ack').last.payload;
+    expect(ack, {'id': 7, 'ok': false});
+    expect(phone.bloc.state.syncStatus, isNot(LwwSyncStatus.syncing));
   });
 }

@@ -15,6 +15,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/core/utils/patient_source_utils.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
@@ -89,13 +90,12 @@ class _RecordsViewState extends State<RecordsView> {
       _updateSwipeState,
     );
 
-    final selected = context.read<HomeBloc>().state.selectedSource;
-    final selectedSourceId = selected == 'All' ? null : selected;
-    final patientSourceIds = _resolvePatientSourceIds(context, selected);
+    final scope = _scope(context);
 
-    context.read<RecordsBloc>().add(const RecordsInitialised());
+    // One event sets the scope and the default filters together, so the
+    // Attachments view never loads with the filters but not the scope.
     context.read<RecordsBloc>().add(
-      RecordsSourceChanged(selectedSourceId, sourceIds: patientSourceIds),
+      RecordsSourceChanged(scope.sourceId, sourceIds: scope.sourceIds),
     );
 
     final currentFilters = context.read<RecordsBloc>().state.activeFilters;
@@ -108,8 +108,8 @@ class _RecordsViewState extends State<RecordsView> {
         (currentSpecialties.isNotEmpty ? <FhirType>[] : currentFilters);
     context.read<AttachmentBrowseBloc>().add(
       AttachmentBrowseInitialised(
-        sourceId: selectedSourceId,
-        sourceIds: patientSourceIds,
+        sourceId: scope.sourceId,
+        sourceIds: scope.sourceIds,
         resourceTypes: attachmentFilters,
         specialty: currentSpecialties.isNotEmpty
             ? currentSpecialties.first
@@ -153,46 +153,37 @@ class _RecordsViewState extends State<RecordsView> {
     BuildContext context, {
     List<FhirType> resourceTypes = const [],
   }) {
-    final homeState = context.read<HomeBloc>().state;
-    final sourceId = homeState.selectedSource == 'All'
-        ? null
-        : homeState.selectedSource;
-    final patientSourceIds = _resolvePatientSourceIds(
-      context,
-      homeState.selectedSource,
-    );
+    final scope = _scope(context);
     final specialties = context.read<RecordsBloc>().state.activeSpecialties;
     context.read<AttachmentBrowseBloc>().add(
       AttachmentBrowseInitialised(
-        sourceId: sourceId,
-        sourceIds: patientSourceIds,
+        sourceId: scope.sourceId,
+        sourceIds: scope.sourceIds,
         resourceTypes: resourceTypes,
         specialty: specialties.firstOrNull,
       ),
     );
   }
 
-  List<String>? _resolvePatientSourceIds(
-    BuildContext context,
-    String? selectedSource,
-  ) {
-    if (selectedSource != 'All') return null;
+  ({String? sourceId, List<String>? sourceIds}) _scope(BuildContext context) =>
+      PatientSourceUtils.recordsScope(
+        context.read<HomeBloc>().state.selectedSource,
+        context.read<PatientBloc>().state,
+      );
 
-    try {
-      final patientBloc = context.read<PatientBloc>();
-      final patientState = patientBloc.state;
-      final selectedPatientId = patientState.selectedPatientId;
-
-      if (selectedPatientId != null && patientState.patientGroups.isNotEmpty) {
-        final patientGroup = patientState.patientGroups[selectedPatientId];
-        if (patientGroup != null) {
-          return patientGroup.sourceIds;
-        }
-      }
-    } catch (e) {
-      logger.w('Could not read the selected patient sources', e);
+  /// Shows the records of the current scope again, in both views: after the
+  /// scope changed, or after records arrived or were deleted.
+  void _reloadRecords(BuildContext context, {bool attachments = true}) {
+    final scope = _scope(context);
+    context.read<RecordsBloc>().add(
+      RecordsSourceChanged(scope.sourceId, sourceIds: scope.sourceIds),
+    );
+    if (attachments) {
+      _reloadAttachmentBrowse(
+        context,
+        resourceTypes: context.read<RecordsBloc>().state.activeFilters,
+      );
     }
-    return null;
   }
 
   void _onScroll() {
@@ -358,82 +349,54 @@ class _RecordsViewState extends State<RecordsView> {
       ],
       child: MultiBlocListener(
         listeners: [
+          // A new scope reaches the Attachments view through the
+          // RecordsBloc listener below, so these only reload the list.
           BlocListener<HomeBloc, HomeState>(
-            listener: (context, state) {
-              final selectedSourceId = state.selectedSource == 'All'
-                  ? null
-                  : state.selectedSource;
-              final patientSourceIds = _resolvePatientSourceIds(
-                context,
-                state.selectedSource,
-              );
-
-              context.read<RecordsBloc>().add(
-                RecordsSourceChanged(
-                  selectedSourceId,
-                  sourceIds: patientSourceIds,
-                ),
-              );
-            },
+            listenWhen: (previous, current) =>
+                previous.selectedSource != current.selectedSource,
+            listener: (context, _) =>
+                _reloadRecords(context, attachments: false),
+          ),
+          BlocListener<PatientBloc, PatientState>(
+            listenWhen: (previous, current) =>
+                previous.status != current.status ||
+                previous.selectedPatientId != current.selectedPatientId ||
+                previous.patientGroups != current.patientGroups,
+            listener: (context, _) =>
+                _reloadRecords(context, attachments: false),
           ),
           BlocListener<SyncBloc, SyncState>(
+            listenWhen: (previous, current) =>
+                previous.hasDemoData != current.hasDemoData ||
+                previous.hasSyncedData != current.hasSyncedData ||
+                (previous.syncStatus != current.syncStatus &&
+                    current.syncStatus == SyncStatus.synced),
             listener: (context, state) {
               if (state.hasDemoData || state.hasSyncedData) {
-                context.read<RecordsBloc>().add(const RecordsInitialised());
-
-                final homeState = context.read<HomeBloc>().state;
-                final selectedSourceId = homeState.selectedSource == 'All'
-                    ? null
-                    : homeState.selectedSource;
-                final patientSourceIds = _resolvePatientSourceIds(
-                  context,
-                  homeState.selectedSource,
-                );
-
-                context.read<RecordsBloc>().add(
-                  RecordsSourceChanged(
-                    selectedSourceId,
-                    sourceIds: patientSourceIds,
-                  ),
-                );
+                _reloadRecords(context);
               }
             },
           ),
           BlocListener<LwwSyncBloc, LwwSyncState>(
             listenWhen: (previous, current) =>
-                current.receivedRows > previous.receivedRows ||
-                (previous.syncStatus == LwwSyncStatus.syncing &&
-                    current.syncStatus == LwwSyncStatus.idle &&
-                    current.receivedRows > 0),
-            listener: (context, state) {
-              context.read<RecordsBloc>().add(const RecordsInitialised());
-
-              final homeState = context.read<HomeBloc>().state;
-              final selectedSourceId = homeState.selectedSource == 'All'
-                  ? null
-                  : homeState.selectedSource;
-              final patientSourceIds = _resolvePatientSourceIds(
-                context,
-                homeState.selectedSource,
-              );
-
-              context.read<RecordsBloc>().add(
-                RecordsSourceChanged(
-                  selectedSourceId,
-                  sourceIds: patientSourceIds,
-                ),
-              );
-            },
+                previous.recordsVersion != current.recordsVersion,
+            listener: (context, _) => _reloadRecords(context),
           ),
           BlocListener<RecordsBloc, RecordsState>(
             listenWhen: (previous, current) =>
                 current.status == const RecordsStatus.deleted(),
             listener: (context, state) {
               context.read<PatientBloc>().add(const PatientPatientsLoaded());
+              _reloadAttachmentBrowse(
+                context,
+                resourceTypes: state.activeFilters,
+              );
             },
           ),
           BlocListener<RecordsBloc, RecordsState>(
             listenWhen: (previous, current) =>
+                previous.sourceId != current.sourceId ||
+                previous.sourceIds != current.sourceIds ||
                 previous.activeFilters != current.activeFilters ||
                 previous.activeSpecialties != current.activeSpecialties ||
                 previous.dateFilter != current.dateFilter,

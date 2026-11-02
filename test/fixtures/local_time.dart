@@ -17,8 +17,11 @@ String localDateTime(
 );
 
 /// The local time of day of [iso] ("9:30 AM").
-String localTime(String iso) =>
-    _clean(DateFormat.jm().format(DateTime.parse(iso).toLocal()));
+String localTime(String iso, {bool withSeconds = false}) => _clean(
+  (withSeconds ? DateFormat.jms() : DateFormat.jm()).format(
+    DateTime.parse(iso).toLocal(),
+  ),
+);
 
 /// The local date of [iso] ("Mar 15, 2024").
 String localDate(String iso) =>

@@ -233,6 +233,12 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
           builder: (_) => _PdfViewer(filePath: filePath, title: title),
         ),
       );
+    } else if (widget.readOnly) {
+      // Shared records are view-only: another app could keep or forward the
+      // file after the share ends.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.sharedFileNotPreviewable)),
+      );
     } else {
       unawaited(_openFileExternal(context, filePath));
     }

@@ -17,7 +17,11 @@ void main() {
   late SyncLocalDataSourceImpl dataSource;
 
   setUp(() async {
-    database = db.AppDatabase(NativeDatabase.memory());
+    database = db.AppDatabase(
+      NativeDatabase.memory(
+        setup: (raw) => raw.execute('PRAGMA foreign_keys = ON'),
+      ),
+    );
     SharedPreferences.setMockInitialValues({});
     prefs = await SharedPreferences.getInstance();
     dataSource = SyncLocalDataSourceImpl(database, prefs);
@@ -39,6 +43,70 @@ void main() {
     resourceType: 'Observation',
     resourceRaw: {'resourceType': 'Observation', 'id': id},
   );
+
+  group('cacheFhirResources with ids shared across sources or types', () {
+    FhirResourceDto typed(String id, String type, String sourceId) =>
+        FhirResourceDto(
+          resourceId: id,
+          sourceId: sourceId,
+          resourceType: type,
+          resourceRaw: {'resourceType': type, 'id': id},
+        );
+
+    Future<List<String>> rows() async => [
+      for (final r in await resourceRows())
+        '${r.id} ${r.sourceId} ${r.resourceType}',
+    ];
+
+    test('two sources with the same patient id keep both patients', () async {
+      await dataSource.cacheFhirResources([typed('12345', 'Patient', 'epic')]);
+      await dataSource.cacheFhirResources([
+        typed('12345', 'Patient', 'cerner'),
+      ]);
+
+      expect(await rows(), [
+        '12345 epic Patient',
+        'cerner/Patient/12345 cerner Patient',
+      ]);
+    });
+
+    test('one source with an encounter and an observation sharing an id '
+        'keeps both', () async {
+      await dataSource.cacheFhirResources([
+        typed('100', 'Encounter', 'hapi'),
+        typed('100', 'Observation', 'hapi'),
+      ]);
+
+      expect(await rows(), [
+        '100 hapi Encounter',
+        'hapi/Observation/100 hapi Observation',
+      ]);
+    });
+
+    test('a later sync updates the same rows instead of adding more', () async {
+      final batch = [
+        typed('100', 'Encounter', 'hapi'),
+        typed('100', 'Observation', 'hapi'),
+      ];
+      await dataSource.cacheFhirResources(batch);
+      await dataSource.cacheFhirResources(batch.reversed.toList());
+
+      expect(await rows(), [
+        '100 hapi Encounter',
+        'hapi/Observation/100 hapi Observation',
+      ]);
+    });
+
+    test('resources without an id are skipped, not merged into one', () async {
+      await dataSource.cacheFhirResources([
+        typed('ok', 'Observation', 'a'),
+        const FhirResourceDto(sourceId: 'a', resourceType: 'Observation'),
+        const FhirResourceDto(sourceId: 'a', resourceType: 'Condition'),
+      ]);
+
+      expect(await rows(), ['ok a Observation']);
+    });
+  });
 
   group('cacheFhirResources', () {
     test('stores each DTO keyed by its resource id', () async {
@@ -83,13 +151,13 @@ void main() {
       expect((await resourceRows()).single.updatedAt, isNotNull);
     });
 
-    test('replaces a row with the same resource id', () async {
+    test('replaces the row of the same resource', () async {
       await dataSource.cacheFhirResources([resource('obs-1', sourceId: 'a')]);
       await dataSource.cacheFhirResources([
-        resource('obs-1', sourceId: 'b').copyWith(title: 'new'),
+        resource('obs-1', sourceId: 'a').copyWith(title: 'new'),
       ]);
       final row = (await resourceRows()).single;
-      expect(row.sourceId, 'b');
+      expect(row.sourceId, 'a');
       expect(row.title, 'new');
     });
 
@@ -98,16 +166,6 @@ void main() {
         const FhirResourceDto(resourceId: 'x'),
       ]);
       expect((await resourceRows()).single.resourceRaw, 'null');
-    });
-
-    test('keys DTOs without a resource id as ""', () async {
-      await dataSource.cacheFhirResources([
-        const FhirResourceDto(title: 'first'),
-        const FhirResourceDto(title: 'second'),
-      ]);
-      final row = (await resourceRows()).single;
-      expect(row.id, '');
-      expect(row.title, 'second');
     });
 
     test('accepts an empty list', () async {
@@ -166,7 +224,8 @@ void main() {
       expect(row.labelSource, 'Renamed');
       expect(row.platformType, 'fasten');
       expect(row.createdAt, DateTime(2024));
-      expect(row.updatedAt, DateTime(2024, 2));
+      // Stamped by the trigger for the desktop sync, not the provider's date.
+      expect(row.updatedAt, isNotNull);
     });
   });
 
@@ -210,6 +269,12 @@ void main() {
           sources.keys,
           unorderedEquals(['fasten-1', 'wallet-abc', 'demo_data', 'remote-9']),
         );
+        final stamp = sources['fasten-1']!.updatedAt!;
+        expect(
+          stamp.difference(DateTime.now()).inMinutes.abs(),
+          lessThan(5),
+          reason: 'the sync stamp, read back in milliseconds',
+        );
         expect(
           sources['fasten-1'],
           Source(
@@ -218,7 +283,7 @@ void main() {
             labelSource: 'Clinic',
             platformType: 'fasten',
             createdAt: DateTime(2024),
-            updatedAt: DateTime(2024, 2),
+            updatedAt: stamp,
           ),
         );
         expect(
@@ -437,6 +502,38 @@ void main() {
       await dataSource.deleteSource('demo_data');
       expect(await dataSource.getSources(), isEmpty);
       expect((await raw('fhir_resource', 'd1'))['deleted_at'], isNotNull);
+    });
+
+    test('removes the notes on its records too', () async {
+      await dataSource.cacheSources(const [Source(id: 'a'), Source(id: 'b')]);
+      await dataSource.cacheFhirResources([
+        resource('a1', sourceId: 'a'),
+        resource('b1', sourceId: 'b'),
+      ]);
+      for (final (resourceId, sourceId) in [('a1', 'a'), ('b1', 'b')]) {
+        await database
+            .into(database.recordNotes)
+            .insert(
+              db.RecordNotesCompanion.insert(
+                resourceId: resourceId,
+                sourceId: Value(sourceId),
+                content: 'note on $resourceId',
+                timestamp: DateTime(2024),
+              ),
+            );
+      }
+
+      await dataSource.deleteSource('a');
+
+      // Tombstoned for the paired device, and hidden here.
+      expect((await dataSource.getSources()).map((s) => s.id), ['b']);
+      final notes = await database.select(database.recordNotes).get();
+      expect(
+        {
+          for (final n in notes) n.resourceId: n.deletedAt != null,
+        },
+        {'a1': true, 'b1': false},
+      );
     });
 
     test('is a no-op for an unknown source', () async {

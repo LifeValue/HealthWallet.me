@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:bloc_test/bloc_test.dart' show MockBloc, whenListen;
 import 'package:flutter/material.dart';
@@ -8,7 +7,9 @@ import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
+import 'package:health_wallet/features/desktop/communication/data/models/device_pairing.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
+import 'package:health_wallet/features/desktop/communication/data/services/secret_store.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/connection_dialog.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/vpn_notice.dart';
@@ -66,6 +67,20 @@ class _FakeScannerPlatform extends MobileScannerPlatform {
 
 final _en = lookupAppLocalizations(const Locale('en'));
 
+/// Pairing keys are not read here.
+class _NoSecrets extends Fake implements SecretStore {}
+
+/// A desktop's pairing code, as its QR code shows it.
+final _qrCode = DevicePairing(
+  deviceId: 'desktop-1',
+  deviceName: 'Office Mac',
+  pairingKey: DevicePairing.newKey(),
+  lastIp: '192.168.1.20',
+  lastPort: 49152,
+  pairedAt: DateTime(2024),
+  os: 'macos',
+).toQrPayload();
+
 void main() {
   late _MockCommunicationBloc commBloc;
 
@@ -81,7 +96,10 @@ void main() {
       ..registerSingleton<AppPlatform>(platform)
       ..registerSingleton<CommunicationBloc>(commBloc)
       ..registerSingleton<PairingStorageService>(
-        PairingStorageService(await SharedPreferences.getInstance()),
+        PairingStorageService(
+          await SharedPreferences.getInstance(),
+          _NoSecrets(),
+        ),
       );
   }
 
@@ -198,14 +216,7 @@ void main() {
         BarcodeCapture(
           barcodes: [
             Barcode(
-              rawValue: jsonEncode({
-                'device_id': 'desktop-1',
-                'device_name': 'Office Mac',
-                'pairing_key': 'key',
-                'ip': '192.168.1.20',
-                'port': 49152,
-                'os': 'macos',
-              }),
+              rawValue: _qrCode,
             ),
           ],
         ),
@@ -220,14 +231,12 @@ void main() {
         ),
         findsOne,
       );
-      final saved = getIt<PairingStorageService>().loadPairing();
-      expect(saved?.deviceId, 'desktop-1');
       expect(
         commBloc.events.single,
         isA<CommunicationPairingCompleted>().having(
-          (e) => e.pairing.deviceName,
-          'device name',
-          'Office Mac',
+          (e) => (e.pairing.deviceId, e.pairing.deviceName),
+          'desktop',
+          ('desktop-1', 'Office Mac'),
         ),
       );
 

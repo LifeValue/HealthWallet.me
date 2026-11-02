@@ -75,59 +75,52 @@ class FhirTemporalExtractor {
   }) {
     if (period == null) return null;
 
-    final locale = l10n?.localeName;
     try {
-      final start = period.start?.toString();
-      final end = period.end?.toString();
-
-      DateTime? startDate;
-      DateTime? endDate;
-
-      if (start != null) {
-        startDate = DateTime.tryParse(start);
-      }
-      if (end != null) {
-        endDate = DateTime.tryParse(end);
-      }
-
-      // A partial FHIR date ("2024-03") does not parse; show the period as
-      // recorded rather than dropping a bound.
-      if ((start != null && startDate == null) ||
-          (end != null && endDate == null)) {
-        return extractPeriod(period, l10n: l10n);
-      }
-
-      if (startDate != null && endDate != null) {
-        final formatter = _dateTimeFormat(locale);
-        final startFormatted = _format(formatter, startDate);
-        final endFormatted = _format(formatter, endDate);
-
-        // Same day as the user sees it: compare the local dates, not the
-        // recorded UTC ones.
-        final localStart = startDate.toLocal();
-        final localEnd = endDate.toLocal();
-        if (localStart.year == localEnd.year &&
-            localStart.month == localEnd.month &&
-            localStart.day == localEnd.day) {
-          final dateFormatter = DateFormat.yMMMd(locale);
-          final timeFormatter = DateFormat.jm(locale);
-          return '${_format(dateFormatter, startDate)}, ${_format(timeFormatter, startDate)} - ${_format(timeFormatter, endDate)}';
-        }
-
-        return '$startFormatted - $endFormatted';
-      } else if (startDate != null) {
-        final formatted = _format(_dateTimeFormat(locale), startDate);
-        return l10n?.fromDate(formatted) ?? 'From $formatted';
-      } else if (endDate != null) {
-        final formatted = _format(_dateTimeFormat(locale), endDate);
-        return l10n?.untilDate(formatted) ?? 'Until $formatted';
-      }
+      return _formatPeriod(period, l10n);
     } catch (e) {
+      // Without date symbols for the locale, show the period as written.
       return extractPeriod(period, l10n: l10n);
     }
+  }
 
+  static String? _formatPeriod(fhir_r4.Period period, AppLocalizations? l10n) {
+    final locale = l10n?.localeName;
+    final start = period.start?.toString();
+    final end = period.end?.toString();
+    final startDate = start == null ? null : _parse(start);
+    final endDate = end == null ? null : _parse(end);
+
+    if (startDate != null &&
+        endDate != null &&
+        startDate.hasTime &&
+        endDate.hasTime &&
+        _isSameDay(startDate.value, endDate.value)) {
+      final timeFormatter = DateFormat.jm(locale);
+      return '${_format(DateFormat.yMMMd(locale), startDate.value)}, '
+          '${_format(timeFormatter, startDate.value)} - '
+          '${_format(timeFormatter, endDate.value)}';
+    }
+
+    // A partial FHIR date ("2024-03", "2024") doesn't parse; show it as
+    // written rather than dropping it.
+    final startFormatted = startDate != null
+        ? _formatParsed(startDate, locale, separator: ' ')
+        : start;
+    final endFormatted = endDate != null
+        ? _formatParsed(endDate, locale, separator: ' ')
+        : end;
+    if (startFormatted != null && endFormatted != null) {
+      return '$startFormatted - $endFormatted';
+    } else if (startFormatted != null) {
+      return l10n?.fromDate(startFormatted) ?? 'From $startFormatted';
+    } else if (endFormatted != null) {
+      return l10n?.untilDate(endFormatted) ?? 'Until $endFormatted';
+    }
     return null;
   }
+
+  static bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 
   static String? extractOnsetX(dynamic onsetX, {AppLocalizations? l10n}) {
     if (onsetX == null) return null;
@@ -251,69 +244,80 @@ class FhirTemporalExtractor {
     return dateX.toString();
   }
 
-  static String? formatFhirDateTime(fhir_r4.FhirDateTime? fhirDateTime) {
-    if (fhirDateTime == null) return null;
+  static String? formatFhirDateTime(fhir_r4.FhirDateTime? fhirDateTime) =>
+      formatDateTimeString(fhirDateTime?.valueString);
 
-    final dateTimeString = fhirDateTime.valueString;
-    if (dateTimeString == null) return null;
+  static String? formatFhirDate(fhir_r4.FhirDate? fhirDate) =>
+      formatDateTimeString(fhirDate?.valueString);
 
-    try {
-      final dateTime = DateTime.parse(dateTimeString);
-      return _format(_dateTimeFormat(null, separator: ', '), dateTime);
-    } catch (e) {
-      return dateTimeString;
-    }
-  }
+  static String? formatFhirInstant(fhir_r4.FhirInstant? fhirInstant) =>
+      formatDateTimeString(fhirInstant?.valueString, withSeconds: true);
 
-  static String? formatFhirDate(fhir_r4.FhirDate? fhirDate) {
-    if (fhirDate == null) return null;
-
-    final dateString = fhirDate.valueString;
-    if (dateString == null) return null;
-
-    try {
-      final date = DateTime.parse(dateString);
-      return _format(DateFormat.yMMMd(), date);
-    } catch (e) {
-      return dateString;
-    }
-  }
-
-  static String? formatFhirInstant(fhir_r4.FhirInstant? fhirInstant) {
-    if (fhirInstant == null) return null;
-
-    final instantString = fhirInstant.valueString;
-    if (instantString == null) return null;
-
-    try {
-      final dateTime = DateTime.parse(instantString);
-      return _format(
-        _dateTimeFormat(null, separator: ', ', withSeconds: true),
-        dateTime,
-      );
-    } catch (e) {
-      return instantString;
-    }
-  }
-
-  static String? formatDateTimeString(String? dateTimeString) {
+  /// A FHIR date, dateTime or instant for display: a value with a time in
+  /// the device's time zone, a date-only value as that calendar day. Partial
+  /// dates ("2024-03") and anything unparseable are returned as written.
+  static String? formatDateTimeString(
+    String? dateTimeString, {
+    String? locale,
+    String separator = ', ',
+    bool withSeconds = false,
+  }) {
     if (dateTimeString == null || dateTimeString.isEmpty) return null;
-
-    try {
-      final dateTime = DateTime.parse(dateTimeString);
-
-      final hasTime =
-          dateTimeString.contains('T') || dateTimeString.contains(':');
-
-      if (hasTime) {
-        return _format(_dateTimeFormat(null, separator: ', '), dateTime);
-      } else {
-        return _format(DateFormat.yMMMd(), dateTime);
-      }
-    } catch (e) {
-      return dateTimeString;
-    }
+    final parsed = _parse(dateTimeString);
+    if (parsed == null) return dateTimeString;
+    return _formatParsed(
+      parsed,
+      locale,
+      separator: separator,
+      withSeconds: withSeconds,
+    );
   }
+
+  /// Parses a FHIR date, dateTime or instant. A value with a time is moved
+  /// to the device's time zone, so "21:30-04:00" is shown at the local time
+  /// rather than in UTC; a date-only value stays local midnight of that day.
+  static ({DateTime value, bool hasTime})? _parse(String raw) {
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return null;
+    final hasTime = raw.contains('T') || raw.contains(':');
+    return (value: hasTime ? parsed.toLocal() : parsed, hasTime: hasTime);
+  }
+
+  static String _formatParsed(
+    ({DateTime value, bool hasTime}) parsed,
+    String? locale, {
+    String separator = ', ',
+    bool withSeconds = false,
+  }) => parsed.hasTime
+      ? _format(
+          _dateTimeFormat(
+            locale,
+            separator: separator,
+            withSeconds: withSeconds,
+          ),
+          parsed.value,
+        )
+      : _format(DateFormat.yMMMd(locale), parsed.value);
+
+  /// The calendar day a record's stored date stands for. A date-only FHIR
+  /// value is stored as midnight UTC, which is the previous evening west of
+  /// UTC; it is read back as that UTC day. Any other time is the local day.
+  static DateTime recordDay(DateTime date) {
+    final utc = date.toUtc();
+    final isUtcMidnight =
+        utc.hour == 0 &&
+        utc.minute == 0 &&
+        utc.second == 0 &&
+        utc.millisecond == 0;
+    if (isUtcMidnight) return DateTime(utc.year, utc.month, utc.day);
+    final local = date.toLocal();
+    return DateTime(local.year, local.month, local.day);
+  }
+
+  /// A record's stored date as a long date ("March 5, 2024"); see
+  /// [recordDay].
+  static String formatRecordDate(DateTime date, String? locale) =>
+      DateFormat.yMMMMd(locale).format(recordDay(date));
 
   static String? extractOnsetXFormatted(
     dynamic onsetX, {

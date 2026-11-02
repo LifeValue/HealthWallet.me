@@ -51,6 +51,10 @@ class ShareLogBuffer extends ChangeNotifier {
   File? _logFile;
   Future<void> _pendingWrite = Future.value();
 
+  /// Lines logged but not yet written; one write takes all of them, so a
+  /// burst of entries costs one flushed append instead of one each.
+  final List<String> _unwritten = [];
+
   List<String> getAll() => List.unmodifiable(_entries);
 
   int get length => _entries.length;
@@ -74,14 +78,15 @@ class ShareLogBuffer extends ChangeNotifier {
   }
 
   void _appendToFile(String message) {
+    _unwritten.add(message);
+    // A write is already queued and will take this line too.
+    if (_unwritten.length > 1) return;
     _pendingWrite = _pendingWrite
         .then((_) async {
+          final lines = '${_unwritten.join('\n')}\n';
+          _unwritten.clear();
           final file = await _ensureLogFile();
-          await file.writeAsString(
-            '$message\n',
-            mode: FileMode.append,
-            flush: true,
-          );
+          await file.writeAsString(lines, mode: FileMode.append, flush: true);
         })
         .catchError((Object e) {
           // The log is a debugging aid: a failed write must not break the

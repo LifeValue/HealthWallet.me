@@ -16,6 +16,11 @@ class FhirFieldExtractor {
   static String? extractCodeableConceptText(dynamic codeableConcept) =>
       FhirCommonExtractor.extractCodeableConceptText(codeableConcept);
 
+  static String? extractMedicationName(
+    dynamic medicationX,
+    Map<String, dynamic> rawResource,
+  ) => FhirCommonExtractor.extractMedicationName(medicationX, rawResource);
+
   static String? extractReferenceDisplay(dynamic reference) =>
       FhirCommonExtractor.extractReferenceDisplay(reference);
 
@@ -288,6 +293,12 @@ class FhirFieldExtractor {
 
   static String? formatDateTimeString(String? dateTimeString) =>
       FhirTemporalExtractor.formatDateTimeString(dateTimeString);
+
+  static DateTime recordDay(DateTime date) =>
+      FhirTemporalExtractor.recordDay(date);
+
+  static String formatRecordDate(DateTime date, String? locale) =>
+      FhirTemporalExtractor.formatRecordDate(date, locale);
 
   static String? extractOnsetXFormatted(
     dynamic onsetX, {

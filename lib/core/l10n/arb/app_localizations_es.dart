@@ -1237,7 +1237,13 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String desktopSyncPendingValue(int count) {
-    return '$count cambios';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count cambios',
+      one: '1 cambio',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1983,7 +1989,13 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String syncStatusPending(int count) {
-    return '$count pendientes';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count cambios pendientes',
+      one: '1 cambio pendiente',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2006,6 +2018,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get backupStatusNotConnected => 'No conectado';
+
+  @override
+  String get backupStatusNoFolder => 'Sin carpeta de respaldos';
+
+  @override
+  String get backupStatusNoDesktopFolder => 'Sin carpeta en el escritorio';
+
+  @override
+  String get backupNoFolderChosen => 'Ninguna carpeta elegida';
+
+  @override
+  String get chooseLabel => 'Elegir';
 
   @override
   String get exportIpsPdf => 'Exportar IPS (PDF)';
@@ -3780,6 +3804,150 @@ class AppLocalizationsEs extends AppLocalizations {
   String get fieldStatusReason => 'Motivo del estado';
 
   @override
+  String get fhirStatusActive => 'Activo';
+
+  @override
+  String get fhirStatusInactive => 'Inactivo';
+
+  @override
+  String get fhirStatusResolved => 'Resuelto';
+
+  @override
+  String get fhirStatusRecurrence => 'Recurrencia';
+
+  @override
+  String get fhirStatusRelapse => 'Recaída';
+
+  @override
+  String get fhirStatusRemission => 'Remisión';
+
+  @override
+  String get fhirStatusUnconfirmed => 'No confirmado';
+
+  @override
+  String get fhirStatusProvisional => 'Provisional';
+
+  @override
+  String get fhirStatusDifferential => 'Diferencial';
+
+  @override
+  String get fhirStatusConfirmed => 'Confirmado';
+
+  @override
+  String get fhirStatusRefuted => 'Descartado';
+
+  @override
+  String get fhirStatusEnteredInError => 'Registrado por error';
+
+  @override
+  String get fhirStatusOnHold => 'En espera';
+
+  @override
+  String get fhirStatusCancelled => 'Cancelado';
+
+  @override
+  String get fhirStatusCompleted => 'Completado';
+
+  @override
+  String get fhirStatusStopped => 'Suspendido';
+
+  @override
+  String get fhirStatusDraft => 'Borrador';
+
+  @override
+  String get fhirStatusUnknown => 'Desconocido';
+
+  @override
+  String get fhirStatusIntended => 'Previsto';
+
+  @override
+  String get fhirStatusNotTaken => 'No tomado';
+
+  @override
+  String get fhirStatusInProgress => 'En curso';
+
+  @override
+  String get fhirStatusNotDone => 'No realizado';
+
+  @override
+  String get fhirStatusPreparation => 'En preparación';
+
+  @override
+  String get fhirStatusDeclined => 'Rechazado';
+
+  @override
+  String get fhirStatusRegistered => 'Registrado';
+
+  @override
+  String get fhirStatusPreliminary => 'Preliminar';
+
+  @override
+  String get fhirStatusFinal => 'Final';
+
+  @override
+  String get fhirStatusAmended => 'Modificado';
+
+  @override
+  String get fhirStatusCorrected => 'Corregido';
+
+  @override
+  String get fieldInterpretation => 'Interpretación';
+
+  @override
+  String get interpretationHigh => 'Alto';
+
+  @override
+  String get interpretationLow => 'Bajo';
+
+  @override
+  String get interpretationNormal => 'Normal';
+
+  @override
+  String get interpretationAbnormal => 'Anormal';
+
+  @override
+  String get interpretationCriticallyAbnormal => 'Críticamente anormal';
+
+  @override
+  String get interpretationCriticallyHigh => 'Críticamente alto';
+
+  @override
+  String get interpretationCriticallyLow => 'Críticamente bajo';
+
+  @override
+  String get interpretationSignificantlyHigh => 'Significativamente alto';
+
+  @override
+  String get interpretationSignificantlyLow => 'Significativamente bajo';
+
+  @override
+  String get interpretationIntermediate => 'Intermedio';
+
+  @override
+  String get interpretationResistant => 'Resistente';
+
+  @override
+  String get interpretationSusceptible => 'Sensible';
+
+  @override
+  String get interpretationPositive => 'Positivo';
+
+  @override
+  String get interpretationNegative => 'Negativo';
+
+  @override
+  String get interpretationDetected => 'Detectado';
+
+  @override
+  String get interpretationNotDetected => 'No detectado';
+
+  @override
+  String get interpretationIndeterminate => 'Indeterminado';
+
+  @override
+  String get interpretationEquivocal => 'Dudoso';
+
+  @override
   String get fieldStrength => 'Concentración';
 
   @override
@@ -4379,6 +4547,61 @@ class AppLocalizationsEs extends AppLocalizations {
   String desktopRestoreSucceededMessage(String name, int count) {
     return 'Se restauró \"$name\". Ahora hay $count registros en este dispositivo.';
   }
+
+  @override
+  String get sharedFileNotPreviewable =>
+      'Este tipo de archivo no se puede mostrar en los registros compartidos.';
+
+  @override
+  String get desktopWaitingForApproval =>
+      'Esperando a que el escritorio acepte este teléfono…';
+
+  @override
+  String get desktopPairingRejected =>
+      'El escritorio ya no reconoce este teléfono. Vuelve a escanear su código QR.';
+
+  @override
+  String get desktopPairingDeclined => 'El escritorio rechazó este teléfono.';
+
+  @override
+  String get desktopUpdateDesktopApp =>
+      'Actualiza HealthWallet en el escritorio y vuelve a intentarlo.';
+
+  @override
+  String get desktopUpdatePhoneApp =>
+      'Un teléfono con una versión anterior de HealthWallet intentó conectarse. Actualiza la aplicación en el teléfono.';
+
+  @override
+  String get desktopQrOutdated =>
+      'Este código QR es de una versión anterior de HealthWallet. Actualiza la aplicación en el escritorio y escanea su nuevo código.';
+
+  @override
+  String get desktopQrInvalid =>
+      'Este código QR no sirve para emparejar. Muestra uno nuevo en el escritorio.';
+
+  @override
+  String get desktopNoNetwork =>
+      'Este escritorio no está conectado a ninguna red. Conéctalo a una red Wi-Fi para emparejar un teléfono.';
+
+  @override
+  String get desktopFirewallHint =>
+      'Si tu teléfono no encuentra este escritorio, permite HealthWallet en el Firewall de Windows para redes privadas.';
+
+  @override
+  String desktopApprovePhoneMessage(String phone, String current) {
+    return '\"$phone\" quiere conectarse a este escritorio.\n\nSustituirá a \"$current\" y recibirá los historiales médicos guardados aquí.\n\n¿Lo permites?';
+  }
+
+  @override
+  String get desktopPairedPhone => 'Teléfono emparejado';
+
+  @override
+  String get desktopNewQrUnpairsHint =>
+      'Un nuevo código QR desempareja este teléfono; úsalo para emparejar otro.';
+
+  @override
+  String get desktopNotFound =>
+      'No se encontró el escritorio. Comprueba que HealthWallet está abierto en él y que ambos dispositivos están en la misma red.';
 
   @override
   String desktopBackupSucceededMessage(String name, int count) {

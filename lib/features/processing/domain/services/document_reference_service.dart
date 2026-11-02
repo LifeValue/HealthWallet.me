@@ -24,16 +24,63 @@ class DocumentReferenceService {
     this._pathResolver,
   );
 
-  /// Soft-deletes the DocumentReferences of a visit before they are
-  /// replaced, so the paired device drops them too (see [SoftDelete]).
-  Future<void> deleteDocumentReferences({
+  static const _sessionSystem = 'http://healthwallet.me/processing-session';
+
+  /// Saves a processing session's files as DocumentReferences, then deletes
+  /// the ones an earlier save of the same session created. Only documents
+  /// tagged with [sessionId] are replaced: other scans and files attached by
+  /// hand to the same encounter stay, and if the new PDFs fail the earlier
+  /// documents are kept.
+  Future<List<String>> replaceSessionDocuments({
+    required String sessionId,
+    required List<String> filePaths,
+    required String patientId,
+    Encounter? encounter,
     required String sourceId,
-    required String encounterId,
+    String? title,
   }) async {
-    await _database.softDeleteDocumentReferences(
+    final saved = await saveGroupedDocumentsAsFhirRecords(
+      filePaths: filePaths,
+      patientId: patientId,
+      encounter: encounter,
       sourceId: sourceId,
-      encounterId: encounterId,
+      title: title,
+      sessionId: sessionId,
     );
+
+    final earlier =
+        await (_database.select(_database.fhirResource)..where(
+              (t) =>
+                  t.resourceType.equals('DocumentReference') &
+                  t.deletedAt.isNull() &
+                  t.resourceRaw.contains(_sessionSystem) &
+                  t.resourceRaw.contains(sessionId),
+            ))
+            .get();
+    final replaced = [
+      for (final row in earlier)
+        if (!saved.contains(row.resourceId) &&
+            _sessionIdOf(row.resourceRaw) == sessionId)
+          row.id,
+    ];
+    // Tombstoned, so the paired device drops them too (see [SoftDelete]).
+    await _database.softDeleteResources(replaced);
+    return saved;
+  }
+
+  static String? _sessionIdOf(String rawJson) {
+    try {
+      final identifiers =
+          (jsonDecode(rawJson) as Map<String, dynamic>)['identifier'] as List?;
+      for (final identifier in identifiers ?? const []) {
+        if (identifier is Map && identifier['system'] == _sessionSystem) {
+          return identifier['value'] as String?;
+        }
+      }
+    } catch (e) {
+      logger.w('Unreadable DocumentReference identifiers', e);
+    }
+    return null;
   }
 
   Future<List<String>> saveGroupedDocumentsAsFhirRecords({
@@ -42,6 +89,7 @@ class DocumentReferenceService {
     Encounter? encounter,
     required String sourceId,
     String? title,
+    String? sessionId,
   }) async {
     try {
       final List<String> savedResourceIds = [];
@@ -58,6 +106,7 @@ class DocumentReferenceService {
               patientId: patientId,
               encounter: encounter,
               title: group.title,
+              sessionId: sessionId,
             );
 
         final resourceId = await _saveFhirDocumentReferenceToDatabase(
@@ -83,6 +132,7 @@ class DocumentReferenceService {
     required String patientId,
     Encounter? encounter,
     required String title,
+    String? sessionId,
   }) async {
     final file = File(pdfPath);
     final bytes = await file.readAsBytes();
@@ -143,6 +193,12 @@ class DocumentReferenceService {
           value: fhir_r4.FhirString(_generateId()),
           use: fhir_r4.IdentifierUse.usual,
         ),
+        if (sessionId != null)
+          fhir_r4.Identifier(
+            system: fhir_r4.FhirUri(_sessionSystem),
+            value: fhir_r4.FhirString(sessionId),
+            use: fhir_r4.IdentifierUse.secondary,
+          ),
       ],
     );
   }

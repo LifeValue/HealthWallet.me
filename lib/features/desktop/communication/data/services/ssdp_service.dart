@@ -36,7 +36,7 @@ class SsdpService {
         final datagram = _socket!.receive();
         if (datagram == null) return;
 
-        final message = utf8.decode(datagram.data);
+        final message = utf8.decode(datagram.data, allowMalformed: true);
         if (message.contains('M-SEARCH') && message.contains(_urn)) {
           _sendResponse(
             datagram.address,
@@ -61,6 +61,7 @@ class SsdpService {
   Future<({String ip, int port, String deviceId})?> search({
     Duration timeout = const Duration(seconds: 3),
     String? expectedDeviceId,
+    @visibleForTesting (InternetAddress, int)? target,
   }) async {
     RawDatagramSocket? socket;
     try {
@@ -91,7 +92,7 @@ class SsdpService {
           final datagram = socket?.receive();
           if (datagram == null) return;
 
-          final message = utf8.decode(datagram.data);
+          final message = utf8.decode(datagram.data, allowMalformed: true);
           if (message.contains(_urn) && !completer.isCompleted) {
             final result = _parseResponse(message);
             if (result != null) {
@@ -99,7 +100,14 @@ class SsdpService {
                   result.deviceId != expectedDeviceId) {
                 return;
               }
-              completer.complete(result);
+              // The address the answer came from, not the one it names: a
+              // host answering for the desktop can't send the phone
+              // elsewhere. The handshake still checks who answers.
+              completer.complete((
+                ip: datagram.address.address,
+                port: result.port,
+                deviceId: result.deviceId,
+              ));
               socket?.close();
             }
           }
@@ -121,11 +129,9 @@ class SsdpService {
         '\r\n';
 
     try {
-      socket.send(
-        utf8.encode(searchMessage),
-        InternetAddress(_multicastAddress),
-        _multicastPort,
-      );
+      final (address, port) =
+          target ?? (InternetAddress(_multicastAddress), _multicastPort);
+      socket.send(utf8.encode(searchMessage), address, port);
     } catch (e) {
       debugPrint('[SSDP] Send failed: $e');
       if (!completer.isCompleted) completer.complete(null);
@@ -194,10 +200,12 @@ class SsdpService {
     final usnMatch = RegExp(r'USN:\s*uuid:([^:]+)::').firstMatch(message);
 
     if (locationMatch == null) return null;
+    final port = int.tryParse(locationMatch.group(2)!);
+    if (port == null || port < 1 || port > 65535) return null;
 
     return (
       ip: locationMatch.group(1)!,
-      port: int.parse(locationMatch.group(2)!),
+      port: port,
       deviceId: usnMatch?.group(1) ?? '',
     );
   }

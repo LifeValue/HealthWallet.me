@@ -5,8 +5,9 @@ import 'package:health_wallet/core/data/local/app_database.dart';
 /// (`fhir_resource`, `sources`, `record_notes`).
 ///
 /// A delete keeps the row and sets `deleted_at` and `updated_at` to now in
-/// milliseconds, so the tombstone travels in the next LWW delta and wins
-/// over older copies on the other device. The values are written with raw
+/// milliseconds (at least one past the row's `updated_at`, so the stamp
+/// never goes back), so the tombstone travels in the next sync batch and
+/// wins over older copies on the other device. The values are written with raw
 /// SQL because drift stores a `DateTime` in seconds. Rows that are already
 /// tombstoned keep their stamp. Deleting records also tombstones their
 /// notes. See the LWW sync section of `architecture.md`.
@@ -44,7 +45,7 @@ extension SoftDelete on AppDatabase {
   Future<void> softDeleteSource(String sourceId) => transaction(() async {
     final now = _nowMs();
     await customUpdate(
-      'UPDATE sources SET deleted_at = ?, updated_at = ? '
+      'UPDATE sources SET deleted_at = MAX(?, COALESCE(updated_at, 0) + 1), updated_at = MAX(?, COALESCE(updated_at, 0) + 1) '
       'WHERE id = ? AND deleted_at IS NULL',
       variables: [..._stamp(now), Variable.withString(sourceId)],
       updates: {sources},
@@ -60,7 +61,7 @@ extension SoftDelete on AppDatabase {
   /// Tombstones one note. Returns 1, or 0 when it is missing or already
   /// deleted.
   Future<int> softDeleteNote(int id) => customUpdate(
-    'UPDATE record_notes SET deleted_at = ?, updated_at = ? '
+    'UPDATE record_notes SET deleted_at = MAX(?, COALESCE(updated_at, 0) + 1), updated_at = MAX(?, COALESCE(updated_at, 0) + 1) '
     'WHERE id = ? AND deleted_at IS NULL',
     variables: [..._stamp(_nowMs()), Variable.withInt(id)],
     updates: {recordNotes},
@@ -74,7 +75,7 @@ extension SoftDelete on AppDatabase {
   }) => transaction(() async {
     final stamp = _stamp(now ?? _nowMs());
     await customUpdate(
-      'UPDATE record_notes SET deleted_at = ?, updated_at = ? '
+      'UPDATE record_notes SET deleted_at = MAX(?, COALESCE(updated_at, 0) + 1), updated_at = MAX(?, COALESCE(updated_at, 0) + 1) '
       'WHERE deleted_at IS NULL '
       'AND resource_id IN (SELECT id FROM fhir_resource WHERE $where)',
       variables: [...stamp, ...args],
@@ -82,7 +83,7 @@ extension SoftDelete on AppDatabase {
       updateKind: UpdateKind.update,
     );
     return customUpdate(
-      'UPDATE fhir_resource SET deleted_at = ?, updated_at = ? '
+      'UPDATE fhir_resource SET deleted_at = MAX(?, COALESCE(updated_at, 0) + 1), updated_at = MAX(?, COALESCE(updated_at, 0) + 1) '
       'WHERE deleted_at IS NULL AND $where',
       variables: [...stamp, ...args],
       updates: {fhirResource},

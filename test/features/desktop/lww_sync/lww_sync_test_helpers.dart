@@ -18,7 +18,7 @@ AppDatabase openTestDatabase() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   return AppDatabase(
     NativeDatabase.memory(
-      setup: (raw) => raw.execute('PRAGMA foreign_keys = ON'),
+      setup: (database) => database.execute('PRAGMA foreign_keys = ON'),
     ),
   );
 }
@@ -30,26 +30,62 @@ DateTime at(int minutes) => t0.add(Duration(minutes: minutes));
 
 typedef SentMessage = ({String type, Map<String, dynamic> payload});
 
-/// Hand-written stand-in for the encrypted TCP/MPC link.
-class FakeTcpService extends Fake implements tcp.TcpService {
-  FakeTcpService({this.connected = true});
+/// One end of an in-memory phone ↔ desktop link: what one side sends
+/// arrives at the other as a `data` message, asynchronously and in order,
+/// as JSON. [link] connects two ends, [unlink] drops the connection.
+class LinkedTcpService extends Fake implements tcp.TcpService {
+  LinkedTcpService(this.deviceId, this.name);
 
-  bool connected;
+  final String deviceId;
+  final String name;
+  LinkedTcpService? _other;
+  bool connected = false;
+
+  /// While set, sent messages of these types are lost on the way.
+  final dropTypes = <String>{};
   final sent = <SentMessage>[];
-
-  /// When set, every `sendData` after this many successful sends throws.
-  int? failAfter;
 
   final _messages = StreamController<tcp.TcpMessage>.broadcast();
   final _states = StreamController<tcp.ConnectionState>.broadcast();
 
-  bool get hasListeners => _messages.hasListener || _states.hasListener;
+  static void link(LinkedTcpService a, LinkedTcpService b) {
+    a._other = b;
+    b._other = a;
+    a._setConnected(true);
+    b._setConnected(true);
+  }
+
+  void unlink() {
+    final other = _other;
+    _setConnected(false);
+    other?._setConnected(false);
+  }
+
+  void _setConnected(bool value) {
+    connected = value;
+    _states.add(
+      value ? tcp.ConnectionState.connected : tcp.ConnectionState.disconnected,
+    );
+  }
 
   List<SentMessage> sentOfType(String type) =>
       sent.where((m) => m.type == type).toList();
 
   @override
   bool get isConnected => connected;
+
+  @override
+  tcp.ConnectionState get currentState => connected
+      ? tcp.ConnectionState.connected
+      : tcp.ConnectionState.disconnected;
+
+  @override
+  tcp.PeerInfo? get peer {
+    final other = _other;
+    return connected && other != null
+        ? tcp.PeerInfo(deviceId: other.deviceId, name: other.name)
+        : null;
+  }
 
   @override
   Stream<tcp.TcpMessage> get messages => _messages.stream;
@@ -59,27 +95,20 @@ class FakeTcpService extends Fake implements tcp.TcpService {
 
   @override
   Future<void> sendData(String type, Map<String, dynamic> payload) async {
-    final limit = failAfter;
-    if (limit != null && sent.length >= limit) {
-      throw const SocketException('link dropped');
-    }
+    if (!connected) throw const tcp.LinkNotConnectedException();
+    final json = jsonEncode({'type': type, 'payload': payload});
     sent.add((type: type, payload: payload));
+    if (dropTypes.contains(type)) return;
+    final other = _other!;
+    // Delivered later, like bytes off a socket.
+    Timer.run(() {
+      if (other.connected && !other._messages.isClosed) {
+        other._messages.add(
+          tcp.TcpMessage.fromString(type: tcp.MessageType.data, data: json),
+        );
+      }
+    });
   }
-
-  void receiveData(String type, Object? payload) {
-    _messages.add(
-      tcp.TcpMessage.fromString(
-        type: tcp.MessageType.data,
-        data: jsonEncode({'type': type, 'payload': payload}),
-      ),
-    );
-  }
-
-  void receiveRaw(tcp.MessageType type, String data) {
-    _messages.add(tcp.TcpMessage.fromString(type: type, data: data));
-  }
-
-  void emitState(tcp.ConnectionState state) => _states.add(state);
 
   Future<void> close() async {
     await _messages.close();

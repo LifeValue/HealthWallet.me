@@ -32,11 +32,57 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
 
   SyncLocalDataSourceImpl(this._appDatabase, this._sharedPreferences);
 
+  /// The row id of each resource: its FHIR id, unless that id already
+  /// belongs to a resource of another source or type, which would otherwise
+  /// be replaced. Then it is `sourceId/type/id`. Rows keep the id they have,
+  /// so a later sync updates them.
+  Future<List<String>> _rowIds(List<FhirResourceDto> resources) async {
+    String composite(FhirResourceDto e) =>
+        '${e.sourceId}/${e.resourceType}/${e.resourceId}';
+
+    final candidates = {
+      for (final e in resources) ...[e.resourceId!, composite(e)],
+    };
+    final owners = <String, (String?, String?)>{
+      for (final row in await (_appDatabase.select(
+        _appDatabase.fhirResource,
+      )..where((r) => r.id.isIn(candidates))).get())
+        row.id: (row.sourceId, row.resourceType),
+    };
+
+    return [
+      for (final e in resources)
+        () {
+          final owner = (e.sourceId, e.resourceType);
+          final bare = e.resourceId!;
+          final id =
+              !owners.containsKey(composite(e)) &&
+                  (owners[bare] == null || owners[bare] == owner)
+              ? bare
+              : composite(e);
+          owners[id] = owner;
+          return id;
+        }(),
+    ];
+  }
+
   @override
   Future<void> cacheFhirResources(List<FhirResourceDto> fhirResources) async {
-    final resources = fhirResources.map((e) {
+    final withId = fhirResources
+        .where((e) => e.resourceId?.isNotEmpty ?? false)
+        .toList();
+    if (withId.length < fhirResources.length) {
+      logger.w(
+        'Skipped ${fhirResources.length - withId.length} resources without '
+        'an id',
+      );
+    }
+    final rowIds = await _rowIds(withId);
+
+    final resources = withId.indexed.map((entry) {
+      final (i, e) = entry;
       return db.FhirResourceCompanion.insert(
-        id: e.resourceId ?? '',
+        id: rowIds[i],
         sourceId: Value(e.sourceId),
         resourceType: Value(e.resourceType),
         resourceId: Value(e.resourceId),
@@ -85,7 +131,8 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
         labelSource: Value(e.labelSource),
         platformType: Value(e.platformType),
         createdAt: Value(e.createdAt),
-        updatedAt: Value(e.updatedAt),
+        // updated_at is stamped by the trigger, in milliseconds like every
+        // other synced row; drift would store seconds.
       );
     }).toList();
     await _appDatabase.batch((batch) {
@@ -152,7 +199,7 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
               (sourceId == 'demo_data' ? 'Demo' : null),
           platformType: _getSourcePlatformType(sourceId, dbSource),
           createdAt: dbSource?.createdAt,
-          updatedAt: dbSource?.updatedAt,
+          updatedAt: _fromStamp(dbSource?.updatedAt),
         );
       },
     ).toList();
@@ -206,7 +253,6 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
             db.SourcesCompanion(
               id: Value(sourceId),
               labelSource: Value(newLabel.isEmpty ? null : newLabel),
-              updatedAt: Value(DateTime.now()),
             ),
           );
     } catch (e) {
@@ -229,10 +275,9 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
       }
 
       // Create the Wallet source, replacing a deleted one. `updated_at` is
-      // left to the trigger, which stamps it in ms units at whole-second
-      // precision (drift would store seconds), so the new row beats an older
-      // tombstone on the peer. A row re-created within the same second as
-      // its delete loses to the tombstone; that limit is accepted.
+      // left to the trigger, which stamps it in milliseconds (drift would
+      // store seconds), so the new row beats the older tombstone on the
+      // peer.
       await _appDatabase
           .into(_appDatabase.sources)
           .insert(
@@ -257,9 +302,8 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
     try {
       // Create demo_data source in sources table with correct name for
       // display logic. Replacing the row clears a tombstone; `updated_at` is
-      // left to the trigger, in ms units at whole-second precision, so the
-      // new row beats a tombstone from an earlier second (see
-      // createWalletSource).
+      // left to the trigger, in milliseconds, so the new row beats the
+      // tombstone (see createWalletSource).
       await _appDatabase
           .into(_appDatabase.sources)
           .insert(
@@ -283,4 +327,12 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
   @override
   Future<void> deleteSource(String sourceId) =>
       _appDatabase.softDeleteSource(sourceId);
+
+  /// `updated_at` holds the sync stamp in milliseconds, which drift's
+  /// DateTime column reads as seconds.
+  static DateTime? _fromStamp(DateTime? read) => read == null
+      ? null
+      : DateTime.fromMillisecondsSinceEpoch(
+          read.millisecondsSinceEpoch ~/ 1000,
+        );
 }

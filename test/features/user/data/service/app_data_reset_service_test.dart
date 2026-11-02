@@ -28,6 +28,13 @@ class _CountingSweeper extends TempFileSweeper {
   }
 }
 
+/// The app database with foreign keys on, as in production.
+AppDatabase _openDatabase() => AppDatabase(
+  NativeDatabase.memory(
+    setup: (database) => database.execute('PRAGMA foreign_keys = ON'),
+  ),
+);
+
 Future<int> _count(AppDatabase db, String table) async {
   final row = await db
       .customSelect('SELECT COUNT(*) AS n FROM $table')
@@ -50,7 +57,7 @@ void main() {
     temp = Directory('${root.path}/tmp')..createSync();
     docs = Directory('${root.path}/Documents')..createSync();
     support = Directory('${root.path}/Support')..createSync();
-    db = AppDatabase(NativeDatabase.memory());
+    db = _openDatabase();
     sweeper = _CountingSweeper(temp, docs);
     SharedPreferences.setMockInitialValues({'theme': 'dark'});
 
@@ -60,9 +67,11 @@ void main() {
     await db.customStatement(
       "INSERT INTO fhir_resource (id, resource_raw) VALUES ('r1', '{}')",
     );
+    // A note refers to its record's source, which blocks deleting the
+    // source before the note.
     await db.customStatement(
-      'INSERT INTO record_notes (resource_id, content, timestamp) '
-      "VALUES ('r1', 'note', 0)",
+      'INSERT INTO record_notes (resource_id, source_id, content, timestamp) '
+      "VALUES ('r1', 's1', 'note', 0)",
     );
     await db.customStatement(
       "INSERT INTO processing_sessions (id) VALUES ('p1')",
@@ -130,6 +139,21 @@ void main() {
     expect(support.existsSync(), isTrue);
   });
 
+  test('a failing table doesn\'t keep the others or the preferences', () async {
+    await db.customStatement(
+      'CREATE TRIGGER block_session_delete BEFORE DELETE ON processing_sessions '
+      "BEGIN SELECT RAISE(ABORT, 'blocked'); END",
+    );
+
+    await service().reset();
+
+    expect(await _count(db, 'processing_sessions'), 1);
+    for (final table in ['fhir_resource', 'sources', 'record_notes']) {
+      expect(await _count(db, table), 0, reason: table);
+    }
+    expect((await SharedPreferences.getInstance()).getKeys(), isEmpty);
+  });
+
   test('goes on when a step fails', () async {
     await db.close();
     final payload = File('${temp.path}/share_$_id.json')
@@ -144,7 +168,7 @@ void main() {
 
     expect(sweeper.sweeps, 1);
     expect(payload.existsSync(), isFalse);
-    db = AppDatabase(NativeDatabase.memory());
+    db = _openDatabase();
   });
 
   test('the default sweep also deletes the processing cache', () async {

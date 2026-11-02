@@ -6,12 +6,12 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_code_labels.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
 
 part 'diagnostic_report.freezed.dart';
 
@@ -123,11 +123,11 @@ abstract class DiagnosticReport
     final List<RecordInfoLine> infoLines = [];
 
     // Status
-    final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(
-        statusText,
+      FhirCodeLabels.statusLine(
+        status?.valueString,
+        l10n,
         prefix: l10n.fieldStatus,
       ),
     );
@@ -237,7 +237,7 @@ abstract class DiagnosticReport
       infoLines.add(
         RecordInfoLine(
           icon: Assets.icons.calendar,
-          info: DateFormat.yMMMMd(l10n.localeName).format(date!),
+          info: FhirFieldExtractor.formatRecordDate(date!, l10n.localeName),
         ),
       );
     }

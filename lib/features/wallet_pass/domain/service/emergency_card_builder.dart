@@ -53,7 +53,6 @@ class EmergencyCardBuilder {
         .map((p) => p.sourceId)
         .toSet()
         .toList();
-    final sourceIds = patientSourceIds.isNotEmpty ? patientSourceIds : null;
 
     final patientName =
         FhirFieldExtractor.extractHumanNameFamilyFirst(patient.name?.first) ??
@@ -86,7 +85,7 @@ class EmergencyCardBuilder {
 
     final allergyResources = await _recordsRepository.getResources(
       resourceTypes: [FhirType.AllergyIntolerance],
-      sourceIds: sourceIds,
+      sourceIds: patientSourceIds,
       limit: 100,
     );
     final allergies = _distinct(
@@ -98,7 +97,7 @@ class EmergencyCardBuilder {
 
     final conditionResources = await _recordsRepository.getResources(
       resourceTypes: [FhirType.Condition],
-      sourceIds: sourceIds,
+      sourceIds: patientSourceIds,
       limit: 100,
     );
     final conditions = _distinct(
@@ -110,12 +109,12 @@ class EmergencyCardBuilder {
 
     final statementResources = await _recordsRepository.getResources(
       resourceTypes: [FhirType.MedicationStatement],
-      sourceIds: sourceIds,
+      sourceIds: patientSourceIds,
       limit: 100,
     );
     final requestResources = await _recordsRepository.getResources(
       resourceTypes: [FhirType.MedicationRequest],
-      sourceIds: sourceIds,
+      sourceIds: patientSourceIds,
       limit: 100,
     );
     final medications = _distinct([

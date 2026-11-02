@@ -192,46 +192,6 @@ void main() {
     });
   });
 
-  group('deleteDocumentReferences', () {
-    test('tombstones the DocumentReferences of the source and visit, in '
-        'ms', () async {
-      await doc('doc');
-      await doc('other-visit', encounterId: 'x');
-      await doc('other-source', sourceId: 't');
-      await doc('obs', type: 'Observation');
-      final before = DateTime.now().millisecondsSinceEpoch;
-
-      await service.deleteDocumentReferences(sourceId: 's', encounterId: 'e');
-
-      final row = (await fetchRow(db, 'fhir_resource', 'doc'))!;
-      expect(row['deleted_at'] as int, greaterThanOrEqualTo(before));
-      expect(row['updated_at'], row['deleted_at']);
-      for (final id in ['other-visit', 'other-source', 'obs']) {
-        expect(
-          (await fetchRow(db, 'fhir_resource', id))!['deleted_at'],
-          isNull,
-        );
-      }
-      expect(await countRows(db, 'fhir_resource'), 4);
-    });
-
-    test('a replacement saved afterwards is live', () async {
-      await doc('doc');
-      await service.deleteDocumentReferences(sourceId: 's', encounterId: 'e');
-      pdfs.groups = [await pdfGroup('c.pdf', 'PDF: c')];
-
-      await service.saveGroupedDocumentsAsFhirRecords(
-        filePaths: ['/in/c.pdf'],
-        patientId: 'pat-1',
-        encounter: const Encounter(resourceId: 'e'),
-        sourceId: 's',
-      );
-
-      final docs = await service.getAllDocumentReferences(sourceId: 's');
-      expect(docs.single.title, 'PDF: c');
-    });
-  });
-
   group('reads', () {
     test('getAllDocumentReferences lists live DocumentReferences', () async {
       await doc('a');

@@ -230,15 +230,9 @@ void main() {
         ),
       )
       ..add(const ShareRecordsEvent.peerSelected('a'));
-    // Sealing the payload generates real keys, which outlasts the event queue.
-    for (var i = 0; i < 300; i++) {
-      if (service.calls.contains('selectPeer a') ||
-          bloc.state.phase == SharePhase.error) {
-        break;
-      }
-      await Future<void>.delayed(const Duration(milliseconds: 10));
-    }
-    await settle();
+    await waitFor(
+      () => connections('a') >= 1 || bloc.state.phase == SharePhase.error,
+    );
   }
 
   group('sending', () {

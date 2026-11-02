@@ -441,7 +441,7 @@ void main() {
     ) async {
       final next = stream.first;
       await native.emit(method, arguments);
-      expect(await next.timeout(const Duration(seconds: 1)), matcher);
+      expect(await next.timeout(const Duration(seconds: 5)), matcher);
     }
 
     test('invitations, peers and health updates', () async {

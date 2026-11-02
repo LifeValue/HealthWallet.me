@@ -8,7 +8,7 @@ import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/discovery_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart'
-    show ConnectionState;
+    show ConnectionState, LinkFailure, PeerInfo, PendingApproval;
 import 'package:health_wallet/features/desktop/communication/data/services/transport/communication_service.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 
@@ -24,6 +24,12 @@ class _Address extends Fake implements InterfaceAddress {
 
   @override
   final String address;
+
+  @override
+  bool get isLoopback => false;
+
+  @override
+  bool get isLinkLocal => false;
 }
 
 /// A network interface with one IPv4 address.
@@ -42,20 +48,27 @@ final _vpn = _Interface('utun4', '10.212.134.7');
 
 /// Adds what the bloc's constructor wires up on top of [FakeTcpService].
 class _BlocTcpService extends FakeTcpService {
-  final _pendingClients = StreamController<String>.broadcast();
+  final _approvals = StreamController<PendingApproval?>.broadcast();
+  final _approved = StreamController<PeerInfo>.broadcast();
+  final _failures = StreamController<LinkFailure>.broadcast();
 
   @override
-  Stream<String> get pendingClients => _pendingClients.stream;
+  Stream<PendingApproval?> get approvalRequests => _approvals.stream;
 
   @override
-  void setMpcTransport(CommunicationService? transport) {}
+  Stream<PeerInfo> get peerApproved => _approved.stream;
 
   @override
-  void setUseMpc(bool value) {}
+  Stream<LinkFailure> get serverFailures => _failures.stream;
+
+  @override
+  void attachMpc(CommunicationService? transport, {required bool asServer}) {}
 
   @override
   Future<void> close() async {
-    await _pendingClients.close();
+    await _approvals.close();
+    await _approved.close();
+    await _failures.close();
     await super.close();
   }
 }
@@ -83,6 +96,7 @@ void main() {
     _UnusedPairingStorage(),
     tcp,
     _UnusedDiscoveryService(),
+    mpcAvailable: false,
   );
 
   // The two seeds cover either host: an ungated check would flip a false flag
@@ -124,6 +138,7 @@ void main() {
           _UnusedPairingStorage(),
           tcp,
           _UnusedDiscoveryService(),
+          mpcAvailable: false,
           vpnRecheckInterval: interval,
           listInterfaces: () async {
             lookups++;
@@ -188,6 +203,7 @@ void main() {
         _UnusedPairingStorage(),
         tcp,
         _UnusedDiscoveryService(),
+        mpcAvailable: false,
         // Too long to tick during the test: only the disconnect checks.
         vpnRecheckInterval: const Duration(hours: 1),
         listInterfaces: () async {
@@ -215,6 +231,7 @@ void main() {
         _UnusedPairingStorage(),
         tcp,
         _UnusedDiscoveryService(),
+        mpcAvailable: false,
         vpnRecheckInterval: const Duration(hours: 1),
         listInterfaces: () async {
           lookups++;
@@ -239,6 +256,7 @@ void main() {
       _UnusedPairingStorage(),
       tcp,
       _UnusedDiscoveryService(),
+      mpcAvailable: false,
       vpnRecheckInterval: const Duration(hours: 1),
     );
     addTearDown(bloc.close);

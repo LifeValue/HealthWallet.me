@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/attachment_sync_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/lww_sync_service.dart';
-import 'package:health_wallet/features/desktop/lww_sync/domain/entity/sync_delta.dart';
+import 'package:health_wallet/features/desktop/lww_sync/domain/entity/sync_batch.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../lww_sync_test_helpers.dart';
@@ -19,22 +19,17 @@ void main() {
 
   final pdfBytes = utf8.encode('%PDF-1.7 fake');
 
-  SyncDelta incoming(
+  SyncBatch incoming(
     String table,
     List<Map<String, dynamic>> rows, {
     String deviceId = 'device-m',
-  }) => SyncDelta(
-    tableName: table,
-    rows: rows,
-    deviceId: deviceId,
-    timestamp: at(100),
-  );
+    int id = 1,
+  }) => SyncBatch(id: id, deviceId: deviceId, tables: {table: rows});
 
   Map<String, dynamic> fhirRow(
     String id, {
     required int updatedAt,
     String title = 'remote',
-    String deviceId = 'device-m',
     String resourceType = 'Observation',
     String? raw,
     int? deletedAt,
@@ -44,12 +39,16 @@ void main() {
     'resource_raw': raw ?? jsonEncode({'resourceType': resourceType}),
     'title': title,
     'updated_at': updatedAt,
-    'device_id': deviceId,
     'deleted_at': deletedAt,
   };
 
   Future<String?> titleOf(String id) async =>
       (await fetchRow(db, 'fhir_resource', id))?['title'] as String?;
+
+  Future<int?> stampOf(String id) async =>
+      (await fetchRow(db, 'fhir_resource', id))?['updated_at'] as int?;
+
+  Future<int> outboxSize() => countRows(db, 'sync_outbox');
 
   setUp(() async {
     dirs = await TestDirs.create();
@@ -70,648 +69,303 @@ void main() {
     await dirs.dispose();
   });
 
-  test('syncs exactly fhir_resource, sources and record_notes', () {
+  test('syncs exactly sources, fhir_resource and record_notes, in that '
+      'order', () {
     expect(LwwSyncService.syncedTables, [
-      'fhir_resource',
       'sources',
+      'fhir_resource',
       'record_notes',
     ]);
   });
 
-  group('computeDelta', () {
-    test('returns rows with updated_at at or after since', () async {
-      await insertFhir(db, id: 'old', updatedAt: ms(at(0)));
-      await insertFhir(db, id: 'boundary', updatedAt: ms(at(5)));
-      await insertFhir(db, id: 'new', updatedAt: ms(at(9)));
+  group('the outbox', () {
+    test('every local write is waiting until acknowledged', () async {
+      expect(await service.nextBatch(0), isNull);
 
-      final delta = await service.computeDelta('fhir_resource', at(5));
-
-      expect(delta.tableName, 'fhir_resource');
-      expect(delta.deviceId, 'device-local');
-      expect(
-        delta.rows.map((r) => r['id']),
-        unorderedEquals(['boundary', 'new']),
-      );
-      expect(delta.rows.first.keys, containsAll(['updated_at', 'deleted_at']));
-    });
-
-    test('includes tombstones so deletes can travel', () async {
-      await insertSource(
-        db,
-        id: 'gone',
-        updatedAt: ms(at(5)),
-        deletedAt: ms(at(5)),
+      await insertFhir(db, id: 'a', title: 'first');
+      await insertSource(db, id: 's');
+      await db.customStatement(
+        "UPDATE fhir_resource SET title = 'again' WHERE id = 'a'",
       );
 
-      final delta = await service.computeDelta('sources', at(0));
-
-      expect(delta.rows.single['deleted_at'], ms(at(5)));
-    });
-
-    test('embeds DocumentReference files for fhir_resource only', () async {
-      await dirs.writeDoc('r.pdf', pdfBytes);
-      await insertFhir(
-        db,
-        id: 'doc',
-        updatedAt: ms(at(1)),
-        resourceType: 'DocumentReference',
-        raw: documentReferenceRaw([
-          {'url': 'file://r.pdf', 'title': 'r.pdf'},
-        ]),
-      );
-
-      final delta = await service.computeDelta('fhir_resource', at(0));
-
-      final raw = jsonDecode(delta.rows.single['resource_raw'] as String);
-      final attachment = (raw['content'] as List).single['attachment'] as Map;
-      expect(base64Decode(attachment['data'] as String), pdfBytes);
-      expect(attachment.containsKey('url'), isFalse);
-      final stored = await fetchRow(db, 'fhir_resource', 'doc');
-      expect(stored!['resource_raw'], contains('file://r.pdf'));
-    });
-
-    test('generates and persists a device id when none is stored', () async {
-      await prefs.remove('lww_local_device_id');
-
-      final first = await service.getLocalDeviceId();
-      final second = await service.getLocalDeviceId();
-
-      expect(first, matches(RegExp(r'^[0-9a-f-]{36}$')));
-      expect(second, first);
-      expect(prefs.getString('lww_local_device_id'), first);
-    });
-  });
-
-  group('computeAllDeltas', () {
-    test('only returns non-empty deltas of the synced tables', () async {
-      await insertFhir(db, id: 'f', updatedAt: ms(at(1)));
-      await insertNote(db, id: 1, content: 'n', updatedAt: ms(at(1)));
-      await insertSource(db, id: 'old-source', updatedAt: ms(at(-10)));
-      await insertProcessingSession(db, id: 'session', updatedAt: ms(at(1)));
-
-      final deltas = await service.computeAllDeltas(at(0));
-
-      expect(deltas.map((d) => d.tableName), ['fhir_resource', 'record_notes']);
-    });
-
-    test('returns nothing when nothing changed', () async {
-      expect(await service.computeAllDeltas(at(0)), isEmpty);
-    });
-  });
-
-  group('applyDelta conflict rules', () {
-    test('inserts a row that does not exist locally', () async {
-      final applied = await service.applyDelta(
-        incoming('fhir_resource', [fhirRow('a', updatedAt: ms(at(1)))]),
-      );
-
-      expect(applied, 1);
-      final row = await fetchRow(db, 'fhir_resource', 'a');
-      expect(row!['title'], 'remote');
-      expect(row['updated_at'], ms(at(1)), reason: 'timestamp is kept');
-      expect(row['device_id'], 'device-m');
-    });
-
-    test('newer incoming row overwrites the local row', () async {
-      await insertFhir(db, id: 'a', updatedAt: ms(at(1)), title: 'local');
-
-      final applied = await service.applyDelta(
-        incoming('fhir_resource', [fhirRow('a', updatedAt: ms(at(2)))]),
-      );
-
-      expect(applied, 1);
-      expect(await titleOf('a'), 'remote');
-      expect(
-        (await fetchRow(db, 'fhir_resource', 'a'))!['updated_at'],
-        ms(at(2)),
-      );
-    });
-
-    test('older incoming row loses to the newer local row', () async {
-      await insertFhir(db, id: 'a', updatedAt: ms(at(2)), title: 'local');
-
-      final applied = await service.applyDelta(
-        incoming('fhir_resource', [fhirRow('a', updatedAt: ms(at(1)))]),
-      );
-
-      expect(applied, 0);
-      expect(await titleOf('a'), 'local');
-      expect(
-        (await fetchRow(db, 'fhir_resource', 'a'))!['updated_at'],
-        ms(at(2)),
-      );
-    });
-
-    test('a 1 ms difference is enough to decide', () async {
-      await insertFhir(db, id: 'a', updatedAt: ms(at(1)), title: 'local');
-      await insertFhir(db, id: 'b', updatedAt: ms(at(1)), title: 'local');
-
-      await service.applyDelta(
-        incoming('fhir_resource', [
-          fhirRow('a', updatedAt: ms(at(1)) + 1),
-          fhirRow('b', updatedAt: ms(at(1)) - 1),
-        ]),
-      );
-
-      expect(await titleOf('a'), 'remote');
-      expect(await titleOf('b'), 'local');
-    });
-
-    test('applies each row of a mixed delta on its own merits', () async {
-      await insertFhir(db, id: 'keep', updatedAt: ms(at(5)), title: 'local');
-      await insertFhir(db, id: 'take', updatedAt: ms(at(1)), title: 'local');
-
-      final applied = await service.applyDelta(
-        incoming('fhir_resource', [
-          fhirRow('keep', updatedAt: ms(at(3))),
-          fhirRow('take', updatedAt: ms(at(3))),
-          fhirRow('new', updatedAt: ms(at(3))),
-        ]),
-      );
-
-      expect(applied, 2);
-      expect(await titleOf('keep'), 'local');
-      expect(await titleOf('take'), 'remote');
-      expect(await titleOf('new'), 'remote');
-    });
-
-    group('tie on updated_at (fhir_resource keeps device_id)', () {
-      test('the larger incoming device id wins', () async {
-        await insertFhir(
-          db,
-          id: 'a',
-          updatedAt: ms(at(1)),
-          deviceId: 'device-a',
-          title: 'local',
-        );
-
-        final applied = await service.applyDelta(
-          incoming('fhir_resource', [
-            fhirRow('a', updatedAt: ms(at(1)), deviceId: 'device-b'),
-          ], deviceId: 'device-b'),
-        );
-
-        expect(applied, 1);
-        expect(await titleOf('a'), 'remote');
-      });
-
-      test('the smaller incoming device id loses', () async {
-        await insertFhir(
-          db,
-          id: 'a',
-          updatedAt: ms(at(1)),
-          deviceId: 'device-b',
-          title: 'local',
-        );
-
-        final applied = await service.applyDelta(
-          incoming('fhir_resource', [
-            fhirRow('a', updatedAt: ms(at(1))),
-          ], deviceId: 'device-a'),
-        );
-
-        expect(applied, 0);
-        expect(await titleOf('a'), 'local');
-      });
-
-      test('an identical device id is not re-applied', () async {
-        await insertFhir(
-          db,
-          id: 'a',
-          updatedAt: ms(at(1)),
-          deviceId: 'device-m',
-          title: 'local',
-        );
-
-        final applied = await service.applyDelta(
-          incoming('fhir_resource', [fhirRow('a', updatedAt: ms(at(1)))]),
-        );
-
-        expect(applied, 0);
-      });
-
-      test('a local row without device id loses the tie', () async {
-        await insertFhir(db, id: 'a', updatedAt: ms(at(1)), title: 'local');
-
-        expect(
-          await service.applyDelta(
-            incoming('fhir_resource', [fhirRow('a', updatedAt: ms(at(1)))]),
-          ),
-          1,
-        );
-      });
-
-      test('KNOWN ISSUE: an unchanged row delivered again is re-applied and '
-          're-stamped with the wall clock', () async {
-        // Rows written by the app have no device_id, so the tie-break compares
-        // the sender's id with '' and the sender always wins. A duplicate
-        // delivery (offline queue, or the full resend after a count mismatch)
-        // therefore rewrites the row and makes it look like a new edit.
-        await insertFhir(db, id: 'a', updatedAt: ms(at(1)), title: 'same');
-        final echo = incoming('fhir_resource', [
-          {...fhirRow('a', updatedAt: ms(at(1))), 'title': 'same'},
-        ]);
-
-        expect(await service.applyDelta(echo), 1);
-        final restamped =
-            (await fetchRow(db, 'fhir_resource', 'a'))!['updated_at'] as int;
-        expect(restamped, greaterThan(ms(at(1))));
-
-        // A genuine edit the peer made before the echo was processed now
-        // loses, although it is newer than the echoed version.
-        final peerEdit = ms(at(1)) + 1000;
-        expect(
-          await service.applyDelta(
-            incoming('fhir_resource', [
-              {...fhirRow('a', updatedAt: peerEdit), 'title': 'peer edit'},
-            ]),
-          ),
-          0,
-        );
-        expect(await titleOf('a'), 'same');
-      });
-
-      test('KNOWN ISSUE: the tie winner gets a fresh updated_at from the '
-          'update trigger, so the two devices no longer agree', () async {
-        await insertFhir(
-          db,
-          id: 'a',
-          updatedAt: ms(at(1)),
-          deviceId: 'device-a',
-          title: 'local',
-        );
-
-        await service.applyDelta(
-          incoming('fhir_resource', [
-            fhirRow('a', updatedAt: ms(at(1)), deviceId: 'device-b'),
-          ], deviceId: 'device-b'),
-        );
-
-        final row = await fetchRow(db, 'fhir_resource', 'a');
-        expect(row!['title'], 'remote');
-        // The upsert leaves updated_at unchanged, which is exactly the
-        // condition of fhir_resource_update_updated_at, so the row is stamped
-        // "now" and will be sent back to the peer as a newer change.
-        expect(row['updated_at'], isNot(ms(at(1))));
-        expect(row['updated_at'] as int, greaterThan(ms(at(1))));
-      });
-    });
-
-    test('tie in sources (no local device_id): any non-empty incoming '
-        'device id wins', () async {
-      await insertSource(db, id: 's', updatedAt: ms(at(1)), label: 'local');
-
-      final applied = await service.applyDelta(
-        incoming('sources', [
-          {'id': 's', 'label_source': 'remote', 'updated_at': ms(at(1))},
-        ], deviceId: '0'),
-      );
-
-      expect(applied, 1);
-      expect((await fetchRow(db, 'sources', 's'))!['label_source'], 'remote');
-    });
-
-    test('a local row with NULL updated_at always loses', () async {
-      await dropSyncTriggers(db);
-      await insertFhir(db, id: 'legacy', title: 'local');
-
-      final applied = await service.applyDelta(
-        incoming('fhir_resource', [fhirRow('legacy', updatedAt: 1)]),
-      );
-
-      expect(applied, 1);
-      expect(await titleOf('legacy'), 'remote');
-    });
-
-    group('deletes (deleted_at tombstones)', () {
-      test('a newer tombstone deletes the local row', () async {
-        await insertFhir(db, id: 'a', updatedAt: ms(at(1)), title: 'local');
-
-        await service.applyDelta(
-          incoming('fhir_resource', [
-            fhirRow('a', updatedAt: ms(at(2)), deletedAt: ms(at(2))),
-          ]),
-        );
-
-        expect(
-          (await fetchRow(db, 'fhir_resource', 'a'))!['deleted_at'],
-          ms(at(2)),
-        );
-        expect((await service.getTableRowCounts())['fhir_resource'], 0);
-      });
-
-      test('an older tombstone does not delete a newer local edit', () async {
-        await insertFhir(db, id: 'a', updatedAt: ms(at(3)), title: 'edited');
-
-        final applied = await service.applyDelta(
-          incoming('fhir_resource', [
-            fhirRow('a', updatedAt: ms(at(2)), deletedAt: ms(at(2))),
-          ]),
-        );
-
-        expect(applied, 0);
-        final row = await fetchRow(db, 'fhir_resource', 'a');
-        expect(row!['deleted_at'], isNull);
-        expect(row['title'], 'edited');
-      });
-
-      test('a newer update resurrects a locally deleted row', () async {
-        await insertFhir(
-          db,
-          id: 'a',
-          updatedAt: ms(at(1)),
-          deletedAt: ms(at(1)),
-        );
-
-        await service.applyDelta(
-          incoming('fhir_resource', [fhirRow('a', updatedAt: ms(at(2)))]),
-        );
-
-        expect(
-          (await fetchRow(db, 'fhir_resource', 'a'))!['deleted_at'],
-          isNull,
-        );
-      });
-
-      test(
-        'an older update does not resurrect a newer local tombstone',
-        () async {
-          await insertFhir(
-            db,
-            id: 'a',
-            updatedAt: ms(at(3)),
-            deletedAt: ms(at(3)),
-          );
-
-          await service.applyDelta(
-            incoming('fhir_resource', [fhirRow('a', updatedAt: ms(at(2)))]),
-          );
-
-          expect(
-            (await fetchRow(db, 'fhir_resource', 'a'))!['deleted_at'],
-            ms(at(3)),
-          );
-        },
-      );
-
-      test(
-        'a tombstone for a row missing locally is stored as a tombstone',
-        () async {
-          await service.applyDelta(
-            incoming('fhir_resource', [
-              fhirRow('ghost', updatedAt: ms(at(2)), deletedAt: ms(at(2))),
-            ]),
-          );
-
-          expect(await countRows(db, 'fhir_resource'), 1);
-          expect((await service.getTableRowCounts())['fhir_resource'], 0);
-        },
-      );
-    });
-
-    test('ignores tables outside the synced set', () async {
-      final applied = await service.applyDelta(
-        incoming('processing_sessions', [
-          {'id': 'p', 'status': 'done', 'updated_at': ms(at(1))},
-        ]),
-      );
-
-      expect(applied, 0);
-      expect(await countRows(db, 'processing_sessions'), 0);
-    });
-
-    test('skips rows without id or without a usable updated_at', () async {
-      final applied = await service.applyDelta(
-        incoming('fhir_resource', [
-          {'resource_raw': '{}', 'updated_at': ms(at(1))},
-          {'id': 'no-ts', 'resource_raw': '{}'},
-          {'id': 'bad-ts', 'resource_raw': '{}', 'updated_at': 'yesterday'},
-          {'id': 'double-ts', 'resource_raw': '{}', 'updated_at': 1.5e12},
-        ]),
-      );
-
-      expect(applied, 0);
-      expect(await countRows(db, 'fhir_resource'), 0);
+      expect(await service.pendingCount(0), 2);
+      final batch = (await service.nextBatch(0))!;
+      expect(batch.deviceId, 'device-local');
+      expect(batch.tables['fhir_resource']!.single['title'], 'again');
+      expect(batch.tables['sources']!.single['id'], 's');
+
+      // Nothing moves without an acknowledgement: the same rows come again.
+      expect((await service.nextBatch(0))!.id, batch.id);
+
+      await service.pruneOutbox(batch.id);
+      expect(await service.nextBatch(batch.id), isNull);
+      expect(await service.pendingCount(batch.id), 0);
     });
 
     test(
-      'accepts updated_at as a numeric string or an ISO-8601 string',
+      'an edit made in the same second after a send is still sent',
       () async {
-        await insertFhir(db, id: 'num', updatedAt: ms(at(1)), title: 'local');
-        await insertFhir(db, id: 'iso', updatedAt: ms(at(1)), title: 'local');
+        await insertFhir(db, id: 'a', title: 'one');
+        final first = (await service.nextBatch(0))!;
+        await service.pruneOutbox(first.id);
 
-        final applied = await service.applyDelta(
-          incoming('fhir_resource', [
-            {...fhirRow('num', updatedAt: 0), 'updated_at': '${ms(at(2))}'},
-            {
-              ...fhirRow('iso', updatedAt: 0),
-              'updated_at': at(2).toIso8601String(),
-            },
-          ]),
+        await db.customStatement(
+          "UPDATE fhir_resource SET title = 'two' WHERE id = 'a'",
         );
-
-        expect(applied, 2);
-        expect(await titleOf('num'), 'remote');
-        expect(await titleOf('iso'), 'remote');
+        final second = (await service.nextBatch(first.id))!;
+        expect(second.tables['fhir_resource']!.single['title'], 'two');
       },
     );
 
-    test('stores bools as integers and other values as strings', () async {
-      await service.applyDelta(
-        incoming('fhir_resource', [
-          {
-            ...fhirRow('a', updatedAt: ms(at(1))),
-            'title': true,
-            'resource_raw': {'nested': 1},
-            'specialty_override': 2.5,
-          },
-        ]),
+    test('a batch stops at the row limit and continues from there', () async {
+      for (var i = 0; i < LwwSyncService.maxBatchRows + 5; i++) {
+        await insertFhir(db, id: 'r$i');
+      }
+      final first = (await service.nextBatch(0))!;
+      expect(
+        first.tables['fhir_resource'],
+        hasLength(LwwSyncService.maxBatchRows),
       );
-
-      final row = await fetchRow(db, 'fhir_resource', 'a');
-      expect(row!['title'], '1');
-      expect(row['resource_raw'], '{nested: 1}');
-      expect(row['specialty_override'], '2.5');
+      final second = (await service.nextBatch(first.id))!;
+      expect(second.tables['fhir_resource'], hasLength(5));
     });
 
-    test('a row with a column the local schema lacks aborts the delta '
-        'midway', () async {
-      final delta = incoming('fhir_resource', [
-        fhirRow('first', updatedAt: ms(at(1))),
-        {...fhirRow('second', updatedAt: ms(at(1))), 'future_column': 'x'},
-        fhirRow('third', updatedAt: ms(at(1))),
-      ]);
-
-      await expectLater(service.applyDelta(delta), throwsA(anything));
-
-      expect(await titleOf('first'), 'remote');
-      expect(await fetchRow(db, 'fhir_resource', 'second'), isNull);
-      expect(await fetchRow(db, 'fhir_resource', 'third'), isNull);
+    test('rows deleted since they were logged make an empty batch', () async {
+      await insertFhir(db, id: 'gone');
+      await db.customStatement("DELETE FROM fhir_resource WHERE id = 'gone'");
+      final batch = (await service.nextBatch(0))!;
+      expect(batch.tables, isEmpty);
+      expect(batch.id, greaterThan(0));
     });
 
-    test('record_notes rows keep their integer id', () async {
-      await insertNote(db, id: 7, content: 'local', updatedAt: ms(at(1)));
-
-      await service.applyDelta(
-        incoming('record_notes', [
-          {
-            'id': 7,
-            'resource_id': 'obs-1',
-            'content': 'remote',
-            'timestamp': ms(t0) ~/ 1000,
-            'updated_at': ms(at(2)),
-          },
-        ]),
-      );
-
-      final row = await fetchRow(db, 'record_notes', 7);
-      expect(row!['content'], 'remote');
-      expect(await countRows(db, 'record_notes'), 1);
-    });
-
-    test('KNOWN ISSUE: two different notes that got the same autoincrement '
-        'id on each device overwrite each other', () async {
-      // Desktop wrote its own note #1; mobile independently wrote a note #1
-      // on another record. Last write wins treats them as one row.
-      await insertNote(
-        db,
-        id: 1,
-        content: 'desktop note on obs-1',
-        updatedAt: ms(at(1)),
-      );
-
-      await service.applyDelta(
-        incoming('record_notes', [
-          {
-            'id': 1,
-            'resource_id': 'obs-2',
-            'content': 'mobile note on obs-2',
-            'timestamp': ms(t0) ~/ 1000,
-            'updated_at': ms(at(2)),
-          },
-        ]),
-      );
-
-      final notes = await db
-          .customSelect('SELECT content FROM record_notes')
-          .get();
-      expect(notes.map((r) => r.data['content']), ['mobile note on obs-2']);
+    test('a note is logged under its uuid', () async {
+      await insertNote(db, id: 4, content: 'hi');
+      final batch = (await service.nextBatch(0))!;
+      expect(batch.tables['record_notes']!.single['uuid'], 'legacy-4');
     });
   });
 
-  group('applyDelta attachments', () {
-    test('restores inline files of incoming DocumentReferences', () async {
-      final applied = await service.applyDelta(
+  group('applying a batch', () {
+    test('inserts a missing row, keeping its updated_at', () async {
+      await service.applyBatch(
+        incoming('fhir_resource', [fhirRow('a', updatedAt: ms(at(1)))]),
+      );
+      expect(await titleOf('a'), 'remote');
+      expect(await stampOf('a'), ms(at(1)));
+    });
+
+    test('newer wins, older loses, by the millisecond', () async {
+      await insertFhir(db, id: 'a', updatedAt: ms(at(1)), title: 'local');
+      await service.applyBatch(
+        incoming('fhir_resource', [
+          fhirRow('a', updatedAt: ms(at(1)) - 1, title: 'older'),
+        ]),
+      );
+      expect(await titleOf('a'), 'local');
+
+      await service.applyBatch(
+        incoming('fhir_resource', [
+          fhirRow('a', updatedAt: ms(at(1)) + 1, title: 'newer'),
+        ]),
+      );
+      expect(await titleOf('a'), 'newer');
+      expect(await stampOf('a'), ms(at(1)) + 1);
+    });
+
+    test('a tie goes to the larger device id, the same answer on both '
+        'sides, and keeps the stamp', () async {
+      await insertFhir(db, id: 'a', updatedAt: ms(at(1)), title: 'local');
+      await service.applyBatch(
+        incoming('fhir_resource', [
+          fhirRow('a', updatedAt: ms(at(1)), title: 'smaller'),
+        ], deviceId: 'device-a'),
+      );
+      expect(await titleOf('a'), 'local');
+
+      await service.applyBatch(
+        incoming('fhir_resource', [
+          fhirRow('a', updatedAt: ms(at(1)), title: 'larger'),
+        ], deviceId: 'device-z'),
+      );
+      expect(await titleOf('a'), 'larger');
+      expect(await stampOf('a'), ms(at(1)), reason: 'not re-stamped');
+    });
+
+    test('a row delivered again is not written again', () async {
+      final row = fhirRow('a', updatedAt: ms(at(1)), title: 'same');
+      final first = await service.applyBatch(incoming('fhir_resource', [row]));
+      final again = await service.applyBatch(incoming('fhir_resource', [row]));
+      expect(first.count, 1);
+      expect(again.count, 0);
+      expect(await stampOf('a'), ms(at(1)));
+    });
+
+    test("the peer's rows don't go back into the outbox", () async {
+      await service.applyBatch(
+        incoming('fhir_resource', [fhirRow('a', updatedAt: ms(at(1)))]),
+      );
+      await service.applyBatch(
+        incoming('fhir_resource', [
+          fhirRow('a', updatedAt: ms(at(2)), title: 'edited'),
+        ]),
+      );
+      expect(await outboxSize(), 0);
+      expect(await service.nextBatch(0), isNull);
+    });
+
+    test('unknown columns are dropped, so a newer peer and a hostile key '
+        'neither abort nor run SQL', () async {
+      await db.customStatement(
+        "INSERT INTO processing_sessions (id, status) VALUES ('p', 'secret')",
+      );
+      const injected =
+          'resource_raw, updated_at) SELECT ?, (SELECT group_concat(status) '
+          'FROM processing_sessions), 9999999999999 WHERE ? IS NOT NULL --';
+      final applied = await service.applyBatch(
+        incoming('fhir_resource', [
+          {
+            ...fhirRow('a', updatedAt: ms(at(1)), title: 'kept'),
+            'column_from_v14': 'x',
+            injected: 'x',
+          },
+        ]),
+      );
+      expect(applied.count, 1);
+      expect(await titleOf('a'), 'kept');
+      final raw = (await fetchRow(db, 'fhir_resource', 'a'))!['resource_raw'];
+      expect(raw, isNot(contains('secret')));
+    });
+
+    test('rows of tables outside the synced set are ignored', () async {
+      final applied = await service.applyBatch(
+        SyncBatch(
+          id: 1,
+          deviceId: 'device-m',
+          tables: {
+            'processing_sessions': [
+              {'id': 'p', 'status': 'x', 'updated_at': ms(at(1))},
+            ],
+          },
+        ),
+      );
+      expect(applied.count, 0);
+      expect(await countRows(db, 'processing_sessions'), 0);
+    });
+
+    test(
+      'one row that fails a constraint does not hold back the others',
+      () async {
+        final applied = await service.applyBatch(
+          SyncBatch(
+            id: 1,
+            deviceId: 'device-m',
+            tables: {
+              'fhir_resource': [fhirRow('ok', updatedAt: ms(at(1)))],
+              'record_notes': [
+                {
+                  'id': 1,
+                  'uuid': 'n1',
+                  'resource_id': 'ok',
+                  'source_id': 'no-such-source',
+                  'content': 'orphan',
+                  'timestamp': 0,
+                  'updated_at': ms(at(1)),
+                },
+              ],
+            },
+          ),
+        );
+        expect(applied.rows['fhir_resource'], ['ok']);
+        expect(applied.rows['record_notes'], isNull);
+        expect(await outboxSize(), 0);
+      },
+    );
+
+    test('a note matches on its uuid and keeps its local id when the '
+        "peer's id is taken", () async {
+      await insertNote(db, id: 7, content: 'local note');
+      await service.applyBatch(
+        incoming('record_notes', [
+          {
+            'id': 7,
+            'uuid': 'from-peer',
+            'resource_id': 'obs-1',
+            'content': 'peer note',
+            'timestamp': 0,
+            'updated_at': ms(at(1)),
+          },
+        ]),
+      );
+      final notes = await db
+          .customSelect(
+            'SELECT id, uuid, content FROM record_notes ORDER BY id',
+          )
+          .get();
+      expect(notes.map((r) => r.data['content']), ['local note', 'peer note']);
+      expect(notes.last.data['uuid'], 'from-peer');
+      expect(notes.last.data['id'], isNot(7));
+    });
+
+    test('an older DocumentReference replaces a local one whose file is '
+        'missing', () async {
+      await insertFhir(
+        db,
+        id: 'doc',
+        resourceType: 'DocumentReference',
+        updatedAt: ms(at(5)),
+        raw: documentReferenceRaw([
+          {'url': 'file://gone.pdf'},
+        ]),
+      );
+      await dirs.writeDoc('present.pdf', pdfBytes);
+      await service.applyBatch(
         incoming('fhir_resource', [
           fhirRow(
             'doc',
             updatedAt: ms(at(1)),
             resourceType: 'DocumentReference',
             raw: documentReferenceRaw([
-              {'data': base64Encode(pdfBytes), 'title': 'scan.pdf'},
+              {'url': 'file://present.pdf'},
             ]),
           ),
         ]),
       );
-
-      expect(applied, 1);
-      final raw = (await fetchRow(db, 'fhir_resource', 'doc'))!['resource_raw'];
-      final url =
-          ((jsonDecode(raw as String)['content'] as List).single
-                  as Map)['attachment']['url']
-              as String;
-      expect(url, startsWith('file://scan_'));
-      expect(await dirs.docFile(url.substring(7)).readAsBytes(), pdfBytes);
+      expect(
+        (await fetchRow(db, 'fhir_resource', 'doc'))!['resource_raw'],
+        contains('present.pdf'),
+      );
     });
 
-    test('an older incoming DocumentReference replaces a local one whose file '
-        'is missing', () async {
+    test('a newer DocumentReference keeps the local file of an attachment '
+        'it names differently', () async {
+      await dirs.writeDoc('mine_1234.pdf', pdfBytes);
       await insertFhir(
         db,
         id: 'doc',
-        updatedAt: ms(at(5)),
         resourceType: 'DocumentReference',
-        title: 'local',
+        updatedAt: ms(at(1)),
         raw: documentReferenceRaw([
-          {'url': 'file://lost.pdf'},
+          {'url': 'file://mine_1234.pdf', 'title': 'Lab'},
         ]),
       );
-
-      final applied = await service.applyDelta(
+      await service.applyBatch(
         incoming('fhir_resource', [
           fhirRow(
             'doc',
-            updatedAt: ms(at(1)),
+            updatedAt: ms(at(2)),
+            title: 'edited',
             resourceType: 'DocumentReference',
+            raw: documentReferenceRaw([
+              {'url': 'file://theirs.pdf', 'title': 'Lab'},
+            ]),
           ),
         ]),
       );
-
-      expect(applied, 1);
-      expect(await titleOf('doc'), 'remote');
-    });
-
-    test(
-      'an absolute url whose file name exists in documents is not broken',
-      () async {
-        await dirs.writeDoc('kept.pdf', pdfBytes);
-        await insertFhir(
-          db,
-          id: 'doc',
-          updatedAt: ms(at(5)),
-          resourceType: 'DocumentReference',
-          title: 'local',
-          raw: documentReferenceRaw([
-            {'url': 'https://example.org/x.pdf'},
-            {'url': 'file:///other/device/kept.pdf'},
-            {'url': 'file://kept.pdf'},
-          ]),
-        );
-
-        final applied = await service.applyDelta(
-          incoming('fhir_resource', [
-            fhirRow(
-              'doc',
-              updatedAt: ms(at(1)),
-              resourceType: 'DocumentReference',
-            ),
-          ]),
-        );
-
-        expect(applied, 0);
-        expect(await titleOf('doc'), 'local');
-      },
-    );
-
-    test('an older row never replaces a newer local non-document or a '
-        'document without attachments', () async {
-      await insertFhir(db, id: 'obs', updatedAt: ms(at(5)), title: 'local');
-      await insertFhir(
-        db,
-        id: 'doc',
-        updatedAt: ms(at(5)),
-        resourceType: 'DocumentReference',
-        title: 'local',
-        raw: '{"resourceType":"DocumentReference"}',
-      );
-      await insertFhir(
-        db,
-        id: 'bad',
-        updatedAt: ms(at(5)),
-        resourceType: 'DocumentReference',
-        title: 'local',
-        raw: 'not json',
-      );
-
-      final applied = await service.applyDelta(
-        incoming('fhir_resource', [
-          fhirRow('obs', updatedAt: ms(at(1))),
-          fhirRow('doc', updatedAt: ms(at(1))),
-          fhirRow('bad', updatedAt: ms(at(1))),
-        ]),
-      );
-
-      expect(applied, 0);
+      final raw =
+          (await fetchRow(db, 'fhir_resource', 'doc'))!['resource_raw']
+              as String;
+      expect(raw, contains('mine_1234.pdf'));
+      expect(await titleOf('doc'), 'edited');
     });
 
     test('an older live row does not resurrect a local tombstoned document '
@@ -728,7 +382,7 @@ void main() {
         ]),
       );
 
-      final applied = await service.applyDelta(
+      final applied = await service.applyBatch(
         incoming('fhir_resource', [
           fhirRow(
             'doc',
@@ -738,7 +392,7 @@ void main() {
         ]),
       );
 
-      expect(applied, 0);
+      expect(applied.count, 0);
       final row = await fetchRow(db, 'fhir_resource', 'doc');
       expect(row!['deleted_at'], ms(at(5)));
       expect(row['title'], 'deleted');
@@ -757,7 +411,7 @@ void main() {
         ]),
       );
 
-      final applied = await service.applyDelta(
+      final applied = await service.applyBatch(
         incoming('fhir_resource', [
           fhirRow(
             'doc',
@@ -768,7 +422,7 @@ void main() {
         ]),
       );
 
-      expect(applied, 0);
+      expect(applied.count, 0);
       final row = await fetchRow(db, 'fhir_resource', 'doc');
       expect(row!['deleted_at'], isNull);
       expect(row['title'], 'edited later');
@@ -786,7 +440,7 @@ void main() {
         ]),
       );
 
-      final applied = await service.applyDelta(
+      final applied = await service.applyBatch(
         incoming('fhir_resource', [
           fhirRow(
             'doc',
@@ -797,684 +451,337 @@ void main() {
         ]),
       );
 
-      expect(applied, 1);
+      expect(applied.count, 1);
       expect(
         (await fetchRow(db, 'fhir_resource', 'doc'))!['deleted_at'],
         ms(at(5)),
       );
     });
 
-    test('a tombstoned DocumentReference is sent without its file', () async {
-      await dirs.writeDoc('r.pdf', pdfBytes);
-      final raw = documentReferenceRaw([
-        {'url': 'file://r.pdf', 'title': 'r.pdf'},
-      ]);
-      await insertFhir(
-        db,
-        id: 'doc',
-        updatedAt: ms(at(1)),
-        deletedAt: ms(at(1)),
-        resourceType: 'DocumentReference',
-        raw: raw,
-      );
-
-      final delta = await service.computeDelta('fhir_resource', at(0));
-
-      expect(delta.rows.single['resource_raw'], raw);
-      expect(delta.rows.single['deleted_at'], ms(at(1)));
-    });
-
-    test('an incoming tombstoned DocumentReference writes no file and keeps '
-        'no inline data', () async {
-      final applied = await service.applyDelta(
-        incoming('fhir_resource', [
-          fhirRow(
-            'doc',
+    test(
+      'a tombstoned DocumentReference asks for no file and serves none',
+      () async {
+        await dirs.writeDoc('r.pdf', pdfBytes);
+        for (final (id, url) in [('kept', 'r.pdf'), ('lost', 'gone.pdf')]) {
+          await insertFhir(
+            db,
+            id: id,
             updatedAt: ms(at(1)),
             deletedAt: ms(at(1)),
             resourceType: 'DocumentReference',
             raw: documentReferenceRaw([
-              {'data': base64Encode(pdfBytes), 'title': 'scan.pdf'},
+              {'url': 'file://$url'},
             ]),
-          ),
-        ]),
-      );
+          );
+        }
 
-      expect(applied, 1);
-      expect(dirs.docNames(), isEmpty);
-      final raw = (await fetchRow(db, 'fhir_resource', 'doc'))!['resource_raw'];
-      final attachment =
-          ((jsonDecode(raw as String)['content'] as List).single
-                  as Map)['attachment']
-              as Map;
-      expect(attachment, {'title': 'scan.pdf'});
+        expect(await service.missingAttachmentPaths(), isEmpty);
+        expect(await service.fileForRequest('r.pdf'), isNull);
+      },
+    );
+  });
+
+  group('reconciliation', () {
+    late AppDatabase otherDb;
+    late LwwSyncService other;
+
+    setUp(() async {
+      otherDb = openTestDatabase();
+      other = LwwSyncService(
+        otherDb,
+        prefs,
+        AttachmentSyncService(FakePathResolver(dirs.docs.path)),
+      );
+    });
+
+    tearDown(() => otherDb.close());
+
+    test('the digest is the same for the same rows and changes with any '
+        'row', () async {
+      for (final d in [db, otherDb]) {
+        await insertFhir(d, id: 'a', updatedAt: ms(at(1)));
+        await insertSource(d, id: 's', updatedAt: ms(at(1)));
+      }
+      expect(await service.computeDigest(), await other.computeDigest());
+
+      await otherDb.customStatement(
+        "UPDATE fhir_resource SET updated_at = ${ms(at(2))} WHERE id = 'a'",
+      );
+      final mine = await service.computeDigest();
+      final theirs = await other.computeDigest();
+      expect(mine['sources'], theirs['sources']);
+      expect(mine['fhir_resource'], isNot(theirs['fhir_resource']));
+    });
+
+    test('queues only the rows the peer lacks or holds older', () async {
+      await insertFhir(db, id: 'only-here', updatedAt: ms(at(1)));
+      await insertFhir(db, id: 'newer-here', updatedAt: ms(at(5)));
+      await insertFhir(db, id: 'newer-there', updatedAt: ms(at(1)));
+      await insertFhir(db, id: 'same', updatedAt: ms(at(3)));
+      await service.pruneOutbox(await service.currentOutboxSeq());
+
+      final queued = await service.queueRowsNewerThan('fhir_resource', {
+        'newer-here': ms(at(1)),
+        'newer-there': ms(at(9)),
+        'same': ms(at(3)),
+        'only-there': ms(at(1)),
+      });
+      expect(queued, 2);
+      final batch = (await service.nextBatch(0))!;
+      expect(
+        batch.tables['fhir_resource']!.map((r) => r['id']).toSet(),
+        {'only-here', 'newer-here'},
+      );
+    });
+
+    test('two devices converge through manifests and batches', () async {
+      await insertFhir(db, id: 'a', updatedAt: ms(at(1)), title: 'phone');
+      await insertFhir(otherDb, id: 'a', updatedAt: ms(at(2)), title: 'desk');
+      await insertFhir(db, id: 'b', updatedAt: ms(at(1)));
+      await insertFhir(otherDb, id: 'c', updatedAt: ms(at(1)));
+      await service.pruneOutbox(await service.currentOutboxSeq());
+      await other.pruneOutbox(await other.currentOutboxSeq());
+
+      Future<void> send(LwwSyncService from, LwwSyncService to) async {
+        var after = 0;
+        while (true) {
+          final batch = await from.nextBatch(after);
+          if (batch == null) return;
+          await to.applyBatch(
+            SyncBatch.fromJson(jsonDecode(jsonEncode(batch.toJson()))),
+          );
+          after = batch.id;
+        }
+      }
+
+      for (final table in LwwSyncService.syncedTables) {
+        await service.queueRowsNewerThan(table, await other.manifest(table));
+        await other.queueRowsNewerThan(table, await service.manifest(table));
+      }
+      await send(service, other);
+      await send(other, service);
+
+      expect(await service.computeDigest(), await other.computeDigest());
+      expect(await titleOf('a'), 'desk');
+      expect(await fetchRow(db, 'fhir_resource', 'c'), isNotNull);
+      expect(await fetchRow(otherDb, 'fhir_resource', 'b'), isNotNull);
     });
   });
 
-  test('a delta survives the wire and converges a second database', () async {
-    await dirs.writeDoc('report.pdf', pdfBytes);
-    await insertFhir(db, id: 'obs', updatedAt: ms(at(1)), deviceId: 'd1');
-    await insertFhir(
-      db,
-      id: 'doc',
-      updatedAt: ms(at(2)),
-      resourceType: 'DocumentReference',
-      raw: documentReferenceRaw([
-        {'url': 'file://report.pdf', 'title': 'report.pdf'},
-      ]),
-    );
-    await insertSource(db, id: 'src', updatedAt: ms(at(1)), label: 'Clinic');
-    await insertNote(db, id: 3, content: 'note', updatedAt: ms(at(1)));
+  group('the peer', () {
+    test('a new peer starts after what is already logged; the same peer '
+        'keeps its place; another peer starts over', () async {
+      await insertFhir(db, id: 'before-pairing');
+      final first = await service.peerStateFor('desk-A', peerName: 'Desk A');
+      expect(first.ackedSeq, await service.currentOutboxSeq());
+      expect(await outboxSize(), 0, reason: 'reconciled instead');
 
-    final peerDocs = Directory('${dirs.root.path}/peer')..createSync();
-    final peerDb = openTestDatabase();
-    addTearDown(peerDb.close);
-    final peer = LwwSyncService(
-      peerDb,
-      prefs,
-      AttachmentSyncService(FakePathResolver(peerDocs.path)),
-    );
+      await insertFhir(db, id: 'later');
+      await service.savePeerState(first.copyWith(ackedSeq: 0));
+      expect((await service.peerStateFor('desk-A')).ackedSeq, 0);
 
-    var applied = 0;
-    for (final delta in await service.computeAllDeltas(at(0))) {
-      final wire = jsonDecode(jsonEncode(delta.toJson()));
-      applied += await peer.applyDelta(
-        SyncDelta.fromJson(wire as Map<String, dynamic>),
-      );
-    }
+      final other = await service.peerStateFor('desk-B', peerName: 'Desk B');
+      expect(other.ackedSeq, await service.currentOutboxSeq());
+      expect(other.peerName, 'Desk B');
+      expect(other.lastSyncAt, isNull);
+    });
 
-    expect(applied, 4);
-    expect(await peer.getTableRowCounts(), await service.getTableRowCounts());
-    final obs = await fetchRow(peerDb, 'fhir_resource', 'obs');
-    expect(obs, await fetchRow(db, 'fhir_resource', 'obs'));
-    expect(
-      (await fetchRow(peerDb, 'sources', 'src'))!['label_source'],
-      'Clinic',
-    );
-    expect((await fetchRow(peerDb, 'record_notes', 3))!['content'], 'note');
-    final peerFiles = peerDocs.listSync().whereType<File>().toList();
-    expect(peerFiles.single.readAsBytesSync(), pdfBytes);
+    test('resetPeerState forgets the peer', () async {
+      await service.peerStateFor('desk-A');
+      await service.resetPeerState();
+      expect(service.loadPeerState(), isNull);
+    });
   });
 
-  group('timestamps written outside lww_sync', () {
-    test(
-      'the triggers stamp rows with whole seconds in milliseconds',
-      () async {
-        await insertFhir(db, id: 'a');
-        await db.customStatement(
-          "UPDATE fhir_resource SET title = 'x' WHERE id = 'a'",
+  group('attachment files', () {
+    Future<void> insertDoc(String id, List<Map<String, dynamic>> attachments) =>
+        insertFhir(
+          db,
+          id: id,
+          resourceType: 'DocumentReference',
+          updatedAt: ms(at(1)),
+          raw: documentReferenceRaw(attachments),
         );
 
-        final updatedAt =
-            (await fetchRow(db, 'fhir_resource', 'a'))!['updated_at'] as int;
-        expect(updatedAt % 1000, 0);
-        expect(
-          updatedAt,
-          closeTo(DateTime.now().millisecondsSinceEpoch, 60 * 1000),
-        );
+    test('lists the missing files of the given documents only', () async {
+      await dirs.writeDoc('here.pdf', pdfBytes);
+      await insertDoc('d1', [
+        {'url': 'file://here.pdf'},
+        {'url': 'file://lab%20result.pdf'},
+      ]);
+      await insertDoc('d2', [
+        {'url': 'file://other.pdf'},
+      ]);
+      expect(await service.missingAttachmentPaths(['d1']), ['lab result.pdf']);
+      expect(
+        (await service.missingAttachmentPaths()).toSet(),
+        {'lab result.pdf', 'other.pdf'},
+      );
+    });
+
+    test('serves only files a live DocumentReference refers to', () async {
+      await dirs.writeDoc('report.pdf', pdfBytes);
+      await dirs.writeDoc('ai_models/model.gguf', [1, 2, 3]);
+      await dirs.writeDoc('db.sqlite', [1]);
+      await insertDoc('d', [
+        {'url': 'file://report.pdf'},
+      ]);
+      expect(await service.fileForRequest('report.pdf'), isNotNull);
+      expect(await service.fileForRequest('ai_models/model.gguf'), isNull);
+      expect(await service.fileForRequest('db.sqlite'), isNull);
+      expect(await service.fileForRequest('../report.pdf'), isNull);
+    });
+
+    test('a file sent in chunks lands under a free name and the record '
+        'points at it, without counting as an edit', () async {
+      final bytes = Uint8List.fromList(
+        List.generate(LwwSyncService.fileChunkBytes * 2 + 10, (i) => i % 251),
+      );
+      final source = await dirs.writeDoc('send/Analize sânge.pdf', bytes);
+      await insertDoc('d', [
+        {'url': 'file://Analize%20s%C3%A2nge.pdf'},
+      ]);
+      await service.pruneOutbox(await service.currentOutboxSeq());
+      final before = await stampOf('d');
+
+      String? saved;
+      final chunks = await service
+          .readChunks('Analize sânge.pdf', source)
+          .toList();
+      expect(chunks, hasLength(3));
+      for (final chunk in chunks) {
+        saved = await service.saveChunk(chunk) ?? saved;
+      }
+
+      expect(saved, 'Analize_sânge.pdf');
+      expect(dirs.docFile(saved!).readAsBytesSync(), bytes);
+      final raw =
+          (await fetchRow(db, 'fhir_resource', 'd'))!['resource_raw'] as String;
+      expect(raw, contains('Analize_sânge.pdf'));
+      expect(await service.missingAttachmentPaths(['d']), isEmpty);
+      expect(await stampOf('d'), before);
+      expect(await outboxSize(), 0);
+    });
+
+    test('a chunk out of order is refused and the partial file can be '
+        'discarded', () async {
+      await expectLater(
+        service.saveChunk(
+          FileChunk(path: 'x.pdf', offset: 10, total: 20, bytes: Uint8List(10)),
+        ),
+        throwsStateError,
+      );
+      await service.saveChunk(
+        FileChunk(path: 'x.pdf', offset: 0, total: 20, bytes: Uint8List(10)),
+      );
+      await service.discardAllPartials();
+      expect(
+        dirs.docs.listSync().where((f) => f.path.endsWith('.part')),
+        isEmpty,
+      );
+    });
+
+    test(
+      'a received name never replaces the database or leaves Documents',
+      () async {
+        for (final name in ['db.sqlite', '../../escape.pdf', '.hidden']) {
+          final saved = await service.saveChunk(
+            FileChunk(path: name, offset: 0, total: 1, bytes: Uint8List(1)),
+          );
+          expect(saved, isNot(name));
+          expect(File('${dirs.docs.path}/$saved').existsSync(), isTrue);
+        }
+        expect(File('${dirs.root.path}/escape.pdf').existsSync(), isFalse);
       },
     );
 
-    test('KNOWN ISSUE: drift stores Sources.updatedAt in seconds, so a '
-        'label edit made through drift is never in a delta and loses every '
-        'conflict', () async {
-      final edit = DateTime.now();
-      await db
-          .into(db.sources)
-          .insertOnConflictUpdate(
-            SourcesCompanion(
-              id: const Value('s'),
-              labelSource: const Value('renamed'),
-              updatedAt: Value(edit),
-            ),
-          );
+    test(
+      'a broken url is repointed only to a file of exactly that name',
+      () async {
+        await dirs.writeDoc('lab_results_other_patient.pdf', pdfBytes);
+        await dirs.writeDoc('scan.pdf', pdfBytes);
+        await insertDoc('lab', [
+          {'url': 'file://lab.pdf'},
+        ]);
+        await insertDoc('scan', [
+          {'url': 'file://old/container/scan.pdf'},
+        ]);
+        await service.pruneOutbox(await service.currentOutboxSeq());
 
-      final stored = (await fetchRow(db, 'sources', 's'))!['updated_at'];
-      expect(stored, edit.millisecondsSinceEpoch ~/ 1000);
+        await service.fixBrokenAttachmentUrls();
 
-      final delta = await service.computeDelta(
-        'sources',
-        edit.subtract(const Duration(hours: 1)),
-      );
-      expect(delta.rows, isEmpty);
-
-      final applied = await service.applyDelta(
-        incoming('sources', [
-          {
-            'id': 's',
-            'label_source': 'stale remote',
-            'updated_at': ms(DateTime.utc(2020)),
-          },
-        ]),
-      );
-      expect(applied, 1);
-      expect(
-        (await fetchRow(db, 'sources', 's'))!['label_source'],
-        'stale remote',
-      );
-    });
+        expect(
+          (await fetchRow(db, 'fhir_resource', 'lab'))!['resource_raw'],
+          contains('file://lab.pdf'),
+        );
+        expect(
+          (await fetchRow(db, 'fhir_resource', 'scan'))!['resource_raw'],
+          contains('"file://scan.pdf"'),
+        );
+        expect(await outboxSize(), 0);
+      },
+    );
   });
 
-  group('last sync timestamp', () {
-    test('is null until set, then round-trips with ms precision', () async {
-      expect(await service.getLastSyncTimestamp(), isNull);
+  group('housekeeping', () {
+    test(
+      'backfill stamps rows from before the sync columns, not as edits',
+      () async {
+        await dropSyncTriggers(db);
+        await insertFhir(db, id: 'old');
+        await service.pruneOutbox(await service.currentOutboxSeq());
+        expect(await service.backfillExistingRows(), 1);
+        expect(await stampOf('old'), isNotNull);
+        expect(await outboxSize(), 0);
+      },
+    );
 
-      await service.setLastSyncTimestamp(
-        at(3).add(
-          const Duration(
-            milliseconds: 7,
-          ),
-        ),
-      );
-
-      expect(
-        (await service.getLastSyncTimestamp())!.millisecondsSinceEpoch,
-        ms(at(3)) + 7,
-      );
-      expect(prefs.getInt('lww_last_sync_timestamp'), ms(at(3)) + 7);
-    });
-
-    test('reset clears it', () async {
-      await service.setLastSyncTimestamp(at(1));
-
-      await service.resetLastSyncTimestamp();
-
-      expect(await service.getLastSyncTimestamp(), isNull);
-    });
-  });
-
-  test('getTableRowCounts counts live rows of each synced table', () async {
-    await insertFhir(db, id: 'a', updatedAt: ms(at(1)));
-    await insertFhir(db, id: 'b', updatedAt: ms(at(1)), deletedAt: ms(at(1)));
-    await insertSource(db, id: 's', updatedAt: ms(at(1)));
-    await insertProcessingSession(db, id: 'p');
-
-    expect(await service.getTableRowCounts(), {
-      'fhir_resource': 1,
-      'sources': 1,
-      'record_notes': 0,
-    });
-  });
-
-  test(
-    'cleanupTombstones hard-deletes tombstones older than 30 days',
-    () async {
-      final now = DateTime.now();
-      int daysAgo(int d) => ms(now.subtract(Duration(days: d)));
-      await insertFhir(
-        db,
-        id: 'old',
-        updatedAt: daysAgo(31),
-        deletedAt: daysAgo(31),
-      );
-      await insertFhir(
-        db,
-        id: 'recent',
-        updatedAt: daysAgo(29),
-        deletedAt: daysAgo(29),
-      );
-      await insertFhir(db, id: 'live', updatedAt: daysAgo(90));
-      await insertSource(
-        db,
-        id: 'old-s',
-        updatedAt: daysAgo(40),
-        deletedAt: daysAgo(40),
-      );
+    test('cleanupTombstones purges a deleted source together with its deleted '
+        'notes, with foreign keys on as in the app', () async {
+      final old = ms(DateTime.now().subtract(const Duration(days: 40)));
+      await insertSource(db, id: 'clinic', updatedAt: old, deletedAt: old);
       await insertNote(
         db,
         id: 1,
-        content: 'x',
-        updatedAt: daysAgo(40),
-        deletedAt: daysAgo(40),
+        content: 'note of a deleted source',
+        sourceId: 'clinic',
+        updatedAt: old,
+        deletedAt: old,
       );
 
-      expect(await service.cleanupTombstones(), 3);
+      expect(await service.cleanupTombstones(), 2);
 
-      expect(await fetchRow(db, 'fhir_resource', 'old'), isNull);
-      expect(await fetchRow(db, 'fhir_resource', 'recent'), isNotNull);
-      expect(await fetchRow(db, 'fhir_resource', 'live'), isNotNull);
       expect(await countRows(db, 'sources'), 0);
       expect(await countRows(db, 'record_notes'), 0);
+    });
+
+    test('cleanupTombstones keeps a deleted source that a newer note still '
+        'points at, and purges it once the note is gone', () async {
+      final old = ms(DateTime.now().subtract(const Duration(days: 40)));
+      final recent = ms(DateTime.now().subtract(const Duration(days: 2)));
+      await insertSource(db, id: 'clinic', updatedAt: old, deletedAt: old);
+      await insertNote(
+        db,
+        id: 1,
+        content: 'live note',
+        sourceId: 'clinic',
+        updatedAt: recent,
+      );
+
       expect(await service.cleanupTombstones(), 0);
-    },
-  );
+      expect(await countRows(db, 'sources'), 1);
 
-  test('cleanupTombstones purges a deleted source together with its deleted '
-      'notes, with foreign keys on as in the app', () async {
-    final old = ms(DateTime.now().subtract(const Duration(days: 40)));
-    await insertSource(db, id: 'clinic', updatedAt: old, deletedAt: old);
-    await insertNote(
-      db,
-      id: 1,
-      content: 'note of a deleted source',
-      sourceId: 'clinic',
-      updatedAt: old,
-      deletedAt: old,
-    );
-
-    expect(await service.cleanupTombstones(), 2);
-
-    expect(await countRows(db, 'sources'), 0);
-    expect(await countRows(db, 'record_notes'), 0);
-  });
-
-  test('cleanupTombstones keeps a deleted source that a newer note still '
-      'points at, and purges it once the note is gone', () async {
-    final old = ms(DateTime.now().subtract(const Duration(days: 40)));
-    final recent = ms(DateTime.now().subtract(const Duration(days: 2)));
-    await insertSource(db, id: 'clinic', updatedAt: old, deletedAt: old);
-    await insertNote(
-      db,
-      id: 1,
-      content: 'live note',
-      sourceId: 'clinic',
-      updatedAt: recent,
-    );
-
-    expect(await service.cleanupTombstones(), 0);
-    expect(await countRows(db, 'sources'), 1);
-
-    await db.customStatement('DELETE FROM record_notes');
-    expect(await service.cleanupTombstones(), 1);
-    expect(await countRows(db, 'sources'), 0);
-  });
-
-  test(
-    'backfillExistingRows stamps rows that predate the sync columns',
-    () async {
-      await dropSyncTriggers(db);
-      await insertFhir(db, id: 'legacy');
-      await insertFhir(db, id: 'stamped', updatedAt: ms(at(1)), deviceId: 'x');
-      await insertSource(db, id: 's');
-      await insertNote(db, id: 1, content: 'n');
-      await insertNote(db, id: 2, content: 'n');
-      await insertProcessingSession(db, id: 'p');
-      final before = DateTime.now().millisecondsSinceEpoch;
-
-      expect(await service.backfillExistingRows(), 4);
-
-      final legacy = (await fetchRow(db, 'fhir_resource', 'legacy'))!;
-      expect(legacy['updated_at'] as int, greaterThanOrEqualTo(before));
-      expect(legacy['device_id'], 'device-local');
-      final stamped = (await fetchRow(db, 'fhir_resource', 'stamped'))!;
-      expect(stamped['updated_at'], ms(at(1)));
-      expect(stamped['device_id'], 'x');
-      expect((await fetchRow(db, 'sources', 's'))!['updated_at'], isNotNull);
-      expect(
-        (await fetchRow(db, 'processing_sessions', 'p'))!['updated_at'],
-        isNull,
-        reason: 'processing_sessions is local-only',
-      );
-      expect(await service.backfillExistingRows(), 0);
-    },
-  );
-
-  group('missing attachment files', () {
-    Future<void> insertDoc(
-      String id,
-      List<Map<String, dynamic>> attachments, {
-      int? deletedAt,
-    }) => insertFhir(
-      db,
-      id: id,
-      updatedAt: ms(at(1)),
-      resourceType: 'DocumentReference',
-      raw: documentReferenceRaw(attachments),
-      deletedAt: deletedAt,
-    );
-
-    test('getMissingAttachmentPaths lists file:// urls with no file', () async {
-      await dirs.writeDoc('present.pdf', pdfBytes);
-      await insertDoc('d1', [
-        {'url': 'file://present.pdf'},
-        {'url': 'file://sub/missing%20one.pdf'},
-        {'url': 'https://example.org/remote.pdf'},
-        {'title': 'no url'},
-      ]);
-      await insertDoc('d2', [
-        {'url': 'file:///abs/elsewhere.pdf'},
-      ]);
-      await insertDoc('deleted', [
-        {'url': 'file://deleted.pdf'},
-      ], deletedAt: ms(at(1)));
-      await insertFhir(
-        db,
-        id: 'broken',
-        resourceType: 'DocumentReference',
-        raw: 'nope',
-      );
-      await insertFhir(
-        db,
-        id: 'no-content',
-        resourceType: 'DocumentReference',
-        raw: '{"content":["x"]}',
-      );
-      await insertFhir(
-        db,
-        id: 'obs',
-        raw: documentReferenceRaw([
-          {'url': 'file://observation.pdf'},
-        ]),
-      );
-
-      expect(
-        await service.getMissingAttachmentPaths(),
-        unorderedEquals(['sub/missing one.pdf', '/abs/elsewhere.pdf']),
-      );
+      await db.customStatement('DELETE FROM record_notes');
+      expect(await service.cleanupTombstones(), 1);
+      expect(await countRows(db, 'sources'), 0);
     });
 
-    test(
-      'resolveFileRequests returns base64 for the files it can find',
-      () async {
-        await dirs.writeDoc('a.pdf', pdfBytes);
-
-        final resolved = await service.resolveFileRequests([
-          'a.pdf',
-          '/old/path/a.pdf',
-          'unknown.pdf',
-        ]);
-
-        expect(resolved.keys, ['a.pdf', '/old/path/a.pdf']);
-        expect(base64Decode(resolved['a.pdf']!), pdfBytes);
-      },
-    );
-
-    test('saveReceivedFiles writes files and repoints the matching '
-        'attachment urls', () async {
-      await insertDoc('d1', [
-        {'url': 'file://scans/lab result.pdf'},
-        {'url': 'file://other.pdf'},
-      ]);
-      await insertDoc('d2', [
-        {'url': 'file://unrelated.pdf'},
-      ]);
-
-      final saved = await service.saveReceivedFiles({
-        'scans/lab result.pdf': base64Encode(pdfBytes),
-        'bad.pdf': '***',
-      });
-
-      expect(saved, 1);
-      expect(await dirs.docFile('lab_result.pdf').readAsBytes(), pdfBytes);
-      expect(dirs.docFile('bad.pdf').existsSync(), isFalse);
-      final d1 = jsonDecode(
-        (await fetchRow(db, 'fhir_resource', 'd1'))!['resource_raw'] as String,
-      );
-      final urls = [
-        for (final c in d1['content'] as List) (c as Map)['attachment']['url'],
-      ];
-      expect(urls, ['file://lab_result.pdf', 'file://other.pdf']);
-      final d2 = (await fetchRow(db, 'fhir_resource', 'd2'))!;
-      expect(d2['resource_raw'], contains('file://unrelated.pdf'));
-      expect(d2['updated_at'], ms(at(1)));
-    });
-
-    test('saveReceivedFiles never overwrites the database', () async {
-      final dbFile = dirs.docFile('db.sqlite')..writeAsStringSync('real db');
-      final wal = dirs.docFile('db.sqlite-wal')..writeAsStringSync('real wal');
-
-      final saved = await service.saveReceivedFiles({
-        'db.sqlite': base64Encode(pdfBytes),
-        '../DB.SQLITE-wal': base64Encode(pdfBytes),
-      });
-
-      expect(saved, 2);
-      expect(dbFile.readAsStringSync(), 'real db');
-      expect(wal.readAsStringSync(), 'real wal');
-      final names = dirs.docNames();
-      expect(names, hasLength(4));
-      expect(
-        names.where((n) => RegExp(r'^db_[0-9a-f]{8}\.sqlite$').hasMatch(n)),
-        hasLength(1),
-      );
-      expect(
-        names.where(
-          (n) => RegExp(r'^DB_[0-9a-f]{8}\.SQLITE-wal$').hasMatch(n),
-        ),
-        hasLength(1),
-      );
-    });
-
-    test('saveReceivedFiles gives a taken name a unique suffix', () async {
-      await insertDoc('d1', [
-        {'url': 'file://scans/report.pdf'},
-      ]);
-      final existing = await dirs.writeDoc('report.pdf', utf8.encode('mine'));
-
-      final saved = await service.saveReceivedFiles({
-        'scans/report.pdf': base64Encode(pdfBytes),
-      });
-
-      expect(saved, 1);
-      expect(existing.readAsStringSync(), 'mine');
-      final written = dirs.docNames().singleWhere((n) => n != 'report.pdf');
-      expect(written, matches(RegExp(r'^report_[0-9a-f]{8}\.pdf$')));
-      expect(await dirs.docFile(written).readAsBytes(), pdfBytes);
-      final d1 = jsonDecode(
-        (await fetchRow(db, 'fhir_resource', 'd1'))!['resource_raw'] as String,
-      );
-      expect(
-        ((d1['content'] as List).single as Map)['attachment']['url'],
-        'file://$written',
-      );
-    });
-
-    test(
-      'saveReceivedFiles keeps empty and dot names inside documents',
-      () async {
-        final saved = await service.saveReceivedFiles({
-          '..': base64Encode(pdfBytes),
-          'dir/': base64Encode(pdfBytes),
-          r'..\..\evil.pdf': base64Encode(pdfBytes),
-        });
-
-        expect(saved, 3);
-        expect(dirs.docNames(), hasLength(3));
-        expect(dirs.docNames(), contains('evil.pdf'));
-        expect(File('${dirs.root.path}/evil.pdf').existsSync(), isFalse);
-        expect(File('${dirs.container.path}/evil.pdf').existsSync(), isFalse);
-      },
-    );
-
-    test('resolveFileRequests never sends a file outside documents', () async {
-      File('${dirs.container.path}/secret.db').writeAsStringSync('db');
-      final outside = File('${dirs.root.path}/private.txt')
-        ..writeAsStringSync('secret');
-
-      final resolved = await service.resolveFileRequests([
-        '/etc/passwd',
-        '../secret.db',
-        '${dirs.docs.path}/../secret.db',
-        outside.path,
-        '..',
-        '',
-      ]);
-
-      expect(resolved, isEmpty);
-    });
-
-    test('saveReceivedFiles keeps traversal and absolute names inside '
-        'documents', () async {
-      final saved = await service.saveReceivedFiles({
-        '../../evil.pdf': base64Encode(pdfBytes),
-        '/etc/evil.pdf': base64Encode(pdfBytes),
-      });
-
-      expect(saved, 2);
-      final names = dirs.docNames();
-      expect(names, hasLength(2));
-      expect(names, contains('evil.pdf'));
-      expect(
-        names.where((n) => RegExp(r'^evil_[0-9a-f]{8}\.pdf$').hasMatch(n)),
-        hasLength(1),
-      );
-      expect(File('${dirs.root.path}/evil.pdf').existsSync(), isFalse);
-      expect(File('${dirs.container.path}/evil.pdf').existsSync(), isFalse);
-    });
-
-    test('saveReceivedFiles renames every db.sqlite* name', () async {
-      final saved = await service.saveReceivedFiles({
-        'db.sqlite-shm': base64Encode(pdfBytes),
-        'db.sqlite-journal': base64Encode(pdfBytes),
-        'sub/Db.Sqlite': base64Encode(pdfBytes),
-      });
-
-      expect(saved, 3);
-      expect(
-        dirs.docNames().where((n) => n.toLowerCase().startsWith('db.sqlite')),
-        isEmpty,
-      );
-      expect(dirs.docNames(), hasLength(3));
-    });
-
-    test(
-      'saveReceivedFiles gives a taken name without extension a suffix',
-      () async {
-        await dirs.writeDoc('notes', utf8.encode('mine'));
-
-        await service.saveReceivedFiles({'notes': base64Encode(pdfBytes)});
-
-        expect(dirs.docFile('notes').readAsStringSync(), 'mine');
-        expect(
-          dirs.docNames().singleWhere((n) => n != 'notes'),
-          matches(RegExp(r'^notes_[0-9a-f]{8}$')),
-        );
-      },
-    );
-
-    test('saveReceivedFiles does not write through a link with the same '
-        'name', () async {
-      final target = File('${dirs.root.path}/target.pdf')
-        ..writeAsStringSync('outside');
-      Link('${dirs.docs.path}/linked.pdf').createSync(target.path);
-
-      await service.saveReceivedFiles({'linked.pdf': base64Encode(pdfBytes)});
-
-      expect(target.readAsStringSync(), 'outside');
-    });
-
-    test('a file_request round trip moves the file and repoints the '
-        'receiver\'s record', () async {
-      final sender = LwwSyncService(
-        db,
-        prefs,
-        AttachmentSyncService(FakePathResolver(dirs.temp.path)),
-      );
-      File('${dirs.temp.path}/scans/xray.jpg')
-        ..createSync(recursive: true)
-        ..writeAsBytesSync(pdfBytes);
-      await insertDoc('d1', [
-        {'url': 'file://scans/xray.jpg'},
-      ]);
-
-      final missing = await service.getMissingAttachmentPaths();
-      final fileData = await sender.resolveFileRequests(missing);
-      final saved = await service.saveReceivedFiles(fileData);
-
-      expect(missing, ['scans/xray.jpg']);
-      expect(saved, 1);
-      expect(await dirs.docFile('xray.jpg').readAsBytes(), pdfBytes);
-      expect(await service.getMissingAttachmentPaths(), isEmpty);
-    });
-
-    test(
-      'saveReceivedFiles repoints a percent-encoded attachment url',
-      () async {
-        await insertDoc('d1', [
-          {'url': 'file://scans/lab%20result.pdf'},
-        ]);
-
-        // getMissingAttachmentPaths decodes the url, so this is the key the
-        // peer sends back.
-        expect(await service.getMissingAttachmentPaths(), [
-          'scans/lab result.pdf',
-        ]);
-        await service.saveReceivedFiles({
-          'scans/lab result.pdf': base64Encode(pdfBytes),
-        });
-
-        expect(await service.getMissingAttachmentPaths(), isEmpty);
-      },
-      skip:
-          'BUG: _updateAttachmentUrls first filters rows with '
-          'raw.contains(oldPath) on the undecoded JSON, so a url stored '
-          'percent-encoded (file://scans/lab%20result.pdf) never matches the '
-          'decoded path the peer sends back and stays broken '
-          '(lww_sync_service.dart _updateAttachmentUrls).',
-    );
-
-    test(
-      'saveReceivedFiles leaves another record with the same file name alone',
-      () async {
-        await dirs.writeDoc('a/report.pdf', utf8.encode('record A'));
-        await insertDoc('a', [
-          {'url': 'file://a/report.pdf'},
-        ]);
-        await insertDoc('b', [
-          {'url': 'file://b/report.pdf'},
-        ]);
-
-        await service.saveReceivedFiles({
-          'b/report.pdf': base64Encode(pdfBytes),
-        });
-
-        expect(
-          (await fetchRow(db, 'fhir_resource', 'a'))!['resource_raw'],
-          contains('file://a/report.pdf'),
-        );
-      },
-    );
-
-    test(
-      'fixBrokenAttachmentUrls repoints urls to files found by name',
-      () async {
-        await dirs.writeDoc('exact.pdf', pdfBytes);
-        await dirs.writeDoc('present.pdf', pdfBytes);
-        await insertDoc('by-name', [
-          {'url': 'file:///old/device/Documents/exact.pdf'},
-        ]);
-        await insertDoc('fine', [
-          {'url': 'file://present.pdf'},
-          {'url': 'https://example.org/x.pdf'},
-        ]);
-        await insertDoc('lost', [
-          {'url': 'file://zzz.pdf'},
-        ]);
-
-        expect(await service.fixBrokenAttachmentUrls(), 1);
-
-        expect(
-          (await fetchRow(db, 'fhir_resource', 'by-name'))!['resource_raw'],
-          contains('"file://exact.pdf"'),
-        );
-        expect(
-          (await fetchRow(db, 'fhir_resource', 'fine'))!['updated_at'],
-          ms(at(1)),
-        );
-        expect(
-          (await fetchRow(db, 'fhir_resource', 'lost'))!['resource_raw'],
-          contains('file://zzz.pdf'),
-        );
-      },
-    );
-
-    test('KNOWN ISSUE: fixBrokenAttachmentUrls links a missing file to any '
-        'file whose name contains its stem', () async {
-      await dirs.writeDoc('lab_results_other_patient.pdf', pdfBytes);
-      await insertDoc('doc', [
-        {'url': 'file://lab.pdf'},
-      ]);
-
-      expect(await service.fixBrokenAttachmentUrls(), 1);
-
-      final row = (await fetchRow(db, 'fhir_resource', 'doc'))!;
-      expect(
-        row['resource_raw'],
-        contains('file://lab_results_other_patient.pdf'),
-      );
-      // The repair is an UPDATE without updated_at, so the trigger stamps the
-      // row as a fresh local edit that wins over the peer's copy.
-      expect(row['updated_at'], isNot(ms(at(1))));
+    test('tombstones older than 30 days are removed', () async {
+      final old = DateTime.now().subtract(const Duration(days: 31));
+      await insertFhir(db, id: 'old', deletedAt: ms(old));
+      await insertFhir(db, id: 'recent', deletedAt: ms(DateTime.now()));
+      expect(await service.cleanupTombstones(), 1);
+      expect(await fetchRow(db, 'fhir_resource', 'recent'), isNotNull);
     });
   });
 }

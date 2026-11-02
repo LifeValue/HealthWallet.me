@@ -34,6 +34,38 @@ class FhirCommonExtractor {
     return null;
   }
 
+  /// The name of a `medication[x]`: its CodeableConcept, or for a Reference
+  /// its display, else the code of the Medication it points to inside the
+  /// record's `contained` resources ([rawResource]).
+  static String? extractMedicationName(
+    dynamic medicationX,
+    Map<String, dynamic> rawResource,
+  ) {
+    final concept = medicationX?.isAs<fhir_r4.CodeableConcept>();
+    if (concept != null) return extractCodeableConceptText(concept);
+
+    final reference = medicationX?.isAs<fhir_r4.Reference>();
+    if (reference == null) return null;
+    final display = reference.display?.valueString;
+    if (display != null && display.isNotEmpty) return display;
+
+    final target = reference.reference?.valueString;
+    if (target == null || !target.startsWith('#')) return null;
+    final contained = rawResource['contained'];
+    if (contained is! List) return null;
+    for (final resource in contained) {
+      if (resource is Map<String, dynamic> &&
+          resource['resourceType'] == 'Medication' &&
+          resource['id'] == target.substring(1) &&
+          resource['code'] is Map<String, dynamic>) {
+        return extractCodeableConceptText(
+          fhir_r4.CodeableConcept.fromJson(resource['code']),
+        );
+      }
+    }
+    return null;
+  }
+
   static String? extractReferenceDisplay(dynamic reference) {
     if (reference is fhir_r4.Reference) {
       return reference.display?.toString();
@@ -101,11 +133,16 @@ class FhirCommonExtractor {
   }
 
   /// The formatted value of [quantity] without its unit, or null when it has
-  /// no value.
+  /// no value. Its comparator is kept, so "<20" doesn't read as "20".
   static String? quantityValue(fhir_r4.Quantity? quantity) {
     final value = quantity?.value?.valueDouble;
-    return value == null ? null : formatQuantityValue(value);
+    if (value == null) return null;
+    return '${comparatorOf(quantity)}${formatQuantityValue(value)}';
   }
+
+  /// The comparator of [quantity] ("<", "<=", ">=", ">"), or "".
+  static String comparatorOf(fhir_r4.Quantity? quantity) =>
+      quantity?.comparator?.valueString ?? '';
 
   /// "[low] - [high]"; an open range keeps its direction ("≥ [low]",
   /// "≤ [high]") so it does not read as an exact value. Null when both

@@ -24,6 +24,7 @@ import 'package:health_wallet/features/records/presentation/pages/records_page.d
 import 'package:health_wallet/features/records/presentation/widgets/records_view_toggle.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -51,6 +52,9 @@ class _MockUserBloc extends MockBloc<UserEvent, UserState>
     implements UserBloc {}
 
 /// Keeps the documents the page hands over for processing.
+class _MockPatientBloc extends MockBloc<PatientEvent, PatientState>
+    implements PatientBloc {}
+
 class _MockProcessingBloc extends MockBloc<ProcessingEvent, ProcessingState>
     implements ProcessingBloc {
   final added = <ProcessingEvent>[];
@@ -137,8 +141,7 @@ void main() {
         ),
       );
 
-  /// Opens the records page. Without a PatientBloc above it, as on a screen
-  /// that opens before the patients load.
+  /// Opens the records page.
   Future<void> pumpPage(
     WidgetTester tester, {
     required Size screen,
@@ -205,6 +208,12 @@ void main() {
       const Stream<ProcessingState>.empty(),
       initialState: const ProcessingState(),
     );
+    final patientBloc = _MockPatientBloc();
+    whenListen(
+      patientBloc,
+      const Stream<PatientState>.empty(),
+      initialState: const PatientState(),
+    );
     final userBloc = _MockUserBloc();
     whenListen(
       userBloc,
@@ -223,6 +232,7 @@ void main() {
             BlocProvider<SyncBloc>.value(value: syncBloc),
             BlocProvider<ProcessingBloc>.value(value: processingBloc),
             BlocProvider<UserBloc>.value(value: userBloc),
+            BlocProvider<PatientBloc>.value(value: patientBloc),
           ],
           child: const RecordsPage(),
         ),
@@ -236,13 +246,6 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 750));
   }
-
-  testWidgets('without the patients loaded, all sources are read and the '
-      'failure is logged', (tester) async {
-    await pumpPage(tester, screen: const Size(390, 844));
-
-    expect(logs, loggedWarning('Could not read the selected patient sources'));
-  });
 
   group('importing from the empty records list', () {
     Future<void> openList(WidgetTester tester) => pumpPage(

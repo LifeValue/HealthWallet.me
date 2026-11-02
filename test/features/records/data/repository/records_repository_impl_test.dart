@@ -12,6 +12,7 @@ import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../desktop/lww_sync/lww_sync_test_helpers.dart';
+import '../../records_test_helpers.dart' show DocumentsPathResolver;
 
 void main() {
   late TestDirs dirs;
@@ -27,7 +28,12 @@ void main() {
       db,
       await SharedPreferences.getInstance(),
     );
-    repository = RecordsRepositoryImpl(db, syncLocal, SharedNotesDatasource());
+    repository = RecordsRepositoryImpl(
+      db,
+      syncLocal,
+      SharedNotesDatasource(),
+      DocumentsPathResolver('/nonexistent'),
+    );
   });
 
   tearDown(() async {
@@ -144,7 +150,8 @@ void main() {
       );
       expect(
         await ids(repository.getResources(sourceIds: const [])),
-        hasLength(4),
+        isEmpty,
+        reason: 'a patient without sources has no records',
       );
       expect(
         await ids(repository.getResources(limit: 2, offset: 1)),

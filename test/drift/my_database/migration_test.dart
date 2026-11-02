@@ -292,6 +292,147 @@ void main() {
     });
 
     test(
+      '11 → 12 gives every note the key the other device derives too',
+      () async {
+        final db = await migrateFrom(11, (schema) {
+          schema.rawDatabase.execute(
+            'INSERT INTO record_notes '
+            '(id, resource_id, content, timestamp, updated_at) '
+            "VALUES (7, 'obs-1', 'note', 0, 1000), "
+            "(9, 'obs-2', 'other', 0, 2000)",
+          );
+        });
+
+        expect(
+          (await rows(
+            db,
+            'SELECT id, uuid, updated_at FROM record_notes ORDER BY id',
+          )).map(
+            (r) => '${r.data['id']}:${r.data['uuid']}:${r.data['updated_at']}',
+          ),
+          ['7:legacy-7:1000', '9:legacy-9:2000'],
+          reason: 'the key is filled in without counting as an edit',
+        );
+
+        // A note written without one, as an older backup or app version does.
+        await db.customStatement(
+          'INSERT INTO record_notes (id, resource_id, content, timestamp) '
+          "VALUES (12, 'obs-3', 'old format', 0)",
+        );
+        expect(
+          (await rows(
+            db,
+            'SELECT uuid FROM record_notes WHERE id = 12',
+          )).single.data['uuid'],
+          'legacy-12',
+        );
+
+        await expectLater(
+          db.customStatement(
+            'INSERT INTO record_notes (resource_id, content, timestamp, uuid) '
+            "VALUES ('obs-4', 'clash', 0, 'legacy-7')",
+          ),
+          throwsA(isA<Exception>()),
+          reason: 'one note per key',
+        );
+
+        await db.close();
+      },
+    );
+
+    test(
+      '12 → 13 logs every local write for the desktop sync and stamps '
+      'milliseconds that never go back',
+      () async {
+        final db = await migrateFrom(12, (schema) {
+          schema.rawDatabase.execute(
+            'INSERT INTO sources (id, platform_name, platform_type, updated_at) '
+            "VALUES ('src-1', 'Epic', 'ehr', 1000)",
+          );
+        });
+
+        expect(
+          await rows(db, 'SELECT * FROM sync_outbox'),
+          isEmpty,
+          reason: 'rows from before the upgrade are reconciled, not logged',
+        );
+
+        final before = DateTime.now().millisecondsSinceEpoch;
+        await db.customStatement(
+          'INSERT INTO fhir_resource (id, source_id, resource_type, resource_raw) '
+          "VALUES ('obs-1', 'src-1', 'Observation', '{}')",
+        );
+        await db.customStatement(
+          'INSERT INTO record_notes (resource_id, content, timestamp) '
+          "VALUES ('obs-1', 'note', 0)",
+        );
+        await db.customStatement(
+          "UPDATE sources SET label_source = 'Clinic' WHERE id = 'src-1'",
+        );
+
+        final logged = await rows(
+          db,
+          'SELECT DISTINCT synced_table, row_key FROM sync_outbox ORDER BY seq',
+        );
+        expect(
+          logged.map((r) => '${r.data['synced_table']}/${r.data['row_key']}'),
+          ['fhir_resource/obs-1', 'record_notes/legacy-1', 'sources/src-1'],
+        );
+
+        final inserted =
+            (await rows(
+                  db,
+                  "SELECT updated_at FROM fhir_resource WHERE id = 'obs-1'",
+                )).single.data['updated_at']
+                as int;
+        // julianday() can round down by a millisecond; a whole-second stamp
+        // is up to 999 ms behind.
+        expect(inserted, greaterThanOrEqualTo(before - 10));
+
+        // Two edits in the same millisecond still order, and an edit after a
+        // row arrived stamped in the future (a peer whose clock runs ahead)
+        // stays newer than it.
+        await db.customStatement(
+          "UPDATE fhir_resource SET title = 'a' WHERE id = 'obs-1'",
+        );
+        final first =
+            (await rows(
+                  db,
+                  "SELECT updated_at FROM fhir_resource WHERE id = 'obs-1'",
+                )).single.data['updated_at']
+                as int;
+        await db.customStatement(
+          "UPDATE fhir_resource SET title = 'b' WHERE id = 'obs-1'",
+        );
+        final second =
+            (await rows(
+                  db,
+                  "SELECT updated_at FROM fhir_resource WHERE id = 'obs-1'",
+                )).single.data['updated_at']
+                as int;
+        expect(second, greaterThan(first));
+
+        const future = 99999999999999;
+        await db.customStatement(
+          'UPDATE fhir_resource SET updated_at = $future '
+          "WHERE id = 'obs-1'",
+        );
+        await db.customStatement(
+          "UPDATE fhir_resource SET title = 'c' WHERE id = 'obs-1'",
+        );
+        expect(
+          (await rows(
+            db,
+            "SELECT updated_at FROM fhir_resource WHERE id = 'obs-1'",
+          )).single.data['updated_at'],
+          future + 1,
+        );
+
+        await db.close();
+      },
+    );
+
+    test(
       '10 → 11 tolerates specialty_override left by an interrupted run',
       () async {
         // A previous attempt added the column but crashed before the schema

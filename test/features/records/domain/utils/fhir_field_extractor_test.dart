@@ -330,7 +330,7 @@ void main() {
     );
     expect(
       FhirFieldExtractor.extractOnsetXFormatted(condition.onsetX),
-      'Feb 1, 2019, 12:00 AM',
+      'Feb 1, 2019',
     );
     expect(
       FhirFieldExtractor.extractAbatementXFormatted(condition.abatementX),

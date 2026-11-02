@@ -31,9 +31,11 @@ void main() {
     final deletedAt = r['deleted_at'] as int?;
     expect(deletedAt, isNotNull);
     expect(deletedAt, greaterThanOrEqualTo(beforeMs));
+    // One past the row's own stamp when it was written in the same
+    // millisecond, so the stamp never goes back.
     expect(
       deletedAt,
-      lessThanOrEqualTo(DateTime.now().millisecondsSinceEpoch),
+      lessThanOrEqualTo(DateTime.now().millisecondsSinceEpoch + 1),
     );
     expect(r['updated_at'], deletedAt);
   }

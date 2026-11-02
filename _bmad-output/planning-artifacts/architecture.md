@@ -13,7 +13,7 @@ Reference for work in `lib/features/processing/`, `lib/features/capture/` and `l
 
 | File                    | Platform        | Sets up                                                                                                                                                                                                                                                                                                            |
 | ----------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `lib/main.dart`         | iOS / Android   | Clears `lww_offline_queue`, preserves the native splash, registers `AppPlatform.mobile`, `configureDependencies()`, `ShareIntentService`, `DeepLinkService`, `ProcessingBloc.add(ProcessingInitialised())`, removes the splash                                                                                     |
+| `lib/main.dart`         | iOS / Android   | Removes the legacy `lww_offline_queue` preference, preserves the native splash, registers `AppPlatform.mobile`, `configureDependencies()`, `ShareIntentService`, `DeepLinkService`, `ProcessingBloc.add(ProcessingInitialised())`, removes the splash                                                                                     |
 | `lib/main_desktop.dart` | macOS / Windows | Registers `AppPlatform.desktop`, `CommunicationBloc` and `TrayBloc` by hand (`BackupBloc`, `HandoverBloc`, `LwwSyncBloc`, `WindowLifecycleService` come from injectable), sends their init events and `ProcessingInitialised`, pipes `CommunicationBloc` and `LwwSyncBloc` state into `TrayBloc`. No native splash |
 
 `App` provides the BLoCs through `MultiBlocProvider` and, as a `WidgetsBindingObserver`, starts and stops P2P discovery on resume and pause.
@@ -124,77 +124,96 @@ Bench-only candidates (`AiModelVariant` values left out of `availableVariants`, 
 
 ## Database
 
-`lib/core/data/local/app_database.dart`, `schemaVersion` 11. Tables: `FhirResource`, `Sources`, `RecordNotes`, `ProcessingSessions`. v1→8 migrate with drift `stepByStep` (there is no v4; `from3To5` covers it). v8→9 (per-patient wallet sources), v9→10 (sync triggers) and v10→11 are hand-written in `onUpgrade`. Snapshots for v1–3 and v5–11 are in `drift_schemas/my_database/`, generated test schemas in `test/drift/my_database/generated/`, tests in `test/drift/my_database/migration_test.dart`.
+`lib/core/data/local/app_database.dart`, `schemaVersion` 13, opened on a background isolate (`NativeDatabase.createInBackground`). Tables: `FhirResource`, `Sources`, `RecordNotes`, `ProcessingSessions`, `SyncOutbox`. v1→8 migrate with drift `stepByStep` (there is no v4; `from3To5` covers it). v8→9 (per-patient wallet sources), v9→10 (sync triggers), v10→11, v11→12 (note keys) and v12→13 (sync outbox, millisecond triggers) are hand-written in `onUpgrade`. Snapshots for v1–3 and v5–13 are in `drift_schemas/my_database/`, generated test schemas in `test/drift/my_database/generated/`, tests in `test/drift/my_database/migration_test.dart`.
 
-Synced tables have triggers that set `updated_at` on insert and on any update that leaves it unchanged.
+Triggers set `updated_at` in milliseconds on insert and on any update that leaves it unchanged, never lower than the row's previous stamp (an edit after receiving a row stamped by a clock that runs ahead still wins); filling in a note's `uuid` (below) doesn't count as an update. On the three synced tables, triggers also log every insert and update in `sync_outbox` (`synced_table`, `row_key`), which is what the desktop sync sends; Dart code doesn't set `updated_at` on these tables.
+
+Row ids: a Fasten resource is stored under its FHIR id, unless that id already belongs to a resource of another source or type; then it is `sourceId/type/id` (`SyncLocalDataSourceImpl.cacheFhirResources`). Notes have a local integer `id` and a `uuid` that identifies them on every device: a v4 UUID for new notes, `legacy-<id>` for notes from before v12 or from an app version without the column (a trigger fills it in). `record_notes.source_id` references `sources`, with foreign keys on: delete notes before their source.
+
+Deleting records goes through `RecordsRepositoryImpl._deleteRecords`: it also deletes their notes and the DocumentReferences attached only to them (`context.related`), then each attachment file no remaining record refers to, never a file outside the app's documents.
 
 ## Mobile ↔ desktop communication
 
-Mobile is the client, desktop the server. Frames are AES-256-GCM encrypted over TCP or, between Apple devices, MultipeerConnectivity (MPC, from `airdrop`).
+Mobile is the client, desktop the server; one phone is paired with one desktop. They talk over TCP or, between an iPhone and a Mac, MultipeerConnectivity (MPC, from `airdrop`), with the same protocol on both (`link_protocol.dart`, version 2). Both apps must run version 2; an older peer is told to update, not half-served.
 
 ### Pairing
 
-Desktop shows a QR with a `DevicePairing` JSON: `deviceId` (UUID v4), `deviceName` (hostname), `pairingKey` (32 random bytes, base64url, the AES key), `lastIp`, `lastPort` (default 49152), optional `lastSsid`, `lastPassword`, `os`, and `pairedAt`. Mobile saves it through `PairingStorageService` (SharedPreferences key `device_pairing`) and connects.
+The desktop makes a pairing on first start (`DevicePairing`: `deviceId` (UUID v4), `deviceName`, `pairingKey` (32 random bytes, base64url), `lastIp`, `lastPort`). Its QR code (`DevicePairing.toQrPayload`) carries `v`, `device_id`, `device_name`, `pairing_key`, `ip`, `port` and `os`; the phone checks it with `DevicePairing.parseQr` (version, a 32-byte key, a valid port). Keys are stored in the platform's secret store (`SecretStore`: Keychain this-device-only, Android Keystore, Windows DPAPI; on macOS the legacy keychain, which needs no entitlement), the rest of the pairing in SharedPreferences (`device_pairing`).
+
+The first phone to complete a handshake becomes the paired phone (`peerDeviceId`). The desktop then gives it a new key over the session (`pairing.rekey` / `pairing.rekey_ack`), accepting both keys until the phone uses the new one, so the QR code that was shown stops working. Once a phone is paired the desktop shows its name, not the QR code; "New QR code" makes a new pairing. Another phone that holds the current key (and proves it) waits until the desktop's user accepts or declines it; accepted, it replaces the paired phone.
 
 ### Discovery (mobile, `communication_bloc.dart`)
 
-1. **Saved IP**: `lastIp:lastPort`, 5 s `Socket.connect()` timeout.
-2. **mDNS + SSDP**: `MdnsService` and `SsdpService` in parallel, 3 s timeouts each. Both are awaited and the mDNS result is preferred; the saved IP is updated.
-3. **MPC**: iOS/macOS only, waits up to 10 s.
+1. **Saved address**: `lastIp:lastPort`, saved only after a handshake there succeeded.
+2. **Bonjour + SSDP**: `_healthwallet._tcp` with a TXT attribute `t` (a token derived from the key and the desktop id, `discoveryToken`), resolved explicitly; SSDP (not on iOS, which needs a multicast entitlement Apple grants on request) filtered by the desktop id, using the answer's source address. Results are candidates only.
+3. **MPC**: the Mac advertises the token in `discoveryInfo` and accepts only an invitation carrying it, one peer at a time, and stops advertising while connected; the iPhone invites only that Mac and stops browsing when the attempt times out.
 
-If all fail: `CommunicationConnectionFailed` ("Desktop not found"). When an established connection drops, mobile retries with exponential back-off (3 s base, doubling, 5 attempts), then clears the pairing and asks for a new QR scan. A failed first connection is not retried.
+Every candidate must pass the handshake, which checks the desktop's id and proof. A desktop that answers "unknown key" (a new QR code was made), declines the phone or speaks another version ends the attempt with that reason and no retry; otherwise the phone retries with a doubling delay (3 s, 5 attempts), then waits for the app to come back to the foreground or for Reconnect. The pairing is never cleared by itself. A desktop user's Disconnect (`kill` with reason `user`) keeps the phone disconnected; a desktop quitting (`shutdown`) doesn't.
+
+The desktop listens on every interface (port 49152 or a free one) and checks its address every 30 s, updating the QR code and the advertisements; without a usable address it says so instead of showing a QR code. It holds up to 8 sockets; each must complete the handshake within 15 s, and the newest verified session replaces the previous one, so a phone that reconnects after a drop is never locked out by its own half-open socket.
 
 | Mobile \ Desktop | macOS     | Windows |
 | ---------------- | --------- | ------- |
 | iOS              | MPC + TCP | TCP     |
 | Android          | TCP       | TCP     |
 
-`TcpService` holds one client. A second connection becomes a pending client, and the desktop shows an accept/reject dialog. The server binds to the machine's current local IP when it starts (port 49152, falling back to a random port, then to `anyIPv4`), on every platform; after a network change the saved IP is stale and the first reconnect falls through to mDNS/SSDP.
-
 ### Wire format
 
-Key: the first 32 bytes of the base64url-decoded `pairingKey` (zero-padded if shorter). Message: `[12-byte random nonce][ciphertext + 16-byte tag]`. TCP adds a 4-byte big-endian length prefix; MPC sends without one. With no pairing key the payload goes out unencrypted.
+TCP frames are `[4-byte big-endian length][body]`; MPC carries bodies in pieces of at most 60 KiB (`[1 = last][bytes]`). A body starts with a kind byte: `0x00` alone (the desktop doesn't know the phone's key), `0x01` handshake (`[12-byte nonce][AES-256-GCM]` under the pairing key) or `0x02` session (`[8-byte counter][AES-256-GCM]`, the counter being the nonce, under a key for this session and direction). A session frame must carry the next counter, so frames can't be replayed, reordered or reflected. Frames are capped at 64 KiB until the handshake completes and at 16 MiB after.
 
-The decrypted payload starts with a `MessageType` byte:
+Handshake: the phone sends `hello` (`v`, its device id and name, a 16-byte nonce); the desktop answers `ack` (`v`, its id and name, its nonce, an HMAC proof over both nonces and ids under the pairing key); the phone checks the id and the proof and sends `confirm` (its own proof). Both derive the session keys with HKDF-SHA256 from the pairing key and both nonces. The desktop then sends `ready`, or a session `ack` while its user decides on an unknown phone, or `reject` (`version`, `declined`).
 
-| Code | Type    | Meaning                                                                                                                             |
-| ---- | ------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 0x01 | `hello` | Handshake, JSON `{pairing_key_hash, device_name}` (hash: SHA-256 of the key, base64url). Receiver checks the hash and replies `ack`. The desktop server reads nothing else from a new connection until a valid hello arrives, closes it if none arrives within 15 s or the hash is missing or wrong, and caps frames at 64 KiB before the hello and 1 GiB after |
-| 0x02 | `ack`   | Acknowledgement                                                                                                                     |
-| 0x03 | `ping`  | Client keep-alive every 10 s; 5 s pong timeout                                                                                      |
-| 0x04 | `pong`  | Reply to ping                                                                                                                       |
-| 0x05 | `data`  | Application message, JSON `{type, payload}`, routed by `MessageRouter`                                                              |
-| 0xFF | `kill`  | Graceful disconnect; receiver replies `ack` and closes                                                                              |
+The decrypted payload starts with a type byte:
+
+| Code | Type      | Meaning                                                                 |
+| ---- | --------- | ----------------------------------------------------------------------- |
+| 0x01 | `hello`   | Handshake, phone → desktop                                              |
+| 0x02 | `ack`     | Handshake answer; in a session: waiting for the desktop user's decision |
+| 0x03 | `ping`    | Phone keep-alive every 10 s                                             |
+| 0x04 | `pong`    | Reply to ping                                                           |
+| 0x05 | `data`    | Application message, JSON `{type, payload}`, routed by `MessageRouter`  |
+| 0x06 | `confirm` | Handshake, the phone's proof                                            |
+| 0x07 | `reject`  | Handshake refused: `version` or `declined`                              |
+| 0x08 | `ready`   | The desktop accepted the session                                        |
+| 0xFF | `kill`    | End of session, JSON `{reason}`: `user` or `shutdown`                   |
+
+Either side drops a link it heard nothing from for 25 s (phone) or 35 s (desktop); any frame counts, so a long transfer never trips it. Sending without a verified session throws `LinkNotConnectedException`.
 
 ### Application messages
 
-**LWW sync** (`desktop/lww_sync/`):
+**LWW sync** (`desktop/lww_sync/`), all handled in one queue by `LwwSyncBloc`:
 
-| Type                | Direction         | Meaning                                                                                                                                                              |
-| ------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sync.delta`        | both              | Rows of one table changed since a timestamp (`SyncDelta`: table, rows, deviceId, timestamp). Attachments travel inline as base64 and are written to files on receipt |
-| `sync.ack`          | both              | Acknowledges a delta                                                                                                                                                 |
-| `sync.status`       | both              | Row counts per table; differing counts start reconciliation                                                                                                          |
-| `sync.verify`       | both              | Counts after reconciliation                                                                                                                                          |
-| `sync.file_request` | receiver → sender | Missing attachment paths                                                                                                                                             |
-| `sync.file_data`    | sender → receiver | `path → base64` for those files                                                                                                                                      |
+| Type                | Direction | Meaning                                                                                                   |
+| ------------------- | --------- | --------------------------------------------------------------------------------------------------------- |
+| `sync.batch`        | both      | Up to 200 rows (about 2 MB) from the outbox, by table (`SyncBatch`: `id`, `deviceId`, `tables`)           |
+| `sync.ack`          | both      | `{id, ok}` after the batch was applied in one transaction                                                 |
+| `sync.digest`       | both      | Per table, the row count and a SHA-256 of every key with its `updated_at`; `reply` marks the answer      |
+| `sync.manifest`     | both      | For a table whose digests differ: every key with its `updated_at`                                         |
+| `sync.file_request` | both      | Attachment paths the receiver lacks                                                                       |
+| `sync.file_chunk`   | both      | `{path, offset, total, data}`, 256 KiB of base64 at a time                                                |
+| `sync.file_missing` | both      | The requested file can't be sent                                                                          |
 
-Conflicts: the later `updated_at` wins; on a tie the larger device id wins. Only `fhir_resource` stores a local `device_id`, so on a tie in `sources` or `record_notes` the incoming row nearly always wins. A local `DocumentReference` with a broken attachment loses to the incoming row. The delta query is `WHERE updated_at >= ?`; counts skip rows with `deleted_at` set; `LwwSyncInitialised` hard-deletes rows whose `deleted_at` is older than 30 days.
+Sending: one batch at a time, the next after the `sync.ack`. The outbox position the peer acknowledged (`ackedSeq`, per peer in `lww_sync_state`) is the only thing that moves, so nothing is lost to a dropped link, a crash or a rejected write, and nothing depends on either device's clock. A batch not acknowledged within 60 s is sent again on the next trigger. The receiver applies a batch in one transaction (row by row when one row fails), and the writes don't go back into the outbox.
 
-Deletes travel as `deleted_at` tombstones, with no wire or schema change:
+Reconciliation: on connecting both sides send `sync.digest`; for each table that differs they exchange `sync.manifest` once per connection and queue the rows the other lacks or holds older. After a round of sending, the sender compares digests again; "in sync" means connected, nothing waiting, nothing in flight and the digests matching. A new peer (another desktop, a new phone) starts with a fresh outbox position and reconciles; a desktop restore resets the position.
 
-1. A user delete of a `fhir_resource`, `sources` or `record_notes` row runs `UPDATE … SET deleted_at = :nowMs, updated_at = :nowMs`, in milliseconds through raw SQL, never through a drift `DateTime` (drift stores seconds). Already tombstoned rows are left as they are. Deleting a record or a source also tombstones the notes of the deleted records; clearing demo data and replacing a scan's DocumentReferences tombstone too. The statements live in one place, the `SoftDelete` extension on `AppDatabase` (`lib/core/data/local/soft_delete.dart`); repositories and data sources call it, and their delete methods (`RecordsRepository.deleteResource`, `deleteResourcesByIds`, `deleteResourceWithRelated`, `deleteRecordNote`, `clearDemoData`, `SyncLocalDataSource.deleteSource`, `DocumentReferenceService.deleteDocumentReferences`) are soft.
-2. Tombstones travel in normal deltas (`computeDelta` does not filter them). LWW per row decides: the newer `updated_at` wins, so a later edit on the other device resurrects the row, and a full-table resend does not bring a deleted row back. Tombstoned DocumentReferences are sent without their files and restored without writing files, and a missing file on either side of a tombstone never overrides LWW.
+Deletes travel as `deleted_at` tombstones:
+
+1. A user delete of a `fhir_resource`, `sources` or `record_notes` row runs `UPDATE … SET deleted_at = :nowMs, updated_at = :nowMs`, in milliseconds through raw SQL, never through a drift `DateTime` (drift stores seconds). Already tombstoned rows are left as they are. Deleting a record or a source also tombstones the notes of the deleted records; clearing demo data and replacing a scan's DocumentReferences tombstone too. Deleting a record also tombstones the documents attached only to it, and removes the attachment files no live record uses from this device. The statements live in one place, the `SoftDelete` extension on `AppDatabase` (`lib/core/data/local/soft_delete.dart`); repositories and data sources call it, and their delete methods (`RecordsRepository.deleteResource`, `deleteResourcesByIds`, `deleteResourceWithRelated`, `deleteRecordNote`, `clearDemoData`, `SyncLocalDataSource.deleteSource`, `DocumentReferenceService.replaceSessionDocuments`) are soft.
+2. Tombstones travel like any edit: the update that sets `deleted_at` is logged in the outbox, and manifests and digests include tombstoned rows. LWW per row decides: the newer `updated_at` wins, so a later edit on the other device resurrects the row, and reconciliation does not bring a deleted row back. Files are requested and served only for live DocumentReferences.
 3. Every UI and export read excludes `deleted_at IS NOT NULL` (records, related records, references, search, notes, sources, DocumentReferences of a scan). Row counts already did.
-4. Every save or insert of a row clears `deleted_at` (upserts write `deleted_at = NULL`, and the `INSERT OR REPLACE` paths replace the whole row). The demo and wallet source rows leave `updated_at` to the trigger rather than drift (which stores seconds). The trigger stamps in millisecond units at whole-second precision (`strftime('%s') * 1000`), so a re-created row beats a tombstone from an earlier second, but a row re-created within the same second as its delete loses to the tombstone; this limit is accepted. In-place updates of a single column (raw JSON, specialty, note text, encounter link) leave `deleted_at` as it is, so they never resurrect a row.
+4. Every save or insert of a row clears `deleted_at` (upserts write `deleted_at = NULL`, and the `INSERT OR REPLACE` paths replace the whole row). The demo and wallet source rows leave `updated_at` to the trigger rather than drift (which stores seconds). The trigger stamps in milliseconds and never moves a row's stamp back, so a re-created row beats its tombstone. In-place updates of a single column (raw JSON, specialty, note text, encounter link) leave `deleted_at` as it is, so they never resurrect a row.
 5. `cleanupTombstones` (on `LwwSyncInitialised`) hard-deletes tombstones older than 30 days: notes first, then records, then sources, and a source stays while a newer note still points at it (`record_notes.source_id` is a foreign key the app enforces). A device offline for longer than that can bring the row back; this limit is accepted.
-6. Mixed versions: a peer without this change stores incoming tombstones (they are ordinary rows), keeps showing the rows until it updates, and its own deletes stay hard, so they still come back from the updated peer.
 
-Reset (`AppDataResetService`), `deleteAllFhirResources`, `deleteAllSources` and backup restore stay local hard wipes. The trigger stamps edits at whole seconds, so an edit made within the same second as a delete on the other device can lose to the tombstone.
+Reset (`AppDataResetService`), `deleteAllFhirResources`, `deleteAllSources` and backup restore stay local hard wipes.
 
-Offline queue: `OfflineQueueService` keeps pending deltas in SharedPreferences (`lww_offline_queue`) and flushes them on reconnect; `lib/main.dart` clears the key on every mobile start.
+Conflicts: the later `updated_at` wins; on a tie the row from the larger device id wins, the same answer on both sides; a row identical to the local one is not written. Incoming columns are kept only if the table has them. A local `DocumentReference` with a missing attachment loses to the incoming row, and an incoming one keeps the local file of an attachment that it names differently.
 
-**Backup** (`desktop/backup/`): desktop snapshots with `VACUUM INTO` to `~/Documents/HealthWallet/Backups/` (`USERPROFILE` on Windows).
+Files never travel inside rows. The receiver asks for the attachments of the rows it applied (and, on connecting, for every missing one); the sender serves only paths a live `DocumentReference` refers to, at most 200 MB, in chunks, outside the event queue. A received file gets a free name in Documents (never replacing a file or the database), and the record is repointed to it without counting as an edit.
+
+Deletes: no code in `lib/` sets `deleted_at`, and none ever has; repositories hard-delete synced rows, and reconciliation brings a deleted row back from the other device. The archived PRD (FR35, NFR14) asked for soft-delete propagation with 30-day tombstone cleanup; only the columns and the cleanup were built.
+
+**Backup** (`desktop/backup/`): desktop snapshots with `VACUUM INTO` to `~/Documents/HealthWallet/Backups/` (`USERPROFILE` on Windows). Restore empties the tables children first and copies only the columns the backup and the current schema share, so backups from an older schema restore.
 
 | Type              | Direction         | Meaning                              |
 | ----------------- | ----------------- | ------------------------------------ |
@@ -205,7 +224,7 @@ Offline queue: `OfflineQueueService` keeps pending deltas in SharedPreferences (
 | `backup.complete` | sender → receiver | Done; receiver verifies the checksum |
 | `backup.error`    | either            | Failure                              |
 
-`backup_bloc.dart` also sends `backup_start`, `backup_chunk` and `backup_complete`; nothing listens for them.
+`backup_bloc.dart` also sends `backup_start`, `backup_chunk` and `backup_complete`; nothing listens for them. The phone asks for a backup (`PhoneBackupRequested`) only once its changes were acknowledged, so the snapshot holds them.
 
 **Handover** (`desktop/handover/`): mobile offloads AI processing to desktop. `HandoverSenderService` sends on mobile; `HandoverService` receives on desktop.
 

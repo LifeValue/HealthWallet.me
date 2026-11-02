@@ -27,6 +27,7 @@ import 'package:health_wallet/features/records/presentation/widgets/record_attac
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/record_attachments_widget.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_notes/record_notes_widget.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:pdfx/pdfx.dart' as pdfx;
 
 double _panelHPad(double width) {
   if (width >= 1024) return 48.0;
@@ -261,12 +262,19 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
         oldWidget.detail.attachments.length != widget.detail.attachments.length;
     if (idChanged || attachmentsChanged) {
       if (attachmentsChanged && !idChanged) {
-        _cache.remove(widget.detail.record.id);
+        _cache.remove(_cacheKey(oldWidget.detail));
         _loadedRecordId = '';
       }
       _loadPages();
     }
   }
+
+  /// The record and its attachments, so a record whose attachments changed
+  /// is rendered again.
+  static String _cacheKey(AttachmentBrowseDetail detail) => [
+    detail.record.id,
+    for (final attachment in detail.attachments) attachment.resource.id,
+  ].join('|');
 
   void _loadPages() {
     final recordId = widget.detail.record.id;
@@ -275,7 +283,7 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
       return;
     }
 
-    final cached = _cache[recordId];
+    final cached = _cache[_cacheKey(widget.detail)];
     if (cached != null && cached.isNotEmpty) {
       final startPage = widget.startFromEnd ? cached.length - 1 : 0;
       _pages.clear();
@@ -317,10 +325,13 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
 
   Future<void> _buildPages() async {
     setState(() => _loading = true);
+    // Rendering awaits; by the time it ends the panel may show another
+    // record, whose pages these are not.
+    final detail = widget.detail;
     final pages = <_PreviewPage>[];
     var failedPdfs = 0;
 
-    for (final attachment in widget.detail.attachments) {
+    for (final attachment in detail.attachments) {
       if (attachment.filePath == null) continue;
       final path = attachment.filePath!;
       final ct = attachment.contentType?.toLowerCase() ?? '';
@@ -328,8 +339,9 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
           ct == 'application/pdf' || path.toLowerCase().endsWith('.pdf');
 
       if (isPdf) {
+        pdfx.PdfDocument? doc;
         try {
-          final doc = await openPdfDocument(path);
+          doc = await openPdfDocument(path);
           final pageCount = doc.pagesCount;
           for (int i = 1; i <= pageCount; i++) {
             final page = await doc.getPage(i);
@@ -351,10 +363,11 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
               );
             }
           }
-          await doc.close();
         } catch (e) {
           logger.w('Could not open the PDF attachment ${attachment.title}', e);
           failedPdfs++;
+        } finally {
+          await doc?.close();
         }
       } else {
         pages.add(
@@ -372,7 +385,7 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
     // A partial result is not cached, so reopening retries the failed PDFs
     // and shows the failure again.
     if (pages.isNotEmpty && failedPdfs == 0) {
-      _cache[widget.detail.record.id] = pages;
+      _cache[_cacheKey(detail)] = pages;
     }
 
     if (mounted && failedPdfs > 0) {
@@ -383,7 +396,7 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
       );
     }
 
-    if (mounted) {
+    if (mounted && widget.detail.record.id == detail.record.id) {
       final startPage = widget.startFromEnd && pages.isNotEmpty
           ? pages.length - 1
           : 0;

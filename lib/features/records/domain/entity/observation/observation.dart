@@ -10,12 +10,12 @@ import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_code_labels.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
 
 part 'observation.freezed.dart';
 
@@ -135,6 +135,12 @@ abstract class Observation with _$Observation implements IFhirResource {
     final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader(l10n.fieldResult));
 
+    // A result entered in error or cancelled says so before its value.
+    final isFlagged = FhirCodeLabels.isFlagged(status?.valueString);
+    infoLines.addAll(
+      FhirCodeLabels.flaggedStatusLines(status?.valueString, null, l10n),
+    );
+
     final valueDisplay = FhirFieldExtractor.extractObservationValue(
       valueX,
       l10n: l10n,
@@ -149,9 +155,7 @@ abstract class Observation with _$Observation implements IFhirResource {
 
     if (component != null && component!.isNotEmpty) {
       for (final comp in component!) {
-        final componentCode = FhirFieldExtractor.extractCodeableConceptText(
-          comp.code,
-        );
+        final componentCode = FhirCodeLabels.componentLabel(comp.code, l10n);
         final componentValue = FhirFieldExtractor.extractObservationValue(
           comp.valueX,
           l10n: l10n,
@@ -169,14 +173,15 @@ abstract class Observation with _$Observation implements IFhirResource {
       }
     }
 
-    final interpretationDisplay = FhirFieldExtractor.extractInterpretation(
+    final interpretationDisplay = FhirCodeLabels.interpretations(
       interpretation,
+      l10n,
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createWarningLine(
         interpretationDisplay,
-        prefix: l10n.fieldStatus,
+        prefix: l10n.fieldInterpretation,
       ),
     );
 
@@ -282,14 +287,16 @@ abstract class Observation with _$Observation implements IFhirResource {
       ResourceFieldMapper.createSectionHeader(l10n.fieldAdditionalInformation),
     );
 
-    final statusText = status?.valueString;
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createStatusLine(
-        statusText,
-        prefix: l10n.fieldStatus,
-      ),
-    );
+    if (!isFlagged) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        FhirCodeLabels.statusLine(
+          status?.valueString,
+          l10n,
+          prefix: l10n.fieldStatus,
+        ),
+      );
+    }
 
     final specimenDisplay = FhirFieldExtractor.extractReferenceDisplay(
       specimen,
@@ -403,7 +410,7 @@ abstract class Observation with _$Observation implements IFhirResource {
       infoLines.add(
         RecordInfoLine(
           icon: Assets.icons.calendar,
-          info: DateFormat.yMMMMd(l10n.localeName).format(date!),
+          info: FhirFieldExtractor.formatRecordDate(date!, l10n.localeName),
         ),
       );
     }
@@ -427,6 +434,12 @@ abstract class Observation with _$Observation implements IFhirResource {
     final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader(l10n.fieldResult));
 
+    // A result entered in error or cancelled says so before its value.
+    final isFlagged = FhirCodeLabels.isFlagged(status?.valueString);
+    infoLines.addAll(
+      FhirCodeLabels.flaggedStatusLines(status?.valueString, null, l10n),
+    );
+
     final measured = FhirFieldExtractor.regionUnitVitalOf(code);
     final valueDisplay = FhirFieldExtractor.extractObservationValueForRegion(
       valueX,
@@ -444,9 +457,7 @@ abstract class Observation with _$Observation implements IFhirResource {
 
     if (component != null && component!.isNotEmpty) {
       for (final comp in component!) {
-        final componentCode = FhirFieldExtractor.extractCodeableConceptText(
-          comp.code,
-        );
+        final componentCode = FhirCodeLabels.componentLabel(comp.code, l10n);
         final componentValue =
             FhirFieldExtractor.extractObservationValueForRegion(
               comp.valueX,
@@ -467,14 +478,15 @@ abstract class Observation with _$Observation implements IFhirResource {
       }
     }
 
-    final interpretationDisplay = FhirFieldExtractor.extractInterpretation(
+    final interpretationDisplay = FhirCodeLabels.interpretations(
       interpretation,
+      l10n,
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createWarningLine(
         interpretationDisplay,
-        prefix: l10n.fieldStatus,
+        prefix: l10n.fieldInterpretation,
       ),
     );
 
@@ -605,14 +617,16 @@ abstract class Observation with _$Observation implements IFhirResource {
       ResourceFieldMapper.createSectionHeader(l10n.fieldAdditionalInformation),
     );
 
-    final statusText = status?.valueString;
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createStatusLine(
-        statusText,
-        prefix: l10n.fieldStatus,
-      ),
-    );
+    if (!isFlagged) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        FhirCodeLabels.statusLine(
+          status?.valueString,
+          l10n,
+          prefix: l10n.fieldStatus,
+        ),
+      );
+    }
 
     final specimenDisplay = FhirFieldExtractor.extractReferenceDisplay(
       specimen,
@@ -726,7 +740,10 @@ abstract class Observation with _$Observation implements IFhirResource {
       infoLines.add(
         RecordInfoLine(
           icon: Assets.icons.calendar,
-          info: DateFormatUtils.formatDate(date!, region),
+          info: DateFormatUtils.formatDate(
+            FhirFieldExtractor.recordDay(date!),
+            region,
+          ),
         ),
       );
     }

@@ -13,6 +13,7 @@ import 'package:health_wallet/features/desktop/backup/data/services/backup_servi
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
 import 'package:health_wallet/features/desktop/backup/domain/utils/backup_name_date.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
+import 'package:health_wallet/features/desktop/lww_sync/data/services/lww_sync_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:injectable/injectable.dart';
@@ -28,6 +29,7 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
   final AppStringsProvider _strings;
 
   StreamSubscription? _messageSub;
+  StreamSubscription? _linkSub;
   static const _chunkSize = 64 * 1024;
 
   /// `backup.error` code sent when the desktop has no backup folder. Desktops
@@ -44,14 +46,22 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     on<BackupLocationChanged>(_onLocationChanged);
     on<BackupLocationReset>(_onLocationReset);
     on<RemoteBackupRequested>(_onRemoteBackupRequested);
+    on<PhoneBackupRequested>(_onPhoneBackupRequested);
     on<RemoteBackupStatusChanged>(_onRemoteBackupStatusChanged);
     on<RemoteBackupStatusReceived>(_onRemoteBackupStatusReceived);
+    on<RemoteLinkLost>(_onRemoteLinkLost);
 
     _listenForMessages();
   }
 
   void _listenForMessages() {
     final isMobile = getIt<AppPlatform>().isMobile;
+
+    if (isMobile) {
+      _linkSub = _tcpService.connectionState
+          .where((s) => s == ConnectionState.disconnected)
+          .listen((_) => add(const RemoteLinkLost()));
+    }
 
     _messageSub = _tcpService.messages.listen((message) {
       if (message.type != MessageType.data) return;
@@ -114,7 +124,7 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     debugPrint(
       '[Backup] Sending status: ready=${state.hasUserSelectedPath}, count=${state.backupHistory.length}',
     );
-    _tcpService.sendData('backup.status', {
+    _sendQuietly('backup.status', {
       'ready': state.hasUserSelectedPath,
       'count': state.backupHistory.length,
       if (state.backupHistory.isNotEmpty)
@@ -212,6 +222,9 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
       emit(state.copyWith(progress: 0.2));
 
       await _backupService.restoreFromFile(target.filePath);
+      // The restored tables hold older rows; the next connection compares
+      // everything with the phone instead of trusting the old sync position.
+      await getIt<LwwSyncService>().resetPeerState();
 
       emit(state.copyWith(progress: 1.0));
 
@@ -335,10 +348,13 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
         state.copyWith(
           backupPath: path,
           backupHistory: history,
+          hasUserSelectedPath: false,
           selectedBackup: null,
           error: null,
         ),
       );
+
+      sendBackupStatus();
     } catch (e) {
       emit(
         state.copyWith(
@@ -355,29 +371,21 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     if (state.isBackingUp) return;
 
     if (!state.hasUserSelectedPath) {
-      unawaited(
-        _tcpService.sendData('backup.error', {
-          'code': noBackupLocationCode,
-          // Shown by phones from before the code.
-          'error': 'No backup location set on desktop. Open the desktop app and choose a backup folder first.',
-        }),
-      );
+      _sendQuietly('backup.error', {
+        'code': noBackupLocationCode,
+        // Shown by phones from before the code.
+        'error': 'No backup location set on desktop. Open the desktop app and choose a backup folder first.',
+      });
       return;
     }
 
-    try {
-      getIt<LwwSyncBloc>().add(const SyncTriggered());
-    } catch (_) {}
-
-    await Future<void>.delayed(const Duration(seconds: 2));
-
-    unawaited(
-      _tcpService.sendData('backup.status', {
-        'ready': true,
-        'backing_up': true,
-        'count': state.backupHistory.length,
-      }),
-    );
+    // The phone asks only after its changes were acknowledged, so they are
+    // already in this database.
+    _sendQuietly('backup.status', {
+      'ready': true,
+      'backing_up': true,
+      'count': state.backupHistory.length,
+    });
 
     final name = _strings.l10n.desktopRemoteBackupName(
       backupNameDate(
@@ -387,6 +395,27 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
       ),
     );
     add(BackupRequested(name: name));
+  }
+
+  Future<void> _onPhoneBackupRequested(
+    PhoneBackupRequested event,
+    Emitter<BackupState> emit,
+  ) async {
+    emit(state.copyWith(isBackingUp: true, progress: 0.0, error: null));
+    final drained = await getIt<LwwSyncBloc>().waitUntilDrained();
+    if (!drained) {
+      logger.w('[Backup] asking for a backup before every change was sent');
+    }
+    try {
+      await _tcpService.sendData('backup.request', {});
+    } on LinkNotConnectedException {
+      emit(
+        state.copyWith(
+          isBackingUp: false,
+          error: _strings.l10n.backupStatusNotConnected,
+        ),
+      );
+    }
   }
 
   void _onRemoteBackupStatusChanged(
@@ -416,9 +445,16 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     );
   }
 
+  /// A backup the desktop was making can't reach this phone any more, and
+  /// its folder may change before the next connection reports it again.
+  void _onRemoteLinkLost(RemoteLinkLost event, Emitter<BackupState> emit) {
+    emit(state.copyWith(isBackingUp: false, desktopBackupReady: null));
+  }
+
   @override
   Future<void> close() {
     _messageSub?.cancel();
+    _linkSub?.cancel();
     return super.close();
   }
 
@@ -432,4 +468,11 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     null || noBackupLocationCode => _strings.l10n.desktopNoBackupLocation,
     _ => _strings.l10n.desktopBackupFailed,
   };
+
+  /// Sends a message nobody waits for; a dropped link is logged, not thrown.
+  void _sendQuietly(String type, Map<String, dynamic> payload) {
+    _tcpService.sendData(type, payload).catchError((Object e) {
+      logger.w('[$runtimeType] $type not sent', e);
+    });
+  }
 }

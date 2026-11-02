@@ -268,7 +268,8 @@ void main() {
       }
     });
 
-    test('reads every source when the patient has no source id', () async {
+    test('reads no other patient\'s source when the patient has no source '
+        'id', () async {
       repository.resources.addAll([
         _patient(sourceId: '', id: 'pat-1'),
         _allergy('Pollen', sourceId: 'src-3'),
@@ -276,12 +277,12 @@ void main() {
 
       final card = await builder.build(patientId: 'pat-1');
 
-      expect(card.allergies, ['Pollen']);
+      expect(card.allergies, isEmpty);
       expect(repository.requests.skip(1).map((r) => r.sourceIds), [
-        null,
-        null,
-        null,
-        null,
+        isEmpty,
+        isEmpty,
+        isEmpty,
+        isEmpty,
       ]);
     });
   });

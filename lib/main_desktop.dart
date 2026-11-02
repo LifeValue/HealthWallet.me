@@ -12,6 +12,7 @@ import 'package:health_wallet/features/desktop/communication/data/services/disco
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
+import 'package:health_wallet/features/desktop/handover/data/services/handover_service.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/bloc/handover_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/desktop/tray/data/services/tray_service.dart';
@@ -34,6 +35,10 @@ void main() async {
       getIt<PairingStorageService>(),
       getIt<TcpService>(),
       getIt<DiscoveryService>(),
+      onPhoneConnected: () {
+        getIt<BackupBloc>().sendBackupStatus();
+        getIt<HandoverService>().resendPendingResults();
+      },
     ),
   );
 
@@ -43,6 +48,13 @@ void main() async {
       getIt<WindowLifecycleService>(),
     ),
   );
+
+  getIt<WindowLifecycleService>().beforeQuit = () async {
+    // A batch being applied finishes first, then the phone is told this app
+    // is quitting, so it reconnects later by itself.
+    await getIt<LwwSyncBloc>().shutdown();
+    await getIt<CommunicationBloc>().shutdown();
+  };
 
   getIt<CommunicationBloc>().add(const CommunicationInitialised());
   getIt<BackupBloc>().add(const BackupHistoryLoaded());

@@ -11,7 +11,6 @@ import 'package:health_wallet/features/records/domain/utils/resource_field_mappe
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
 
 part 'practitioner_role.freezed.dart';
 
@@ -257,7 +256,7 @@ abstract class PractitionerRole
         RecordInfoLine(
           icon: Assets.icons.calendar,
           info:
-              '${l10n.fieldLastUpdated}: ${DateFormat.yMMMMd(l10n.localeName).format(date!)}',
+              '${l10n.fieldLastUpdated}: ${FhirFieldExtractor.formatRecordDate(date!, l10n.localeName)}',
         ),
       );
     }

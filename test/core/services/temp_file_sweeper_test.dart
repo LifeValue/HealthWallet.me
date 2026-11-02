@@ -41,8 +41,11 @@ void main() {
       final ips = tempFile('Jane Doe - IPS Summary - 28-10-2026.pdf');
       final unnamedIps = tempFile(' - IPS Summary - 10-28-2026.pdf');
       final pass = tempFile('HealthWallet_Emergency.pkpass');
+      final preview = tempFile('healthwallet_record_preview_$_id.pdf');
 
       await sweeper(deleteDebugLogs: false).sweep();
+
+      expect(preview.existsSync(), isFalse);
 
       expect(sharePayload.existsSync(), isFalse);
       expect(oldSharePayload.existsSync(), isFalse);
@@ -250,6 +253,8 @@ void main() {
       tempFile('${TempFileSweeper.ipsSummaryName('Jane', '01-02-2026')}.pdf'),
       tempFile(TempFileSweeper.walletPassFileName),
       tempFile('${TempFileSweeper.shareSessionName(_id)}/a.png'),
+      tempFile(TempFileSweeper.recordPreviewName('pdf')),
+      tempFile(TempFileSweeper.recordPreviewName('png')),
     ];
 
     await sweeper(deleteDebugLogs: false).sweep();
