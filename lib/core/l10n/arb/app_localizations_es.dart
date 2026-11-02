@@ -4607,4 +4607,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String desktopBackupSucceededMessage(String name, int count) {
     return 'Se guardó \"$name\". Contiene $count registros.';
   }
+
+  @override
+  String get holderQuestionTitle => '¿De quién son estos registros?';
+
+  @override
+  String holderQuestionMessage(String name) {
+    return 'Han llegado registros de $name, que no coincide con nadie de tu cartera. ¿Quién es?';
+  }
+
+  @override
+  String get holderQuestionSomeoneElse => 'Otra persona';
 }

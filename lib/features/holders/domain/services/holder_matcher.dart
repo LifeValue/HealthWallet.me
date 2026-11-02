@@ -25,6 +25,24 @@ class HolderMatcher {
     return _sameNameAndBirthDate(a, b);
   }
 
+  /// Whether a patient read from a scanned document is [stored]. A scan's
+  /// identifier has no system, so its value is compared with every stored
+  /// identifier; a name counts only with the full birth date on both.
+  bool sameScannedPerson(HolderPatient scanned, HolderPatient stored) {
+    for (final x in scanned.identifiers) {
+      final value = normalize(x.value);
+      if (value.length < _minIdentifierLength) continue;
+      if (stored.identifiers.any(
+        (y) =>
+            y.value != HolderPatient.placeholderRowId &&
+            normalize(y.value) == value,
+      )) {
+        return true;
+      }
+    }
+    return _sameNameAndBirthDate(scanned, stored);
+  }
+
   bool _sameIdentifier(HolderIdentifier x, HolderIdentifier y) {
     final value = normalize(x.value);
     if (value.length < _minIdentifierLength || value != normalize(y.value)) {
@@ -70,6 +88,29 @@ class HolderMatcher {
 
   bool _isNational(HolderIdentifier id) =>
       id.typeCodes.any(nationalTypes.contains);
+
+  /// Whether [identifier] is in [text] as a whole: on its own, or as a run of
+  /// digits written with spaces, dashes, dots or slashes ("123 45 6789").
+  /// Part of a longer number (a phone number, a date) doesn't count.
+  static bool appearsIn(String identifier, String text) {
+    final whole = RegExp(
+      '(?<![0-9A-Za-z])${RegExp.escape(identifier)}(?![0-9A-Za-z])',
+    );
+    if (whole.hasMatch(text)) return true;
+
+    final digits = identifier.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.length < 8) return false;
+    for (final run in RegExp(r'\d[\d \-./]*\d').allMatches(text)) {
+      final found = run.group(0)!.replaceAll(RegExp(r'[^0-9]'), '');
+      if (found == digits) return true;
+      // Long national numbers are often printed without their check digit.
+      if (digits.length > 10 &&
+          found == digits.substring(0, digits.length - 1)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   /// Lower case, without spaces, dashes or diacritics, so "Ștefan-Ioan" and
   /// "stefan ioan" compare equal, as do "123-45-6789" and "123456789".

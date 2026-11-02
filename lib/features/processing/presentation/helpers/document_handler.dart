@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
@@ -89,13 +90,8 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
               patientForSource?.displayTitle ??
               SourceTypeService.unknownPatientName;
 
-          final sourceTypeService = getIt<SourceTypeService>();
-          final walletSource = await sourceTypeService
-              .getWritableSourceForPatient(
-                patientId: patientId,
-                patientName: patientName,
-                availableSources: homeState.sources,
-              );
+          final walletSource = await getIt<HolderService>()
+              .walletSourceForPatient(patientId, patientName: patientName);
 
           finalEncounter = encounter.draft!.toFhirResource(
             sourceId: walletSource.id,
@@ -150,11 +146,9 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
       final patientName =
           patient?.displayTitle ?? SourceTypeService.unknownPatientName;
 
-      final sourceTypeService = getIt<SourceTypeService>();
-      final walletSource = await sourceTypeService.getWritableSourceForPatient(
-        patientId: patientId,
+      final walletSource = await getIt<HolderService>().walletSourceForPatient(
+        patientId,
         patientName: patientName,
-        availableSources: homeState.sources,
       );
 
       if (context.mounted) {

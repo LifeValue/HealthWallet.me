@@ -1,12 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/utils/patient_source_utils.dart';
+import 'package:health_wallet/features/holders/domain/entity/holder.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 
 void main() {
   const jane = Patient(id: 'jane');
-  const janeGroup = PatientGroup(
+  const janeGroup = Holder(
+    id: 'jane',
     representativePatient: jane,
     sourceIds: ['s1', 's2'],
     allPatientInstances: [jane],

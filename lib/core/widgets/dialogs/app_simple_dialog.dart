@@ -317,6 +317,65 @@ class AppSimpleDialog {
   }
 
   /// Width of [showSuccess]: a short message reads best in a narrow card.
+  /// A question with one button per answer. It can't be dismissed: the
+  /// user picks one, and the future completes with its value.
+  static Future<T?> showChoice<T>({
+    required BuildContext context,
+    required String title,
+    required String message,
+    required List<(String label, T value)> choices,
+  }) {
+    return showDialog<T>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        final textColor = context.isDarkMode
+            ? AppColors.textPrimaryDark
+            : AppColors.textPrimary;
+
+        return PopScope(
+          canPop: false,
+          child: _DialogShell(
+            useResponsiveWidth: true,
+            child: Padding(
+              padding: const EdgeInsets.all(Insets.normal),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    title,
+                    style: AppTextStyle.bodyLarge.copyWith(
+                      color: textColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: Insets.normal),
+                  Text(
+                    message,
+                    style: AppTextStyle.labelLarge.copyWith(color: textColor),
+                  ),
+                  const SizedBox(height: Insets.normal),
+                  for (final (i, (label, value)) in choices.indexed) ...[
+                    if (i > 0) const SizedBox(height: Insets.small),
+                    AppButton(
+                      label: label,
+                      variant: i == choices.length - 1
+                          ? AppButtonVariant.outlined
+                          : AppButtonVariant.primary,
+                      fullWidth: true,
+                      onPressed: () => Navigator.of(dialogContext).pop(value),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @visibleForTesting
   static const double successDialogWidth = 360;
 }

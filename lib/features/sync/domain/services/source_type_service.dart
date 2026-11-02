@@ -1,14 +1,9 @@
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
-import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/wallet_patient_service.dart';
 import 'package:injectable/injectable.dart';
 
 @injectable
 class SourceTypeService {
-  final WalletPatientService _walletPatientService;
-  final SyncRepository _syncRepository;
-
-  SourceTypeService(this._walletPatientService, this._syncRepository);
+  const SourceTypeService();
 
   bool isSourceWritable(String platformType) {
     return platformType == 'wallet';
@@ -43,45 +38,6 @@ class SourceTypeService {
 
   bool canAddDataToSource(Source source) {
     return isSourceWritable(source.platformType);
-  }
-
-  Future<Source> ensureWalletSourceForPatient({
-    required String patientId,
-    String? patientName,
-    required List<Source> availableSources,
-  }) async {
-    final walletId = 'wallet-$patientId';
-    final existingWallet = availableSources
-        .where(
-          (s) => s.platformType == 'wallet' && s.id == walletId,
-        )
-        .firstOrNull;
-
-    if (existingWallet != null) {
-      return existingWallet;
-    }
-
-    final walletSource = await _walletPatientService
-        .createWalletSourceForPatient(
-          patientId,
-          patientName ?? 'Patient $patientId',
-        );
-
-    await _syncRepository.cacheSources([walletSource]);
-
-    return walletSource;
-  }
-
-  Future<Source> getWritableSourceForPatient({
-    required String patientId,
-    String? patientName,
-    required List<Source> availableSources,
-  }) async {
-    return await ensureWalletSourceForPatient(
-      patientId: patientId,
-      patientName: patientName,
-      availableSources: availableSources,
-    );
   }
 }
 

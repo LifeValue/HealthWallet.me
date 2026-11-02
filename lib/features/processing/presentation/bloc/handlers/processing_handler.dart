@@ -8,6 +8,8 @@ import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_matcher.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
@@ -25,8 +27,6 @@ import 'package:health_wallet/features/processing/presentation/bloc/processing_b
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
@@ -35,8 +35,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
   RecordsRepository get recordsRepository;
   SyncRepository get syncRepository;
   DocumentReferenceService get documentReferenceService;
-  PatientDeduplicationService get deduplicationService;
-  SourceTypeService get sourceTypeService;
+  HolderService get holderService;
   SharedPreferences get prefs;
   AppStringsProvider get strings;
 
@@ -270,27 +269,23 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       session?.origin.localizedName(strings.l10n) ??
       strings.l10n.fhirTypeDocumentReference;
 
+  /// The person whose identifier appears in the scanned text, before the AI
+  /// reads the patient.
   Future<Patient?> _tryMatchPatientFromOcr(String ocrText) async {
     if (ocrText.isEmpty) return null;
     try {
-      final allPatientsResources = await recordsRepository.getResources(
-        resourceTypes: [FhirType.Patient],
-        limit: 1000,
-      );
-      final allPatients = allPatientsResources.whereType<Patient>().toList();
-      if (allPatients.isEmpty) return null;
-
-      for (final patient in allPatients) {
-        if (patient.identifier == null) continue;
-        for (final id in patient.identifier!) {
-          final value = id.value?.valueString;
-          if (value == null || value.length < 5) continue;
-          if (ocrText.contains(value) ||
-              _fuzzyIdentifierMatch(value, ocrText)) {
-            ProcessingLogBuffer.instance.log(
-              '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: found identifier $value',
-            );
-            return patient;
+      final directory = await holderService.load();
+      for (final holder in directory.holders) {
+        for (final patient in holder.allPatientInstances) {
+          for (final id in patient.identifier ?? const <fhir_r4.Identifier>[]) {
+            final value = id.value?.valueString;
+            if (value == null || value.length < 6) continue;
+            if (HolderMatcher.appearsIn(value, ocrText)) {
+              ProcessingLogBuffer.instance.log(
+                '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: found identifier $value',
+              );
+              return holder.representativePatient;
+            }
           }
         }
       }
@@ -301,34 +296,13 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     return null;
   }
 
-  bool _fuzzyIdentifierMatch(String identifier, String ocrText) {
-    final digitsOnly = identifier.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digitsOnly.length < 5) return false;
-
-    if (ocrText.contains(digitsOnly)) return true;
-
-    if (digitsOnly.length > 10) {
-      final trimmed = digitsOnly.substring(0, digitsOnly.length - 1);
-      if (ocrText.contains(trimmed)) return true;
-    }
-
-    return false;
-  }
-
   Future<StagedPatient> _matchOrCreatePatient(MappingPatient patient) async {
     try {
-      final allPatientsResources = await recordsRepository.getResources(
-        resourceTypes: [FhirType.Patient],
-        limit: 1000,
-      );
-      final allPatients = allPatientsResources.whereType<Patient>().toList();
-      final matchedPatient = deduplicationService.findMatchingPatient(
-        patient,
-        allPatients,
-      );
-      if (matchedPatient != null) {
+      final directory = await holderService.load();
+      final holder = holderService.matchScanned(patient, directory);
+      if (holder != null) {
         return StagedPatient(
-          existing: matchedPatient,
+          existing: holder.representativePatient,
           mode: ImportMode.linkExisting,
         );
       }
@@ -595,14 +569,12 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     String subjectId;
     String sourceId;
     final List<IFhirResource> resourcesToSave = [];
-    final availableSources = await syncRepository.getSources();
     if (activeSession.patient.mode == ImportMode.linkExisting &&
         activeSession.patient.existing != null) {
       final Patient existingPatient = activeSession.patient.existing!;
-      final walletSource = await sourceTypeService.ensureWalletSourceForPatient(
-        patientId: existingPatient.id,
+      final walletSource = await holderService.walletSourceForPatient(
+        existingPatient.id,
         patientName: existingPatient.displayTitle,
-        availableSources: availableSources,
       );
       subjectId = existingPatient.id;
       sourceId = walletSource.id;
@@ -620,12 +592,12 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         );
       }
     } else {
+      // Someone new: a holder of their own, named after their Patient row.
       final MappingPatient draftPatient = activeSession.patient.draft!;
-      final walletSource = await sourceTypeService.ensureWalletSourceForPatient(
-        patientId: draftPatient.id,
+      final walletSource = await holderService.walletSourceOf(
+        draftPatient.id,
         patientName:
             '${draftPatient.givenName.value} ${draftPatient.familyName.value}',
-        availableSources: availableSources,
       );
       subjectId = draftPatient.id;
       sourceId = walletSource.id;

@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
 import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
@@ -12,20 +13,21 @@ import 'package:health_wallet/features/home/domain/services/specialty_classifier
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
   RecordsRepository get recordsRepository;
   HomePreferencesRepository get homePreferences;
-  PatientDeduplicationService get deduplicationService;
+  HolderService get holderService;
   PatientSelectionService get patientSelectionService;
   PatientVitalFactory get patientVitalFactory;
   SpecialtyClassifier get specialtyClassifier;
 
   static const String demoSourceId = 'demo_data';
 
+  /// The sources of the selected person, or of the first person when the
+  /// selection is unknown (then saved as the selection).
   Future<List<String>?> getPatientSourceIds() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -35,42 +37,15 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
         return null;
       }
 
-      final allPatients = await recordsRepository.getResources(
-        resourceTypes: [FhirType.Patient],
-        limit: 100,
-      );
-
-      if (allPatients.isEmpty) return null;
-
-      final patients = allPatients.whereType<Patient>().toList();
-
-      final sourceIds = <String>{};
-      for (final patient in patients) {
-        if (patient.id == selectedPatientId && patient.sourceId.isNotEmpty) {
-          sourceIds.add(patient.sourceId);
-        }
+      final directory = await holderService.load();
+      final holder =
+          directory.ofPatientId(selectedPatientId) ??
+          directory.holders.firstOrNull;
+      if (holder == null) return null;
+      if (directory.ofPatientId(selectedPatientId) == null) {
+        await prefs.setString('selected_patient_id', holder.patientId);
       }
-
-      if (sourceIds.isNotEmpty) return sourceIds.toList();
-
-      final patientGroups = deduplicationService.deduplicatePatients(patients);
-      final matchingGroup = deduplicationService.findPatientGroup(
-        patientGroups,
-        selectedPatientId,
-      );
-
-      if (matchingGroup != null) {
-        return matchingGroup.sourceIds;
-      }
-
-      if (patientGroups.isNotEmpty) {
-        final firstGroup = patientGroups.values.first;
-        final newSelectedId = firstGroup.representativePatient.id;
-        await prefs.setString('selected_patient_id', newSelectedId);
-        return firstGroup.sourceIds;
-      }
-
-      return null;
+      return holder.sourceIds;
     } catch (e) {
       logger.e('Error getting patient source IDs: $e');
       return null;
@@ -177,12 +152,14 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
     }
 
     if (selectedPatientId != null && patients.length > 1) {
-      final patientGroups = deduplicationService.deduplicatePatients(patients);
+      final directory = await holderService.load();
       final selectedPatient = patientSelectionService.getPatientForSource(
         patients: patients,
         sourceId: sourceId,
         selectedPatientId: selectedPatientId,
-        patientGroups: patientGroups,
+        patientGroups: {
+          for (final holder in directory.holders) holder.patientId: holder,
+        },
       );
       if (selectedPatient != null) {
         return [selectedPatient];

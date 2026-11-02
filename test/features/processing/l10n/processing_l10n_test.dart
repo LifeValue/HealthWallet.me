@@ -5,6 +5,7 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/validator.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_observation.dart';
@@ -20,8 +21,6 @@ import 'package:health_wallet/features/processing/presentation/pages/processing/
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/resources_form.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final _en = lookupAppLocalizations(const Locale('en'));
@@ -67,10 +66,7 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {}
 class _FakeDocumentReferenceService extends Fake
     implements DocumentReferenceService {}
 
-class _FakePatientDeduplicationService extends Fake
-    implements PatientDeduplicationService {}
-
-class _FakeSourceTypeService extends Fake implements SourceTypeService {}
+class _FakeHolderService extends Fake implements HolderService {}
 
 Future<ProcessingBloc> _bloc({
   required bool modelExists,
@@ -82,8 +78,7 @@ Future<ProcessingBloc> _bloc({
     _FakeOcrProcessingHelper(error: prepareError),
     _FakeSyncRepository(),
     _FakeDocumentReferenceService(),
-    _FakePatientDeduplicationService(),
-    _FakeSourceTypeService(),
+    _FakeHolderService(),
     _FakeRecordsRepository(),
     await SharedPreferences.getInstance(),
     AppStringsProvider(),

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
 import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
 import 'package:health_wallet/features/home/domain/factory/patient_vitals_factory.dart';
@@ -11,7 +12,6 @@ import 'package:health_wallet/features/home/domain/services/specialty_classifier
 import 'package:health_wallet/features/home/presentation/bloc/handlers/home_data_handler.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 
 /// Preferences saved by a build from before the translation: the order is
@@ -40,8 +40,7 @@ class _LayoutBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
   RecordsRepository get recordsRepository => throw UnimplementedError();
 
   @override
-  PatientDeduplicationService get deduplicationService =>
-      throw UnimplementedError();
+  HolderService get holderService => throw UnimplementedError();
 
   @override
   PatientSelectionService get patientSelectionService =>

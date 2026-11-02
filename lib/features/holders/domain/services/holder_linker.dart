@@ -12,6 +12,11 @@ import 'package:health_wallet/features/holders/domain/services/holder_matcher.da
 /// person. The unnamed placeholder holder joins the only other person, so
 /// the first sync doesn't leave a second, empty "Health Wallet Holder".
 ///
+/// Once the wallet has holders, a newcomer who matches no one joins the only
+/// holder there is; with several, the user is asked (see [HolderQuestion]).
+/// Before any source has a holder (the first run after the upgrade), each
+/// person found becomes a holder, as the app showed them until then.
+///
 /// A new holder's id comes from its records alone (see [_holderIdOf]), so
 /// two devices that hold the same records give it the same id.
 class HolderLinker {
@@ -19,10 +24,10 @@ class HolderLinker {
 
   final HolderMatcher _matcher;
 
-  /// Source id → holder id, for the sources that had none and could be
-  /// placed. A source that refers to no one, while the wallet has several
-  /// people, is left out.
-  Map<String, String> link(HolderSnapshot snapshot) {
+  /// The holder of each source that had none and could be placed, and the
+  /// newcomers to ask about. A source that refers to no one, while the
+  /// wallet has several people, is in neither.
+  HolderLinks link(HolderSnapshot snapshot) {
     final groups = _Groups();
     final patients = [...snapshot.patients]
       ..sort((a, b) => a.rowId.compareTo(b.rowId));
@@ -75,6 +80,18 @@ class HolderLinker {
 
     _joinPlaceholder(groups, patients, sources);
 
+    final asked = <String>{};
+    if (sources.any((s) => s.holderId != null)) {
+      final people = _people(groups, patients, sources);
+      final holders = people.where((r) => groups.holderOf(r) != null).toList();
+      final newcomers = people.where((r) => groups.holderOf(r) == null);
+      if (holders.length == 1 && newcomers.length == 1) {
+        groups.union(holders.single, newcomers.single);
+      } else if (holders.isNotEmpty) {
+        asked.addAll(newcomers);
+      }
+    }
+
     final people = _people(groups, patients, sources);
     for (final source in sources) {
       final key = _sourceKey(source.id);
@@ -84,15 +101,28 @@ class HolderLinker {
       }
     }
 
-    return {
-      for (final source in sources)
-        if (source.holderId == null)
-          source.id: ?_holderIdOf(
-            groups,
-            groups.find(_sourceKey(source.id)),
-            patients,
+    final unlinked = sources.where((s) => s.holderId == null);
+    return HolderLinks(
+      links: {
+        for (final source in unlinked)
+          if (!asked.contains(groups.find(_sourceKey(source.id))))
+            source.id: ?_holderIdOf(
+              groups,
+              groups.find(_sourceKey(source.id)),
+              patients,
+            ),
+      },
+      questions: [
+        for (final root in asked)
+          HolderQuestion(
+            sourceIds: [
+              for (final source in unlinked)
+                if (groups.find(_sourceKey(source.id)) == root) source.id,
+            ],
+            newHolderId: _holderIdOf(groups, root, patients)!,
           ),
-    };
+      ]..sort((a, b) => a.newHolderId.compareTo(b.newHolderId)),
+    );
   }
 
   void _joinPlaceholder(
@@ -163,6 +193,26 @@ class HolderLinker {
 
   static String _sourceKey(String id) => 's:$id';
   static String _patientKey(HolderPatient p) => 'p:${p.rowId}';
+}
+
+class HolderLinks {
+  const HolderLinks({this.links = const {}, this.questions = const []});
+
+  /// Source id → holder id.
+  final Map<String, String> links;
+  final List<HolderQuestion> questions;
+}
+
+/// Someone new arrived who matches no one, and the wallet has several
+/// people: the user says who it is, or that it is someone else.
+class HolderQuestion {
+  const HolderQuestion({required this.sourceIds, required this.newHolderId});
+
+  /// The sources that wait for the answer.
+  final List<String> sourceIds;
+
+  /// The holder they get if it is someone else: the newcomer's Patient row.
+  final String newHolderId;
 }
 
 /// Union–find over sources and patients, where a group holds at most one

@@ -5,10 +5,13 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/model_not_found_exception.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
@@ -16,8 +19,6 @@ import 'package:health_wallet/features/processing/presentation/bloc/processing_b
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../helpers/log_capture.dart';
@@ -103,10 +104,13 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {}
 class _FakeDocumentReferenceService extends Fake
     implements DocumentReferenceService {}
 
-class _FakePatientDeduplicationService extends Fake
-    implements PatientDeduplicationService {}
-
-class _FakeSourceTypeService extends Fake implements SourceTypeService {}
+class _FakeHolderService extends Fake implements HolderService {
+  @override
+  Future<Source> walletSourceOf(
+    String holderId, {
+    required String patientName,
+  }) async => throw Exception('db closed');
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -128,8 +132,7 @@ void main() {
       ocr,
       _FakeSyncRepository(),
       _FakeDocumentReferenceService(),
-      _FakePatientDeduplicationService(),
-      _FakeSourceTypeService(),
+      _FakeHolderService(),
       _FakeRecordsRepository(),
       await SharedPreferences.getInstance(),
       AppStringsProvider.forLocale(const Locale('ro')),
@@ -457,6 +460,10 @@ void main() {
       id: 's1',
       status: ProcessingStatus.draft,
       resources: <MappingResource>[],
+      patient: StagedPatient(
+        draft: MappingPatient(id: 'p1'),
+        mode: ImportMode.createNew,
+      ),
     );
     seed(const ProcessingState(sessions: [draft]));
 

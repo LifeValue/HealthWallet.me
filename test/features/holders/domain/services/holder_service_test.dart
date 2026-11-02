@@ -1,0 +1,279 @@
+import 'package:drift/drift.dart' hide isNull, isNotNull;
+import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:health_wallet/core/data/local/app_database.dart' hide Source;
+import 'package:health_wallet/features/holders/data/repository/holder_repository_impl.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_linking_service.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
+import 'package:health_wallet/features/records/data/repository/records_repository_impl.dart';
+import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
+import 'package:health_wallet/features/sync/domain/entities/source.dart';
+import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../records/records_test_helpers.dart';
+
+/// The sources part of the real repository, on the test database.
+class _LocalSyncRepository extends Fake implements SyncRepository {
+  _LocalSyncRepository(this._local);
+
+  final SyncLocalDataSource _local;
+
+  @override
+  Future<List<Source>> getSources() => _local.getSources();
+
+  @override
+  Future<void> cacheSources(List<Source> sources) =>
+      _local.cacheSources(sources);
+}
+
+void main() {
+  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+
+  late AppDatabase db;
+  late RecordsRepositoryImpl records;
+  late HolderService service;
+
+  setUp(() async {
+    db = AppDatabase(
+      NativeDatabase.memory(
+        setup: (raw) => raw.execute('PRAGMA foreign_keys = ON'),
+      ),
+    );
+    records = await openRepository(db);
+    final prefs = await SharedPreferences.getInstance();
+    final holders = HolderRepositoryImpl(db);
+    service = HolderService(
+      HolderLinkingService(holders),
+      holders,
+      records,
+      _LocalSyncRepository(SyncLocalDataSourceImpl(db, prefs)),
+    );
+  });
+
+  tearDown(() => db.close());
+
+  Future<void> source(String id, {String? holderId}) => db.customStatement(
+    'INSERT INTO sources (id, platform_type, holder_id) VALUES (?, ?, ?)',
+    [
+      id,
+      id.startsWith('wallet-') || id == 'demo_data' ? 'wallet' : 'fasten',
+      holderId,
+    ],
+  );
+
+  Future<void> patient(
+    String id,
+    String sourceId, {
+    String? given,
+    String? family,
+    String? birthDate,
+    String? identifier,
+  }) => insertResource(
+    db,
+    id: id,
+    type: 'Patient',
+    sourceId: sourceId,
+    title: '${given ?? ''} ${family ?? ''}'.trim(),
+    raw: {
+      if (given != null || family != null)
+        'name': [
+          {
+            'use': 'official',
+            'given': ?(given == null ? null : [given]),
+            'family': ?family,
+          },
+        ],
+      'birthDate': ?birthDate,
+      if (identifier != null)
+        'identifier': [
+          {'system': 'http://hospital/mrn', 'value': identifier},
+        ],
+    },
+  );
+
+  Future<String?> holderOf(String sourceId) async =>
+      (await db
+              .customSelect(
+                'SELECT holder_id FROM sources WHERE id = ?',
+                variables: [Variable(sourceId)],
+              )
+              .getSingle())
+          .read<String?>('holder_id');
+
+  Future<void> placeholder() async {
+    await source('wallet-default_patient');
+    await patient(
+      'default_patient',
+      'wallet-default_patient',
+      given: 'Health Wallet',
+      family: 'Holder',
+    );
+  }
+
+  test('the default holder and the first provider patient are read as one '
+      'person, shown by the wallet patient', () async {
+    await placeholder();
+    await patient('p1', 'epic', given: 'Jane', family: 'Doe');
+
+    final directory = await service.load();
+
+    final holder = directory.holders.single;
+    expect(holder.id, 'default_patient');
+    expect(holder.sourceIds, ['epic', 'wallet-default_patient']);
+    expect(holder.representativePatient.id, 'default_patient');
+    expect(holder.allPatientInstances.map((p) => p.id), contains('p1'));
+    expect(directory.ofPatientId('p1'), same(holder));
+    expect(directory.questions, isEmpty);
+  });
+
+  test('with several people a newcomer is asked about, stays out of every '
+      'holder until answered, and the answer is kept', () async {
+    await source('wallet-jane', holderId: 'jane');
+    await patient('jane', 'wallet-jane', given: 'Jane');
+    await source('wallet-tom', holderId: 'tom');
+    await patient('tom', 'wallet-tom', given: 'Tom');
+    await patient('p1', 'kaiser', given: 'Anna');
+
+    var directory = await service.load();
+    expect(
+      directory.holders.map((h) => h.id),
+      unorderedEquals(['jane', 'tom']),
+    );
+    final ask = directory.questions.single;
+    expect(ask.patient.id, 'p1');
+    expect(directory.ofSource('kaiser'), isNull);
+
+    await service.answer(ask.question, holderId: 'jane');
+    directory = await service.load();
+    expect(directory.questions, isEmpty);
+    expect(directory.byId('jane')!.sourceIds, ['kaiser', 'wallet-jane']);
+  });
+
+  test('someone else becomes a holder of their own', () async {
+    await source('wallet-jane', holderId: 'jane');
+    await patient('jane', 'wallet-jane');
+    await source('wallet-tom', holderId: 'tom');
+    await patient('tom', 'wallet-tom');
+    await patient('p1', 'kaiser');
+
+    final ask = (await service.load()).questions.single;
+    await service.answer(ask.question);
+
+    expect(await holderOf('kaiser'), 'p1');
+    expect((await service.load()).holders, hasLength(3));
+  });
+
+  group('wallet source', () {
+    test("a provider patient's records go to their holder's wallet source, "
+        'not one named after the provider row', () async {
+      await placeholder();
+      await patient('p1', 'epic');
+      await service.load();
+
+      final wallet = await service.walletSourceForPatient('p1');
+      expect(wallet.id, 'wallet-default_patient');
+    });
+
+    test('a holder without one gets wallet-<holder id>, linked to them, and '
+        'keeps it', () async {
+      await source('epic', holderId: 'p1');
+      await patient('p1', 'epic', given: 'Jane');
+
+      final made = await service.walletSourceOf('p1', patientName: 'Jane');
+      expect(made.id, 'wallet-p1');
+      expect(await holderOf('wallet-p1'), 'p1');
+      expect(
+        (await service.walletSourceOf('p1', patientName: 'Jane')).id,
+        'wallet-p1',
+      );
+    });
+
+    test('a wallet source made under another name before is reused', () async {
+      await source('epic', holderId: 'p1');
+      await patient('p1', 'epic');
+      await source('wallet-fhir-1', holderId: 'p1');
+
+      expect(
+        (await service.walletSourceOf('p1', patientName: 'Jane')).id,
+        'wallet-fhir-1',
+      );
+    });
+  });
+
+  group('a scanned patient', () {
+    MappingPatient scanned({
+      String given = '',
+      String family = '',
+      String birthDate = '',
+      String identifier = '',
+    }) => MappingPatient(
+      id: 'draft',
+      givenName: MappedProperty(value: given),
+      familyName: MappedProperty(value: family),
+      dateOfBirth: MappedProperty(value: birthDate),
+      patientIdentifier: MappedProperty(value: identifier),
+    );
+
+    Future<void> twoPeople() async {
+      await source('wallet-jane', holderId: 'jane');
+      await patient(
+        'jane',
+        'wallet-jane',
+        given: 'Jane',
+        family: 'Doe',
+        birthDate: '1980-04-02',
+      );
+      await source('epic', holderId: 'jane');
+      await patient('p1', 'epic', identifier: 'MRN-55501');
+      await source('wallet-tom', holderId: 'tom');
+      await patient('tom', 'wallet-tom', given: 'Tom', family: 'Doe');
+    }
+
+    test(
+      'matches a holder by identifier or by name and full birth date',
+      () async {
+        await twoPeople();
+        final directory = await service.load();
+
+        expect(
+          service.matchScanned(scanned(identifier: 'mrn 55501'), directory)?.id,
+          'jane',
+        );
+        expect(
+          service
+              .matchScanned(
+                scanned(given: 'jane', family: 'DOE', birthDate: '1980-04-02'),
+                directory,
+              )
+              ?.id,
+          'jane',
+        );
+      },
+    );
+
+    test('a name without a birth date on both sides matches no one', () async {
+      await twoPeople();
+      final directory = await service.load();
+
+      expect(
+        service.matchScanned(scanned(given: 'Tom', family: 'Doe'), directory),
+        isNull,
+      );
+    });
+
+    test('with only the unnamed default holder, it is proposed', () async {
+      await placeholder();
+      await source('demo_data');
+      await patient('demo-patient', 'demo_data', given: 'Demo');
+      final directory = await service.load();
+
+      expect(
+        service.matchScanned(scanned(given: 'Ana'), directory)?.id,
+        'default_patient',
+      );
+    });
+  });
+}

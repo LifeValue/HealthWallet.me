@@ -18,6 +18,7 @@ import 'package:health_wallet/features/app_lock/presentation/widgets/app_lock_ov
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/phone_approval_listener.dart';
 import 'package:health_wallet/features/desktop/tray/presentation/bloc/tray_bloc.dart';
+import 'package:health_wallet/features/holders/presentation/widgets/holder_question_listener.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
@@ -226,7 +227,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                     child: IpsExportErrorListener(
                       child: WalletPassErrorListener(
                         child: CaptureErrorListener(
-                          child: SyncErrorListener(child: child!),
+                          child: SyncErrorListener(
+                            child: HolderQuestionListener(child: child!),
+                          ),
                         ),
                       ),
                     ),

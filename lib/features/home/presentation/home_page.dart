@@ -92,6 +92,8 @@ class HomePage extends StatelessWidget {
             listenWhen: (previous, current) =>
                 previous.recordsVersion != current.recordsVersion,
             listener: (context, state) {
+              // Sources from the desktop may bring someone new to place.
+              context.read<PatientBloc>().add(const PatientPatientsLoaded());
               context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
             },
           ),

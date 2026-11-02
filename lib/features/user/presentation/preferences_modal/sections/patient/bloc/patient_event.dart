@@ -81,3 +81,16 @@ abstract class PatientSelectionChanged extends PatientEvent
     required String patientId,
   }) = _PatientSelectionChanged;
 }
+
+/// The user's answer to [HolderAsk]: [holderId] is the person picked, or
+/// null for someone else.
+@freezed
+abstract class PatientHolderAnswered extends PatientEvent
+    with _$PatientHolderAnswered {
+  const PatientHolderAnswered._();
+
+  const factory PatientHolderAnswered({
+    required HolderAsk ask,
+    String? holderId,
+  }) = _PatientHolderAnswered;
+}

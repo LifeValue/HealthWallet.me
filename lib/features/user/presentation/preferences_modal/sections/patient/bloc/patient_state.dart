@@ -6,7 +6,10 @@ abstract class PatientState with _$PatientState {
     @Default(PatientStatus.initial()) PatientStatus status,
     @Default([]) List<Patient> patients,
     @Default([]) List<Patient> allPatientsAcrossSources,
-    @Default({}) Map<String, PatientGroup> patientGroups,
+    @Default({}) Map<String, Holder> patientGroups,
+
+    /// People who arrived and match no one, while the wallet has several.
+    @Default([]) List<HolderAsk> holderQuestions,
     @Default({}) Set<String> expandedPatientIds,
     String? selectedPatientId,
     @Default('') String animatingPatientId,

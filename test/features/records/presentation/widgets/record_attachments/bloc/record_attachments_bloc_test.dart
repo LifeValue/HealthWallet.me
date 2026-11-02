@@ -10,6 +10,7 @@ import 'package:health_wallet/core/data/local/soft_delete.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/bloc/record_attachments_bloc.dart';
@@ -148,16 +149,17 @@ class _FakeSyncRepository extends Fake implements SyncRepository {
 }
 
 class _FakeSourceTypeService extends Fake implements SourceTypeService {
+  @override
+  bool isSourceWritable(String platformType) => platformType == 'wallet';
+}
+
+class _FakeHolderService extends Fake implements HolderService {
   final walletRequests = <String>[];
 
   @override
-  bool isSourceWritable(String platformType) => platformType == 'wallet';
-
-  @override
-  Future<Source> getWritableSourceForPatient({
-    required String patientId,
+  Future<Source> walletSourceForPatient(
+    String patientId, {
     String? patientName,
-    required List<Source> availableSources,
   }) async {
     walletRequests.add(patientId);
     return Source(id: 'wallet-$patientId');
@@ -257,6 +259,7 @@ void main() {
   late _FakeRecordsRepository repository;
   late _FakeSyncRepository syncRepository;
   late _FakeSourceTypeService sourceTypeService;
+  late _FakeHolderService holderService;
   late AppStringsProvider strings;
   late RecordAttachmentsBloc bloc;
 
@@ -267,10 +270,12 @@ void main() {
     repository = _FakeRecordsRepository(db);
     syncRepository = _FakeSyncRepository();
     sourceTypeService = _FakeSourceTypeService();
+    holderService = _FakeHolderService();
     strings = AppStringsProvider();
     bloc = RecordAttachmentsBloc(
       repository,
       sourceTypeService,
+      holderService,
       syncRepository,
       db,
       PathResolver(),
@@ -670,7 +675,7 @@ void main() {
           state.attachments.single.filePath,
           '${docs.path}/${stored.single}',
         );
-        expect(sourceTypeService.walletRequests, isEmpty);
+        expect(holderService.walletRequests, isEmpty);
       },
     );
 
@@ -759,7 +764,7 @@ void main() {
 
         await run(RecordAttachmentsFileAttached([picked('a.pdf')]));
 
-        expect(sourceTypeService.walletRequests, ['pat-1']);
+        expect(holderService.walletRequests, ['pat-1']);
         expect((await documentRows()).single.sourceId, 'wallet-pat-1');
       },
     );
@@ -771,7 +776,7 @@ void main() {
 
         await run(RecordAttachmentsFileAttached([picked('a.pdf')]));
 
-        expect(sourceTypeService.walletRequests, ['pat-1']);
+        expect(holderService.walletRequests, ['pat-1']);
         expect((await documentRows()).single.sourceId, 'wallet-pat-1');
       },
     );
@@ -924,6 +929,7 @@ void main() {
           () => RecordAttachmentsBloc(
             repository,
             sourceTypeService,
+            holderService,
             syncRepository,
             db,
             PathResolver(),

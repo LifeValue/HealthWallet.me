@@ -1666,5 +1666,8 @@
   "desktopPairedPhone": "Gekoppeltes Telefon",
   "desktopNewQrUnpairsHint": "Ein neuer QR-Code entkoppelt dieses Telefon; damit koppelst du ein anderes.",
   "desktopNotFound": "Desktop nicht gefunden. Prüfe, ob HealthWallet dort geöffnet ist und beide Geräte im selben Netzwerk sind.",
-  "desktopBackupSucceededMessage": "\"{name}\" wurde gespeichert. Sie enthält {count} Aufzeichnungen."
+  "desktopBackupSucceededMessage": "\"{name}\" wurde gespeichert. Sie enthält {count} Aufzeichnungen.",
+  "holderQuestionTitle": "Wem gehören diese Aufzeichnungen?",
+  "holderQuestionMessage": "Es sind Aufzeichnungen für {name} eingegangen. Diese Person passt zu niemandem in deiner Wallet. Wer ist das?",
+  "holderQuestionSomeoneElse": "Jemand anderes"
 }

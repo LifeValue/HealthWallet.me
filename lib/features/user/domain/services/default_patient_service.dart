@@ -2,11 +2,11 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
-import 'package:health_wallet/features/sync/domain/services/wallet_patient_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -15,12 +15,12 @@ import 'package:uuid/uuid.dart';
 class DefaultPatientService {
   final RecordsRepository _recordsRepository;
   final SyncLocalDataSource _syncLocalDataSource;
-  final WalletPatientService _walletPatientService;
+  final HolderService _holderService;
 
   DefaultPatientService(
     this._recordsRepository,
     this._syncLocalDataSource,
-    this._walletPatientService,
+    this._holderService,
   );
 
   Future<Patient> createDefaultWalletHolder() async {
@@ -109,12 +109,11 @@ class DefaultPatientService {
 
       final defaultPatient = await createDefaultWalletHolder();
 
-      final walletSource = await _walletPatientService
-          .createWalletSourceForPatient(
-            defaultPatient.id,
-            defaultPatient.displayTitle,
-          );
-      await _syncLocalDataSource.cacheSources([walletSource]);
+      // The holder is the default patient, in `wallet-default_patient`.
+      await _holderService.walletSourceOf(
+        defaultPatient.id,
+        patientName: defaultPatient.displayTitle,
+      );
 
       final fhirResourceDto = FhirResourceDto(
         id: defaultPatient.id,

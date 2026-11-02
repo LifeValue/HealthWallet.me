@@ -1,12 +1,13 @@
 import 'dart:async';
 
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/holders/domain/entity/holder.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,14 +18,12 @@ part 'patient_state.dart';
 
 @injectable
 class PatientBloc extends Bloc<PatientEvent, PatientState> {
-  final RecordsRepository _recordsRepository;
-  final PatientDeduplicationService _deduplicationService;
+  final HolderService _holderService;
   final PatientEditService _patientEditService;
   static const String _selectedPatientIdKey = 'selected_patient_id';
 
   PatientBloc(
-    this._recordsRepository,
-    this._deduplicationService,
+    this._holderService,
     this._patientEditService,
   ) : super(const PatientState()) {
     on<PatientInitialised>(_onInitialised);
@@ -35,6 +34,7 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
     on<PatientEditCancelled>(_onEditCancelled);
     on<PatientEditSaved>(_onEditSaved);
     on<PatientSelectionChanged>(_onSelectionChanged);
+    on<PatientHolderAnswered>(_onHolderAnswered, transformer: droppable());
   }
 
   Future<void> _saveSelectedPatient(String patientId) async {
@@ -55,40 +55,6 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
     await _loadPatients(emit);
   }
 
-  PatientGroup? _findMatchingGroupByOldPatient(
-    Map<String, PatientGroup> newGroups,
-    PatientGroup oldGroup,
-  ) {
-    final oldRepresentative = oldGroup.representativePatient;
-
-    for (final group in newGroups.values) {
-      final hasMatchingResourceId = group.allPatientInstances.any(
-        (p) => p.resourceId == oldRepresentative.resourceId,
-      );
-
-      if (hasMatchingResourceId) {
-        return group;
-      }
-
-      final oldIdentifiers = oldRepresentative.identifier
-          ?.where((id) => id.value?.isNotEmpty == true)
-          .map((id) => id.value)
-          .toSet();
-      final newIdentifiers = group.representativePatient.identifier
-          ?.where((id) => id.value?.isNotEmpty == true)
-          .map((id) => id.value)
-          .toSet();
-
-      if (oldIdentifiers != null &&
-          newIdentifiers != null &&
-          oldIdentifiers.intersection(newIdentifiers).isNotEmpty) {
-        return group;
-      }
-    }
-
-    return null;
-  }
-
   Future<void> _loadPatients(
     Emitter<PatientState> emit, {
     bool preserveOrder = false,
@@ -104,26 +70,17 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
         );
       }
 
-      final allPatientsResources = await _recordsRepository.getResources(
-        resourceTypes: [FhirType.Patient],
-        limit: 100,
-      );
-
-      final allPatients = allPatientsResources.whereType<Patient>().toList();
-
-      final uniquePatients = _deduplicationService.getUniquePatients(
-        allPatients,
-      );
-
-      final patientGroups = _deduplicationService.deduplicatePatients(
-        allPatients,
-      );
-
-      final enhancedPatientGroups = await _deduplicationService
-          .enhancePatientGroupsWithSubjectId(
-            patientGroups,
-            allPatients,
-          );
+      final directory = await _holderService.load();
+      final holders = directory.holders;
+      final uniquePatients = [
+        for (final holder in holders) holder.representativePatient,
+      ];
+      final patientGroups = {
+        for (final holder in holders) holder.patientId: holder,
+      };
+      final allPatients = [
+        for (final holder in holders) ...holder.allPatientInstances,
+      ];
 
       final savedPatientId = await _loadSelectedPatient();
 
@@ -135,20 +92,9 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
           preservePatientId != null &&
           oldPosition != null &&
           oldPosition >= 0) {
-        var matchingGroup = _deduplicationService.findPatientGroup(
-          enhancedPatientGroups,
-          preservePatientId,
-        );
-
-        if (matchingGroup == null) {
-          final oldPatientGroup = state.patientGroups[preservePatientId];
-          if (oldPatientGroup != null) {
-            matchingGroup = _findMatchingGroupByOldPatient(
-              enhancedPatientGroups,
-              oldPatientGroup,
-            );
-          }
-        }
+        final matchingGroup =
+            directory.byId(state.patientGroups[preservePatientId]?.id ?? '') ??
+            directory.ofPatientId(preservePatientId);
 
         if (matchingGroup != null) {
           patientToPreserve = matchingGroup.representativePatient;
@@ -174,11 +120,13 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
           uniquePatients.insert(insertIndex, patient);
         }
       } else {
-        if (savedPatientId != null &&
-            uniquePatients.any((p) => p.id == savedPatientId)) {
-          final savedPatient = uniquePatients.firstWhere(
-            (p) => p.id == savedPatientId,
-          );
+        // The saved id can be any of the person's rows (a scan saves the
+        // row it filed under), so it is looked up by person.
+        final savedHolder = savedPatientId == null
+            ? null
+            : directory.ofPatientId(savedPatientId);
+        if (savedHolder != null) {
+          final savedPatient = savedHolder.representativePatient;
           expandedIds = {savedPatient.id};
           selectedPatientId = savedPatient.id;
 
@@ -201,7 +149,8 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
           status: const PatientStatus.success(),
           patients: uniquePatients,
           allPatientsAcrossSources: allPatients,
-          patientGroups: enhancedPatientGroups,
+          patientGroups: patientGroups,
+          holderQuestions: directory.questions,
           expandedPatientIds: expandedIds,
           selectedPatientId: selectedPatientId,
         ),
@@ -326,6 +275,22 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
         swappingFromPatientId: '',
         swappingToPatientId: '',
       ),
+    );
+  }
+
+  Future<void> _onHolderAnswered(
+    PatientHolderAnswered event,
+    Emitter<PatientState> emit,
+  ) async {
+    try {
+      await _holderService.answer(event.ask.question, holderId: event.holderId);
+    } catch (e, s) {
+      logger.e('Saving whose records arrived failed', e, s);
+    }
+    await _loadPatients(
+      emit,
+      preserveOrder: state.selectedPatientId != null,
+      preservePatientId: state.selectedPatientId,
     );
   }
 

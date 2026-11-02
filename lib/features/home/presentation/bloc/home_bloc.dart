@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
 import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
@@ -18,7 +19,6 @@ import 'package:health_wallet/features/records/domain/repository/records_reposit
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:health_wallet/features/sync/domain/use_case/get_sources_use_case.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -36,7 +36,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
   final HomePreferencesRepository homePreferences;
   final SyncRepository _syncRepository;
   @override
-  final PatientDeduplicationService deduplicationService;
+  final HolderService holderService;
   @override
   final PatientSelectionService patientSelectionService;
   @override
@@ -53,7 +53,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
     this.homePreferences,
     this.recordsRepository,
     this._syncRepository,
-    this.deduplicationService,
+    this.holderService,
     this.patientSelectionService,
     this._specialtyClassifier,
   ) : super(const HomeState()) {

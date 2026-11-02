@@ -17,6 +17,9 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/app_lock/presentation/bloc/app_lock_bloc.dart';
 import 'package:health_wallet/features/app_lock/presentation/widgets/app_lock_overlay.dart';
+import 'package:health_wallet/features/holders/domain/repository/holder_repository.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_linking_service.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/home/data/services/specialty_classifier_impl.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
@@ -29,14 +32,12 @@ import 'package:health_wallet/features/share_records/domain/services/receive_mod
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/wallet_patient_service.dart';
 import 'package:health_wallet/features/sync/domain/use_case/get_sources_use_case.dart';
 import 'package:health_wallet/features/sync/ehrs/fasten/domain/entities/sync_qr_data.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/user/domain/entity/user.dart';
 import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
 import 'package:health_wallet/features/user/domain/services/default_patient_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
@@ -208,6 +209,14 @@ class FakeSyncRepository extends Fake implements SyncRepository {
 
 class FakeSyncLocalDataSource extends Fake implements SyncLocalDataSource {}
 
+class FakeHolderRepository extends Fake implements HolderRepository {
+  @override
+  Future<bool> hasUnassigned() async => false;
+
+  @override
+  Future<Map<String, String>> holderBySource() async => {};
+}
+
 class FakeBluetoothStateService extends Fake implements BluetoothStateService {
   @override
   void startListening() {}
@@ -268,13 +277,15 @@ Future<void> _registerAppDependencies({
   final fakeRecordsRepo = FakeRecordsRepository();
   final fakeSyncRepo = FakeSyncRepository();
 
-  final deduplicationService = PatientDeduplicationService(
+  final holderRepo = FakeHolderRepository();
+  final holderService = HolderService(
+    HolderLinkingService(holderRepo),
+    holderRepo,
     fakeRecordsRepo,
     fakeSyncRepo,
   );
-  final selectionService = PatientSelectionService(deduplicationService);
+  const selectionService = PatientSelectionService();
   final getSourcesUseCase = GetSourcesUseCase(fakeSyncRepo);
-  final walletPatientService = WalletPatientService(fakeSyncRepo);
 
   // --- Blocs (constructed with fake dependencies) ---
   final userBloc = UserBloc(fakeUserRepo, fakeBiometricAuth);
@@ -284,18 +295,14 @@ Future<void> _registerAppDependencies({
     DefaultPatientService(
       fakeRecordsRepo,
       FakeSyncLocalDataSource(),
-      walletPatientService,
+      holderService,
     ),
     AppStringsProvider(),
   );
   final recordsBloc = RecordsBloc(fakeRecordsRepo, SpecialtyClassifierImpl());
   final prefs = await SharedPreferences.getInstance();
   final notificationBloc = NotificationBloc(prefs);
-  final patientBloc = PatientBloc(
-    fakeRecordsRepo,
-    deduplicationService,
-    MockPatientEditService(),
-  );
+  final patientBloc = PatientBloc(holderService, MockPatientEditService());
 
   // Blocs with heavy dependency graphs (AI models, native plugins) are
   // mocked; the smoke test only needs their initial state.
@@ -344,9 +351,7 @@ Future<void> _registerAppDependencies({
   getIt.registerFactory<GetSourcesUseCase>(() => getSourcesUseCase);
   getIt.registerFactory<RecordsRepository>(() => fakeRecordsRepo);
   getIt.registerFactory<SyncRepository>(() => fakeSyncRepo);
-  getIt.registerFactory<PatientDeduplicationService>(
-    () => deduplicationService,
-  );
+  getIt.registerFactory<HolderService>(() => holderService);
   getIt.registerFactory<PatientSelectionService>(() => selectionService);
   getIt.registerFactory<PatientBloc>(() => patientBloc);
   getIt.registerSingleton<NotificationBloc>(notificationBloc);

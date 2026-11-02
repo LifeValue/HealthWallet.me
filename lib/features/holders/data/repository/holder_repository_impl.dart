@@ -110,6 +110,18 @@ class HolderRepositoryImpl implements HolderRepository {
   }
 
   @override
+  Future<Map<String, String>> holderBySource() async => {
+    for (final r
+        in await _db
+            .customSelect(
+              'SELECT id, holder_id FROM sources '
+              'WHERE deleted_at IS NULL AND holder_id IS NOT NULL',
+            )
+            .get())
+      r.read<String>('id'): r.read<String>('holder_id'),
+  };
+
+  @override
   Future<void> assignHolders(Map<String, String> holderBySource) async {
     await _db.transaction(() async {
       for (final MapEntry(key: sourceId, value: holderId)

@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/holders/domain/entity/holder.dart';
 import 'package:health_wallet/features/home/presentation/widgets/source/source_selector_widget.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 
 import '../../../../../helpers/log_capture.dart';
@@ -35,7 +35,8 @@ void main() {
       initialState: const PatientState(
         selectedPatientId: 'p1',
         patientGroups: {
-          'p1': PatientGroup(
+          'p1': Holder(
+            id: 'p1',
             representativePatient: Patient(id: 'p1'),
             sourceIds: ['clinic', 'lab'],
             allPatientInstances: [],

@@ -4620,4 +4620,15 @@ class AppLocalizationsRo extends AppLocalizations {
   String desktopBackupSucceededMessage(String name, int count) {
     return '\"$name\" a fost salvată. Conține $count înregistrări.';
   }
+
+  @override
+  String get holderQuestionTitle => 'Ale cui sunt aceste înregistrări?';
+
+  @override
+  String holderQuestionMessage(String name) {
+    return 'Au sosit înregistrări pentru $name, care nu corespunde nimănui din portofelul tău. Cine este?';
+  }
+
+  @override
+  String get holderQuestionSomeoneElse => 'Altcineva';
 }

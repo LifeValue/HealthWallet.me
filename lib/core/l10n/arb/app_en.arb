@@ -2337,5 +2337,16 @@
         "type": "int"
       }
     }
-  }
+  },
+  "holderQuestionTitle": "Whose records are these?",
+  "holderQuestionMessage": "Records arrived for {name}, who doesn't match anyone in your wallet. Who is this?",
+  "@holderQuestionMessage": {
+    "description": "Asked when records arrive for someone who matches no one in the wallet, which has several people.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "holderQuestionSomeoneElse": "Someone else"
 }

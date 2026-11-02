@@ -8,6 +8,9 @@ abstract class HolderRepository {
   /// The live sources, Patient rows and record references linking reads.
   Future<HolderSnapshot> snapshot();
 
+  /// Source id → holder id, for the live sources that have one.
+  Future<Map<String, String>> holderBySource();
+
   /// Links each source to its holder, adding a row for a source that has
   /// records but no row yet. A source already linked keeps its holder.
   Future<void> assignHolders(Map<String, String> holderBySource);

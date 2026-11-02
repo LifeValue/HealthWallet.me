@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/records/data/repository/records_repository_impl.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/bloc/record_attachments_bloc.dart';
@@ -12,6 +13,8 @@ import 'package:health_wallet/features/sync/domain/services/source_type_service.
 import '../../records_test_helpers.dart';
 
 class _FakeSourceTypeService extends Fake implements SourceTypeService {}
+
+class _FakeHolderService extends Fake implements HolderService {}
 
 class _FakeSyncRepository extends Fake implements SyncRepository {}
 
@@ -30,6 +33,7 @@ void main() {
     bloc = RecordAttachmentsBloc(
       repository,
       _FakeSourceTypeService(),
+      _FakeHolderService(),
       _FakeSyncRepository(),
       db,
       DocumentsPathResolver(docs.path),
