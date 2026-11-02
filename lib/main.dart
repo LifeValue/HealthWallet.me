@@ -16,6 +16,7 @@ import 'package:health_wallet/features/desktop/communication/data/services/pairi
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_linking_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -35,6 +36,9 @@ void main() async {
   getIt.registerSingleton<AppPlatform>(AppPlatform.mobile);
 
   await configureDependencies();
+
+  // Before the first screen asks whose records to show.
+  await getIt<HolderLinkingService>().linkUnassigned();
 
   getIt.registerLazySingleton<CommunicationBloc>(
     () => CommunicationBloc(

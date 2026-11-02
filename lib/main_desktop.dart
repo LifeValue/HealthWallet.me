@@ -18,6 +18,7 @@ import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sy
 import 'package:health_wallet/features/desktop/tray/data/services/tray_service.dart';
 import 'package:health_wallet/features/desktop/tray/data/services/window_lifecycle_service.dart';
 import 'package:health_wallet/features/desktop/tray/presentation/bloc/tray_bloc.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_linking_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 
 void main() async {
@@ -28,6 +29,9 @@ void main() async {
   getIt.registerSingleton<AppPlatform>(AppPlatform.desktop);
 
   await configureDependencies();
+
+  // Before the first screen asks whose records to show.
+  await getIt<HolderLinkingService>().linkUnassigned();
 
   getIt.registerLazySingleton<CommunicationBloc>(
     () => CommunicationBloc(
