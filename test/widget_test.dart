@@ -193,9 +193,6 @@ class FakeSyncRepository extends Fake implements SyncRepository {
   Future<void> updateSourceLabel(String sourceId, String newLabel) async {}
 
   @override
-  Future<void> createWalletSource() async {}
-
-  @override
   Future<void> createDemoDataSource() async {}
 
   @override

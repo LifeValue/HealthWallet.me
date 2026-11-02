@@ -220,7 +220,6 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
           context.read<PatientBloc>().add(
             PatientEditSaved(
               patientId: _currentPatient!.id,
-              sourceId: _currentPatient!.sourceId,
               given: givenList,
               family: currentFamilyValue.isNotEmpty ? currentFamilyValue : null,
               birthDate: _selectedBirthDate,

@@ -23,7 +23,11 @@ class _FakeHolderService extends Fake implements HolderService {
       answers.add('${question.sourceIds.join(',')} → $holderId');
 }
 
-class _FakePatientEditService extends Fake implements PatientEditService {}
+class _FakePatientEditService extends Fake implements PatientEditService {
+  @override
+  Future<String?> getCurrentBloodType(Patient patient) async =>
+      patient.id == 'jane' ? 'A+' : null;
+}
 
 const jane = Patient(id: 'jane', sourceId: 'wallet-jane', title: 'Jane');
 const janeAtEpic = Patient(id: 'p1', sourceId: 'epic', title: 'Jane Doe');
@@ -73,6 +77,7 @@ void main() {
         'wallet-jane',
       ]);
       expect(bloc.state.selectedPatientId, 'jane');
+      expect(bloc.state.bloodTypes, {'jane': 'A+', 'tom': null});
     },
   );
 

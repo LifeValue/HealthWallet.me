@@ -12,16 +12,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 abstract class SyncLocalDataSource {
   Future<void> cacheFhirResources(List<FhirResourceDto> fhirResources);
-  Future<void> deleteAllFhirResources();
   Future<String?> getLastSyncTimestamp();
   Future<void> setLastSyncTimestamp(String timestamp);
   Future<void> cacheSources(List<domain.Source> sources);
   Future<void> cacheProviderSources(List<domain.Source> sources);
-  Future<List<domain.Source>> getSources({String? patientId});
-  Future<void> deleteAllSources();
+  Future<List<domain.Source>> getSources();
   Future<void> markResourcesAsDeleted(List<FhirResourceDto> deletions);
   Future<void> updateSourceLabel(String sourceId, String newLabel);
-  Future<void> createWalletSource();
   Future<void> createDemoDataSource();
   Future<void> deleteSource(String sourceId);
 }
@@ -128,11 +125,6 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
   }
 
   @override
-  Future<void> deleteAllFhirResources() {
-    return _appDatabase.delete(_appDatabase.fhirResource).go();
-  }
-
-  @override
   Future<String?> getLastSyncTimestamp() {
     return Future.value(_sharedPreferences.getString('lastSyncTimestamp'));
   }
@@ -210,21 +202,10 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
   }
 
   @override
-  Future<void> deleteAllSources() {
-    return _appDatabase.delete(_appDatabase.sources).go();
-  }
-
-  @override
-  Future<List<domain.Source>> getSources({String? patientId}) async {
+  Future<List<domain.Source>> getSources() async {
     // First get unique source IDs from FHIR resources
     final query = _appDatabase.select(_appDatabase.fhirResource)
-      ..where((tbl) => tbl.deletedAt.isNull());
-
-    if (patientId != null) {
-      query.where((tbl) => tbl.sourceId.equals(patientId));
-    } else {
-      query.where((tbl) => tbl.sourceId.isNotNull());
-    }
+      ..where((tbl) => tbl.deletedAt.isNull() & tbl.sourceId.isNotNull());
 
     final results = await query.get();
     final uniqueSourceIds = results
@@ -330,49 +311,14 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
     }
   }
 
-  @override
-  Future<void> createWalletSource() async {
-    try {
-      // Check if wallet source already exists
-      final existingWallet = await (_appDatabase.select(
-        _appDatabase.sources,
-      )..where((s) => s.id.equals('wallet'))).getSingleOrNull();
-
-      if (existingWallet != null && existingWallet.deletedAt == null) {
-        // Wallet source already exists, no need to create
-        return;
-      }
-
-      // Create the Wallet source, replacing a deleted one. `updated_at` is
-      // left to the trigger, which stamps it in milliseconds (drift would
-      // store seconds), so the new row beats the older tombstone on the
-      // peer.
-      await _appDatabase
-          .into(_appDatabase.sources)
-          .insert(
-            db.SourcesCompanion.insert(
-              id: 'wallet',
-              platformName: const Value('wallet'),
-              labelSource: const Value('Wallet'),
-              platformType: const Value('wallet'),
-              createdAt: Value(DateTime.now()),
-            ),
-            mode: InsertMode.insertOrReplace,
-          );
-    } catch (e) {
-      logger.e('Error creating wallet source: $e');
-      rethrow;
-    }
-  }
-
   /// Create demo_data source in the database with proper name and label
   @override
   Future<void> createDemoDataSource() async {
     try {
       // Create demo_data source in sources table with correct name for
       // display logic. Replacing the row clears a tombstone; `updated_at` is
-      // left to the trigger, in milliseconds, so the new row beats the
-      // tombstone (see createWalletSource).
+      // left to the trigger, in milliseconds (drift would store seconds), so
+      // the new row beats the tombstone on the peer.
       await _appDatabase
           .into(_appDatabase.sources)
           .insert(

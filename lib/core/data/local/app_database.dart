@@ -414,9 +414,6 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
-  Stream<List<Source>> watchSources() => select(sources).watch();
-  Future<void> addSource(SourcesCompanion entry) => into(sources).insert(entry);
-
   Future<List<FhirResourceLocalDto>> getEncounterWithReferences(
     String encounterId,
   ) {

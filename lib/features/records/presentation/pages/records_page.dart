@@ -36,7 +36,6 @@ import 'package:health_wallet/features/records/presentation/widgets/records_view
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -376,8 +375,8 @@ class _RecordsViewState extends State<RecordsView> {
           BlocListener<RecordsBloc, RecordsState>(
             listenWhen: (previous, current) =>
                 current.status == const RecordsStatus.deleted(),
+            // The people are read again app-wide (see App).
             listener: (context, state) {
-              context.read<PatientBloc>().add(const PatientPatientsLoaded());
               _reloadAttachmentBrowse(
                 context,
                 resourceTypes: state.activeFilters,

@@ -185,10 +185,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
             listener: (context, state) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (!context.mounted) return;
+                // Home follows when the people are read again.
                 context.read<PatientBloc>().add(const PatientPatientsLoaded());
-                context.read<HomeBloc>().add(
-                  const HomeRefreshPreservingOrder(),
-                );
               });
             },
           ),

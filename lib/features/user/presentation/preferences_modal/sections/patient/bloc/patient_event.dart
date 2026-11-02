@@ -22,6 +22,15 @@ abstract class PatientPatientsLoaded extends PatientEvent
       _PatientPatientsLoaded;
 }
 
+/// Reads the listed patients' blood types again, after one was saved.
+@freezed
+abstract class PatientBloodTypesRequested extends PatientEvent
+    with _$PatientBloodTypesRequested {
+  const PatientBloodTypesRequested._();
+
+  const factory PatientBloodTypesRequested() = _PatientBloodTypesRequested;
+}
+
 /// The selection changed (see `HolderSelection`).
 @freezed
 abstract class PatientScopeChanged extends PatientEvent
@@ -36,14 +45,6 @@ abstract class PatientReorder extends PatientEvent with _$PatientReorder {
   const PatientReorder._();
 
   const factory PatientReorder(String patientId) = _PatientReorder;
-}
-
-@freezed
-abstract class PatientDataUpdatedFromSync extends PatientEvent
-    with _$PatientDataUpdatedFromSync {
-  const PatientDataUpdatedFromSync._();
-
-  const factory PatientDataUpdatedFromSync() = _PatientDataUpdatedFromSync;
 }
 
 @freezed
@@ -68,7 +69,6 @@ abstract class PatientEditSaved extends PatientEvent with _$PatientEditSaved {
 
   const factory PatientEditSaved({
     required String patientId,
-    required String sourceId,
     List<String>? given,
     String? family,
     DateTime? birthDate,

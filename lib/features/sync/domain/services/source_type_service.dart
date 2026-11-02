@@ -9,42 +9,13 @@ class SourceTypeService {
     return platformType == 'wallet';
   }
 
-  SourceType getSourceType(String platformType) {
-    switch (platformType) {
-      case 'wallet':
-        return SourceType.wallet;
-      case 'fasten':
-        return SourceType.fasten;
-      default:
-        return SourceType.fasten;
-    }
-  }
-
   /// Stored as the patient name of a wallet source when the patient has no
   /// name. It is synced data, so it stays English; screens show
   /// `l10n.unknownPatient` in its place.
   static const unknownPatientName = 'Unknown Patient';
 
-  bool canEditSource(Source source) {
-    if (isSourceWritable(source.platformType)) {
-      return true;
-    }
-    return true;
-  }
-
   /// A provider's source and the demo data can be removed. A wallet source
   /// can't: it holds the person's own Patient row and what they scanned.
   bool canDeleteSource(Source source) =>
       !isSourceWritable(source.platformType) || source.id == 'demo_data';
-
-  bool canAddDataToSource(Source source) {
-    return isSourceWritable(source.platformType);
-  }
-}
-
-enum SourceType {
-  wallet,
-  fasten,
-  ehr,
-  external,
 }

@@ -36,10 +36,6 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
     on<PatientPatientsLoaded>(_onPatientsLoaded, transformer: restartable());
     on<PatientScopeChanged>(_onScopeChanged, transformer: sequential());
     on<PatientReorder>(_onPatientReorder, transformer: droppable());
-    on<PatientDataUpdatedFromSync>(
-      _onDataUpdatedFromSync,
-      transformer: droppable(),
-    );
     on<PatientEditStarted>(_onEditStarted, transformer: sequential());
     on<PatientEditCancelled>(_onEditCancelled, transformer: sequential());
     on<PatientEditSaved>(_onEditSaved, transformer: droppable());
@@ -48,6 +44,10 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
       transformer: sequential(),
     );
     on<PatientHolderAnswered>(_onHolderAnswered, transformer: droppable());
+    on<PatientBloodTypesRequested>(
+      (_, emit) => _loadBloodTypes(emit),
+      transformer: restartable(),
+    );
     _scopeChanges = _selection.changes.listen(
       (scope) => add(PatientScopeChanged(scope)),
     );
@@ -77,6 +77,7 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
     emit(state.copyWith(status: const PatientStatus.loading()));
     try {
       _show(emit, await _selection.refresh(), preserveOrder: preserveOrder);
+      await _loadBloodTypes(emit);
     } catch (e) {
       logger.e('Error in _loadPatients: $e');
       emit(state.copyWith(status: PatientStatus.failure(e)));
@@ -92,6 +93,22 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
     if (identical(event.scope, _shown) || !event.scope.loaded) return;
     final moved = event.scope.holder?.patientId != state.selectedPatientId;
     _show(emit, event.scope, preserveOrder: !moved);
+    await _loadBloodTypes(emit);
+  }
+
+  Future<void> _loadBloodTypes(Emitter<PatientState> emit) async {
+    final bloodTypes = <String, String?>{};
+    for (final patient in state.patients) {
+      try {
+        bloodTypes[patient.id] = await _patientEditService.getCurrentBloodType(
+          patient,
+        );
+      } catch (e) {
+        logger.w('Reading the blood type of ${patient.id} failed', e);
+        bloodTypes[patient.id] = null;
+      }
+    }
+    emit(state.copyWith(bloodTypes: bloodTypes));
   }
 
   /// One patient per person. The selected person comes first, unless the
@@ -124,9 +141,6 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
       state.copyWith(
         status: const PatientStatus.success(),
         patients: patients,
-        allPatientsAcrossSources: [
-          for (final h in holders) ...h.allPatientInstances,
-        ],
         patientGroups: {for (final h in holders) h.patientId: h},
         holderQuestions: scope.directory.questions,
         selectedPatientId: selected?.patientId,
@@ -257,11 +271,6 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
     await _loadPatients(emit, preserveOrder: true);
   }
 
-  Future<void> _onDataUpdatedFromSync(
-    PatientDataUpdatedFromSync event,
-    Emitter<PatientState> emit,
-  ) async {}
-
   Future<void> _onEditStarted(
     PatientEditStarted event,
     Emitter<PatientState> emit,
@@ -320,12 +329,6 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
         availableSources: availableSources,
       );
 
-      await _loadPatients(emit, preserveOrder: true);
-
-      final finalExpandedIds = wasExpanded
-          ? state.expandedPatientIds
-          : <String>{};
-
       final currentBloodType = await _patientEditService.getCurrentBloodType(
         saved,
       );
@@ -335,6 +338,12 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
           event.bloodType,
         );
       }
+
+      await _loadPatients(emit, preserveOrder: true);
+
+      final finalExpandedIds = wasExpanded
+          ? state.expandedPatientIds
+          : <String>{};
 
       emit(
         state.copyWith(

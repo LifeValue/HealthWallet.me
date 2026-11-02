@@ -118,11 +118,6 @@ class SyncRepositoryImpl implements SyncRepository {
   }
 
   @override
-  Future<void> createWalletSource() async {
-    return _localDataSource.createWalletSource();
-  }
-
-  @override
   Future<void> createDemoDataSource() async {
     return _localDataSource.createDemoDataSource();
   }

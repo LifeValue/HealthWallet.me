@@ -174,12 +174,6 @@ void main() {
     });
   });
 
-  test('deleteAllFhirResources empties the table', () async {
-    await dataSource.cacheFhirResources([resource('a'), resource('b')]);
-    await dataSource.deleteAllFhirResources();
-    expect(await resourceRows(), isEmpty);
-  });
-
   test('markResourcesAsDeleted does not touch stored rows', () async {
     await dataSource.cacheFhirResources([resource('a'), resource('b')]);
     await dataSource.markResourcesAsDeleted([
@@ -322,12 +316,6 @@ void main() {
     },
   );
 
-  test('deleteAllSources empties the sources table', () async {
-    await dataSource.cacheSources(const [Source(id: 'a'), Source(id: 'b')]);
-    await dataSource.deleteAllSources();
-    expect(await sourceRows(), isEmpty);
-  });
-
   group('getSources', () {
     test('is empty for an empty database', () async {
       expect(await dataSource.getSources(), isEmpty);
@@ -427,20 +415,6 @@ void main() {
       expect(source.logo, isNull);
       expect(source.platformType, 'wallet');
     });
-
-    test(
-      'patientId narrows resource-derived ids, not stored sources',
-      () async {
-        await dataSource.cacheSources(const [Source(id: 'stored')]);
-        await dataSource.cacheFhirResources([
-          resource('r1', sourceId: 'match'),
-          resource('r2', sourceId: 'other'),
-        ]);
-        final ids = (await dataSource.getSources(patientId: 'match'))
-            .map((s) => s.id);
-        expect(ids, unorderedEquals(['match', 'stored']));
-      },
-    );
   });
 
   group('updateSourceLabel', () {
@@ -484,35 +458,6 @@ void main() {
       await database.customStatement('DROP TABLE sources');
       await expectLater(
         dataSource.updateSourceLabel('src', 'x'),
-        throwsA(isA<SqliteException>()),
-      );
-    });
-  });
-
-  group('createWalletSource', () {
-    test('creates the wallet source', () async {
-      await dataSource.createWalletSource();
-      final row = (await sourceRows()).single;
-      expect(row.id, 'wallet');
-      expect(row.platformName, 'wallet');
-      expect(row.labelSource, 'Wallet');
-      expect(row.platformType, 'wallet');
-      expect(row.createdAt, isNotNull);
-      expect(row.updatedAt, isNotNull);
-    });
-
-    test('keeps an existing wallet source untouched', () async {
-      await dataSource.cacheSources(const [
-        Source(id: 'wallet', labelSource: 'Renamed by user'),
-      ]);
-      await dataSource.createWalletSource();
-      expect((await sourceRows()).single.labelSource, 'Renamed by user');
-    });
-
-    test('rethrows database errors', () async {
-      await database.customStatement('DROP TABLE sources');
-      await expectLater(
-        dataSource.createWalletSource(),
         throwsA(isA<SqliteException>()),
       );
     });
@@ -705,26 +650,6 @@ void main() {
               as int;
       expect(updatedAt, greaterThan(1e12));
       expect((await dataSource.getSources()).single.labelSource, 'Demo Data');
-    });
-
-    test('createWalletSource brings a deleted wallet source back with an ms '
-        'stamp', () async {
-      await dataSource.createWalletSource();
-      await tombstone('sources', 'wallet');
-
-      await dataSource.createWalletSource();
-
-      expect(await deletedAt('sources', 'wallet'), isNull);
-      final updatedAt =
-          (await database
-                      .customSelect(
-                        "SELECT updated_at FROM sources WHERE id = 'wallet'",
-                      )
-                      .getSingle())
-                  .data['updated_at']
-              as int;
-      expect(updatedAt, greaterThan(1e12));
-      expect((await dataSource.getSources()).single.labelSource, 'Wallet');
     });
   });
 }

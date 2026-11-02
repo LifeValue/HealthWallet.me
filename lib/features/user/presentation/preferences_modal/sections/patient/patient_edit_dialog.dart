@@ -434,7 +434,6 @@ class _PatientEditDialogState extends State<PatientEditDialog>
           context.read<PatientBloc>().add(
             PatientEditSaved(
               patientId: _currentPatient!.id,
-              sourceId: _currentPatient!.sourceId,
               given: givenChanged ? givenList : null,
               family: familyChanged
                   ? (currentFamilyValue.isNotEmpty ? currentFamilyValue : null)
