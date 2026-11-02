@@ -74,6 +74,8 @@ How it works now is in `architecture.md`, "Mobile ↔ desktop communication". In
 
 Also fixed with them: C1, C2, C3 (stale MPC sessions, MPC teardown on disconnect), C4 (a fixed peer name, so a long Mac name can't crash it), C5, C6, C7 (native logs in debug builds only, the raw QR no longer printed) and C10. From the records audit: B2, B3, B4 (sources stamped by the triggers in milliseconds), B16, and the skipped percent-encoded-URL `BUG:` test, now a passing test.
 
+Backup status, found while testing: the phone's backup handler started only when the settings sheet opened, so it missed the desktop's report sent on connect and stayed on "Waiting..."; it now starts with the app, forgets the report when the link drops and says when the desktop has no backup folder. On the desktop, the settings row showed the built-in default folder as if it were chosen; settings, the status row and the home card now all say no folder is chosen until the user picks one.
+
 New tests: the link (handshake, approval, takeover of a half-open socket, replay, frame caps, keep-alive, MPC with a stranger nearby), `CommunicationBloc` on real sockets (pairing and the key change, approval, reconnecting, Disconnect, re-pairing), the engine (outbox, conflicts, column filtering, reconciliation, files) and `LwwSyncBloc` with two devices end to end (lost batches and acks, offline edits, simultaneous edits, files, a new peer, one reload per burst).
 
 Still to do on devices: every phone/desktop pair over TCP; iPhone ↔ Mac over MPC with another iPhone or Mac nearby; a first sync of a library of several hundred MB; secure storage after an app update on each platform (the key moves out of preferences); Windows tray, second instance and firewall; Mac sleep and wake.
