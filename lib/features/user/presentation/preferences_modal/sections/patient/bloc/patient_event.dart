@@ -17,10 +17,18 @@ abstract class PatientPatientsLoaded extends PatientEvent
     with _$PatientPatientsLoaded {
   const PatientPatientsLoaded._();
 
-  const factory PatientPatientsLoaded({
-    @Default(false) bool preserveOrder,
-    String? preservePatientId,
-  }) = _PatientPatientsLoaded;
+  /// [preserveOrder] keeps the list as it is, as after an edit.
+  const factory PatientPatientsLoaded({@Default(false) bool preserveOrder}) =
+      _PatientPatientsLoaded;
+}
+
+/// The selection changed (see `HolderSelection`).
+@freezed
+abstract class PatientScopeChanged extends PatientEvent
+    with _$PatientScopeChanged {
+  const PatientScopeChanged._();
+
+  const factory PatientScopeChanged(HolderScope scope) = _PatientScopeChanged;
 }
 
 @freezed

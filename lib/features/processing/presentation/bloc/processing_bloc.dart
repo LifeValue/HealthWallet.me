@@ -9,6 +9,7 @@ import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart'
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
@@ -42,6 +43,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   final SyncRepository _syncRepository;
   final DocumentReferenceService _documentReferenceService;
   final HolderService _holderService;
+  final HolderSelection _holderSelection;
   final RecordsRepository _recordsRepository;
   final SharedPreferences _prefs;
   final AppStringsProvider _strings;
@@ -66,6 +68,9 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   HolderService get holderService => _holderService;
 
   @override
+  HolderSelection get holderSelection => _holderSelection;
+
+  @override
   SharedPreferences get prefs => _prefs;
 
   @override
@@ -77,6 +82,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     this._syncRepository,
     this._documentReferenceService,
     this._holderService,
+    this._holderSelection,
     this._recordsRepository,
     this._prefs,
     this._strings,

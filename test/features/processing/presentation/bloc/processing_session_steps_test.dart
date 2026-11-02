@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart' hide Notification;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
@@ -93,6 +94,8 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {}
 class _FakeDocumentReferenceService extends Fake
     implements DocumentReferenceService {}
 
+class _FakeHolderSelection extends Fake implements HolderSelection {}
+
 class _FakeHolderService extends Fake implements HolderService {}
 
 void main() {
@@ -118,6 +121,7 @@ void main() {
       _FakeSyncRepository(),
       _FakeDocumentReferenceService(),
       _FakeHolderService(),
+      _FakeHolderSelection(),
       _FakeRecordsRepository(),
       prefs,
       AppStringsProvider.forLocale(const Locale('en')),

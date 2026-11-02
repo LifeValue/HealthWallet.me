@@ -905,6 +905,25 @@ void main() {
       expect(first.patientName, 'Unknown');
     });
 
+    test("with the person's sources, the export reads those sources", () async {
+      await seed([
+        dto('pat-1', type: 'Patient'),
+        dto('obs-1', sourceId: 'src-2'),
+      ]);
+
+      final export = await repository.buildIpsExport(
+        patientId: 'pat-1',
+        sourceIds: ['src-1', 'src-2'],
+      );
+      expect(String.fromCharCodes(export.bytes.take(4)), '%PDF');
+
+      await expectLater(
+        repository.buildIpsExport(patientId: 'pat-1', sourceIds: ['src-2']),
+        throwsA(isA<Exception>()),
+        reason: 'the Patient row is read from the given sources too',
+      );
+    });
+
     test('a deleted patient is not exported', () async {
       await seed([dto('pat-1', type: 'Patient')]);
       await tombstone('fhir_resource', 'pat-1');

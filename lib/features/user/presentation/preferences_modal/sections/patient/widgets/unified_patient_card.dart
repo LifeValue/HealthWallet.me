@@ -10,7 +10,6 @@ import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
-import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/widgets/patient_card_details.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -45,30 +44,24 @@ class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
   /// Null while the blood type loads.
   String? _bloodTypeDisplay;
   late RecordsRepository _recordsRepository;
-  late PatientSelectionService _patientSelectionService;
 
   @override
   void initState() {
     super.initState();
     _recordsRepository = getIt<RecordsRepository>();
-    _patientSelectionService = getIt<PatientSelectionService>();
     _loadBloodType();
   }
 
   Future<void> _loadBloodType() async {
     try {
-      final patientState = context.read<PatientBloc>().state;
-
-      final selectedSource = context.read<HomeBloc>().state.selectedSource;
-
-      final patientGroup = patientState.patientGroups[widget.patient.id];
-      final displayPatient = patientGroup != null
-          ? _patientSelectionService.getPatientFromGroup(
-              patientGroup: patientGroup,
-              selectedSource: selectedSource,
-              fallbackPatient: widget.patient,
-            )
-          : widget.patient;
+      // The person's own row, the one the edit dialog opens too.
+      final displayPatient =
+          context
+              .read<PatientBloc>()
+              .state
+              .patientGroups[widget.patient.id]
+              ?.representativePatient ??
+          widget.patient;
 
       final observations = await _recordsRepository.getBloodTypeObservations(
         patientId: displayPatient.id,
@@ -102,16 +95,13 @@ class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
       builder: (context, homeState) {
         return BlocBuilder<PatientBloc, PatientState>(
           builder: (context, blocState) {
-            final selectedSource = homeState.selectedSource;
-
-            final patientGroup = blocState.patientGroups[widget.patient.id];
-            final displayPatient = patientGroup != null
-                ? _patientSelectionService.getPatientFromGroup(
-                    patientGroup: patientGroup,
-                    selectedSource: selectedSource,
-                    fallbackPatient: widget.patient,
-                  )
-                : widget.patient;
+            // The person's own row, whatever source Home shows, so the card
+            // and the edit dialog show the same details.
+            final displayPatient =
+                blocState
+                    .patientGroups[widget.patient.id]
+                    ?.representativePatient ??
+                widget.patient;
 
             final currentPatient = blocState.patients.firstWhere(
               (p) => p.id == widget.patient.id,

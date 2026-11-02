@@ -1,8 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
-import 'package:health_wallet/core/utils/logger.dart';
-import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
 import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
@@ -13,44 +11,15 @@ import 'package:health_wallet/features/home/domain/services/specialty_classifier
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
-import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
   RecordsRepository get recordsRepository;
   HomePreferencesRepository get homePreferences;
-  HolderService get holderService;
-  PatientSelectionService get patientSelectionService;
   PatientVitalFactory get patientVitalFactory;
   SpecialtyClassifier get specialtyClassifier;
 
   static const String demoSourceId = 'demo_data';
-
-  /// The sources of the selected person, or of the first person when the
-  /// selection is unknown (then saved as the selection).
-  Future<List<String>?> getPatientSourceIds() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final selectedPatientId = prefs.getString('selected_patient_id');
-
-      if (selectedPatientId == null) {
-        return null;
-      }
-
-      final directory = await holderService.load();
-      final holder =
-          directory.ofPatientId(selectedPatientId) ??
-          directory.holders.firstOrNull;
-      if (holder == null) return null;
-      if (directory.ofPatientId(selectedPatientId) == null) {
-        await prefs.setString('selected_patient_id', holder.patientId);
-      }
-      return holder.sourceIds;
-    } catch (e) {
-      logger.e('Error getting patient source IDs: $e');
-      return null;
-    }
-  }
 
   Future<List<IFhirResource>> fetchResourcesFromAllSources(
     List<FhirType> resourceTypes,
@@ -65,16 +34,10 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
       return resources;
     }
 
-    List<String>? finalPatientSourceIds = patientSourceIds;
-    if ((sourceId == null || sourceId == 'All') &&
-        finalPatientSourceIds == null) {
-      finalPatientSourceIds = await getPatientSourceIds();
-    }
-
     final resources = await recordsRepository.getResources(
       resourceTypes: resourceTypes,
       sourceId: sourceId,
-      sourceIds: finalPatientSourceIds,
+      sourceIds: patientSourceIds,
     );
 
     return resources;
@@ -124,49 +87,6 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
       allEnabledResources: allEnabledResources,
       selectedRecordTypes: updatedSelectedRecordTypes,
     );
-  }
-
-  Future<List<IFhirResource>> fetchPatientResources(
-    String? sourceId, [
-    List<String>? patientSourceIds,
-    String? selectedPatientId,
-  ]) async {
-    var resources = await fetchResourcesFromAllSources(
-      [FhirType.Patient],
-      sourceId,
-      patientSourceIds,
-    );
-
-    var patients = resources.whereType<Patient>().toList();
-
-    if (patients.isEmpty && sourceId != null && sourceId != 'All') {
-      resources = await recordsRepository.getResources(
-        resourceTypes: [FhirType.Patient],
-        limit: 100,
-      );
-      patients = resources.whereType<Patient>().toList();
-    }
-
-    if (patients.isEmpty) {
-      return [];
-    }
-
-    if (selectedPatientId != null && patients.length > 1) {
-      final directory = await holderService.load();
-      final selectedPatient = patientSelectionService.getPatientForSource(
-        patients: patients,
-        sourceId: sourceId,
-        selectedPatientId: selectedPatientId,
-        patientGroups: {
-          for (final holder in directory.holders) holder.patientId: holder,
-        },
-      );
-      if (selectedPatient != null) {
-        return [selectedPatient];
-      }
-    }
-
-    return patients;
   }
 
   Future<List<PatientVital>> fetchAndProcessVitals(

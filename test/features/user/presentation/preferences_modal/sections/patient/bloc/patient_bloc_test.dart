@@ -2,6 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/features/holders/domain/entity/holder.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_linker.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
@@ -44,11 +45,17 @@ const tomHolder = Holder(
 
 void main() {
   late _FakeHolderService holders;
+  late SharedPreferences prefs;
 
-  PatientBloc build() => PatientBloc(holders, _FakePatientEditService());
+  PatientBloc build() => PatientBloc(
+    holders,
+    HolderSelection(holders, prefs),
+    _FakePatientEditService(),
+  );
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
+    prefs = await SharedPreferences.getInstance();
     holders = _FakeHolderService(
       const HolderDirectory(holders: [janeHolder, tomHolder]),
     );
@@ -70,19 +77,10 @@ void main() {
   );
 
   blocTest<PatientBloc, PatientState>(
-    "a saved id of one of the person's other rows selects that person",
-    setUp: () => SharedPreferences.setMockInitialValues({
-      'selected_patient_id': 'tom',
-    }),
+    'a Patient row id saved by an older version selects its person',
+    setUp: () => prefs.setString('selected_patient_id', 'p1'),
     build: build,
-    act: (bloc) async {
-      bloc.add(const PatientInitialised());
-      await Future<void>.delayed(Duration.zero);
-      // A scan saved the provider row it filed under.
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('selected_patient_id', 'p1');
-      bloc.add(const PatientPatientsLoaded());
-    },
+    act: (bloc) => bloc.add(const PatientInitialised()),
     wait: const Duration(milliseconds: 10),
     verify: (bloc) {
       expect(bloc.state.selectedPatientId, 'jane');

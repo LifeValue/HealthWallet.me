@@ -26,14 +26,8 @@ class _PatientSectionState extends State<PatientSection> {
     if (!_hasInitialized) {
       _hasInitialized = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final patientBloc = context.read<PatientBloc>();
-        final currentSelectedPatientId = patientBloc.state.selectedPatientId;
-
         context.read<PatientBloc>().add(
-          PatientPatientsLoaded(
-            preserveOrder: true,
-            preservePatientId: currentSelectedPatientId,
-          ),
+          const PatientPatientsLoaded(preserveOrder: true),
         );
       });
     }

@@ -20,6 +20,7 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
   @override
   Future<({Uint8List bytes, String patientName})> buildIpsExport({
     String? sourceId,
+    List<String>? sourceIds,
     String? patientId,
   }) async {
     requests.add((sourceId, patientId));

@@ -368,6 +368,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     try {
       final export = await _recordsRepository.buildIpsExport(
         sourceId: event.sourceId,
+        sourceIds: event.sourceIds,
         patientId: event.patientId,
       );
 

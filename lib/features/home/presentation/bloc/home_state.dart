@@ -44,7 +44,9 @@ abstract class HomeState with _$HomeState {
     })
     Map<PatientVitalType, bool> selectedVitals,
     Patient? patient,
-    String? selectedPatientName,
+
+    /// Whose records Home and Records show (see `HolderSelection`).
+    @Default(HolderScope()) HolderScope scope,
     String? errorMessage,
     @Default(false) bool editMode,
     @Default(false) bool vitalsExpanded,

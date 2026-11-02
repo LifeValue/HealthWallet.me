@@ -9,6 +9,7 @@ import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_matcher.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
@@ -36,6 +37,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
   SyncRepository get syncRepository;
   DocumentReferenceService get documentReferenceService;
   HolderService get holderService;
+  HolderSelection get holderSelection;
   SharedPreferences get prefs;
   AppStringsProvider get strings;
 
@@ -477,9 +479,8 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       (s) => s.id == event.sessionId,
     );
     try {
-      final (subjectId, sourceId, finalContainer, _) =
+      final (subjectId, sourceId, finalContainer, holderId) =
           await _persistPrimaryResources(activeSession);
-      await prefs.setString('selected_patient_id', subjectId);
       final otherResources = activeSession.resources
           .where(
             (r) =>
@@ -532,6 +533,8 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         sourceId: sourceId,
         title: finalContainer.displayTitle,
       );
+      // Shows the person the scan was filed under, once it is all saved.
+      await holderSelection.select(holderId);
       emit(state.copyWith(status: const PipelineStatus.success()));
     } catch (e, s) {
       logger.e('[ProcessingBloc] resource creation failed', e, s);
@@ -563,11 +566,13 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     );
   }
 
-  Future<(String, String, IFhirResource, Patient)> _persistPrimaryResources(
+  /// The patient, source, container and holder the scan is filed under.
+  Future<(String, String, IFhirResource, String)> _persistPrimaryResources(
     ProcessingSession activeSession,
   ) async {
     String subjectId;
     String sourceId;
+    String holderId;
     final List<IFhirResource> resourcesToSave = [];
     if (activeSession.patient.mode == ImportMode.linkExisting &&
         activeSession.patient.existing != null) {
@@ -578,6 +583,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       );
       subjectId = existingPatient.id;
       sourceId = walletSource.id;
+      holderId = walletSource.holderId ?? existingPatient.id;
 
       if (activeSession.patient.draft != null) {
         final draftWithExistingId = activeSession.patient.draft!.copyWith(
@@ -601,6 +607,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       );
       subjectId = draftPatient.id;
       sourceId = walletSource.id;
+      holderId = walletSource.holderId ?? draftPatient.id;
       resourcesToSave.add(
         draftPatient.toFhirResource(
           sourceId: sourceId,
@@ -634,16 +641,6 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       await syncRepository.saveResources(resourcesToSave);
     }
 
-    final Patient finalPatient;
-    final savedPatient = resourcesToSave.whereType<Patient>().firstOrNull;
-    if (savedPatient != null) {
-      finalPatient = savedPatient;
-    } else if (activeSession.patient.existing != null) {
-      finalPatient = activeSession.patient.existing!;
-    } else {
-      finalPatient = resourcesToSave.firstWhere((r) => r is Patient) as Patient;
-    }
-
-    return (subjectId, sourceId, finalContainer, finalPatient);
+    return (subjectId, sourceId, finalContainer, holderId);
   }
 }

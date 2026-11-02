@@ -19,6 +19,7 @@ import 'package:health_wallet/features/app_lock/presentation/bloc/app_lock_bloc.
 import 'package:health_wallet/features/app_lock/presentation/widgets/app_lock_overlay.dart';
 import 'package:health_wallet/features/holders/domain/repository/holder_repository.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_linking_service.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/home/data/services/specialty_classifier_impl.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
@@ -39,7 +40,6 @@ import 'package:health_wallet/features/user/domain/entity/user.dart';
 import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
 import 'package:health_wallet/features/user/domain/services/default_patient_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
@@ -162,6 +162,7 @@ class FakeRecordsRepository extends Fake implements RecordsRepository {
   @override
   Future<({Uint8List bytes, String patientName})> buildIpsExport({
     String? sourceId,
+    List<String>? sourceIds,
     String? patientId,
   }) async => (bytes: Uint8List(0), patientName: 'Unknown');
 }
@@ -284,7 +285,10 @@ Future<void> _registerAppDependencies({
     fakeRecordsRepo,
     fakeSyncRepo,
   );
-  const selectionService = PatientSelectionService();
+  final selection = HolderSelection(
+    holderService,
+    await SharedPreferences.getInstance(),
+  );
   final getSourcesUseCase = GetSourcesUseCase(fakeSyncRepo);
 
   // --- Blocs (constructed with fake dependencies) ---
@@ -302,7 +306,11 @@ Future<void> _registerAppDependencies({
   final recordsBloc = RecordsBloc(fakeRecordsRepo, SpecialtyClassifierImpl());
   final prefs = await SharedPreferences.getInstance();
   final notificationBloc = NotificationBloc(prefs);
-  final patientBloc = PatientBloc(holderService, MockPatientEditService());
+  final patientBloc = PatientBloc(
+    holderService,
+    selection,
+    MockPatientEditService(),
+  );
 
   // Blocs with heavy dependency graphs (AI models, native plugins) are
   // mocked; the smoke test only needs their initial state.
@@ -352,7 +360,7 @@ Future<void> _registerAppDependencies({
   getIt.registerFactory<RecordsRepository>(() => fakeRecordsRepo);
   getIt.registerFactory<SyncRepository>(() => fakeSyncRepo);
   getIt.registerFactory<HolderService>(() => holderService);
-  getIt.registerFactory<PatientSelectionService>(() => selectionService);
+  getIt.registerSingleton<HolderSelection>(selection);
   getIt.registerFactory<PatientBloc>(() => patientBloc);
   getIt.registerSingleton<NotificationBloc>(notificationBloc);
 }

@@ -901,10 +901,11 @@ class RecordsRepositoryImpl implements RecordsRepository {
   @override
   Future<({Uint8List bytes, String patientName})> buildIpsExport({
     String? sourceId,
+    List<String>? sourceIds,
     String? patientId,
   }) async {
-    List<String>? patientSourceIds;
-    if (patientId != null) {
+    List<String>? patientSourceIds = sourceIds;
+    if (patientSourceIds == null && patientId != null) {
       final allPatients = await _datasource.getResources(
         resourceTypes: [FhirType.Patient.name],
       );

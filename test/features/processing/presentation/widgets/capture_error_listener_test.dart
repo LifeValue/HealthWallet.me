@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
@@ -24,6 +25,8 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {}
 class _FakeDocumentReferenceService extends Fake
     implements DocumentReferenceService {}
 
+class _FakeHolderSelection extends Fake implements HolderSelection {}
+
 class _FakeHolderService extends Fake implements HolderService {}
 
 void main() {
@@ -38,6 +41,7 @@ void main() {
       _FakeSyncRepository(),
       _FakeDocumentReferenceService(),
       _FakeHolderService(),
+      _FakeHolderSelection(),
       _FakeRecordsRepository(),
       await SharedPreferences.getInstance(),
       AppStringsProvider.forLocale(const Locale('ro')),
