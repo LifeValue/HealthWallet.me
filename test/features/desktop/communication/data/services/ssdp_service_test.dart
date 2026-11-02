@@ -113,11 +113,60 @@ void main() {
     );
 
     // Multicast loopback depends on the host network; when it works the
-    // answer must be parsed exactly.
+    // answer must be parsed exactly. The address is the one the answer came
+    // from, an address of this host, not the one the advertiser names.
     if (result != null) {
-      expect(result.ip, '192.168.1.50');
+      final hostAddresses = {
+        InternetAddress.loopbackIPv4.address,
+        for (final interface in await NetworkInterface.list(
+          type: InternetAddressType.IPv4,
+          includeLoopback: true,
+        ))
+          for (final address in interface.addresses) address.address,
+      };
+      expect(hostAddresses, contains(result.ip));
+      expect(result.ip, isNot('192.168.1.50'));
       expect(result.port, 49153);
       expect(result.deviceId, 'local-desk');
     }
+  });
+
+  test('search takes the address the answer came from, not the one it '
+      'names', () async {
+    final responder = await RawDatagramSocket.bind(
+      InternetAddress.loopbackIPv4,
+      0,
+    );
+    addTearDown(responder.close);
+    final searchSocket = Completer<(InternetAddress, int)>();
+    // A stand-in for the multicast group: answers the first M-SEARCH sent to
+    // it with a LOCATION pointing elsewhere.
+    responder.listen((event) {
+      if (event != RawSocketEvent.read) return;
+      final datagram = responder.receive();
+      if (datagram != null && !searchSocket.isCompleted) {
+        searchSocket.complete((datagram.address, datagram.port));
+      }
+    });
+
+    final result = ssdp.search(
+      timeout: const Duration(seconds: 5),
+      expectedDeviceId: 'desk',
+      target: (InternetAddress.loopbackIPv4, responder.port),
+    );
+    final (address, port) = await searchSocket.future;
+    responder.send(
+      utf8.encode(
+        'HTTP/1.1 200 OK\r\n'
+        'ST: urn:healthwallet:device:desktop:1\r\n'
+        'LOCATION: tcp://203.0.113.9:49153\r\n'
+        'USN: uuid:desk::urn:healthwallet:device:desktop:1\r\n'
+        '\r\n',
+      ),
+      address,
+      port,
+    );
+
+    expect(await result, (ip: '127.0.0.1', port: 49153, deviceId: 'desk'));
   });
 }

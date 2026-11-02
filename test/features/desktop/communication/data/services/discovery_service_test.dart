@@ -16,6 +16,7 @@ class _FakeSsdp extends Fake implements SsdpService {
   Future<({String ip, int port, String deviceId})?> search({
     Duration timeout = const Duration(seconds: 3),
     String? expectedDeviceId,
+    (InternetAddress, int)? target,
   }) async {
     calls.add('search');
     lastExpectedDeviceId = expectedDeviceId;

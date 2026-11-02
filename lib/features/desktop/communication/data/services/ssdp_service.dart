@@ -61,6 +61,7 @@ class SsdpService {
   Future<({String ip, int port, String deviceId})?> search({
     Duration timeout = const Duration(seconds: 3),
     String? expectedDeviceId,
+    @visibleForTesting (InternetAddress, int)? target,
   }) async {
     RawDatagramSocket? socket;
     try {
@@ -128,11 +129,9 @@ class SsdpService {
         '\r\n';
 
     try {
-      socket.send(
-        utf8.encode(searchMessage),
-        InternetAddress(_multicastAddress),
-        _multicastPort,
-      );
+      final (address, port) =
+          target ?? (InternetAddress(_multicastAddress), _multicastPort);
+      socket.send(utf8.encode(searchMessage), address, port);
     } catch (e) {
       debugPrint('[SSDP] Send failed: $e');
       if (!completer.isCompleted) completer.complete(null);
