@@ -126,19 +126,7 @@ class DefaultPatientService {
       await _syncLocalDataSource.cacheFhirResources([fhirResourceDto]);
     } catch (e, s) {
       logger.e('Caching the default patient failed', e, s);
-    }
-  }
-
-  Future<bool> shouldCreateDefaultWalletHolder() async {
-    try {
-      final patients = await _recordsRepository.getResources(
-        resourceTypes: [FhirType.Patient],
-        limit: 1,
-      );
-
-      return patients.isEmpty;
-    } catch (e) {
-      return true;
+      rethrow;
     }
   }
 }
