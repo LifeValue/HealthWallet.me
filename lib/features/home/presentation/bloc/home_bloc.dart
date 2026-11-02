@@ -447,7 +447,13 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
     Emitter<HomeState> emit,
   ) async {
     try {
-      await _syncRepository.deleteSource(event.sourceId);
+      // The demo data goes through its own removal, which also removes what
+      // was filed under the demo person and their files.
+      if (event.sourceId == HomeDataHandler.demoSourceId) {
+        await recordsRepository.clearDemoData();
+      } else {
+        await _syncRepository.deleteSource(event.sourceId);
+      }
       emit(
         state.copyWith(
           sources: state.sources.where((s) => s.id != event.sourceId).toList(),

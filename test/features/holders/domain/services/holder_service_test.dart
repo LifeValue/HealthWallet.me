@@ -185,11 +185,11 @@ void main() {
       await source('epic', holderId: 'p1');
       await patient('p1', 'epic', given: 'Jane');
 
-      final made = await service.walletSourceOf('p1', patientName: 'Jane');
+      final made = await service.walletSourceOf('p1');
       expect(made.id, 'wallet-p1');
       expect(await holderOf('wallet-p1'), 'p1');
       expect(
-        (await service.walletSourceOf('p1', patientName: 'Jane')).id,
+        (await service.walletSourceOf('p1')).id,
         'wallet-p1',
       );
     });
@@ -200,7 +200,7 @@ void main() {
       await source('wallet-fhir-1', holderId: 'p1');
 
       expect(
-        (await service.walletSourceOf('p1', patientName: 'Jane')).id,
+        (await service.walletSourceOf('p1')).id,
         'wallet-fhir-1',
       );
     });

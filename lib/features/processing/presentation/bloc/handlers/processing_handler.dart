@@ -592,11 +592,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     } else {
       // Someone new: a holder of their own, named after their Patient row.
       final MappingPatient draftPatient = activeSession.patient.draft!;
-      final walletSource = await holderService.walletSourceOf(
-        draftPatient.id,
-        patientName:
-            '${draftPatient.givenName.value} ${draftPatient.familyName.value}',
-      );
+      final walletSource = await holderService.walletSourceOf(draftPatient.id);
       subjectId = draftPatient.id;
       sourceId = walletSource.id;
       holderId = walletSource.holderId ?? draftPatient.id;

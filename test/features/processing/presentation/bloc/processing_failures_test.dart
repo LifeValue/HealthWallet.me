@@ -109,10 +109,8 @@ class _FakeHolderSelection extends Fake implements HolderSelection {}
 
 class _FakeHolderService extends Fake implements HolderService {
   @override
-  Future<Source> walletSourceOf(
-    String holderId, {
-    required String patientName,
-  }) async => throw Exception('db closed');
+  Future<Source> walletSourceOf(String holderId) async =>
+      throw Exception('db closed');
 }
 
 void main() {

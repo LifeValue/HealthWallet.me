@@ -32,9 +32,10 @@ class SourceTypeService {
     return true;
   }
 
-  bool canDeleteSource(Source source) {
-    return isSourceWritable(source.platformType) && source.id != 'demo_data';
-  }
+  /// A provider's source and the demo data can be removed. A wallet source
+  /// can't: it holds the person's own Patient row and what they scanned.
+  bool canDeleteSource(Source source) =>
+      !isSourceWritable(source.platformType) || source.id == 'demo_data';
 
   bool canAddDataToSource(Source source) {
     return isSourceWritable(source.platformType);

@@ -161,7 +161,6 @@ class PatientEditService {
     final holder = (await _holderService.load()).ofPatient(readOnlyPatient);
     final walletSource = await _holderService.walletSourceOf(
       holder?.id ?? readOnlyPatient.id,
-      patientName: readOnlyPatient.displayTitle,
     );
 
     // The person's copy from an earlier edit, whatever its identifiers say.

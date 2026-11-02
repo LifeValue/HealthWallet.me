@@ -8,6 +8,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/features/home/presentation/widgets/source/source_display_name.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -19,6 +20,9 @@ class SourceListDialog extends StatefulWidget {
   final Function(Source)? onSourceEdit;
   final Function(Source)? onSourceDelete;
 
+  /// The selected person's name, which their wallet source is shown under.
+  final String? holderName;
+
   const SourceListDialog({
     super.key,
     required this.sources,
@@ -26,6 +30,7 @@ class SourceListDialog extends StatefulWidget {
     required this.onSourceSelected,
     this.onSourceEdit,
     this.onSourceDelete,
+    this.holderName,
   });
 
   static void show(
@@ -35,6 +40,7 @@ class SourceListDialog extends StatefulWidget {
     Function(Source) onSourceSelected, {
     Function(Source)? onSourceEdit,
     Function(Source)? onSourceDelete,
+    String? holderName,
   }) {
     showDialog(
       context: context,
@@ -47,6 +53,7 @@ class SourceListDialog extends StatefulWidget {
             onSourceSelected: onSourceSelected,
             onSourceEdit: onSourceEdit,
             onSourceDelete: onSourceDelete,
+            holderName: holderName,
           ),
         );
       },
@@ -252,7 +259,11 @@ class _SourceListDialogState extends State<SourceListDialog> {
                                     ),
                                   ),
                                 ),
-                              if (widget.onSourceDelete != null && !isAll) ...[
+                              if (widget.onSourceDelete != null &&
+                                  !isAll &&
+                                  const SourceTypeService().canDeleteSource(
+                                    source,
+                                  )) ...[
                                 const SizedBox(width: 16),
                                 Padding(
                                   padding: const EdgeInsets.all(6),
@@ -322,28 +333,8 @@ class _SourceListDialogState extends State<SourceListDialog> {
     return items;
   }
 
-  String _getSourceDisplayName(BuildContext context, Source source) {
-    if (source.id == 'All') {
-      return context.l10n.all;
-    }
-
-    if (source.labelSource?.isNotEmpty == true) {
-      final label = source.labelSource!;
-      final name = label.startsWith('Wallet - ')
-          ? label.substring('Wallet - '.length)
-          : label;
-      return name == SourceTypeService.unknownPatientName
-          ? context.l10n.unknownPatient
-          : name;
-    }
-    if (source.platformName?.isNotEmpty == true) {
-      return source.platformName!;
-    }
-    if (source.id.length > 20) {
-      return context.l10n.unknownSource;
-    }
-    return source.id;
-  }
+  String _getSourceDisplayName(BuildContext context, Source source) =>
+      sourceDisplayName(context.l10n, source, holderName: widget.holderName);
 
   void _showDeleteConfirmationDialog(BuildContext context, Source source) {
     final sourceName = _getSourceDisplayName(context, source);

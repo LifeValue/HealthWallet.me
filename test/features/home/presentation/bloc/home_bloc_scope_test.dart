@@ -21,6 +21,10 @@ class _FakeHolderService extends Fake implements HolderService {
 /// Records whose records each read asked for.
 class _RecordingRecords extends Fake implements RecordsRepository {
   final scopes = <String>{};
+  var demoCleared = false;
+
+  @override
+  Future<void> clearDemoData() async => demoCleared = true;
 
   @override
   Future<List<IFhirResource>> getResources({
@@ -52,8 +56,13 @@ class _NoPreferences extends Fake implements HomePreferencesRepository {
 }
 
 class _NoSources extends Fake implements SyncRepository {
+  final deleted = <String>[];
+
   @override
   Future<List<Source>> getSources() async => [];
+
+  @override
+  Future<void> deleteSource(String sourceId) async => deleted.add(sourceId);
 }
 
 const jane = Holder(
@@ -68,6 +77,7 @@ const jane = Holder(
 
 void main() {
   late _RecordingRecords records;
+  late _NoSources sources;
   late HolderSelection selection;
   late HomeBloc bloc;
 
@@ -78,11 +88,12 @@ void main() {
       _FakeHolderService(),
       await SharedPreferences.getInstance(),
     );
+    sources = _NoSources();
     bloc = HomeBloc(
-      GetSourcesUseCase(_NoSources()),
+      GetSourcesUseCase(sources),
       _NoPreferences(),
       records,
-      _NoSources(),
+      sources,
       selection,
       SpecialtyClassifierImpl(),
     );
@@ -120,5 +131,18 @@ void main() {
     expect(bloc.state.selectedSource, 'epic');
     expect(bloc.state.patient!.id, 'p1');
     expect(selection.scope.sourceFilter, 'epic');
+  });
+
+  test('removing the demo data from Home goes through its own removal; a '
+      "provider's source is deleted", () async {
+    await selection.refresh();
+    await settled();
+
+    bloc.add(const HomeSourceDeleted('demo_data'));
+    bloc.add(const HomeSourceDeleted('epic'));
+    await bloc.stream.firstWhere((_) => sources.deleted.isNotEmpty);
+
+    expect(records.demoCleared, isTrue);
+    expect(sources.deleted, ['epic']);
   });
 }

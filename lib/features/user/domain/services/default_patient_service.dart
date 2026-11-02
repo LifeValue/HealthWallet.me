@@ -110,10 +110,7 @@ class DefaultPatientService {
       final defaultPatient = await createDefaultWalletHolder();
 
       // The holder is the default patient, in `wallet-default_patient`.
-      await _holderService.walletSourceOf(
-        defaultPatient.id,
-        patientName: defaultPatient.displayTitle,
-      );
+      await _holderService.walletSourceOf(defaultPatient.id);
 
       final fhirResourceDto = FhirResourceDto(
         id: defaultPatient.id,

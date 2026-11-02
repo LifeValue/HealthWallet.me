@@ -13,7 +13,6 @@ import 'package:health_wallet/features/records/domain/repository/records_reposit
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
 
@@ -104,10 +103,7 @@ class HolderService {
 
   /// The source where the app writes for [holderId]: the wallet source
   /// linked to them, made as `wallet-<holderId>` if they have none.
-  Future<Source> walletSourceOf(
-    String holderId, {
-    required String patientName,
-  }) async {
+  Future<Source> walletSourceOf(String holderId) async {
     final walletSources =
         (await _syncRepository.getSources())
             .where(
@@ -124,10 +120,11 @@ class HolderService {
         walletSources.firstOrNull;
     if (existing != null) return existing;
 
+    // No label: it is shown under the person's name as it is at the time
+    // (see `sourceDisplayName`).
     final source = Source(
       id: own,
       platformName: 'wallet',
-      labelSource: 'Wallet - $patientName',
       platformType: 'wallet',
       createdAt: DateTime.now(),
       holderId: holderId,
@@ -139,18 +136,9 @@ class HolderService {
   /// The wallet source of the holder [patientId] (a Patient row id, FHIR id
   /// or holder id) belongs to; a patient not linked yet is a holder of
   /// their own.
-  Future<Source> walletSourceForPatient(
-    String patientId, {
-    String? patientName,
-  }) async {
+  Future<Source> walletSourceForPatient(String patientId) async {
     final holder = (await load()).ofPatientId(patientId);
-    return walletSourceOf(
-      holder?.id ?? patientId,
-      patientName:
-          patientName ??
-          holder?.representativePatient.displayTitle ??
-          SourceTypeService.unknownPatientName,
-    );
+    return walletSourceOf(holder?.id ?? patientId);
   }
 
   /// The Patient row the app writes for the person [patientId] belongs to:
@@ -165,10 +153,7 @@ class HolderService {
     final holder = (await load()).ofPatientId(patientId);
     final holderId = holder?.id ?? patientId;
     final shown = holder?.representativePatient;
-    final source = await walletSourceOf(
-      holderId,
-      patientName: shown?.displayTitle ?? SourceTypeService.unknownPatientName,
-    );
+    final source = await walletSourceOf(holderId);
     final own = holder?.allPatientInstances
         .where((p) => p.sourceId == source.id)
         .firstOrNull;

@@ -149,6 +149,7 @@ class HomeDashboardSections extends StatelessWidget {
             sources: state.sources,
             selectedSource: state.selectedSource,
             holderSourceIds: state.scope.holder?.sourceIds,
+            holderName: state.scope.holder?.representativePatient.displayTitle,
             onSourceChanged: (sourceId) {
               context.read<HomeBloc>().add(HomeSourceChanged(sourceId));
             },

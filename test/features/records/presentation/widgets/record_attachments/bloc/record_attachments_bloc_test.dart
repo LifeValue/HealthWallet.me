@@ -157,10 +157,7 @@ class _FakeHolderService extends Fake implements HolderService {
   final walletRequests = <String>[];
 
   @override
-  Future<Source> walletSourceForPatient(
-    String patientId, {
-    String? patientName,
-  }) async {
+  Future<Source> walletSourceForPatient(String patientId) async {
     walletRequests.add(patientId);
     return Source(id: 'wallet-$patientId');
   }

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/features/home/presentation/widgets/source/source_display_name.dart';
 import 'package:health_wallet/features/home/presentation/widgets/source/source_label_edit_dialog.dart';
 import 'package:health_wallet/features/home/presentation/widgets/source/source_list_dialog.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 
 class SourceSelectorWidget extends StatelessWidget {
   final List<Source> sources;
@@ -14,6 +14,9 @@ class SourceSelectorWidget extends StatelessWidget {
 
   /// The selected person's sources; null shows every source.
   final List<String>? holderSourceIds;
+
+  /// The selected person's name, which their wallet source is shown under.
+  final String? holderName;
   final Function(String) onSourceChanged;
   final Patient? currentPatient;
   final Function(Source)? onSourceTap;
@@ -25,6 +28,7 @@ class SourceSelectorWidget extends StatelessWidget {
     required this.sources,
     required this.selectedSource,
     this.holderSourceIds,
+    this.holderName,
     required this.onSourceChanged,
     this.currentPatient,
     this.onSourceTap,
@@ -122,27 +126,8 @@ class SourceSelectorWidget extends StatelessWidget {
     }
   }
 
-  /// Get the display name for a source (labelSource > name > id)
-  String _getSourceDisplayName(BuildContext context, Source source) {
-    if (source.labelSource?.isNotEmpty == true) {
-      final label = source.labelSource!;
-      return label.endsWith(SourceTypeService.unknownPatientName)
-          ? label.replaceRange(
-              label.length - SourceTypeService.unknownPatientName.length,
-              null,
-              context.l10n.unknownPatient,
-            )
-          : label;
-    }
-    if (source.platformName?.isNotEmpty == true) {
-      return source.platformName!;
-    }
-    // If source ID is too long, don't display it
-    if (source.id.length > 20) {
-      return context.l10n.unknownSource;
-    }
-    return source.id;
-  }
+  String _getSourceDisplayName(BuildContext context, Source source) =>
+      sourceDisplayName(context.l10n, source, holderName: holderName);
 
   /// The selected person's sources, with "All" first when there are
   /// several; every source when no one is selected.
@@ -195,7 +180,7 @@ class SourceSelectorWidget extends StatelessWidget {
                 context,
                 source,
                 (newLabel) {
-                  onSourceLabelEdit!(source);
+                  onSourceLabelEdit!(source.copyWith(labelSource: newLabel));
                   // Close the source list dialog after successful edit
                   Navigator.of(context).pop();
                 },
@@ -203,6 +188,7 @@ class SourceSelectorWidget extends StatelessWidget {
             }
           : null,
       onSourceDelete: onSourceDelete,
+      holderName: holderName,
     );
   }
 
