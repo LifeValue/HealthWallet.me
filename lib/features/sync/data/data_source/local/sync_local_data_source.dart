@@ -121,6 +121,8 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
     return _sharedPreferences.setString('lastSyncTimestamp', timestamp);
   }
 
+  /// Writes the sources, clearing a tombstone, and keeps the holder a
+  /// source already has unless one is given.
   @override
   Future<void> cacheSources(List<domain.Source> sources) async {
     final sourceEntries = sources.map((e) {
@@ -131,16 +133,14 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
         labelSource: Value(e.labelSource),
         platformType: Value(e.platformType),
         createdAt: Value(e.createdAt),
+        deletedAt: const Value(null),
+        holderId: e.holderId == null ? const Value.absent() : Value(e.holderId),
         // updated_at is stamped by the trigger, in milliseconds like every
         // other synced row; drift would store seconds.
       );
     }).toList();
     await _appDatabase.batch((batch) {
-      batch.insertAll(
-        _appDatabase.sources,
-        sourceEntries,
-        mode: InsertMode.insertOrReplace,
-      );
+      batch.insertAllOnConflictUpdate(_appDatabase.sources, sourceEntries);
     });
   }
 
@@ -200,6 +200,7 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
           platformType: _getSourcePlatformType(sourceId, dbSource),
           createdAt: dbSource?.createdAt,
           updatedAt: _fromStamp(dbSource?.updatedAt),
+          holderId: dbSource?.holderId,
         );
       },
     ).toList();

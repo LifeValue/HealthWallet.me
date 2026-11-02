@@ -227,6 +227,24 @@ void main() {
       // Stamped by the trigger for the desktop sync, not the provider's date.
       expect(row.updatedAt, isNotNull);
     });
+
+    test('keeps the holder of a source fetched again', () async {
+      const source = Source(id: 'src-1', platformType: 'fasten');
+      await dataSource.cacheSources([source.copyWith(holderId: 'jane')]);
+      await dataSource.cacheSources([source]);
+      expect((await sourceRows()).single.holderId, 'jane');
+
+      await dataSource.cacheSources([source.copyWith(holderId: 'john')]);
+      expect((await sourceRows()).single.holderId, 'john');
+    });
+
+    test('brings back a deleted source', () async {
+      const source = Source(id: 'wallet-p1');
+      await dataSource.cacheSources([source]);
+      await dataSource.deleteSource('wallet-p1');
+      await dataSource.cacheSources([source]);
+      expect((await sourceRows()).single.deletedAt, isNull);
+    });
   });
 
   test('deleteAllSources empties the sources table', () async {
