@@ -367,6 +367,118 @@ void main() {
       expect(raw, contains('mine_1234.pdf'));
       expect(await titleOf('doc'), 'edited');
     });
+
+    test('an older live row does not resurrect a local tombstoned document '
+        'whose file was removed', () async {
+      await insertFhir(
+        db,
+        id: 'doc',
+        updatedAt: ms(at(5)),
+        deletedAt: ms(at(5)),
+        resourceType: 'DocumentReference',
+        title: 'deleted',
+        raw: documentReferenceRaw([
+          {'url': 'file://removed.pdf'},
+        ]),
+      );
+
+      final applied = await service.applyBatch(
+        incoming('fhir_resource', [
+          fhirRow(
+            'doc',
+            updatedAt: ms(at(1)),
+            resourceType: 'DocumentReference',
+          ),
+        ]),
+      );
+
+      expect(applied.count, 0);
+      final row = await fetchRow(db, 'fhir_resource', 'doc');
+      expect(row!['deleted_at'], ms(at(5)));
+      expect(row['title'], 'deleted');
+    });
+
+    test('an older tombstone does not delete a newer local document whose '
+        'file is missing', () async {
+      await insertFhir(
+        db,
+        id: 'doc',
+        updatedAt: ms(at(5)),
+        resourceType: 'DocumentReference',
+        title: 'edited later',
+        raw: documentReferenceRaw([
+          {'url': 'file://lost.pdf'},
+        ]),
+      );
+
+      final applied = await service.applyBatch(
+        incoming('fhir_resource', [
+          fhirRow(
+            'doc',
+            updatedAt: ms(at(1)),
+            deletedAt: ms(at(1)),
+            resourceType: 'DocumentReference',
+          ),
+        ]),
+      );
+
+      expect(applied.count, 0);
+      final row = await fetchRow(db, 'fhir_resource', 'doc');
+      expect(row!['deleted_at'], isNull);
+      expect(row['title'], 'edited later');
+    });
+
+    test('a newer tombstone still replaces a local document whose file is '
+        'missing', () async {
+      await insertFhir(
+        db,
+        id: 'doc',
+        updatedAt: ms(at(1)),
+        resourceType: 'DocumentReference',
+        raw: documentReferenceRaw([
+          {'url': 'file://lost.pdf'},
+        ]),
+      );
+
+      final applied = await service.applyBatch(
+        incoming('fhir_resource', [
+          fhirRow(
+            'doc',
+            updatedAt: ms(at(5)),
+            deletedAt: ms(at(5)),
+            resourceType: 'DocumentReference',
+          ),
+        ]),
+      );
+
+      expect(applied.count, 1);
+      expect(
+        (await fetchRow(db, 'fhir_resource', 'doc'))!['deleted_at'],
+        ms(at(5)),
+      );
+    });
+
+    test(
+      'a tombstoned DocumentReference asks for no file and serves none',
+      () async {
+        await dirs.writeDoc('r.pdf', pdfBytes);
+        for (final (id, url) in [('kept', 'r.pdf'), ('lost', 'gone.pdf')]) {
+          await insertFhir(
+            db,
+            id: id,
+            updatedAt: ms(at(1)),
+            deletedAt: ms(at(1)),
+            resourceType: 'DocumentReference',
+            raw: documentReferenceRaw([
+              {'url': 'file://$url'},
+            ]),
+          );
+        }
+
+        expect(await service.missingAttachmentPaths(), isEmpty);
+        expect(await service.fileForRequest('r.pdf'), isNull);
+      },
+    );
   });
 
   group('reconciliation', () {
@@ -623,6 +735,46 @@ void main() {
         expect(await outboxSize(), 0);
       },
     );
+
+    test('cleanupTombstones purges a deleted source together with its deleted '
+        'notes, with foreign keys on as in the app', () async {
+      final old = ms(DateTime.now().subtract(const Duration(days: 40)));
+      await insertSource(db, id: 'clinic', updatedAt: old, deletedAt: old);
+      await insertNote(
+        db,
+        id: 1,
+        content: 'note of a deleted source',
+        sourceId: 'clinic',
+        updatedAt: old,
+        deletedAt: old,
+      );
+
+      expect(await service.cleanupTombstones(), 2);
+
+      expect(await countRows(db, 'sources'), 0);
+      expect(await countRows(db, 'record_notes'), 0);
+    });
+
+    test('cleanupTombstones keeps a deleted source that a newer note still '
+        'points at, and purges it once the note is gone', () async {
+      final old = ms(DateTime.now().subtract(const Duration(days: 40)));
+      final recent = ms(DateTime.now().subtract(const Duration(days: 2)));
+      await insertSource(db, id: 'clinic', updatedAt: old, deletedAt: old);
+      await insertNote(
+        db,
+        id: 1,
+        content: 'live note',
+        sourceId: 'clinic',
+        updatedAt: recent,
+      );
+
+      expect(await service.cleanupTombstones(), 0);
+      expect(await countRows(db, 'sources'), 1);
+
+      await db.customStatement('DELETE FROM record_notes');
+      expect(await service.cleanupTombstones(), 1);
+      expect(await countRows(db, 'sources'), 0);
+    });
 
     test('tombstones older than 30 days are removed', () async {
       final old = DateTime.now().subtract(const Duration(days: 31));

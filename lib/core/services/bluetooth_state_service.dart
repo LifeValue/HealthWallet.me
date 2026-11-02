@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:injectable/injectable.dart';
 
 @lazySingleton
@@ -45,7 +46,9 @@ class BluetoothStateService {
   Future<void> requestEnable() async {
     try {
       await _methodChannel.invokeMethod('requestEnable');
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Could not ask the system to turn Bluetooth on', e);
+    }
   }
 
   @disposeMethod

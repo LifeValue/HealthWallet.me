@@ -47,4 +47,7 @@ sealed class CommunicationEvent with _$CommunicationEvent {
   /// Desktop: check whether this computer's address changed.
   const factory CommunicationEvent.networkChecked() =
       CommunicationNetworkChecked;
+
+  /// Re-checks the desktop's network interfaces for a VPN.
+  const factory CommunicationEvent.vpnChecked() = CommunicationVpnChecked;
 }

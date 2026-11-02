@@ -3,8 +3,10 @@
 
 import 'dart:convert';
 
+import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/utils/wallet_source_identifier.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -102,6 +104,25 @@ abstract class IFhirResource {
   List<RecordInfoLine> additionalInfo(AppLocalizations l10n);
   List<String?> get resourceReferences;
   String get statusDisplay;
+}
+
+extension RegionalInfo on IFhirResource {
+  /// [additionalInfo] in the units of [region]: weight, height, temperature
+  /// and glucose observations convert their values (kg and lbs, cm and ft/in,
+  /// °C and °F, mmol/L and mg/dL), other records are unchanged. A record read
+  /// from a scanned or imported document shows exactly what the document says,
+  /// so it is never converted. Every screen that lists a record's values uses
+  /// this, so the list and the record details show the same numbers.
+  List<RecordInfoLine> additionalInfoIn(
+    RegionPreset region,
+    AppLocalizations l10n,
+  ) {
+    final resource = this;
+    return resource is Observation &&
+            !WalletSourceIdentifier.isWalletSource(resource.sourceId)
+        ? resource.additionalInfoForRegion(region, l10n)
+        : additionalInfo(l10n);
+  }
 }
 
 enum FhirType {

@@ -22,12 +22,19 @@ void main() {
     if (docs.existsSync()) docs.deleteSync(recursive: true);
   });
 
+  // Deletes leave tombstones for the paired device; these read what is live.
   Future<List<String>> rowIds() async => [
-    for (final r in await db.select(db.fhirResource).get()) r.id,
+    for (final r in await (db.select(
+      db.fhirResource,
+    )..where((r) => r.deletedAt.isNull())).get())
+      r.id,
   ];
 
   Future<List<String>> noteResourceIds() async => [
-    for (final n in await db.select(db.recordNotes).get()) n.resourceId,
+    for (final n in await (db.select(
+      db.recordNotes,
+    )..where((n) => n.deletedAt.isNull())).get())
+      n.resourceId,
   ];
 
   Future<void> addNote(String resourceId) => repository.addRecordNote(

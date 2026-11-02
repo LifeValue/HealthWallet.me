@@ -1,4 +1,4 @@
-import 'package:bloc_test/bloc_test.dart' show MockBloc, whenListen;
+import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,69 +7,91 @@ import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/widgets/resource_info_content.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import '../../../../fixtures/fhir/fhir_fixtures.dart';
 
 class _MockUserBloc extends MockBloc<UserEvent, UserState>
     implements UserBloc {}
 
-IFhirResource _lab(String code, num value, String unit) => entityFromJson(
-  observationJson(
-    code: code,
-    codeDisplay: null,
-    value: {'valueQuantity': quantity(value, unit: unit)},
-  ),
-);
-
 void main() {
-  Widget card(IFhirResource resource, {UserBloc? userBloc}) {
-    final content = ResourceInfoContent(resource: resource, onTap: () {});
-    return MaterialApp(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
-        body: userBloc == null
-            ? content
-            : BlocProvider<UserBloc>.value(value: userBloc, child: content),
+  setUpAll(initializeDateFormatting);
+
+  IFhirResource weightOf(num value, String unit) => entityFromJson(
+    observationJson(
+      code: '29463-7',
+      codeDisplay: 'Body Weight',
+      value: {'valueQuantity': quantity(value, unit: unit)},
+    ),
+  );
+  final weight = weightOf(70, 'kg');
+
+  Future<void> pump(
+    WidgetTester tester,
+    IFhirResource resource, {
+    RegionPreset region = RegionPreset.europe,
+    VoidCallback? onTap,
+    int maxInfoLines = 2,
+  }) async {
+    final userBloc = _MockUserBloc();
+    whenListen(
+      userBloc,
+      const Stream<UserState>.empty(),
+      initialState: UserState(regionPreset: region),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: BlocProvider<UserBloc>.value(
+          value: userBloc,
+          child: Scaffold(
+            body: ResourceInfoContent(
+              resource: resource,
+              onTap: onTap,
+              maxInfoLines: maxInfoLines,
+            ),
+          ),
+        ),
       ),
     );
   }
 
-  UserBloc userBloc(RegionPreset region) {
-    final bloc = _MockUserBloc();
-    final state = UserState(regionPreset: region);
-    whenListen(bloc, const Stream<UserState>.empty(), initialState: state);
-    return bloc;
-  }
+  testWidgets('shows a weight in pounds for a user in the US', (tester) async {
+    await pump(tester, weight, region: RegionPreset.us);
 
-  group('ResourceInfoContent', () {
-    testWidgets('shows an observation in the region units, like the detail', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        card(
-          _lab('2339-0', 100, 'mg/dL'),
-          userBloc: userBloc(RegionPreset.europe),
-        ),
-      );
-      expect(find.text('Value: 5.55 mmol/L'), findsOneWidget);
-    });
+    expect(find.text('Value: 154.32 lbs'), findsOne);
+    expect(find.textContaining('kg'), findsNothing);
+  });
 
-    testWidgets('shows a non-glucose lab as reported', (tester) async {
-      await tester.pumpWidget(
-        card(
-          _lab('2093-3', 200, 'mg/dL'),
-          userBloc: userBloc(RegionPreset.europe),
-        ),
-      );
-      expect(find.text('Value: 200.00 mg/dL'), findsOneWidget);
-    });
+  testWidgets('shows a weight recorded in pounds in kilograms for a user in '
+      'Europe', (tester) async {
+    await pump(tester, weightOf(200, 'lbs'));
 
-    testWidgets('shows values as reported without a user bloc', (
-      tester,
-    ) async {
-      await tester.pumpWidget(card(_lab('2339-0', 100, 'mg/dL')));
-      expect(find.text('Value: 100.00 mg/dL'), findsOneWidget);
-    });
+    expect(find.text('Value: 90.72 kg'), findsOne);
+    expect(find.textContaining('lbs'), findsNothing);
+  });
+
+  testWidgets('shows the title, skips section headers and keeps to '
+      'maxInfoLines', (tester) async {
+    await pump(tester, weight, region: RegionPreset.us, maxInfoLines: 1);
+
+    expect(find.text(weight.displayTitle), findsOne);
+    expect(find.text('Result'), findsNothing, reason: 'a section header');
+    expect(find.text('Value: 154.32 lbs'), findsOne);
+    final lines = find.descendant(
+      of: find.byType(ResourceInfoContent),
+      matching: find.byType(Row),
+    );
+    expect(lines, findsOne);
+  });
+
+  testWidgets('a tap calls onTap', (tester) async {
+    var taps = 0;
+    await pump(tester, weight, onTap: () => taps++);
+
+    await tester.tap(find.byType(ResourceInfoContent));
+
+    expect(taps, 1);
   });
 }

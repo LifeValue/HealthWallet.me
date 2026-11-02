@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 
 class ProcessingPathHelper {
@@ -68,7 +69,9 @@ class ProcessingPathHelper {
 
         final savedPath = await repository.saveScannedDocument(sanitizedPath);
         persistedPaths.add(savedPath);
-      } catch (_) {}
+      } catch (e) {
+        logger.w('Could not keep the scanned page $sanitizedPath', e);
+      }
     }
 
     return persistedPaths;

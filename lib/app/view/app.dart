@@ -21,15 +21,19 @@ import 'package:health_wallet/features/desktop/tray/presentation/bloc/tray_bloc.
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/capture_error_listener.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
+import 'package:health_wallet/features/records/presentation/widgets/ips_export_error_listener.dart';
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
 import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
+import 'package:health_wallet/features/sync/presentation/widgets/sync_error_listener.dart';
 import 'package:health_wallet/features/user/domain/entity/user.dart';
 import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/features/wallet_pass/presentation/bloc/wallet_pass_bloc.dart';
+import 'package:health_wallet/features/wallet_pass/presentation/widgets/wallet_pass_error_listener.dart';
 import 'package:intl/intl.dart';
 
 class App extends StatefulWidget {
@@ -81,7 +85,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           commBloc.state.connectionStatus == ConnectionStatus.disconnected) {
         commBloc.add(const CommunicationConnectionRequested());
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Could not reconnect to the paired desktop', e);
+    }
   }
 
   Future<void> _startSymmetricDiscovery() async {
@@ -216,7 +222,15 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                 getIt<AppStringsProvider>().update(context.l10n);
                 Intl.defaultLocale = context.l10n.localeName;
                 return PhoneApprovalListener(
-                  child: AppLockOverlay(child: child!),
+                  child: AppLockOverlay(
+                    child: IpsExportErrorListener(
+                      child: WalletPassErrorListener(
+                        child: CaptureErrorListener(
+                          child: SyncErrorListener(child: child!),
+                        ),
+                      ),
+                    ),
+                  ),
                 );
               },
             );

@@ -12,9 +12,11 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/desktop/communication/data/models/device_pairing.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/info_row.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/vpn_notice.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/qr_scanner_widget.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -48,13 +50,16 @@ class ConnectionDialog extends StatefulWidget {
     required AppLocalizations l10n,
     required String qrData,
   }) {
-    void tell(String message) =>
-        messenger.showSnackBar(SnackBar(content: Text(message)));
+    void tell(String message, {AppSnackBarType type = AppSnackBarType.error}) =>
+        AppSnackBar.showOn(messenger, message: message, type: type);
 
     switch (DevicePairing.parseQr(qrData)) {
       case ValidPairingQr(:final pairing):
         navigator.pop();
-        tell(l10n.desktopPairedWith(pairing.deviceName));
+        tell(
+          l10n.desktopPairedWith(pairing.deviceName),
+          type: AppSnackBarType.success,
+        );
         getIt<CommunicationBloc>().add(
           CommunicationPairingCompleted(pairing: pairing),
         );
@@ -328,20 +333,10 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
         ],
         if (commState.vpnDetected && !isConnected) ...[
           const SizedBox(height: Insets.small),
-          Row(
-            children: [
-              const Icon(Icons.vpn_lock, size: 14, color: AppColors.warning),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  context.l10n.desktopVpnDetected,
-                  style: AppTextStyle.labelSmall.copyWith(
-                    color: AppColors.warning,
-                    fontSize: 11,
-                  ),
-                ),
-              ),
-            ],
+          VpnNotice(
+            message: isDesktop
+                ? context.l10n.desktopVpnBlocksPhone
+                : context.l10n.desktopVpnDetected,
           ),
         ],
       ],

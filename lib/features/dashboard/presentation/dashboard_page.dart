@@ -9,6 +9,7 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/capture/import/presentation/pages/import_page.dart';
 import 'package:health_wallet/features/capture/scan/presentation/pages/scan_page.dart';
@@ -70,7 +71,9 @@ class _DashboardPageState extends State<DashboardPage> {
             _showHandoverNotification(context.l10n.handoverPatientMatched);
           }
         });
-      } catch (_) {}
+      } catch (e) {
+        logger.w('Could not listen for finished handovers', e);
+      }
     } else {
       try {
         final senderService = getIt<HandoverSenderService>();
@@ -78,7 +81,9 @@ class _DashboardPageState extends State<DashboardPage> {
           if (!mounted) return;
           _showHandoverNotification(context.l10n.desktopFinishedProcessing);
         });
-      } catch (_) {}
+      } catch (e) {
+        logger.w('Could not listen for handover results from the desktop', e);
+      }
     }
   }
 

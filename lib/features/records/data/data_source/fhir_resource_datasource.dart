@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/data/local/soft_delete.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/tables/fhir_resource_table.dart';
 
 class FhirResourceDatasource {
@@ -20,7 +21,9 @@ class FhirResourceDatasource {
     if (sourceId == null && sourceIds != null && sourceIds.isEmpty) return [];
 
     final SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query =
-        db.select(db.fhirResource)..orderBy([(f) => OrderingTerm.desc(f.date)]);
+        db.select(db.fhirResource)
+          ..where((f) => f.deletedAt.isNull())
+          ..orderBy([(f) => OrderingTerm.desc(f.date)]);
 
     _whereScope(query, sourceId: sourceId, sourceIds: sourceIds);
 
@@ -40,8 +43,9 @@ class FhirResourceDatasource {
     String? sourceId,
   }) async {
     final SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query =
-        db.select(db.fhirResource)
-          ..where((f) => f.encounterId.equals(encounterId));
+        db.select(db.fhirResource)..where(
+          (f) => f.encounterId.equals(encounterId) & f.deletedAt.isNull(),
+        );
 
     if (sourceId != null) {
       query.where((f) => f.sourceId.equals(sourceId));
@@ -56,7 +60,7 @@ class FhirResourceDatasource {
       final uuid = reference.substring(9);
 
       final query = db.select(db.fhirResource)
-        ..where((tbl) => tbl.resourceId.equals(uuid))
+        ..where((tbl) => tbl.resourceId.equals(uuid) & tbl.deletedAt.isNull())
         ..limit(1);
 
       return await query.getSingleOrNull();
@@ -68,7 +72,8 @@ class FhirResourceDatasource {
         ..where(
           (tbl) =>
               tbl.resourceType.equals(parts[0]) &
-              tbl.resourceId.equals(parts[1]),
+              tbl.resourceId.equals(parts[1]) &
+              tbl.deletedAt.isNull(),
         )
         ..limit(1);
 
@@ -85,6 +90,7 @@ class FhirResourceDatasource {
   // TODO: Implement legacy methods that work with old data during migration
   // or remove if not needed
 
+  /// Inserts or updates [resource]. Saving a deleted record brings it back.
   Future<int> insertResource(FhirResourceLocalDto resource) async {
     return db.fhirResource.insertOnConflictUpdate(
       FhirResourceCompanion.insert(
@@ -101,37 +107,42 @@ class FhirResourceDatasource {
         subjectId: resource.subjectId != null
             ? Value(resource.subjectId)
             : const Value.absent(),
+        deletedAt: const Value(null),
       ),
     );
   }
 
-  Future<int> deleteResourceById(String id) async {
-    return (db.delete(db.fhirResource)..where((f) => f.id.equals(id))).go();
-  }
+  /// Soft-deletes the record and its notes (see [SoftDelete]).
+  Future<int> deleteResourceById(String id) => db.softDeleteResources([id]);
 
-  Future<int> deleteResourcesByIds(List<String> ids) async {
-    return (db.delete(db.fhirResource)..where((f) => f.id.isIn(ids))).go();
-  }
+  /// Soft-deletes the records and their notes (see [SoftDelete]).
+  Future<int> deleteResourcesByIds(List<String> ids) =>
+      db.softDeleteResources(ids);
 
   Future<int> getRelatedResourceCount(String encounterId) async {
     final count = db.fhirResource.id.count();
     final query = db.selectOnly(db.fhirResource)
       ..addColumns([count])
-      ..where(db.fhirResource.encounterId.equals(encounterId));
+      ..where(
+        db.fhirResource.encounterId.equals(encounterId) &
+            db.fhirResource.deletedAt.isNull(),
+      );
     final result = await query.getSingle();
     return result.read(count) ?? 0;
   }
 
-  Future<int> deleteResourcesBySourceId(String sourceId) async {
-    return (db.delete(
-      db.fhirResource,
-    )..where((f) => f.sourceId.equals(sourceId))).go();
-  }
+  /// Soft-deletes the records of [sourceId] and their notes (see
+  /// [SoftDelete]).
+  Future<int> deleteResourcesBySourceId(String sourceId) =>
+      db.softDeleteResourcesOfSource(sourceId);
 
   Future<List<String>> getSourceIdsForSubject(String subjectId) async {
     final query = db.selectOnly(db.fhirResource, distinct: true)
       ..addColumns([db.fhirResource.sourceId])
-      ..where(db.fhirResource.subjectId.equals(subjectId));
+      ..where(
+        db.fhirResource.subjectId.equals(subjectId) &
+            db.fhirResource.deletedAt.isNull(),
+      );
 
     final results = await query.get();
     return results
@@ -163,6 +174,7 @@ class FhirResourceDatasource {
 
     final SimpleSelectStatement<FhirResource, FhirResourceLocalDto>
     selectQuery = db.select(db.fhirResource)
+      ..where((f) => f.deletedAt.isNull())
       ..orderBy([(f) => OrderingTerm.desc(f.date)]);
 
     _whereScope(selectQuery, sourceId: sourceId, sourceIds: sourceIds);

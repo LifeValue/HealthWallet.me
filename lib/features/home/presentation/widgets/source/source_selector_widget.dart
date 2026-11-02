@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/home/presentation/widgets/source/source_label_edit_dialog.dart';
 import 'package:health_wallet/features/home/presentation/widgets/source/source_list_dialog.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
@@ -230,7 +231,7 @@ class SourceSelectorWidget extends StatelessWidget {
               }
             }
           } catch (e) {
-            // Error getting patient source IDs
+            logger.w('Could not read the selected patient sources', e);
           }
         }
 

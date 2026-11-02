@@ -376,6 +376,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get clearAll => 'Limpiar todo';
 
   @override
+  String get deselectAll => 'Deseleccionar todo';
+
+  @override
   String get save => 'Guardar';
 
   @override
@@ -595,6 +598,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get modelCorruptedError =>
       'El archivo del modelo está dañado. Vuelve a descargar el modelo de IA.';
+
+  @override
+  String get processingFailedGeneric =>
+      'Algo salió mal al procesar el documento. Inténtalo de nuevo.';
 
   @override
   String get processingCancelled => 'El procesamiento fue cancelado';
@@ -1339,6 +1346,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'VPN detectado. Desconecta la VPN para sincronizar con el escritorio.';
 
   @override
+  String get desktopVpnBlocksPhone =>
+      'Hay una VPN activa en esta computadora. Puede impedir que tu teléfono se conecte: desactívala o permite el acceso a la red local en la configuración de la VPN.';
+
+  @override
   String get desktopPairing => 'Vinculación';
 
   @override
@@ -1801,30 +1812,19 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get relatedResourcesKeptHint =>
+      'Los recursos relacionados se conservan a menos que los selecciones abajo.';
+
+  @override
+  String relatedResourcesCount(int count) {
+    return 'Recursos relacionados ($count)';
+  }
+
+  @override
   String get fileNotAvailable => 'Archivo no disponible en este dispositivo';
 
   @override
-  String couldNotOpenFile(String message) {
-    return 'No se pudo abrir el archivo: $message';
-  }
-
-  @override
-  String errorOpeningFile(String error) {
-    return 'Error al abrir el archivo: $error';
-  }
-
-  @override
   String get failedToLoadImage => 'No se pudo cargar la imagen';
-
-  @override
-  String errorLoadingPdf(String error) {
-    return 'Error al cargar el PDF: $error';
-  }
-
-  @override
-  String errorOnPage(String page, String error) {
-    return 'Error en la página $page: $error';
-  }
 
   @override
   String get notes => 'Notas';
@@ -1903,6 +1903,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get failedToLoadPdf => 'No se pudo cargar el documento PDF';
 
   @override
+  String get fileOpenFailed =>
+      'No se pudo abrir el archivo. Inténtalo de nuevo.';
+
+  @override
   String get mediaInformation => 'Información de medios';
 
   @override
@@ -1950,9 +1954,8 @@ class AppLocalizationsEs extends AppLocalizations {
       'Recurso multimedia vinculado exitosamente al encuentro';
 
   @override
-  String failedToLinkMedia(String error) {
-    return 'Error al vincular: $error';
-  }
+  String get linkMediaFailed =>
+      'No se pudo vincular el recurso multimedia al encuentro. Inténtalo de nuevo.';
 
   @override
   String get link => 'Vincular';
@@ -2036,6 +2039,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get addIpsToGoogleWallet => 'Agregar IPS a Google Wallet';
+
+  @override
+  String get ipsExportFailed =>
+      'No se pudo exportar tu resumen de salud. Inténtalo de nuevo.';
+
+  @override
+  String get walletPassFailed =>
+      'No se pudo agregar el pase a tu billetera. Inténtalo de nuevo.';
 
   @override
   String get sourcesTitle => 'Fuentes';
@@ -2645,16 +2656,6 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String couldNotOpenPdf(String message) {
-    return 'No se pudo abrir el PDF: $message';
-  }
-
-  @override
-  String errorOpeningPdf(String error) {
-    return 'Error al abrir el PDF: $error';
-  }
-
-  @override
   String get shareStatusReadyToShare => 'Listo para compartir';
 
   @override
@@ -2889,6 +2890,14 @@ class AppLocalizationsEs extends AppLocalizations {
       'No se pueden adjuntar archivos a un documento';
 
   @override
+  String get attachFileFailed =>
+      'No se pudo adjuntar el archivo. Inténtalo de nuevo.';
+
+  @override
+  String get attachmentDeleteFailed =>
+      'No se pudo eliminar el archivo adjunto. Inténtalo de nuevo.';
+
+  @override
   String deleteRecordOfType(String type) {
     return 'Eliminar $type';
   }
@@ -2981,25 +2990,30 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String scanFailedWithError(String error) {
-    return 'Error al escanear: $error';
-  }
+  String get scanFailed => 'Error al escanear. Inténtalo de nuevo.';
 
   @override
   String get noValidFilesFound => 'No se encontraron archivos válidos';
 
   @override
-  String failedToImportDocument(String error) {
-    return 'No se pudo importar el documento: $error';
-  }
+  String get importDocumentFailed =>
+      'No se pudo importar el documento. Inténtalo de nuevo.';
 
   @override
   String get couldNotOpenLink =>
       'No se pudo abrir el enlace. Inténtalo de nuevo.';
 
   @override
+  String get importFilesFailed =>
+      'No se pudieron abrir los archivos seleccionados. Inténtalo de nuevo.';
+
+  @override
   String get continueProcessingOnDesktop =>
       'Continuar el procesamiento en el escritorio';
+
+  @override
+  String get handoverSendFailed =>
+      'No se pudo enviar el documento al escritorio. Inténtalo de nuevo.';
 
   @override
   String get deleteResourcesTitle => 'Eliminar recursos';
@@ -4041,11 +4055,6 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String sizeBytes(String size) {
-    return '$size bytes';
-  }
-
-  @override
   String doseNumberOfTotal(String dose, String total) {
     return 'Dosis $dose de $total';
   }
@@ -4514,9 +4523,8 @@ class AppLocalizationsEs extends AppLocalizations {
       'Formato de datos de sincronización no válido';
 
   @override
-  String syncErrorGeneric(String error) {
-    return 'Error al sincronizar los datos: $error';
-  }
+  String get syncErrorGeneric =>
+      'Error al sincronizar los datos. Inténtalo de nuevo.';
 
   @override
   String syncPlaceholderSubtitle(String recordType) {
@@ -4594,4 +4602,9 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get desktopNotFound =>
       'No se encontró el escritorio. Comprueba que HealthWallet está abierto en él y que ambos dispositivos están en la misma red.';
+
+  @override
+  String desktopBackupSucceededMessage(String name, int count) {
+    return 'Se guardó \"$name\". Contiene $count registros.';
+  }
 }

@@ -1,81 +1,154 @@
+import 'package:drift/drift.dart' hide isNotNull, isNull;
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:health_wallet/core/constants/blood_types.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/features/records/data/data_source/shared_notes_datasource.dart';
 import 'package:health_wallet/features/records/data/repository/records_repository_impl.dart';
+import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
+import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../records_test_helpers.dart';
+import '../../records_test_helpers.dart' show DocumentsPathResolver;
+
+const _aboRh = '34530-6';
+const _abo = '883-9';
+const _rh = '10331-7';
+const _heartRate = '8867-4';
 
 void main() {
-  late AppDatabase db;
+  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+
+  late AppDatabase database;
+  late SyncLocalDataSourceImpl syncLocal;
   late RecordsRepositoryImpl repository;
 
   setUp(() async {
-    db = openTestDatabase();
-    repository = await openRepository(db);
-    await insertResource(db, id: 'jane', type: 'Patient', sourceId: 's1');
-    await insertResource(db, id: 'tom', type: 'Patient', sourceId: 's2');
+    database = AppDatabase(NativeDatabase.memory());
+    SharedPreferences.setMockInitialValues({});
+    syncLocal = SyncLocalDataSourceImpl(
+      database,
+      await SharedPreferences.getInstance(),
+    );
+    repository = RecordsRepositoryImpl(
+      database,
+      syncLocal,
+      SharedNotesDatasource(),
+      DocumentsPathResolver('/nonexistent'),
+    );
   });
 
-  tearDown(() => db.close());
+  tearDown(() => database.close());
 
-  Future<void> bloodType(String id, String patient, DateTime date) =>
-      insertResource(
-        db,
-        id: id,
-        type: 'Observation',
-        sourceId: patient == 'jane' ? 's1' : 's2',
-        date: date,
-        raw: {
-          'code': {
-            'coding': [
-              {'system': 'http://loinc.org', 'code': BloodTypes.aboLoincCode},
-            ],
-          },
-          'subject': {'reference': 'Patient/$patient'},
-          'valueCodeableConcept': {'text': 'A+'},
-        },
+  FhirResourceDto patient(String id, {String sourceId = 'src-1'}) =>
+      FhirResourceDto(
+        resourceId: id,
+        sourceId: sourceId,
+        resourceType: 'Patient',
+        resourceRaw: {'resourceType': 'Patient', 'id': id},
       );
 
-  test(
-    'finds the blood type behind more than 100 newer observations',
-    () async {
-      await bloodType('jane-abo', 'jane', DateTime(2015));
-      for (var i = 0; i < 150; i++) {
-        await insertResource(
-          db,
-          id: 'lab-$i',
-          type: 'Observation',
-          sourceId: 's1',
-          date: DateTime(2024, 1, 1 + i % 28),
-          raw: {
-            'subject': {'reference': 'Patient/jane'},
-          },
-        );
-      }
-
-      final found = await repository.getBloodTypeObservations(
-        patientId: 'jane',
-      );
-
-      expect(found.map((o) => o.id), ['jane-abo']);
+  FhirResourceDto observation(
+    String id, {
+    String? subject,
+    String loinc = _aboRh,
+    String sourceId = 'src-1',
+  }) => FhirResourceDto(
+    resourceId: id,
+    sourceId: sourceId,
+    resourceType: 'Observation',
+    resourceRaw: {
+      'resourceType': 'Observation',
+      'id': id,
+      'status': 'final',
+      'code': {
+        'coding': [
+          {'system': 'http://loinc.org', 'code': loinc},
+        ],
+      },
+      if (subject != null) 'subject': {'reference': subject},
+      'valueCodeableConcept': {'text': 'A+'},
     },
   );
 
-  test('another patient\'s blood type is not returned', () async {
-    await bloodType('tom-abo', 'tom', DateTime(2020));
-
-    final found = await repository.getBloodTypeObservations(patientId: 'jane');
-
-    expect(found, isEmpty);
-  });
-
-  test('an unknown patient gets nothing, not the first patient\'s', () async {
-    await bloodType('jane-abo', 'jane', DateTime(2020));
-
+  Future<List<String>> bloodTypeIds({
+    String patientId = 'pat-7',
+    String? sourceId,
+  }) async {
     final found = await repository.getBloodTypeObservations(
-      patientId: 'missing',
+      patientId: patientId,
+      sourceId: sourceId,
     );
+    return found.map((r) => r.id).toList()..sort();
+  }
 
-    expect(found, isEmpty);
+  group('getBloodTypeObservations', () {
+    test('matches the patient of a versioned subject reference', () async {
+      await syncLocal.cacheFhirResources([
+        patient('pat-7'),
+        patient('pat-8'),
+        observation('obs-versioned', subject: 'Patient/pat-7/_history/3'),
+        observation('obs-other', subject: 'Patient/pat-8/_history/7'),
+        observation('obs-version-as-id', subject: 'Patient/x/_history/pat-7'),
+      ]);
+
+      expect(await bloodTypeIds(), ['obs-versioned']);
+    });
+
+    test('matches relative, urn:uuid and bare subject references', () async {
+      await syncLocal.cacheFhirResources([
+        patient('pat-7'),
+        patient('pat-8'),
+        observation('obs-relative', subject: 'Patient/pat-7'),
+        observation(
+          'obs-absolute',
+          subject: 'https://fhir.example/Patient/pat-7',
+        ),
+        observation('obs-urn', subject: 'urn:uuid:pat-7'),
+        observation('obs-bare', subject: 'pat-7'),
+        observation('obs-other', subject: 'Patient/pat-8'),
+      ]);
+
+      expect(await bloodTypeIds(), [
+        'obs-absolute',
+        'obs-bare',
+        'obs-relative',
+        'obs-urn',
+      ]);
+    });
+
+    test('accepts the ABO, Rh and combined LOINC codes only', () async {
+      await syncLocal.cacheFhirResources([
+        patient('pat-7'),
+        observation('obs-abo', subject: 'Patient/pat-7', loinc: _abo),
+        observation('obs-rh', subject: 'Patient/pat-7', loinc: _rh),
+        observation('obs-hr', subject: 'Patient/pat-7', loinc: _heartRate),
+        observation('obs-no-subject'),
+      ]);
+
+      expect(await bloodTypeIds(), ['obs-abo', 'obs-rh']);
+    });
+
+    test('is empty without patients', () async {
+      await syncLocal.cacheFhirResources([
+        observation('obs-1', subject: 'Patient/pat-7'),
+      ]);
+
+      expect(await bloodTypeIds(), isEmpty);
+    });
+
+    test(
+      'reads the given source, then every source when it is empty',
+      () async {
+        await syncLocal.cacheFhirResources([
+          patient('pat-7'),
+          observation('obs-a', subject: 'Patient/pat-7'),
+          observation('obs-b', subject: 'Patient/pat-7', sourceId: 'src-2'),
+        ]);
+
+        expect(await bloodTypeIds(sourceId: 'src-2'), ['obs-b']);
+        expect(await bloodTypeIds(sourceId: 'src-none'), ['obs-a', 'obs-b']);
+        expect(await bloodTypeIds(sourceId: ''), ['obs-a', 'obs-b']);
+      },
+    );
   });
 }

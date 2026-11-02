@@ -20,11 +20,12 @@ class FhirCommonExtractor {
     }
 
     try {
-      // A local coding often comes first without a display; use the first
-      // coding that has one.
-      for (final coding in codeableConcept.coding ?? const []) {
-        final display = coding.display?.toString();
-        if (display != null && display.isNotEmpty) return display;
+      final codings = codeableConcept.coding;
+      if (codings is Iterable) {
+        for (final coding in codings) {
+          final display = coding.display?.toString();
+          if (display != null && display.isNotEmpty) return display;
+        }
       }
     } catch (_) {
       // Malformed coding; there is no display text to return.
@@ -104,56 +105,60 @@ class FhirCommonExtractor {
     return null;
   }
 
-  static String? extractQuantity(fhir_r4.Quantity? quantity) =>
-      formatQuantity(quantity);
+  static const _minQuantityDecimals = 2;
+  static const _maxQuantityDecimals = 6;
 
-  /// "value unit", or null when [quantity] has no value. The comparator is
-  /// kept ("<20 copies/mL"), and without a `unit` the UCUM `code` is shown
-  /// instead. [localizeUnit] translates the unit.
-  static String? formatQuantity(
-    fhir_r4.Quantity? quantity, {
-    String Function(String unit)? localizeUnit,
-  }) {
-    final value = quantity?.value?.valueDouble;
-    if (quantity == null || value == null) return null;
-
-    final unit = quantityUnit(quantity);
-    final shownUnit = localizeUnit == null ? unit : localizeUnit(unit);
-    return '${comparatorOf(quantity)}${formatDecimal(value)} $shownUnit'.trim();
+  /// The decimals a quantity is shown with: at least 2, at most as many as
+  /// [source] carries, capped at 6 (120 -> 2, 0.004 -> 3, 1.2345 -> 4).
+  static int quantityDecimals(double source) {
+    for (var d = _minQuantityDecimals; d < _maxQuantityDecimals; d++) {
+      if (double.parse(source.toStringAsFixed(d)) == source) return d;
+    }
+    return _maxQuantityDecimals;
   }
 
-  /// [value] with two decimals, keeping any further digits it has: 13.5 is
-  /// "13.50" and a troponin of 0.004 stays "0.004" instead of "0.00".
-  static String formatDecimal(double value) {
-    final fixed = value.toStringAsFixed(2);
-    return double.parse(fixed) == value ? fixed : value.toString();
+  /// Formats [value] with the decimals of [source] (default: [value] itself),
+  /// so a converted value keeps the precision of the recorded one.
+  static String formatQuantityValue(double value, {double? source}) =>
+      value.toStringAsFixed(quantityDecimals(source ?? value));
+
+  /// The unit of [quantity], falling back to its UCUM `code`; null when
+  /// neither is present.
+  static String? quantityUnit(fhir_r4.Quantity? quantity) {
+    final unit = quantity?.unit?.valueString?.trim();
+    if (unit != null && unit.isNotEmpty) return unit;
+    final code = quantity?.code?.valueString?.trim();
+    if (code != null && code.isNotEmpty) return code;
+    return null;
+  }
+
+  /// The formatted value of [quantity] without its unit, or null when it has
+  /// no value. Its comparator is kept, so "<20" doesn't read as "20".
+  static String? quantityValue(fhir_r4.Quantity? quantity) {
+    final value = quantity?.value?.valueDouble;
+    if (value == null) return null;
+    return '${comparatorOf(quantity)}${formatQuantityValue(value)}';
   }
 
   /// The comparator of [quantity] ("<", "<=", ">=", ">"), or "".
-  static String comparatorOf(fhir_r4.Quantity quantity) =>
-      quantity.comparator?.valueString ?? '';
+  static String comparatorOf(fhir_r4.Quantity? quantity) =>
+      quantity?.comparator?.valueString ?? '';
 
-  /// The unit of [quantity]: its `unit`, or its UCUM `code` without one.
-  static String quantityUnit(fhir_r4.Quantity quantity) {
-    final unit = quantity.unit?.valueString;
-    if (unit != null && unit.isNotEmpty) return unit;
-    final system = quantity.system?.valueString;
-    final isUcum = system == null || system == 'http://unitsofmeasure.org';
-    return isUcum ? quantity.code?.valueString ?? '' : '';
-  }
-
-  /// "low - high", or "≥ low" / "≤ high" for a range open on one side; null
-  /// when neither bound has a value.
-  static String? formatRange(
-    fhir_r4.Range? range, {
-    String Function(String unit)? localizeUnit,
-  }) {
-    final low = formatQuantity(range?.low, localizeUnit: localizeUnit);
-    final high = formatQuantity(range?.high, localizeUnit: localizeUnit);
+  /// "[low] - [high]"; an open range keeps its direction ("≥ [low]",
+  /// "≤ [high]") so it does not read as an exact value. Null when both
+  /// bounds are missing.
+  static String? formatRange(String? low, String? high) {
     if (low != null && high != null) return '$low - $high';
     if (low != null) return '≥ $low';
     if (high != null) return '≤ $high';
     return null;
+  }
+
+  static String? extractQuantity(fhir_r4.Quantity? quantity) {
+    final value = quantityValue(quantity);
+    if (value == null) return null;
+    final unit = quantityUnit(quantity);
+    return unit == null ? value : '$value $unit';
   }
 
   static String? extractAllCodeableConceptsFromArray(
@@ -238,8 +243,10 @@ class FhirCommonExtractor {
         if (dosage.doseAndRate != null && dosage.doseAndRate!.isNotEmpty) {
           final doseAndRate = dosage.doseAndRate!.first;
           final doseQuantity = doseAndRate.doseX?.isAs<fhir_r4.Quantity>();
-          if (doseQuantity != null) {
-            parts.add('${doseQuantity.value} ${doseQuantity.unit ?? ''}');
+          final value = doseQuantity?.value?.toString();
+          if (value != null) {
+            final unit = quantityUnit(doseQuantity);
+            parts.add(unit == null ? value : '$value $unit');
           }
         }
 
@@ -343,7 +350,9 @@ class FhirCommonExtractor {
               names.add(display);
             }
           }
-        } catch (_) {}
+        } catch (_) {
+          // An element without this field (NoSuchMethodError on dynamic); skip it.
+        }
       }
     }
 
@@ -363,7 +372,9 @@ class FhirCommonExtractor {
             names.add(display);
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        // An element without this field (NoSuchMethodError on dynamic); skip it.
+      }
 
       try {
         final member = (participant as dynamic).member;
@@ -373,7 +384,9 @@ class FhirCommonExtractor {
             names.add(display);
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        // An element without this field (NoSuchMethodError on dynamic); skip it.
+      }
     }
 
     return names.isEmpty ? null : names.join(', ');
@@ -392,7 +405,9 @@ class FhirCommonExtractor {
             names.add(display);
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        // An element without this field (NoSuchMethodError on dynamic); skip it.
+      }
 
       if (location is fhir_r4.Reference) {
         final display = location.display?.toString();
@@ -418,7 +433,9 @@ class FhirCommonExtractor {
             names.add(display);
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        // An element without this field (NoSuchMethodError on dynamic); skip it.
+      }
     }
 
     return names.isEmpty ? null : names.join(', ');

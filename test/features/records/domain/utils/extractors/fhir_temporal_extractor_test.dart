@@ -1,5 +1,7 @@
 import 'package:fhir_r4/fhir_r4.dart' as fhir;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_temporal_extractor.dart';
 
 import '../../../../../fixtures/fhir/fhir_fixtures.dart';
@@ -80,6 +82,28 @@ void main() {
   });
 
   group('extractPeriodFormatted', () {
+    // Whether a period is on one day depends on the user's time zone, not on
+    // the UTC dates it is recorded in: 23:30Z-00:30Z is one day in Romania,
+    // 21:30Z-22:30Z spans two there. Off UTC, both cases differ from the
+    // UTC answer.
+    for (final (start, end) in [
+      ('2024-01-10T23:30:00Z', '2024-01-11T00:30:00Z'),
+      ('2024-01-10T21:30:00Z', '2024-01-10T22:30:00Z'),
+    ]) {
+      test('$start - $end collapses only when it is one local day', () {
+        final sameLocalDay = localDate(start) == localDate(end);
+        expect(
+          FhirTemporalExtractor.extractPeriodFormatted(
+            _period(start: start, end: end),
+          ),
+          sameLocalDay
+              ? '${localDateTime(start)} - ${localTime(end)}'
+              : '${localDateTime(start, separator: ' ')} - '
+                    '${localDateTime(end, separator: ' ')}',
+        );
+      });
+    }
+
     final cases = <(String, fhir.Period?, String?)>[
       ('null period', null, null),
       ('empty period', _period(), null),
@@ -131,6 +155,104 @@ void main() {
     );
   });
 
+  group('extractPeriodFormatted partial dates', () {
+    test('an end-only partial date is shown as recorded', () {
+      expect(
+        FhirTemporalExtractor.extractPeriodFormatted(_period(end: '2024')),
+        'Until 2024',
+      );
+    });
+
+    test('a mixed full and partial period formats the full bound and keeps '
+        'the partial one as written', () {
+      expect(
+        FhirTemporalExtractor.extractPeriodFormatted(
+          _period(start: '2024-03', end: '2024-04-02T10:00:00Z'),
+        ),
+        '2024-03 - ${localDateTime('2024-04-02T10:00:00Z', separator: ' ')}',
+      );
+    });
+
+    test('a partial date keeps the translated From and Until', () {
+      final de = lookupAppLocalizations(const Locale('de'));
+      expect(
+        FhirTemporalExtractor.extractPeriodFormatted(
+          _period(start: '2024-03'),
+          l10n: de,
+        ),
+        'Ab 2024-03',
+      );
+      expect(
+        FhirTemporalExtractor.extractPeriodFormatted(
+          _period(end: '2024'),
+          l10n: de,
+        ),
+        de.untilDate('2024'),
+      );
+    });
+
+    test('a full start with a partial end formats the full bound and keeps '
+        'the partial one as written', () {
+      expect(
+        FhirTemporalExtractor.extractPeriodFormatted(
+          _period(start: '2024-04-02T10:00:00Z', end: '2025'),
+        ),
+        '${localDateTime('2024-04-02T10:00:00Z', separator: ' ')} - 2025',
+      );
+    });
+  });
+
+  group('open ranges on onset and abatement', () {
+    test('an onset Range without a high bound keeps its direction', () {
+      expect(
+        FhirTemporalExtractor.extractOnsetX(
+          _onset({
+            'onsetRange': {
+              'low': {'value': 40, 'unit': 'a'},
+            },
+          }),
+        ),
+        '≥ 40',
+      );
+    });
+
+    test('an abatement Range without a low bound keeps its direction', () {
+      expect(
+        FhirTemporalExtractor.extractAbatementX(
+          _abatement({
+            'abatementRange': {
+              'high': {'value': 50, 'unit': 'a'},
+            },
+          }),
+        ),
+        '≤ 50',
+      );
+    });
+
+    test('an empty Range is null', () {
+      expect(
+        FhirTemporalExtractor.extractAbatementX(
+          _abatement({
+            'abatementRange': {
+              'low': {'unit': 'a'},
+            },
+          }),
+        ),
+        isNull,
+      );
+      expect(
+        FhirTemporalExtractor.extractOnsetX(
+          _onset({
+            'onsetRange': {
+              'high': {'unit': 'a'},
+            },
+          }),
+        ),
+        isNull,
+      );
+    });
+  });
+
   group('extractOnsetX / extractAbatementX', () {
     final cases = <(String, Map<String, dynamic>, String?)>[
       ('dateTime', {'DateTime': '2019-02-01'}, '2019-02-01'),
@@ -140,6 +262,20 @@ void main() {
         'Age without unit',
         {
           'Age': {'value': 3},
+        },
+        '3 years',
+      ),
+      (
+        'Age without value',
+        {
+          'Age': {'unit': 'a'},
+        },
+        null,
+      ),
+      (
+        'Age with an empty unit',
+        {
+          'Age': {'value': 3, 'unit': ' '},
         },
         '3 years',
       ),
@@ -158,7 +294,7 @@ void main() {
             'high': {'value': 50, 'unit': 'a'},
           },
         },
-        '40.00 a - 50.00 a',
+        '40 - 50',
       ),
       ('string', {'String': 'childhood'}, 'childhood'),
     ];
@@ -205,7 +341,7 @@ void main() {
         });
         expect(
           FhirTemporalExtractor.extractOnsetX(onset),
-          '≤ 50.00 a',
+          '≤ 50',
         );
       },
     );
@@ -372,12 +508,24 @@ void main() {
       });
     }
 
-    test('formatFhirInstant keeps seconds', () {
+    test('formatFhirInstant keeps seconds, in local time', () {
       expect(
         FhirTemporalExtractor.formatFhirInstant(
           fhir.FhirInstant.fromString('2024-03-15T12:00:07.000Z'),
         ),
-        localDateTime('2024-03-15T12:00:07.000Z', seconds: true),
+        localDateTime('2024-03-15T12:00:07.000Z', withSeconds: true),
+      );
+    });
+
+    test('an instant saved in UTC is shown at the local hour it happened', () {
+      // An attachment saved at 17:17 in Bucharest is stored as 15:17 UTC
+      // and must show 5:17 PM there, not 3:17 PM.
+      final savedAt = DateTime(2026, 10, 29, 17, 17, 3);
+      expect(
+        FhirTemporalExtractor.formatFhirInstant(
+          fhir.FhirInstant.fromDateTime(savedAt.toUtc()),
+        ),
+        'Oct 29, 2026, 5:17:03 PM',
       );
     });
 
@@ -602,6 +750,24 @@ void main() {
         }),
         '≥ 1.00 a',
       ),
+      (
+        'Range with only a high bound',
+        _performed({
+          'performedRange': {
+            'high': {'value': 2, 'unit': 'a'},
+          },
+        }),
+        '≤ 2.00 a',
+      ),
+      (
+        'empty Range',
+        _performed({
+          'performedRange': {
+            'low': {'unit': 'a'},
+          },
+        }),
+        null,
+      ),
       ('unsupported', fhir.FhirBoolean(true), null),
     ];
     for (final (name, value, expected) in cases) {
@@ -637,7 +803,7 @@ void main() {
       (
         'Instant',
         _effective({'effectiveInstant': '2024-03-15T10:30:15.000Z'}),
-        localDateTime('2024-03-15T10:30:15.000Z', seconds: true),
+        localDateTime('2024-03-15T10:30:15.000Z', withSeconds: true),
       ),
       (
         'Timing with code',

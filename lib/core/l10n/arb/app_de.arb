@@ -107,6 +107,7 @@
   "vitals": "Vitalzeichen",
   "selectAll": "Alle auswählen",
   "clearAll": "Alle löschen",
+  "deselectAll": "Alle abwählen",
   "save": "Speichern",
   "noRecordsFound": "Keine Aufzeichnungen gefunden",
   "tryDifferentKeywords": "Versuche es mit anderen Suchbegriffen",
@@ -172,6 +173,7 @@
   "processingFailed": "Verarbeitung fehlgeschlagen",
   "modelNotFoundError": "Modelldatei nicht gefunden. Bitte laden Sie das KI-Modell zuerst herunter.",
   "modelCorruptedError": "Modelldatei ist beschädigt. Bitte laden Sie das KI-Modell erneut herunter.",
+  "processingFailedGeneric": "Beim Verarbeiten des Dokuments ist ein Fehler aufgetreten. Bitte versuche es erneut.",
   "processingCancelled": "Die Verarbeitung wurde abgebrochen",
   "processingBasicDetails": "Grunddaten werden verarbeitet...",
   "processingPages": "Seiten werden verarbeitet...",
@@ -579,6 +581,7 @@
   "desktopDisconnect": "Trennen",
   "desktopReconnect": "Erneut verbinden",
   "desktopVpnDetected": "VPN erkannt. Trenne das VPN, um mit dem Desktop zu synchronisieren.",
+  "desktopVpnBlocksPhone": "Auf diesem Computer ist ein VPN aktiv. Es kann verhindern, dass sich dein Telefon verbindet: Schalte es aus oder erlaube in den VPN-Einstellungen den Zugriff auf das lokale Netzwerk.",
   "desktopPairing": "Kopplung",
   "desktopLabel": "Desktop",
   "desktopScanFromPhoneToPair": "Scanne mit deinem Handy, um zu koppeln",
@@ -814,43 +817,10 @@
       }
     }
   },
+  "relatedResourcesKeptHint": "Zugehörige Einträge bleiben erhalten, außer du wählst sie unten aus.",
+  "relatedResourcesCount": "Zugehörige Einträge ({count})",
   "fileNotAvailable": "Datei auf diesem Gerät nicht verfügbar",
-  "couldNotOpenFile": "Datei konnte nicht geöffnet werden: {message}",
-  "@couldNotOpenFile": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "errorOpeningFile": "Fehler beim Öffnen der Datei: {error}",
-  "@errorOpeningFile": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "failedToLoadImage": "Bild konnte nicht geladen werden",
-  "errorLoadingPdf": "Fehler beim Laden der PDF: {error}",
-  "@errorLoadingPdf": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "errorOnPage": "Fehler auf Seite {page}: {error}",
-  "@errorOnPage": {
-    "placeholders": {
-      "page": {
-        "type": "String"
-      },
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "notes": "Notizen",
   "noNotesAttached": "Keine Notizen vorhanden",
   "addNote": "Notiz hinzufügen",
@@ -889,6 +859,7 @@
   "linkToEncounter": "Mit Termin verknüpfen",
   "noPdfDataAvailable": "Keine PDF-Daten verfügbar",
   "failedToLoadPdf": "PDF konnte nicht geladen werden",
+  "fileOpenFailed": "Die Datei konnte nicht geöffnet werden. Bitte versuche es erneut.",
   "mediaInformation": "Medieninformationen",
   "mediaInfoTitle": "Titel:",
   "mediaInfoType": "Typ:",
@@ -904,14 +875,7 @@
   "encounterId": "Termin-ID",
   "encounterIdHint": "z. B. termin-123",
   "mediaLinkedSuccess": "Mediendatei erfolgreich mit Termin verknüpft",
-  "failedToLinkMedia": "Verknüpfung fehlgeschlagen: {error}",
-  "@failedToLinkMedia": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
+  "linkMediaFailed": "Die Mediendatei konnte nicht mit dem Termin verknüpft werden. Bitte versuche es erneut.",
   "link": "Verknüpfen",
   "connectionLabel": "Verbindung",
   "connectionStatusConnected": "Verbunden",
@@ -944,6 +908,8 @@
   "exportIpsPdf": "IPS exportieren (PDF)",
   "addIpsToAppleWallet": "IPS zu Apple Wallet hinzufügen",
   "addIpsToGoogleWallet": "IPS zu Google Wallet hinzufügen",
+  "ipsExportFailed": "Deine Gesundheitsübersicht konnte nicht exportiert werden. Bitte versuche es erneut.",
+  "walletPassFailed": "Der Pass konnte nicht zu deinem Wallet hinzugefügt werden. Bitte versuche es erneut.",
   "sourcesTitle": "Quellen",
   "emergencyMedicalId": "Medizinischer Notfallausweis",
   "phoneLabel": "Telefon",
@@ -1156,8 +1122,6 @@
   "desktopFinishedProcessing": "Desktop hat die Verarbeitung abgeschlossen",
   "biometricAuthReason": "Bitte authentifiziere dich, um auf dein HealthWallet.me zuzugreifen",
   "sourceUploadedOn": "Hochgeladen {date}",
-  "couldNotOpenPdf": "PDF konnte nicht geöffnet werden: {message}",
-  "errorOpeningPdf": "Fehler beim Öffnen des PDFs: {error}",
   "shareStatusReadyToShare": "Bereit zum Teilen",
   "shareStatusWaitingForSender": "Warten auf den Absender...",
   "shareStatusPermissionsRequired": "Berechtigungen erforderlich",
@@ -1216,6 +1180,8 @@
   "loadingRelatedResources": "Zugehörige Einträge werden geladen...",
   "noRelatedResourcesForEncounter": "Keine zugehörigen Einträge zu diesem Termin gefunden",
   "cannotAttachToDocumentReference": "An ein Dokument können keine Dateien angehängt werden",
+  "attachFileFailed": "Die Datei konnte nicht angehängt werden. Bitte versuche es erneut.",
+  "attachmentDeleteFailed": "Der Anhang konnte nicht gelöscht werden. Bitte versuche es erneut.",
   "deleteRecordOfType": "{type} löschen",
   "dateFilterEndBeforeStart": "Das Enddatum muss nach dem Startdatum liegen",
   "dateFilterChip": "Datum: {range}",
@@ -1238,11 +1204,13 @@
   "processingPatientMatched": "{origin}: Patient zugeordnet",
   "processingPatientInfoExtracted": "{origin}: Patientendaten extrahiert",
   "processingFinished": "{origin}: Verarbeitung abgeschlossen",
-  "scanFailedWithError": "Scannen fehlgeschlagen: {error}",
+  "scanFailed": "Der Scan ist fehlgeschlagen. Bitte versuche es erneut.",
   "noValidFilesFound": "Keine gültigen Dateien gefunden",
-  "failedToImportDocument": "Dokument konnte nicht importiert werden: {error}",
+  "importDocumentFailed": "Das Dokument konnte nicht importiert werden. Bitte versuche es erneut.",
   "couldNotOpenLink": "Der Link konnte nicht geöffnet werden. Bitte versuchen Sie es erneut.",
+  "importFilesFailed": "Die ausgewählten Dateien konnten nicht geöffnet werden. Bitte versuche es erneut.",
   "continueProcessingOnDesktop": "Verarbeitung auf dem Desktop fortsetzen",
+  "handoverSendFailed": "Das Dokument konnte nicht an den Desktop gesendet werden. Bitte versuche es erneut.",
   "deleteResourcesTitle": "Ressourcen löschen",
   "switchToDiagnosticReport": "Zu Befundbericht wechseln",
   "switchToEncounter": "Zu Termin wechseln",
@@ -1581,7 +1549,6 @@
   "moreCount": "{count} weitere",
   "qualificationIssuedBy": "{qualification} (ausgestellt von {issuer})",
   "qualificationValidPeriod": "{qualification} - Gültig: {period}",
-  "sizeBytes": "{size} Byte",
   "doseNumberOfTotal": "Dosis {dose} von {total}",
   "doseNumber": "Dosis {dose}",
   "immunizationPrimarySourceYes": "Ja (direkt verabreicht)",
@@ -1678,7 +1645,7 @@
   "syncErrorEndpointNotFound": "Sync-Endpunkt nicht gefunden. Prüfe die Serverkonfiguration.",
   "syncErrorAuthentication": "Authentifizierung fehlgeschlagen. Prüfe dein Token.",
   "syncErrorInvalidFormat": "Ungültiges Format der Synchronisierungsdaten",
-  "syncErrorGeneric": "Datensynchronisierung fehlgeschlagen: {error}",
+  "syncErrorGeneric": "Datensynchronisierung fehlgeschlagen. Bitte versuche es erneut.",
   "syncPlaceholderSubtitle": "Synchronisiere oder aktualisiere deine Daten, um {recordType}-Einträge zu sehen",
   "appLockTitle": "HealthWallet ist gesperrt",
   "appLockMessage": "Entsperre die App, um deine Gesundheitsdaten zu sehen",
@@ -1698,5 +1665,6 @@
   "desktopApprovePhoneMessage": "„{phone}“ möchte sich mit diesem Desktop verbinden.\n\nEs ersetzt „{current}“ und erhält die hier gespeicherten Gesundheitsdaten.\n\nZulassen?",
   "desktopPairedPhone": "Gekoppeltes Telefon",
   "desktopNewQrUnpairsHint": "Ein neuer QR-Code entkoppelt dieses Telefon; damit koppelst du ein anderes.",
-  "desktopNotFound": "Desktop nicht gefunden. Prüfe, ob HealthWallet dort geöffnet ist und beide Geräte im selben Netzwerk sind."
+  "desktopNotFound": "Desktop nicht gefunden. Prüfe, ob HealthWallet dort geöffnet ist und beide Geräte im selben Netzwerk sind.",
+  "desktopBackupSucceededMessage": "\"{name}\" wurde gespeichert. Sie enthält {count} Aufzeichnungen."
 }

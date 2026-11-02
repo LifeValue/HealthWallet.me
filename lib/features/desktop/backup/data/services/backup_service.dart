@@ -163,7 +163,10 @@ class BackupService {
 
       await _database.transaction(() async {
         // Tables are declared parents first: delete in reverse so no row is
-        // left pointing at a deleted one, then insert in order.
+        // left pointing at a deleted one, then insert in order. Foreign keys
+        // are still checked once, at commit, against the restored data, in
+        // case a backup holds a row whose parent comes later.
+        await _database.customStatement('PRAGMA defer_foreign_keys = ON');
         for (final name in tables.reversed) {
           await _database.customStatement('DELETE FROM main."$name"');
         }
@@ -240,7 +243,7 @@ class BackupService {
   Future<int> _getRecordCount() async {
     final result = await _database
         .customSelect(
-          'SELECT COUNT(*) as count FROM fhir_resource',
+          'SELECT COUNT(*) as count FROM fhir_resource WHERE deleted_at IS NULL',
           readsFrom: {_database.fhirResource},
         )
         .getSingle();

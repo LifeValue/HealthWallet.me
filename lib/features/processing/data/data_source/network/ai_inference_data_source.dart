@@ -7,6 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/config/env/env.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_handler.dart';
 import 'package:health_wallet/features/processing/data/model/generation_stats.dart';
 import 'package:health_wallet/features/processing/domain/entity/model_not_found_exception.dart';
@@ -142,7 +143,9 @@ class AiInferenceDataSourceImpl
       } else if (Platform.isLinux) {
         _deviceRamMB = await _readLinuxRamMB();
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Could not read the device RAM; assuming 4096 MB', e);
+    }
     _deviceRamMB ??= 4096;
     return _deviceRamMB!;
   }
@@ -159,7 +162,9 @@ class AiInferenceDataSourceImpl
       final memInfo = await File('/proc/meminfo').readAsString();
       final match = RegExp(r'MemTotal:\s+(\d+)').firstMatch(memInfo);
       if (match != null) return int.parse(match.group(1)!) ~/ 1024;
-    } catch (_) {}
+    } catch (_) {
+      // A failed RAM probe returns null; the caller falls back to an estimate.
+    }
     return null;
   }
 
@@ -170,7 +175,9 @@ class AiInferenceDataSourceImpl
         final bytes = int.tryParse(result.stdout.toString().trim());
         if (bytes != null) return bytes ~/ (1024 * 1024);
       }
-    } catch (_) {}
+    } catch (_) {
+      // A failed RAM probe returns null; the caller falls back to an estimate.
+    }
     return null;
   }
 
@@ -185,7 +192,9 @@ class AiInferenceDataSourceImpl
         final bytes = int.tryParse(result.stdout.toString().trim());
         if (bytes != null) return bytes ~/ (1024 * 1024);
       }
-    } catch (_) {}
+    } catch (_) {
+      // A failed RAM probe returns null; the caller falls back to an estimate.
+    }
     return null;
   }
 
@@ -194,7 +203,9 @@ class AiInferenceDataSourceImpl
       final memInfo = await File('/proc/meminfo').readAsString();
       final match = RegExp(r'MemTotal:\s+(\d+)').firstMatch(memInfo);
       if (match != null) return int.parse(match.group(1)!) ~/ 1024;
-    } catch (_) {}
+    } catch (_) {
+      // A failed RAM probe returns null; the caller falls back to an estimate.
+    }
     return null;
   }
 
@@ -210,7 +221,9 @@ class AiInferenceDataSourceImpl
           final kb = int.tryParse(result.stdout.toString().trim());
           if (kb != null) return kb ~/ 1024;
         }
-      } catch (_) {}
+      } catch (_) {
+        // A failed probe returns -1, which callers read as "unknown".
+      }
       return -1;
     }
     if (Platform.isMacOS || Platform.isLinux) {
@@ -221,7 +234,9 @@ class AiInferenceDataSourceImpl
         final memInfo = await File('/proc/meminfo').readAsString();
         final match = RegExp(r'MemAvailable:\s+(\d+)').firstMatch(memInfo);
         if (match != null) return int.parse(match.group(1)!) ~/ 1024;
-      } catch (_) {}
+      } catch (_) {
+        // A failed probe returns -1, which callers read as "unknown".
+      }
     }
     return -1;
   }

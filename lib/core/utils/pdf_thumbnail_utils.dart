@@ -1,13 +1,13 @@
 import 'dart:typed_data';
 
-import 'package:pdfx/pdfx.dart' as pdfx;
+import 'package:health_wallet/core/utils/pdf_open.dart';
 
 Future<Uint8List?> renderPdfFirstPage(
   String filePath, {
   double targetSize = 200,
 }) async {
   try {
-    final document = await pdfx.PdfDocument.openFile(filePath);
+    final document = await openPdfDocument(filePath);
     final page = await document.getPage(1);
     final aspect = page.width / page.height;
     final double renderWidth;

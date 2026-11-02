@@ -16,7 +16,9 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/core/utils/pdf_open.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
@@ -327,6 +329,7 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
     // record, whose pages these are not.
     final detail = widget.detail;
     final pages = <_PreviewPage>[];
+    var failedPdfs = 0;
 
     for (final attachment in detail.attachments) {
       if (attachment.filePath == null) continue;
@@ -338,7 +341,7 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
       if (isPdf) {
         pdfx.PdfDocument? doc;
         try {
-          doc = await pdfx.PdfDocument.openFile(path);
+          doc = await openPdfDocument(path);
           final pageCount = doc.pagesCount;
           for (int i = 1; i <= pageCount; i++) {
             final page = await doc.getPage(i);
@@ -361,7 +364,8 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
             }
           }
         } catch (e) {
-          logger.w('An attachment PDF could not be rendered', e);
+          logger.w('Could not open the PDF attachment ${attachment.title}', e);
+          failedPdfs++;
         } finally {
           await doc?.close();
         }
@@ -378,8 +382,18 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
       }
     }
 
-    if (pages.isNotEmpty) {
+    // A partial result is not cached, so reopening retries the failed PDFs
+    // and shows the failure again.
+    if (pages.isNotEmpty && failedPdfs == 0) {
       _cache[_cacheKey(detail)] = pages;
+    }
+
+    if (mounted && failedPdfs > 0) {
+      AppSnackBar.show(
+        context,
+        message: context.l10n.failedToLoadPdf,
+        type: AppSnackBarType.error,
+      );
     }
 
     if (mounted && widget.detail.record.id == detail.record.id) {
@@ -709,13 +723,24 @@ class _EmptyAttachmentContentState extends State<_EmptyAttachmentContent> {
                     );
 
                     attachBloc.add(RecordAttachmentsFileAttached(files));
-                    await attachBloc.stream.firstWhere(
+                    final attached = await attachBloc.stream.firstWhere(
                       (s) => s.status.when(
                         loading: () => false,
                         success: () => true,
                         error: (_) => true,
                       ),
                     );
+                    // The bloc puts only translated text in a String error.
+                    final attachError = attached.status.whenOrNull(
+                      error: (e) => e is String ? e : null,
+                    );
+                    if (attachError != null && context.mounted) {
+                      AppSnackBar.show(
+                        context,
+                        message: attachError,
+                        type: AppSnackBarType.error,
+                      );
+                    }
 
                     debugPrint('[ATTACH] File saved, refreshing browse list');
                     browseBloc.add(

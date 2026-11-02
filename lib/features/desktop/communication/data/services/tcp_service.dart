@@ -778,14 +778,20 @@ class TcpService {
     }
   }
 
+  static Future<List<NetworkInterface>> ipv4Interfaces() =>
+      NetworkInterface.list(
+        type: InternetAddressType.IPv4,
+        includeLoopback: false,
+      );
+
   /// The address phones should use for this computer: a Wi-Fi, then
   /// Ethernet, then any other IPv4 address that isn't a VPN, virtual
-  /// adapter, loopback or link-local; null without one.
-  static Future<({String? ip, bool vpnDetected})> localAddress() async {
-    final interfaces = await NetworkInterface.list(
-      type: InternetAddressType.IPv4,
-      includeLoopback: false,
-    );
+  /// adapter, loopback or link-local; null without one. Also whether a VPN
+  /// is up. Reads [interfaces], this computer's IPv4 ones by default.
+  static Future<({String? ip, bool vpnDetected})> localAddress([
+    List<NetworkInterface>? interfaces,
+  ]) async {
+    interfaces ??= await ipv4Interfaces();
 
     const vpnPrefixes = ['utun', 'tun', 'tap', 'ppp', 'ipsec', 'wg'];
     const virtualKeywords = [

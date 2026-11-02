@@ -220,7 +220,10 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
           text: _formatNsn(parsed.isoCode, nsn),
         );
         return;
-      } catch (_) {}
+      } catch (_) {
+        // A saved number that no longer parses starts the field empty on the
+        // default country, as a new number would.
+      }
     }
     _selectedCountry = _defaultCountry;
     _numberCtrl = TextEditingController();

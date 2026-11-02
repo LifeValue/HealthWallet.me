@@ -16,10 +16,14 @@ class FhirTemporalExtractor {
     separator,
   );
 
+  /// [date] in the phone's time zone. A FHIR time with `Z` or an offset
+  /// parses as UTC and stays UTC in the record; it is shown in local time,
+  /// while a time without an offset is already local.
+  ///
   /// CLDR puts a narrow no-break space before AM/PM; keep the plain space
   /// the app has always shown.
   static String _format(DateFormat format, DateTime date) =>
-      format.format(date).replaceAll('\u202f', ' ');
+      format.format(date.toLocal()).replaceAll('\u202f', ' ');
 
   static String? extractPeriod(
     fhir_r4.Period? period, {
@@ -38,6 +42,23 @@ class FhirTemporalExtractor {
       return l10n?.untilDate(end) ?? 'Until $end';
     }
     return null;
+  }
+
+  /// "low - high" with the raw recorded values; an open range keeps its
+  /// direction ("≥ low", "≤ high") and an empty range is null.
+  static String? _rangeValues(fhir_r4.Range range) =>
+      FhirCommonExtractor.formatRange(
+        range.low?.value?.toString(),
+        range.high?.value?.toString(),
+      );
+
+  /// "[value] [unit]" of an Age, the unit defaulting to years; null without
+  /// a value.
+  static String? _ageValue(fhir_r4.Age age, AppLocalizations? l10n) {
+    final value = age.value?.toString();
+    if (value == null) return null;
+    final unit = age.unit?.toString().trim();
+    return '$value ${unit == null || unit.isEmpty ? l10n?.years ?? 'years' : unit}';
   }
 
   static String? extractPeriodStart(fhir_r4.Period? period) {
@@ -108,15 +129,13 @@ class FhirTemporalExtractor {
     if (onsetDateTime != null) return onsetDateTime.valueString;
 
     final onsetAge = onsetX.isAs<fhir_r4.Age>();
-    if (onsetAge != null) {
-      return '${onsetAge.value} ${onsetAge.unit ?? l10n?.years ?? 'years'}';
-    }
+    if (onsetAge != null) return _ageValue(onsetAge, l10n);
 
     final onsetPeriod = onsetX.isAs<fhir_r4.Period>();
     if (onsetPeriod != null) return extractPeriod(onsetPeriod, l10n: l10n);
 
     final onsetRange = onsetX.isAs<fhir_r4.Range>();
-    if (onsetRange != null) return FhirCommonExtractor.formatRange(onsetRange);
+    if (onsetRange != null) return _rangeValues(onsetRange);
 
     final onsetString = onsetX.isAs<fhir_r4.FhirString>();
     if (onsetString != null) return onsetString.valueString;
@@ -134,9 +153,7 @@ class FhirTemporalExtractor {
     if (abatementDateTime != null) return abatementDateTime.valueString;
 
     final abatementAge = abatementX.isAs<fhir_r4.Age>();
-    if (abatementAge != null) {
-      return '${abatementAge.value} ${abatementAge.unit ?? l10n?.years ?? 'years'}';
-    }
+    if (abatementAge != null) return _ageValue(abatementAge, l10n);
 
     final abatementPeriod = abatementX.isAs<fhir_r4.Period>();
     if (abatementPeriod != null) {
@@ -144,9 +161,7 @@ class FhirTemporalExtractor {
     }
 
     final abatementRange = abatementX.isAs<fhir_r4.Range>();
-    if (abatementRange != null) {
-      return FhirCommonExtractor.formatRange(abatementRange);
-    }
+    if (abatementRange != null) return _rangeValues(abatementRange);
 
     final abatementString = abatementX.isAs<fhir_r4.FhirString>();
     if (abatementString != null) return abatementString.valueString;
@@ -328,7 +343,12 @@ class FhirTemporalExtractor {
     }
 
     final onsetRange = onsetX.isAs<fhir_r4.Range>();
-    if (onsetRange != null) return FhirCommonExtractor.formatRange(onsetRange);
+    if (onsetRange != null) {
+      return FhirCommonExtractor.formatRange(
+        FhirCommonExtractor.extractQuantity(onsetRange.low),
+        FhirCommonExtractor.extractQuantity(onsetRange.high),
+      );
+    }
 
     final onsetString = onsetX.isAs<fhir_r4.FhirString>();
     if (onsetString != null) return onsetString.valueString;
@@ -361,7 +381,10 @@ class FhirTemporalExtractor {
 
     final abatementRange = abatementX.isAs<fhir_r4.Range>();
     if (abatementRange != null) {
-      return FhirCommonExtractor.formatRange(abatementRange);
+      return FhirCommonExtractor.formatRange(
+        FhirCommonExtractor.extractQuantity(abatementRange.low),
+        FhirCommonExtractor.extractQuantity(abatementRange.high),
+      );
     }
 
     final abatementString = abatementX.isAs<fhir_r4.FhirString>();
@@ -405,7 +428,10 @@ class FhirTemporalExtractor {
 
     final performedRange = performedX.isAs<fhir_r4.Range>();
     if (performedRange != null) {
-      return FhirCommonExtractor.formatRange(performedRange);
+      return FhirCommonExtractor.formatRange(
+        FhirCommonExtractor.extractQuantity(performedRange.low),
+        FhirCommonExtractor.extractQuantity(performedRange.high),
+      );
     }
 
     return null;

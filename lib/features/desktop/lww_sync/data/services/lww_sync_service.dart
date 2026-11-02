@@ -457,7 +457,12 @@ class LwwSyncService {
       }
       if (localUpdatedAt != null) {
         if (incomingUpdatedAt < localUpdatedAt) {
+          // A missing file only overrides LWW between two live rows; a
+          // tombstone on either side is decided by updated_at alone.
+          final bothLive =
+              row['deleted_at'] == null && local['deleted_at'] == null;
           if (!(table == 'fhir_resource' &&
+              bothLive &&
               await _localHasBrokenAttachment(local))) {
             return null;
           }
@@ -909,20 +914,32 @@ class LwwSyncService {
         .millisecondsSinceEpoch;
 
     var totalDeleted = 0;
-    for (final table in syncedTables) {
+
+    // Notes point at their source (a foreign key the app enforces), so they
+    // go first, and a source stays while a newer note still points at it.
+    const purges = {
+      'record_notes': '',
+      'fhir_resource': '',
+      'sources':
+          ' AND id NOT IN '
+          '(SELECT source_id FROM record_notes WHERE source_id IS NOT NULL)',
+    };
+    assert(
+      purges.keys.toSet().containsAll(syncedTables),
+      'every synced table is purged',
+    );
+
+    for (final MapEntry(key: table, value: guard) in purges.entries) {
+      final where = 'deleted_at IS NOT NULL AND deleted_at < ?$guard';
       final result = await _db
           .customSelect(
-            'SELECT COUNT(*) as count FROM $table '
-            'WHERE deleted_at IS NOT NULL AND deleted_at < ?',
+            'SELECT COUNT(*) as count FROM $table WHERE $where',
             variables: [Variable(cutoff)],
           )
           .getSingle();
       final count = result.data['count'] as int? ?? 0;
       if (count > 0) {
-        await _db.customStatement(
-          'DELETE FROM $table WHERE deleted_at IS NOT NULL AND deleted_at < ?',
-          [cutoff],
-        );
+        await _db.customStatement('DELETE FROM $table WHERE $where', [cutoff]);
         totalDeleted += count;
       }
     }

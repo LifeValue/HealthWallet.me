@@ -19,6 +19,7 @@ import 'package:health_wallet/features/desktop/communication/presentation/bloc/c
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/connection_dialog.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/vpn_notice.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart' show Assets;
 
@@ -232,6 +233,14 @@ class SyncSection extends StatelessWidget {
                                         backupStatus,
                                       ),
                                     ),
+                                    if (commState.vpnDetected) ...[
+                                      const SizedBox(height: Insets.small),
+                                      VpnNotice(
+                                        message: isDesktop
+                                            ? context.l10n.desktopVpnBlocksPhone
+                                            : context.l10n.desktopVpnDetected,
+                                      ),
+                                    ],
                                     const SizedBox(height: Insets.normal),
                                     if (isDesktop)
                                       SizedBox(

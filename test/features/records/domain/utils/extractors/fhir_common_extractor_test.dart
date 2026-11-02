@@ -252,6 +252,69 @@ void main() {
     );
   });
 
+  group('quantity formatting', () {
+    final decimals = <(double, String)>[
+      (120, '120.00'),
+      (5.5, '5.50'),
+      (0.004, '0.004'),
+      (1.2345, '1.2345'),
+      (1 / 3, '0.333333'),
+    ];
+    for (final (value, expected) in decimals) {
+      test('formatQuantityValue($value) -> $expected', () {
+        expect(FhirCommonExtractor.formatQuantityValue(value), expected);
+      });
+    }
+
+    test('a converted value keeps the decimals of the recorded one', () {
+      expect(
+        FhirCommonExtractor.formatQuantityValue(154.32358, source: 70),
+        '154.32',
+      );
+      expect(
+        FhirCommonExtractor.formatQuantityValue(0.0123456, source: 0.012),
+        '0.012',
+      );
+    });
+
+    test('the unit falls back to the UCUM code, then is omitted', () {
+      expect(
+        FhirCommonExtractor.extractQuantity(
+          fhir.Quantity.fromJson(quantity(7.2, code: 'mg/dL')),
+        ),
+        '7.20 mg/dL',
+      );
+      expect(
+        FhirCommonExtractor.extractQuantity(
+          fhir.Quantity.fromJson(quantity(7.2, unit: '  ', code: 'mg')),
+        ),
+        '7.20 mg',
+      );
+      expect(FhirCommonExtractor.quantityUnit(null), isNull);
+      expect(
+        FhirCommonExtractor.quantityUnit(fhir.Quantity.fromJson(quantity(1))),
+        isNull,
+      );
+    });
+
+    test('formatRange keeps the direction of an open range', () {
+      expect(FhirCommonExtractor.formatRange('1', '2'), '1 - 2');
+      expect(FhirCommonExtractor.formatRange('1', null), '≥ 1');
+      expect(FhirCommonExtractor.formatRange(null, '2'), '≤ 2');
+      expect(FhirCommonExtractor.formatRange(null, null), isNull);
+    });
+
+    test('quantityValue is null without a value', () {
+      expect(FhirCommonExtractor.quantityValue(null), isNull);
+      expect(
+        FhirCommonExtractor.quantityValue(
+          fhir.Quantity.fromJson(quantity(null, unit: 'mg')),
+        ),
+        isNull,
+      );
+    });
+  });
+
   group('extractAllCodeableConceptsFromArray / extractReasonCodes', () {
     test('return null for null, empty or text-less lists', () {
       expect(
@@ -445,7 +508,31 @@ void main() {
       ];
       expect(
         FhirCommonExtractor.extractDosageInstructions(dosages),
-        'Morning: 1 tablet; At bedtime, 2 ',
+        'Morning: 1 tablet; At bedtime, 2',
+      );
+    });
+
+    test('skips a dose without value and falls back to the UCUM code', () {
+      expect(
+        FhirCommonExtractor.extractDosageInstructions([
+          _dosage({
+            'route': codeableConcept(text: 'Oral'),
+            'doseAndRate': [
+              {'doseQuantity': quantity(null, unit: 'mg')},
+            ],
+          }),
+        ]),
+        'Oral',
+      );
+      expect(
+        FhirCommonExtractor.extractDosageInstructions([
+          _dosage({
+            'doseAndRate': [
+              {'doseQuantity': quantity(5, code: 'mg')},
+            ],
+          }),
+        ]),
+        '5 mg',
       );
     });
   });

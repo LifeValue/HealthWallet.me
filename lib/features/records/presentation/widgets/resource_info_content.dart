@@ -74,13 +74,11 @@ class ResourceInfoContent extends StatelessWidget {
   /// An observation shows the same converted values as on the detail page.
   /// Without the app's [UserBloc] (widget tests) values stay as reported.
   List<RecordInfoLine> _infoLines(BuildContext context) {
-    final resource = this.resource;
-    if (resource is! Observation) return resource.additionalInfo(context.l10n);
     try {
       final region = context.select(
         (UserBloc bloc) => bloc.state.regionPreset,
       );
-      return resource.additionalInfoForRegion(region, context.l10n);
+      return resource.additionalInfoIn(region, context.l10n);
     } on ProviderNotFoundException {
       return resource.additionalInfo(context.l10n);
     }

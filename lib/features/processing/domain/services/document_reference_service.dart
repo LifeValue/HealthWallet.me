@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/data/local/soft_delete.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
@@ -51,6 +52,7 @@ class DocumentReferenceService {
         await (_database.select(_database.fhirResource)..where(
               (t) =>
                   t.resourceType.equals('DocumentReference') &
+                  t.deletedAt.isNull() &
                   t.resourceRaw.contains(_sessionSystem) &
                   t.resourceRaw.contains(sessionId),
             ))
@@ -61,11 +63,8 @@ class DocumentReferenceService {
             _sessionIdOf(row.resourceRaw) == sessionId)
           row.id,
     ];
-    if (replaced.isNotEmpty) {
-      await (_database.delete(
-        _database.fhirResource,
-      )..where((t) => t.id.isIn(replaced))).go();
-    }
+    // Tombstoned, so the paired device drops them too (see [SoftDelete]).
+    await _database.softDeleteResources(replaced);
     return saved;
   }
 
@@ -246,6 +245,7 @@ class DocumentReferenceService {
           ? Value(encounterId)
           : const Value.absent(),
       subjectId: subjectId != null ? Value(subjectId) : const Value.absent(),
+      deletedAt: const Value(null),
     );
 
     await _database.into(_database.fhirResource).insertOnConflictUpdate(dto);
@@ -269,7 +269,11 @@ class DocumentReferenceService {
     String? sourceId,
   }) async {
     var query = (_database.select(_database.fhirResource)
-      ..where((tbl) => tbl.resourceType.equals('DocumentReference')));
+      ..where(
+        (tbl) =>
+            tbl.resourceType.equals('DocumentReference') &
+            tbl.deletedAt.isNull(),
+      ));
 
     if (sourceId != null) {
       query = query..where((tbl) => tbl.sourceId.equals(sourceId));
@@ -309,9 +313,11 @@ class DocumentReferenceService {
     try {
       final documentQuery = _database.select(_database.fhirResource)
         ..where(
-          (tbl) => tbl.id.equals(
-            '${sourceId ?? 'scanner-app'}_$documentReferenceResourceId',
-          ),
+          (tbl) =>
+              tbl.id.equals(
+                '${sourceId ?? 'scanner-app'}_$documentReferenceResourceId',
+              ) &
+              tbl.deletedAt.isNull(),
         );
 
       final document = await documentQuery.getSingleOrNull();

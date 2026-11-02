@@ -94,8 +94,9 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         );
         emit(
           state.copyWith(
-            status: PipelineStatus.failure(
-              error: strings.l10n.processingNoImagesGenerated,
+            status: const PipelineStatus.failure(
+              error: 'No images were generated from the document',
+              reason: PipelineFailureReason.noImagesGenerated,
             ),
           ),
         );
@@ -234,7 +235,8 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       }
 
       startNextPendingSession();
-    } on Exception catch (e) {
+    } on Exception catch (e, s) {
+      logger.e('[ProcessingBloc] patient extraction failed', e, s);
       updateSession(
         emit,
         sessionId: event.sessionId,
@@ -434,7 +436,8 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         ),
       );
       startNextPendingSession();
-    } catch (e) {
+    } catch (e, s) {
+      logger.e('[ProcessingBloc] resource extraction failed', e, s);
       final failedSession = state.sessions.firstWhereOrNull(
         (s) => s.id == event.sessionId,
       );
@@ -556,8 +559,8 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         title: finalContainer.displayTitle,
       );
       emit(state.copyWith(status: const PipelineStatus.success()));
-    } catch (e) {
-      logger.e('[ProcessingBloc] resource creation failed: $e');
+    } catch (e, s) {
+      logger.e('[ProcessingBloc] resource creation failed', e, s);
       emit(
         state.copyWith(
           status: PipelineStatus.failure(

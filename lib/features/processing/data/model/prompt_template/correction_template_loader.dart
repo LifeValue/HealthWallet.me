@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/processing/data/model/structured_output/extraction_schemas.dart';
 
 class CorrectionTemplateLoader {
@@ -30,7 +31,9 @@ class CorrectionTemplateLoader {
         final data = jsonDecode(jsonStr) as Map<String, dynamic>;
         final category = data['category'] as String? ?? 'visit';
         _cache!.putIfAbsent(category, () => []).add(data);
-      } catch (_) {}
+      } catch (e) {
+        logger.w('Could not load the correction template $path', e);
+      }
     }
   }
 

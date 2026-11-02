@@ -5,23 +5,26 @@ import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 
-/// Serves [records] per source, newest first, a page at a time.
+/// One `getResources` call as the bloc made it.
+typedef _Query = ({
+  List<FhirType> types,
+  String? sourceId,
+  List<String>? sourceIds,
+  int limit,
+  int offset,
+  DateFilter? dateFilter,
+});
+
 class _FakeRecordsRepository extends Fake implements RecordsRepository {
-  _FakeRecordsRepository(this.records);
-
-  final List<IFhirResource> records;
-  final deleted = <String>[];
-  final searchedSources = <String?>[];
-
-  /// How long a search takes; the database is not instant.
-  Duration searchTime = Duration.zero;
-
-  Iterable<IFhirResource> _scoped(String? sourceId, List<String>? sourceIds) =>
-      records.where(
-        (r) =>
-            (sourceId == null || r.sourceId == sourceId) &&
-            (sourceIds == null || sourceIds.contains(r.sourceId)),
-      );
+  List<IFhirResource> page = [];
+  List<IFhirResource> patients = const [Patient(id: 'p')];
+  List<IFhirResource> searchResults = [];
+  List<IFhirResource> related = [];
+  Exception? error;
+  bool demoLoaded = false;
+  final queries = <_Query>[];
+  final searches = <String>[];
+  final deletes = <String>[];
 
   @override
   Future<List<IFhirResource>> getResources({
@@ -31,13 +34,21 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
     int limit = 20,
     int offset = 0,
     DateFilter? dateFilter,
-  }) async => _scoped(sourceId, sourceIds)
-      .where(
-        (r) => resourceTypes.isEmpty || resourceTypes.contains(r.fhirType),
-      )
-      .skip(offset)
-      .take(limit)
-      .toList();
+  }) async {
+    if (resourceTypes.length == 1 && resourceTypes.single == FhirType.Patient) {
+      return patients;
+    }
+    if (error != null) throw error!;
+    queries.add((
+      types: resourceTypes,
+      sourceId: sourceId,
+      sourceIds: sourceIds,
+      limit: limit,
+      offset: offset,
+      dateFilter: dateFilter,
+    ));
+    return page;
+  }
 
   @override
   Future<List<IFhirResource>> searchResources({
@@ -47,288 +58,428 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
     List<String>? sourceIds,
     int limit = 50,
   }) async {
-    searchedSources.add(sourceId);
-    await Future<void>.delayed(searchTime);
-    return _scoped(sourceId, sourceIds)
-        .where((r) => r.title.toLowerCase().contains(query.toLowerCase()))
-        .take(limit)
-        .toList();
+    searches.add(query);
+    return searchResults;
   }
 
   @override
-  Future<void> deleteResourcesByIds(List<String> ids) async {
-    deleted.addAll(ids);
-    records.removeWhere((r) => ids.contains(r.id));
+  Future<List<IFhirResource>> getRelatedResourcesForEncounter({
+    required String encounterId,
+    String? sourceId,
+  }) async {
+    if (error != null) throw error!;
+    return related;
   }
 
   @override
-  Future<void> deleteResource(String resourceId) =>
-      deleteResourcesByIds([resourceId]);
+  Future<List<IFhirResource>> getRelatedResources({
+    required IFhirResource resource,
+  }) async => related;
+
+  @override
+  Future<void> loadDemoData() async {
+    if (error != null) throw error!;
+    demoLoaded = true;
+  }
+
+  @override
+  Future<void> clearDemoData() async {
+    if (error != null) throw error!;
+    demoLoaded = false;
+  }
+
+  @override
+  Future<bool> hasDemoData() async => demoLoaded;
+
+  @override
+  Future<void> deleteResource(String resourceId) async {
+    if (error != null) throw error!;
+    deletes.add('one:$resourceId');
+  }
+
+  @override
+  Future<void> deleteResourceWithRelated(String resourceId) async =>
+      deletes.add('related:$resourceId');
+
+  @override
+  Future<void> deleteResourcesByIds(List<String> ids) async =>
+      deletes.add('ids:${ids.join(',')}');
 }
 
-/// Classifies a record as cardiology when its title mentions the heart.
+/// Classifies a resource as cardiology when its title says so.
 class _FakeSpecialtyClassifier extends Fake implements SpecialtyClassifier {
   @override
-  void buildEncounterIndex(List<IFhirResource> resources) {}
+  void buildEncounterIndex(List<IFhirResource> allResources) {}
 
   @override
   Set<MedicalSpecialty> classify(
     IFhirResource resource, {
     MedicalSpecialty? override,
-  }) => resource.title.contains('heart')
-      ? {MedicalSpecialty.cardiology}
-      : {MedicalSpecialty.generalCare};
+  }) => {
+    ?override,
+    if (resource.title.contains('heart')) MedicalSpecialty.cardiology,
+  };
 }
-
-Encounter _visit(int i, {String source = 's1', String title = 'Visit'}) =>
-    Encounter(
-      id: '$source-$i',
-      resourceId: '$source-$i',
-      sourceId: source,
-      title: '$title $i',
-      date: DateTime(2024).subtract(Duration(days: i)),
-    );
 
 void main() {
   late _FakeRecordsRepository repository;
   late RecordsBloc bloc;
 
-  void build(List<IFhirResource> records) {
-    repository = _FakeRecordsRepository(records);
+  setUp(() {
+    repository = _FakeRecordsRepository();
     bloc = RecordsBloc(repository, _FakeSpecialtyClassifier());
-  }
+  });
 
   tearDown(() => bloc.close());
 
-  /// Waits until the bloc is idle and [condition] holds.
-  Future<void> until(bool Function(RecordsState s) condition) async {
-    final deadline = DateTime.now().add(const Duration(seconds: 5));
-    while (bloc.state.status != const RecordsStatus.success() ||
-        !condition(bloc.state)) {
-      if (DateTime.now().isAfter(deadline)) {
-        fail('not reached; the bloc is at ${bloc.state}');
-      }
-      await Future<void>.delayed(const Duration(milliseconds: 5));
-    }
+  /// Adds [event] and waits until the bloc has handled it.
+  Future<RecordsState> run(RecordsEvent event) async {
+    bloc.add(event);
+    await pumpEventQueue();
+    return bloc.state;
   }
 
-  group('paging', () {
-    test('the first page has 20 records and more to come', () async {
-      build([for (var i = 0; i < 45; i++) _visit(i)]);
+  List<Encounter> encounters(int count, {String title = 'visit'}) => [
+    for (var i = 0; i < count; i++) Encounter(id: 'e$i', title: title),
+  ];
 
-      bloc.add(const RecordsSourceChanged('s1'));
-      await until((s) => s.resources.length == 20);
+  group('loading', () {
+    test('starts on encounters and reports', () async {
+      repository.page = encounters(3);
 
-      expect(bloc.state.hasMorePages, isTrue);
-    });
+      final state = await run(const RecordsInitialised());
 
-    test('loading more appends the next pages and stops at the end', () async {
-      build([for (var i = 0; i < 45; i++) _visit(i)]);
-      bloc.add(const RecordsSourceChanged('s1'));
-      await until((s) => s.resources.length == 20);
-
-      bloc.add(const RecordsLoadMore());
-      await until((s) => s.resources.length == 40);
-      bloc.add(const RecordsLoadMore());
-      await until((s) => s.resources.length == 45);
-
-      expect(bloc.state.hasMorePages, isFalse);
-      expect(
-        bloc.state.resources.map((r) => r.id).toSet(),
-        hasLength(45),
-        reason: 'no record twice',
-      );
-    });
-
-    test('BUG: loading more replaces the list with the full-screen loading '
-        'state', () async {
-      build([for (var i = 0; i < 45; i++) _visit(i)]);
-      bloc.add(const RecordsSourceChanged('s1'));
-      await until((s) => s.resources.length == 20);
-      final statuses = <RecordsStatus>[];
-      final sub = bloc.stream.listen((s) => statuses.add(s.status));
-
-      bloc.add(const RecordsLoadMore());
-      await until((s) => s.resources.length == 40);
-      await sub.cancel();
-
-      // The page shows a spinner instead of the list while loading, which
-      // throws the user back to the top (A26).
-      expect(statuses, isNot(contains(const RecordsStatus.loading())));
-    }, skip: 'BUG: A26 in records-audit.md');
-  });
-
-  group('source', () {
-    test('a new source starts the list over with its records', () async {
-      build([_visit(1), _visit(2, source: 's2')]);
-      bloc.add(const RecordsSourceChanged('s1'));
-      await until((s) => s.resources.isNotEmpty);
-
-      bloc.add(const RecordsSourceChanged('s2'));
-      await until((s) => s.sourceId == 's2' && s.resources.isNotEmpty);
-
-      expect(bloc.state.resources.map((r) => r.id), ['s2-2']);
-    });
-
-    test('a patient\'s sources list only their records', () async {
-      build([_visit(1), _visit(2, source: 's2'), _visit(3, source: 's3')]);
-
-      bloc.add(const RecordsSourceChanged(null, sourceIds: ['s1', 's2']));
-      await until((s) => s.resources.length == 2);
-
-      expect(bloc.state.resources.map((r) => r.id), ['s1-1', 's2-2']);
-    });
-
-    test('without chosen filters, encounters and reports are shown', () async {
-      build([_visit(1)]);
-
-      bloc.add(const RecordsSourceChanged('s1'));
-      await until((s) => s.activeFilters.isNotEmpty);
-
-      expect(bloc.state.activeFilters, [
+      expect(state.activeFilters, [
         FhirType.Encounter,
         FhirType.DiagnosticReport,
       ]);
+      expect(state.status, const RecordsStatus.success());
+      expect(state.resources, hasLength(3));
+      expect(state.hasMorePages, isFalse);
     });
 
-    test('chosen filters stay when the source changes', () async {
-      build([_visit(1)]);
-      bloc.add(const RecordsFiltersApplied([FhirType.Condition]));
-      await until((s) => s.activeFilters.isNotEmpty);
+    test('a share context starts without filters', () async {
+      final state = await run(const RecordsInitialised(isShareContext: true));
 
-      bloc.add(const RecordsSourceChanged('s2'));
-      await until((s) => s.sourceId == 's2');
-
-      expect(bloc.state.activeFilters, [FhirType.Condition]);
+      expect(state.activeFilters, isEmpty);
     });
 
-    test('sharing starts without filters', () async {
-      build([_visit(1)]);
+    test('a full page loads the next one', () async {
+      repository.page = encounters(20);
+      await run(const RecordsInitialised());
+      expect(bloc.state.hasMorePages, isTrue);
 
-      bloc.add(const RecordsSourceChanged('s1', isShareContext: true));
-      await until((s) => s.resources.isNotEmpty);
+      repository.page = encounters(5);
+      final state = await run(const RecordsLoadMore());
 
-      expect(bloc.state.activeFilters, isEmpty);
+      expect(repository.queries.last.offset, 20);
+      expect(state.resources, hasLength(25));
+      expect(state.hasMorePages, isFalse);
     });
 
-    test('BUG: the selection survives a change of source or patient', () async {
-      build([_visit(1), _visit(2, source: 's2')]);
-      bloc.add(const RecordsSourceChanged('s1'));
-      await until((s) => s.resources.isNotEmpty);
-      bloc.add(const RecordsSelectionToggled('s1-1'));
-      await until((s) => s.selectedResourceIds.isNotEmpty);
+    test('no next page is loaded after the last one', () async {
+      await run(const RecordsInitialised());
 
-      bloc.add(const RecordsSourceChanged('s2'));
-      await until((s) => s.sourceId == 's2' && s.resources.isNotEmpty);
+      await run(const RecordsLoadMore());
 
-      // Sharing then sends records of the previous patient, or drops them
-      // (A28).
-      expect(bloc.state.selectedResourceIds, isEmpty);
-    }, skip: 'BUG: A28 in records-audit.md');
+      expect(repository.queries, hasLength(1));
+    });
+
+    test('a failed load fails', () async {
+      repository.error = Exception('db');
+
+      final state = await run(const RecordsInitialised());
+
+      expect(state.status, isA<RecordsStatus>());
+      expect(state.status, isNot(const RecordsStatus.success()));
+    });
+
+    test('a source change reloads that source', () async {
+      final state = await run(const RecordsSourceChanged('s1'));
+
+      expect(repository.queries.single.sourceId, 's1');
+      expect(state.sourceId, 's1');
+      expect(state.activeFilters, isNotEmpty);
+    });
+
+    test('several sources are passed when no single one is chosen', () async {
+      await run(const RecordsSourceChanged(null, sourceIds: ['a', 'b']));
+
+      expect(repository.queries.single.sourceIds, ['a', 'b']);
+    });
+
+    test('a share context source change keeps no filters', () async {
+      final state = await run(
+        const RecordsSourceChanged('s1', isShareContext: true),
+      );
+
+      expect(state.activeFilters, isEmpty);
+    });
+
+    test('media keep to the chosen source', () async {
+      await run(const RecordsSourceChanged('s1'));
+
+      await run(const RecordsFiltersApplied([FhirType.Media]));
+
+      expect(repository.queries.last.sourceId, 's1');
+    });
+  });
+
+  group('filters', () {
+    const range = DateFilter(fromYear: 2024);
+
+    test('applied filters and dates are queried', () async {
+      final state = await run(
+        const RecordsFiltersApplied([
+          FhirType.Observation,
+        ], dateFilter: range),
+      );
+
+      expect(repository.queries.last.types, [FhirType.Observation]);
+      expect(repository.queries.last.dateFilter, range);
+      expect(state.dateFilter, range);
+    });
+
+    test('a removed filter is dropped', () async {
+      await run(
+        const RecordsFiltersApplied([FhirType.Observation, FhirType.Condition]),
+      );
+
+      final state = await run(const RecordsFilterRemoved(FhirType.Condition));
+
+      expect(state.activeFilters, [FhirType.Observation]);
+    });
+
+    test('clearing the dates reloads without them', () async {
+      await run(const RecordsFiltersApplied([], dateFilter: range));
+
+      final state = await run(const RecordsDateRangeCleared());
+
+      expect(state.dateFilter, isNull);
+      expect(repository.queries.last.dateFilter, isNull);
+    });
+
+    test('a specialty keeps only the matching records', () async {
+      repository.page = [
+        const Encounter(id: 'a', title: 'heart check'),
+        const Encounter(id: 'b', title: 'skin check'),
+        const Encounter(
+          id: 'c',
+          title: 'other',
+          specialtyOverride: 'cardiology',
+        ),
+      ];
+      await run(const RecordsFiltersApplied([FhirType.Encounter]));
+
+      final state = await run(
+        const RecordsSpecialtyApplied([MedicalSpecialty.cardiology]),
+      );
+
+      expect(state.activeFilters, isEmpty);
+      expect(state.resources.map((r) => r.id), ['a', 'c']);
+    });
+
+    test('an empty specialty choice keeps the type filters', () async {
+      await run(const RecordsFiltersApplied([FhirType.Encounter]));
+
+      final state = await run(const RecordsSpecialtyApplied([]));
+
+      expect(state.activeFilters, [FhirType.Encounter]);
+    });
+
+    test('clearing all filters drops types, specialties and dates', () async {
+      await run(const RecordsFiltersApplied([FhirType.Encounter]));
+
+      final state = await run(RecordsClearAllFilters());
+
+      expect(state.activeFilters, isEmpty);
+      expect(state.activeSpecialties, isEmpty);
+      expect(state.dateFilter, isNull);
+    });
+
+    test('a refresh reloads', () async {
+      await run(RecordsRefreshRequested());
+
+      expect(repository.queries, hasLength(1));
+    });
   });
 
   group('search', () {
-    test('shows the matches, and clearing it brings the list back', () async {
-      build([
-        _visit(1, title: 'Insulin review'),
-        _visit(2, title: 'Dentist'),
-      ]);
-      bloc.add(const RecordsSourceChanged('s1'));
-      await until((s) => s.resources.length == 2);
+    test('runs after the debounce and lists the matches', () async {
+      repository.searchResults = encounters(2);
 
-      bloc.add(const RecordsSearch('insulin'));
-      await until((s) => s.resources.length == 1);
-      expect(bloc.state.resources.single.title, 'Insulin review 1');
+      await run(const RecordsSearch('  he  '));
+      expect(bloc.state.searchQuery, 'he');
+      expect(repository.searches, isEmpty);
 
-      bloc.add(const RecordsSearch(''));
-      await until((s) => s.resources.length == 2);
-    });
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      await pumpEventQueue();
 
-    test('a single letter does not search', () async {
-      build([_visit(1, title: 'Insulin review')]);
-      bloc.add(const RecordsSourceChanged('s1'));
-      await until((s) => s.resources.isNotEmpty);
-
-      bloc.add(const RecordsSearch('i'));
-      await Future<void>.delayed(const Duration(milliseconds: 700));
-
-      expect(repository.searchedSources, isEmpty);
-    });
-
-    test('BUG: reopening Records with a search active shows the previous '
-        'source\'s results', () async {
-      build([
-        _visit(1, title: 'Insulin'),
-        _visit(2, source: 's2', title: 'Insulin'),
-      ]);
-      bloc.add(const RecordsSourceChanged('s1'));
-      await until((s) => s.resources.isNotEmpty);
-      bloc.add(const RecordsSearch('insulin'));
-      await until((s) => s.searchQuery.isNotEmpty && s.resources.isNotEmpty);
-
-      repository.searchTime = const Duration(milliseconds: 50);
-
-      // What the app does when Records opens again, after a patient switch.
-      bloc
-        ..add(const RecordsInitialised())
-        ..add(const RecordsSourceChanged('s2'));
-      await until((s) => s.sourceId == 's2' && s.resources.isNotEmpty);
-
-      expect(bloc.state.resources.map((r) => r.sourceId), ['s2']);
-    }, skip: 'BUG: A25 in records-audit.md');
-  });
-
-  group('specialty', () {
-    test('BUG: a page with few matches still says more pages follow', () async {
-      build([
-        _visit(0, title: 'heart check'),
-        for (var i = 1; i < 25; i++) _visit(i),
-      ]);
-      bloc
-        ..add(const RecordsSourceChanged('s1'))
-        ..add(const RecordsSpecialtyApplied([MedicalSpecialty.cardiology]));
-      await until((s) => s.activeSpecialties.isNotEmpty);
-      await until((s) => s.resources.isNotEmpty);
-
-      // One match in the first 20 rows: the list can't scroll, so the
-      // bottom spinner never goes away; the next page would also start at
-      // the wrong offset (A27).
+      expect(repository.searches, ['he']);
+      expect(bloc.state.resources, hasLength(2));
       expect(bloc.state.hasMorePages, isFalse);
-    }, skip: 'BUG: A27 in records-audit.md');
+    });
+
+    test('a one-letter query does not search', () async {
+      await run(const RecordsSearch('h'));
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      await pumpEventQueue();
+
+      expect(repository.searches, isEmpty);
+    });
+
+    test('an empty query reloads the list', () async {
+      await run(const RecordsSearch(''));
+
+      expect(repository.queries, hasLength(1));
+    });
+
+    test('while searching, no next page is loaded', () async {
+      await run(const RecordsSearch('he'));
+
+      await run(const RecordsLoadMore());
+
+      expect(repository.queries, isEmpty);
+    });
   });
 
-  test('deleting a record with chosen related records deletes them '
-      'together and reloads', () async {
-    // A patient remains, so the list reloads (the filters hide the patient).
-    build([
-      _visit(1),
-      _visit(2),
-      _visit(3),
-      const Patient(id: 'p', sourceId: 's1'),
-    ]);
-    bloc.add(const RecordsSourceChanged('s1'));
-    await until((s) => s.resources.length == 3);
+  group('record detail', () {
+    test('an encounter loads the records it groups', () async {
+      repository.related = encounters(2);
 
-    bloc.add(
-      const RecordsResourceDeleted(
-        resourceId: 's1-1',
-        selectedRelatedIds: ['s1-2'],
-      ),
-    );
-    await until((s) => s.resources.length == 1);
+      final state = await run(
+        const RecordDetailLoaded(Encounter(id: 'e', resourceId: 'r')),
+      );
 
-    expect(repository.deleted, ['s1-1', 's1-2']);
+      expect(state.recordDetailStatus, const RecordDetailStatus.success());
+      expect(state.relatedResources, hasLength(2));
+    });
+
+    test('another record loads its references', () async {
+      repository.related = encounters(1);
+
+      final state = await run(const RecordDetailLoaded(Observation(id: 'o')));
+
+      expect(state.relatedResources, hasLength(1));
+    });
+
+    test('a failed load fails the detail', () async {
+      repository.error = Exception('db');
+
+      final state = await run(const RecordDetailLoaded(Encounter(id: 'e')));
+
+      expect(
+        state.recordDetailStatus,
+        isNot(const RecordDetailStatus.success()),
+      );
+    });
   });
 
-  test('selecting a record twice unselects it', () async {
-    build([_visit(1)]);
+  group('demo data', () {
+    test('loading marks it present and reloads', () async {
+      final state = await run(const LoadDemoData());
 
-    bloc.add(const RecordsSelectionToggled('s1-1'));
-    await Future<void>.delayed(Duration.zero);
-    expect(bloc.state.selectedResourceIds, {'s1-1'});
+      expect(state.hasDemoData, isTrue);
+      expect(state.isLoadingDemoData, isFalse);
+      expect(repository.queries, hasLength(1));
+    });
 
-    bloc.add(const RecordsSelectionToggled('s1-1'));
-    await Future<void>.delayed(Duration.zero);
-    expect(bloc.state.selectedResourceIds, isEmpty);
+    test('clearing marks it absent and reloads', () async {
+      await run(const LoadDemoData());
+
+      final state = await run(const ClearDemoData());
+
+      expect(state.hasDemoData, isFalse);
+      expect(repository.queries, hasLength(2));
+    });
+
+    test('a failed load or clear keeps the error', () async {
+      repository.error = Exception('asset');
+
+      expect((await run(const LoadDemoData())).demoDataError, isNotNull);
+      expect((await run(const ClearDemoData())).demoDataError, isNotNull);
+    });
+  });
+
+  group('selection', () {
+    test('toggling selects and unselects', () async {
+      await run(const RecordsSelectionToggled('a'));
+      await run(const RecordsSelectionToggled('b'));
+      expect(bloc.state.selectedResourceIds, {'a', 'b'});
+
+      await run(const RecordsSelectionToggled('a'));
+      expect(bloc.state.selectedResourceIds, {'b'});
+
+      await run(const RecordsSelectionCleared());
+      expect(bloc.state.selectedResourceIds, isEmpty);
+    });
+
+    test('leaving selection mode clears the selection', () async {
+      await run(const RecordsSelectionModeToggled());
+      await run(const RecordsSelectionToggled('a'));
+      expect(bloc.state.isSelectionMode, isTrue);
+      expect(bloc.state.selectedResourceIds, {'a'});
+
+      await run(const RecordsSelectionModeToggled());
+
+      expect(bloc.state.isSelectionMode, isFalse);
+      expect(bloc.state.selectedResourceIds, isEmpty);
+    });
+  });
+
+  group('delete', () {
+    test('one record is deleted, then the list reloads', () async {
+      final statuses = <RecordsStatus>[];
+      final sub = bloc.stream.listen((s) => statuses.add(s.status));
+
+      await run(const RecordsResourceDeleted(resourceId: 'r'));
+      await sub.cancel();
+
+      expect(repository.deletes, ['one:r']);
+      expect(statuses, contains(const RecordsStatus.deleted()));
+      expect(repository.queries, hasLength(1));
+    });
+
+    test('a record with its related records', () async {
+      await run(
+        const RecordsResourceDeleted(resourceId: 'r', deleteRelated: true),
+      );
+
+      expect(repository.deletes, ['related:r']);
+    });
+
+    test('a record with the chosen related records', () async {
+      await run(
+        const RecordsResourceDeleted(
+          resourceId: 'r',
+          selectedRelatedIds: ['x', 'y'],
+        ),
+      );
+
+      expect(repository.deletes, ['ids:r,x,y']);
+    });
+
+    test('the last patient gone leaves an empty list', () async {
+      repository.patients = const [];
+
+      final state = await run(const RecordsResourceDeleted(resourceId: 'r'));
+
+      expect(state.status, const RecordsStatus.success());
+      expect(state.resources, isEmpty);
+      expect(repository.queries, isEmpty);
+    });
+
+    test('a failed delete fails', () async {
+      repository.error = Exception('db');
+
+      final state = await run(const RecordsResourceDeleted(resourceId: 'r'));
+
+      expect(state.status, isNot(const RecordsStatus.success()));
+      expect(state.status, isNot(const RecordsStatus.deleted()));
+    });
+  });
+
+  test('exposes its repository', () {
+    expect(bloc.recordsRepository, same(repository));
   });
 }

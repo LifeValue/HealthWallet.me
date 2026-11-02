@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart'
     as processing;
 import 'package:injectable/injectable.dart';
@@ -50,7 +51,9 @@ class DeviceCapabilityService {
       } else if (Platform.isLinux) {
         _deviceRamMB = await _readLinuxRamMB();
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Could not read the device RAM; assuming 4096 MB', e);
+    }
     _deviceRamMB ??= 4096;
     return _deviceRamMB!;
   }
@@ -81,7 +84,9 @@ class DeviceCapabilityService {
       final memInfo = await File('/proc/meminfo').readAsString();
       final match = RegExp(r'MemTotal:\s+(\d+)').firstMatch(memInfo);
       if (match != null) return int.parse(match.group(1)!) ~/ 1024;
-    } catch (_) {}
+    } catch (_) {
+      // A failed RAM probe returns null; the caller falls back to an estimate.
+    }
     return null;
   }
 
@@ -113,7 +118,9 @@ class DeviceCapabilityService {
         final bytes = int.tryParse(result.stdout.toString().trim());
         if (bytes != null) return bytes ~/ (1024 * 1024);
       }
-    } catch (_) {}
+    } catch (_) {
+      // A failed RAM probe returns null; the caller falls back to an estimate.
+    }
     return null;
   }
 
@@ -128,7 +135,9 @@ class DeviceCapabilityService {
         final bytes = int.tryParse(result.stdout.toString().trim());
         if (bytes != null) return bytes ~/ (1024 * 1024);
       }
-    } catch (_) {}
+    } catch (_) {
+      // A failed RAM probe returns null; the caller falls back to an estimate.
+    }
     return null;
   }
 
@@ -137,7 +146,9 @@ class DeviceCapabilityService {
       final memInfo = await File('/proc/meminfo').readAsString();
       final match = RegExp(r'MemTotal:\s+(\d+)').firstMatch(memInfo);
       if (match != null) return int.parse(match.group(1)!) ~/ 1024;
-    } catch (_) {}
+    } catch (_) {
+      // A failed RAM probe returns null; the caller falls back to an estimate.
+    }
     return null;
   }
 }

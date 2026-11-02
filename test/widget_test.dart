@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'dart:typed_data';
 
 import 'package:bloc_test/bloc_test.dart' show MockBloc, whenListen;
@@ -9,10 +8,13 @@ import 'package:health_wallet/app/app.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/navigation/observers/order_route_observer.dart';
 import 'package:health_wallet/core/services/biometric_auth_service.dart';
 import 'package:health_wallet/core/services/bluetooth_state_service.dart';
+import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/app_lock/presentation/bloc/app_lock_bloc.dart';
 import 'package:health_wallet/features/app_lock/presentation/widgets/app_lock_overlay.dart';
 import 'package:health_wallet/features/home/data/services/specialty_classifier_impl.dart';
@@ -233,6 +235,11 @@ class MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
 
 class MockWalletPassBloc extends MockBloc<WalletPassEvent, WalletPassState>
     implements WalletPassBloc {}
+
+class MockRecordsBloc extends MockBloc<RecordsEvent, RecordsState>
+    implements RecordsBloc {}
+
+class MockSyncBloc extends MockBloc<SyncEvent, SyncState> implements SyncBloc {}
 
 // ---------------------------------------------------------------------------
 // Test
@@ -620,6 +627,104 @@ void main() {
       expect(find.byIcon(Icons.warning_amber_rounded), findsNothing);
       expect(find.byIcon(Icons.medication_outlined), findsNothing);
       await unmount(tester);
+    });
+  });
+
+  group('app-level error snackbars', () {
+    testWidgets('a failed IPS export, wallet pass, scan and sync each show '
+        'their translated message', (tester) async {
+      await _registerAppDependencies(initialPrefs: {'hasSeenOnboarding': true});
+      final records = StreamController<RecordsState>();
+      final wallet = StreamController<WalletPassState>();
+      final processing = StreamController<ProcessingState>();
+      final sync = StreamController<SyncState>();
+      final recordsBloc = MockRecordsBloc();
+      final walletPassBloc = MockWalletPassBloc();
+      final processingBloc = MockProcessingBloc();
+      final syncBloc = MockSyncBloc();
+      whenListen(
+        recordsBloc,
+        records.stream,
+        initialState: const RecordsState(),
+      );
+      whenListen(
+        walletPassBloc,
+        wallet.stream,
+        initialState: const WalletPassState(),
+      );
+      whenListen(
+        processingBloc,
+        processing.stream,
+        initialState: const ProcessingState(),
+      );
+      whenListen(syncBloc, sync.stream, initialState: const SyncState());
+      await getIt.unregister<RecordsBloc>();
+      await getIt.unregister<WalletPassBloc>();
+      await getIt.unregister<ProcessingBloc>();
+      await getIt.unregister<SyncBloc>();
+      getIt
+        ..registerFactory<RecordsBloc>(() => recordsBloc)
+        ..registerFactory<WalletPassBloc>(() => walletPassBloc)
+        ..registerSingleton<ProcessingBloc>(processingBloc)
+        ..registerFactory<SyncBloc>(() => syncBloc);
+      final l10n = lookupAppLocalizations(const Locale('en'));
+
+      await tester.pumpWidget(const App());
+      await tester.pump();
+      // A page with a Scaffold to show the snackbars on.
+      unawaited(
+        getIt<AppRouter>().replaceAll([
+          EmergencyCardRoute(
+            cardData: const EmergencyCardData(patientName: 'Test Patient'),
+          ),
+        ]),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      Future<void> expectSnackBar(String text) async {
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 750));
+        expect(find.widgetWithText(SnackBar, text), findsOne, reason: text);
+        // The app-styled error card, not the default snackbar.
+        final card = tester.widget<Container>(find.byKey(AppSnackBar.cardKey));
+        final border = (card.decoration! as BoxDecoration).border! as Border;
+        expect(
+          border.top.color.withValues(alpha: 1),
+          AppColors.error,
+          reason: text,
+        );
+        ScaffoldMessenger.of(
+          tester.element(find.byType(SnackBar)),
+        ).removeCurrentSnackBar();
+        await tester.pump();
+      }
+
+      records.add(const RecordsState(ipsExportStatus: IpsExportStatus.failed));
+      await expectSnackBar(l10n.ipsExportFailed);
+
+      wallet.add(const WalletPassState(status: WalletPassStatus.failure));
+      await expectSnackBar(l10n.walletPassFailed);
+
+      processing.add(
+        const ProcessingState(
+          status: PipelineStatus.failure(
+            error: 'camera closed',
+            reason: PipelineFailureReason.scanFailed,
+          ),
+        ),
+      );
+      await expectSnackBar(l10n.scanFailed);
+
+      sync.add(SyncState(errorMessage: l10n.syncErrorGeneric));
+      await expectSnackBar(l10n.syncErrorGeneric);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 1));
+      await records.close();
+      await wallet.close();
+      await processing.close();
+      await sync.close();
     });
   });
 }

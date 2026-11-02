@@ -177,7 +177,10 @@ class AppDatabase extends _$AppDatabase {
       await customStatement(
         'ALTER TABLE fhir_resource ADD COLUMN specialty_override TEXT NULL',
       );
-    } catch (_) {}
+    } catch (_) {
+      // The column already exists when this step ran before (an interrupted
+      // upgrade), so a failed ALTER leaves the schema as v11 expects it.
+    }
 
     final rows = await customSelect(
       'SELECT id, resource_raw FROM fhir_resource '

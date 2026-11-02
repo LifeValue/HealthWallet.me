@@ -21,6 +21,7 @@ import 'package:health_wallet/features/records/domain/repository/records_reposit
 import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
+import 'package:health_wallet/features/records/presentation/widgets/delete_record_dialog.dart';
 import 'package:health_wallet/features/share_records/core/ephemeral_session_manager.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -78,16 +79,11 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     );
   }
 
-  List<RecordInfoLine> _getAdditionalInfo(BuildContext context) {
-    final resource = widget.resource;
-    if (resource is Observation) {
-      try {
-        final region = context.read<UserBloc>().state.regionPreset;
-        return resource.additionalInfoForRegion(region, context.l10n);
-      } catch (_) {}
-    }
-    return resource.additionalInfo(context.l10n);
-  }
+  List<RecordInfoLine> _getAdditionalInfo(BuildContext context) =>
+      widget.resource.additionalInfoIn(
+        context.read<UserBloc>().state.regionPreset,
+        context.l10n,
+      );
 
   void _onViewDocument(IFhirResource resource) {
     if (_isEphemeral) {
@@ -351,7 +347,10 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     IFhirResource resource,
   ) {
     final infoLines = resource
-        .additionalInfo(context.l10n)
+        .additionalInfoIn(
+          context.read<UserBloc>().state.regionPreset,
+          context.l10n,
+        )
         .where((line) => !line.isSection)
         .take(2)
         .toList();
@@ -482,237 +481,25 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
       return;
     }
 
-    _showDeleteSelectionDialog(context, relatedResources);
+    await _showDeleteSelectionDialog(context, relatedResources);
   }
 
-  void _showDeleteSelectionDialog(
+  Future<void> _showDeleteSelectionDialog(
     BuildContext context,
     List<IFhirResource> relatedResources,
-  ) {
-    final selectedIds = <String>{};
+  ) async {
+    final selectedIds = await DeleteRecordDialog.show(
+      context,
+      recordTitle: widget.resource.displayTitle,
+      relatedResources: relatedResources,
+    );
+    if (selectedIds == null || !context.mounted) return;
 
-    showDialog(
+    _showDeleteConfirmation(
       context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (dialogContext, setDialogState) {
-            final textColor = context.primaryTextColor;
-            final borderColor = context.borderColor;
-
-            return Dialog(
-              backgroundColor: context.colorScheme.surface,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: borderColor, width: 1),
-              ),
-              insetPadding: const EdgeInsets.all(Insets.normal),
-              child: Padding(
-                padding: const EdgeInsets.all(Insets.normal),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      context.l10n.deletePage,
-                      style: AppTextStyle.bodyMedium.copyWith(
-                        color: textColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: Insets.normal),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(dialogContext).pop();
-                        _showDeleteConfirmation(
-                          context: context,
-                          onConfirm: () =>
-                              _deleteResource(context, selectedRelatedIds: []),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: context.colorScheme.error,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: Insets.smallNormal,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        context.l10n.deleteRecordOfType(
-                          widget.resource.fhirType.localizedName(context.l10n),
-                        ),
-                      ),
-                    ),
-                    if (relatedResources.isNotEmpty) ...[
-                      const SizedBox(height: Insets.normal),
-                      Text(
-                        context.l10n.relatedResources,
-                        style: AppTextStyle.labelLarge.copyWith(
-                          color: textColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: Insets.small),
-                      Flexible(
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: relatedResources.length,
-                          itemBuilder: (_, index) {
-                            final resource = relatedResources[index];
-                            final isSelected = selectedIds.contains(
-                              resource.id,
-                            );
-                            return Padding(
-                              padding: const EdgeInsets.only(
-                                bottom: Insets.extraSmall,
-                              ),
-                              child: InkWell(
-                                onTap: () {
-                                  setDialogState(() {
-                                    if (isSelected) {
-                                      selectedIds.remove(resource.id);
-                                    } else {
-                                      selectedIds.add(resource.id);
-                                    }
-                                  });
-                                },
-                                borderRadius: BorderRadius.circular(8),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: Insets.smallNormal,
-                                    vertical: Insets.small,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? context.colorScheme.error
-                                                .withValues(alpha: 0.5)
-                                          : borderColor,
-                                    ),
-                                    color: isSelected
-                                        ? context.colorScheme.error.withValues(
-                                            alpha: 0.05,
-                                          )
-                                        : null,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: Checkbox(
-                                          value: isSelected,
-                                          onChanged: (value) {
-                                            setDialogState(() {
-                                              if (value == true) {
-                                                selectedIds.add(resource.id);
-                                              } else {
-                                                selectedIds.remove(resource.id);
-                                              }
-                                            });
-                                          },
-                                          activeColor:
-                                              context.colorScheme.error,
-                                          materialTapTargetSize:
-                                              MaterialTapTargetSize.shrinkWrap,
-                                          visualDensity: VisualDensity.compact,
-                                        ),
-                                      ),
-                                      const SizedBox(width: Insets.small),
-                                      resource.fhirType.icon.svg(
-                                        width: 16,
-                                        color: context.colorScheme.onSurface
-                                            .withValues(alpha: 0.6),
-                                      ),
-                                      const SizedBox(width: Insets.small),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              resource.displayTitle,
-                                              style: AppTextStyle.labelLarge
-                                                  .copyWith(
-                                                    color: textColor,
-                                                  ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            Text(
-                                              resource.fhirType.localizedName(
-                                                context.l10n,
-                                              ),
-                                              style: AppTextStyle.labelSmall
-                                                  .copyWith(
-                                                    color: context
-                                                        .colorScheme
-                                                        .onSurface
-                                                        .withValues(alpha: 0.5),
-                                                  ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                    if (selectedIds.isNotEmpty) ...[
-                      const SizedBox(height: Insets.small),
-                      OutlinedButton(
-                        onPressed: () {
-                          Navigator.of(dialogContext).pop();
-                          _showDeleteConfirmation(
-                            context: context,
-                            itemCount: 1 + selectedIds.length,
-                            onConfirm: () => _deleteResource(
-                              context,
-                              selectedRelatedIds: selectedIds.toList(),
-                            ),
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: context.colorScheme.error,
-                          side: BorderSide(
-                            color: context.colorScheme.error.withValues(
-                              alpha: 0.3,
-                            ),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: Insets.smallNormal,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          context.l10n.deletePlusRelated(selectedIds.length),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: Insets.small),
-                    TextButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(),
-                      child: Text(context.l10n.cancel),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
+      itemCount: 1 + selectedIds.length,
+      onConfirm: () =>
+          _deleteResource(context, selectedRelatedIds: selectedIds),
     );
   }
 

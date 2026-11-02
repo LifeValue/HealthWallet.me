@@ -9,6 +9,7 @@ import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_code_labels.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -186,14 +187,8 @@ abstract class Observation with _$Observation implements IFhirResource {
 
     if (referenceRange != null && referenceRange!.isNotEmpty) {
       final range = referenceRange!.first;
-      final rawLow = range.low?.value?.valueDouble;
-      final rawHigh = range.high?.value?.valueDouble;
-      final lowValue = rawLow == null
-          ? null
-          : FhirFieldExtractor.formatDecimal(rawLow);
-      final highValue = rawHigh == null
-          ? null
-          : FhirFieldExtractor.formatDecimal(rawHigh);
+      final lowValue = FhirCommonExtractor.quantityValue(range.low);
+      final highValue = FhirCommonExtractor.quantityValue(range.high);
       final unit = localizedUnit(
         (range.low?.unit ?? range.high?.unit ?? '').toString(),
         l10n,
@@ -445,12 +440,12 @@ abstract class Observation with _$Observation implements IFhirResource {
       FhirCodeLabels.flaggedStatusLines(status?.valueString, null, l10n),
     );
 
-    final codes = FhirFieldExtractor.codesOf(code);
+    final measured = FhirFieldExtractor.regionUnitVitalOf(code);
     final valueDisplay = FhirFieldExtractor.extractObservationValueForRegion(
       valueX,
       region,
       l10n: l10n,
-      codes: codes,
+      measured: measured,
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
@@ -468,7 +463,7 @@ abstract class Observation with _$Observation implements IFhirResource {
               comp.valueX,
               region,
               l10n: l10n,
-              codes: FhirFieldExtractor.codesOf(comp.code),
+              measured: FhirFieldExtractor.regionUnitVitalOf(comp.code),
             );
 
         if (componentCode != null && componentValue != null) {
@@ -499,43 +494,35 @@ abstract class Observation with _$Observation implements IFhirResource {
       final range = referenceRange!.first;
       final rawLow = range.low?.value?.valueDouble;
       final rawHigh = range.high?.value?.valueDouble;
-      final rawUnit = (range.low?.unit ?? range.high?.unit ?? '').toString();
 
-      double? displayLow = rawLow;
-      double? displayHigh = rawHigh;
-      String displayUnit = rawUnit;
-
-      if (rawLow != null) {
-        final converted = FhirFieldExtractor.convertQuantityForRegion(
-          rawLow,
-          rawUnit,
-          region,
-          codes: codes,
-        );
-        displayLow = converted.value;
-        displayUnit = converted.unit;
-      }
-      if (rawHigh != null) {
-        final converted = FhirFieldExtractor.convertQuantityForRegion(
-          rawHigh,
-          rawUnit,
-          region,
-          codes: codes,
-        );
-        displayHigh = converted.value;
-        displayUnit = converted.unit;
-      }
-
-      // Bounds shown as reported keep their digits; converted ones have two.
-      final converted = displayUnit != rawUnit;
-      String? shown(double? value) => value == null
+      // Each bound is converted from its own unit.
+      ({double value, String unit})? convert(Quantity? bound, double? value) =>
+          value == null
           ? null
-          : converted
-          ? value.toStringAsFixed(2)
-          : FhirFieldExtractor.formatDecimal(value);
-      final lowValue = shown(displayLow);
-      final highValue = shown(displayHigh);
+          : FhirFieldExtractor.convertQuantityForRegion(
+              value,
+              FhirCommonExtractor.quantityUnit(bound) ?? '',
+              region,
+              measured: measured,
+              ucumCode: bound?.code?.valueString,
+            );
+      final low = convert(range.low, rawLow);
+      final high = convert(range.high, rawHigh);
+      final double? displayLow = low?.value;
+      final double? displayHigh = high?.value;
+      String displayUnit = low?.unit ?? high?.unit ?? '';
+
       displayUnit = localizedUnit(displayUnit, l10n);
+
+      final lowValue = displayLow == null
+          ? null
+          : FhirCommonExtractor.formatQuantityValue(displayLow, source: rawLow);
+      final highValue = displayHigh == null
+          ? null
+          : FhirCommonExtractor.formatQuantityValue(
+              displayHigh,
+              source: rawHigh,
+            );
 
       String? rangeDisplay;
       if (lowValue != null && highValue != null) {

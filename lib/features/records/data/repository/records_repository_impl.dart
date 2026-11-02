@@ -10,6 +10,7 @@ import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/constants/blood_types.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/data/local/soft_delete.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
@@ -146,6 +147,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
               ..where(
                 (f) =>
                     f.resourceType.equals('DocumentReference') &
+                    f.deletedAt.isNull() &
                     (f.encounterId.equals(id) | f.resourceRaw.contains(id)),
               )
               ..orderBy([(f) => OrderingTerm.desc(f.date)]))
@@ -219,7 +221,9 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
     final notes =
         await (_database.select(_database.recordNotes)
-              ..where((t) => t.resourceId.equals(resourceId))
+              ..where(
+                (t) => t.resourceId.equals(resourceId) & t.deletedAt.isNull(),
+              )
               ..orderBy([(t) => OrderingTerm.desc(t.timestamp)]))
             .get();
 
@@ -247,13 +251,13 @@ class RecordsRepositoryImpl implements RecordsRepository {
     );
   }
 
+  /// Soft-deletes the note so the delete reaches the paired device.
   @override
-  Future<int> deleteRecordNote(RecordNote note) async {
-    return await (_database.delete(
-      _database.recordNotes,
-    )..where((t) => t.id.equals(note.id))).go();
-  }
+  Future<int> deleteRecordNote(RecordNote note) =>
+      _database.softDeleteNote(note.id);
 
+  /// Soft-deletes the record and its notes so the delete reaches the paired
+  /// device; the other delete methods below do the same.
   @override
   Future<void> deleteResource(String resourceId) =>
       _deleteRecords({resourceId});
@@ -280,9 +284,8 @@ class RecordsRepositoryImpl implements RecordsRepository {
         fileUrls.addAll(_attachmentFileUrls(row.resourceRaw));
       }
 
-      await (_database.delete(
-        _database.recordNotes,
-      )..where((n) => n.resourceId.isIn(allIds))).go();
+      // Tombstones the records and their notes, so the delete reaches the
+      // paired device.
       await _datasource.deleteResourcesByIds(allIds.toList());
     });
 
@@ -308,6 +311,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
         await (_database.select(_database.fhirResource)..where(
               (f) =>
                   f.resourceType.equals('DocumentReference') &
+                  f.deletedAt.isNull() &
                   f.id.isNotIn(ids) &
                   references
                       .map((r) => f.resourceRaw.contains('"$r"'))
@@ -371,7 +375,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
       final stillUsed = await _database
           .customSelect(
             'SELECT 1 FROM fhir_resource WHERE instr(resource_raw, ?) > 0 '
-            'LIMIT 1',
+            'AND deleted_at IS NULL LIMIT 1',
             variables: [Variable.withString(url)],
             readsFrom: {_database.fhirResource},
           )
@@ -396,9 +400,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
   @override
   Future<void> deleteResourceWithRelated(String resourceId) async {
-    final targetResource = (await (_database.select(
-      _database.fhirResource,
-    )..where((f) => f.id.equals(resourceId))).get()).firstOrNull;
+    final targetResource = await _liveResource(resourceId);
 
     if (targetResource == null) return;
 
@@ -414,9 +416,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
     final encId = targetResource.encounterId;
     if (encId != null && encId.isNotEmpty) {
-      final encounterRows = await (_database.select(
-        _database.fhirResource,
-      )..where((f) => f.resourceId.equals(encId))).get();
+      final encounterRows = await _liveResourcesWithResourceId(encId);
       idsToDelete.addAll(encounterRows.map((r) => r.id));
 
       final siblings = await _datasource.getResourcesByEncounterId(
@@ -428,11 +428,21 @@ class RecordsRepositoryImpl implements RecordsRepository {
     await _deleteRecords(idsToDelete);
   }
 
+  Future<FhirResourceLocalDto?> _liveResource(String id) => (_database.select(
+    _database.fhirResource,
+  )..where((f) => f.id.equals(id) & f.deletedAt.isNull())).getSingleOrNull();
+
+  Future<List<FhirResourceLocalDto>> _liveResourcesWithResourceId(
+    String resourceId,
+  ) =>
+      (_database.select(_database.fhirResource)..where(
+            (f) => f.resourceId.equals(resourceId) & f.deletedAt.isNull(),
+          ))
+          .get();
+
   @override
   Future<int> getRelatedResourceCount(String resourceId) async {
-    final targetResource = (await (_database.select(
-      _database.fhirResource,
-    )..where((f) => f.id.equals(resourceId))).get()).firstOrNull;
+    final targetResource = await _liveResource(resourceId);
 
     if (targetResource == null) return 0;
 
@@ -456,9 +466,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
   Future<List<IFhirResource>> getRelatedResourcesForDeletion(
     String resourceId,
   ) async {
-    final targetResource = (await (_database.select(
-      _database.fhirResource,
-    )..where((f) => f.id.equals(resourceId))).get()).firstOrNull;
+    final targetResource = await _liveResource(resourceId);
 
     if (targetResource == null) return [];
 
@@ -476,9 +484,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
     final encId = targetResource.encounterId;
     if (encId != null && encId.isNotEmpty) {
-      final encounterRows = await (_database.select(
-        _database.fhirResource,
-      )..where((f) => f.resourceId.equals(encId))).get();
+      final encounterRows = await _liveResourcesWithResourceId(encId);
       for (final r in encounterRows) {
         if (r.id != resourceId) relatedIds.add(r.id);
       }
@@ -493,9 +499,11 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
     if (relatedIds.isEmpty) return [];
 
-    final relatedRows = await (_database.select(
-      _database.fhirResource,
-    )..where((f) => f.id.isIn(relatedIds.toList()))).get();
+    final relatedRows =
+        await (_database.select(_database.fhirResource)..where(
+              (f) => f.id.isIn(relatedIds.toList()) & f.deletedAt.isNull(),
+            ))
+            .get();
 
     return relatedRows.map(IFhirResource.fromLocalDto).toList();
   }
@@ -705,10 +713,17 @@ class RecordsRepositoryImpl implements RecordsRepository {
       resourceTypes: [],
       sourceId: 'demo_data',
     );
-    await _deleteRecords({for (final row in demoRows) row.id});
+    final fileUrls = {
+      for (final row in demoRows) ..._attachmentFileUrls(row.resourceRaw),
+    };
 
-    // Delete the demo_data source itself
+    // Tombstones the source, its records and their notes in one
+    // transaction.
     await _syncLocalDataSource.deleteSource('demo_data');
+
+    for (final url in fileUrls) {
+      await _deleteFileIfUnused(url);
+    }
   }
 
   @override
@@ -731,7 +746,10 @@ class RecordsRepositoryImpl implements RecordsRepository {
   }) async {
     final patientRow =
         await (_database.select(_database.fhirResource)..where(
-              (f) => f.id.equals(patientId) & f.resourceType.equals('Patient'),
+              (f) =>
+                  f.id.equals(patientId) &
+                  f.resourceType.equals('Patient') &
+                  f.deletedAt.isNull(),
             ))
             .getSingleOrNull();
     if (patientRow == null) return [];
@@ -747,6 +765,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
               ..where(
                 (f) =>
                     f.resourceType.equals('Observation') &
+                    f.deletedAt.isNull() &
                     codes
                         .map((code) => f.resourceRaw.contains('"$code"'))
                         .reduce((a, b) => a | b),
@@ -771,9 +790,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
           false;
       final subject = resource.subject?.reference?.valueString;
       if (!hasCode || subject == null) continue;
-      final subjectId = subject.startsWith('urn:uuid:')
-          ? subject.substring(9)
-          : subject.split('/').last;
+      final subjectId = FhirReferenceUtils.extractReferenceId(subject);
       if (patientIds.contains(subjectId)) matches.add(resource);
     }
 

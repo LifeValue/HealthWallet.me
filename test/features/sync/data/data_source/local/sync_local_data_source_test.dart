@@ -449,16 +449,49 @@ void main() {
   });
 
   group('deleteSource', () {
-    test('removes the source and only its resources', () async {
+    Future<Map<String, Object?>> raw(String table, Object id) async =>
+        (await database
+                .customSelect(
+                  'SELECT * FROM $table WHERE id = ?',
+                  variables: [
+                    if (id is int)
+                      Variable.withInt(id)
+                    else
+                      Variable.withString('$id'),
+                  ],
+                )
+                .getSingle())
+            .data;
+
+    test('tombstones the source, only its resources and their notes, in '
+        'ms', () async {
       await dataSource.cacheSources(const [Source(id: 'a'), Source(id: 'b')]);
       await dataSource.cacheFhirResources([
         resource('a1', sourceId: 'a'),
         resource('a2', sourceId: 'a'),
         resource('b1', sourceId: 'b'),
       ]);
+      await database.customStatement(
+        'INSERT INTO record_notes (id, resource_id, content, timestamp) '
+        "VALUES (1, 'a1', 'n', 0), (2, 'b1', 'n', 0)",
+      );
+      final before = DateTime.now().millisecondsSinceEpoch;
+
       await dataSource.deleteSource('a');
-      expect((await sourceRows()).map((s) => s.id), ['b']);
-      expect((await resourceRows()).map((r) => r.id), ['b1']);
+
+      for (final row in [
+        await raw('sources', 'a'),
+        await raw('fhir_resource', 'a1'),
+        await raw('fhir_resource', 'a2'),
+        await raw('record_notes', 1),
+      ]) {
+        expect(row['deleted_at'] as int, greaterThanOrEqualTo(before));
+        expect(row['updated_at'], row['deleted_at']);
+      }
+      expect((await raw('sources', 'b'))['deleted_at'], isNull);
+      expect((await raw('fhir_resource', 'b1'))['deleted_at'], isNull);
+      expect((await raw('record_notes', 2))['deleted_at'], isNull);
+      expect((await dataSource.getSources()).map((s) => s.id), ['b']);
     });
 
     test('can delete the demo data source', () async {
@@ -467,8 +500,8 @@ void main() {
         resource('d1', sourceId: 'demo_data'),
       ]);
       await dataSource.deleteSource('demo_data');
-      expect(await sourceRows(), isEmpty);
-      expect(await resourceRows(), isEmpty);
+      expect(await dataSource.getSources(), isEmpty);
+      expect((await raw('fhir_resource', 'd1'))['deleted_at'], isNotNull);
     });
 
     test('removes the notes on its records too', () async {
@@ -492,16 +525,113 @@ void main() {
 
       await dataSource.deleteSource('a');
 
-      expect((await sourceRows()).map((s) => s.id), ['b']);
-      expect((await resourceRows()).map((r) => r.id), ['b1']);
+      // Tombstoned for the paired device, and hidden here.
+      expect((await dataSource.getSources()).map((s) => s.id), ['b']);
       final notes = await database.select(database.recordNotes).get();
-      expect(notes.map((n) => n.resourceId), ['b1']);
+      expect(
+        {
+          for (final n in notes) n.resourceId: n.deletedAt != null,
+        },
+        {'a1': true, 'b1': false},
+      );
     });
 
     test('is a no-op for an unknown source', () async {
       await dataSource.cacheSources(const [Source(id: 'a')]);
       await dataSource.deleteSource('missing');
       expect((await sourceRows()).map((s) => s.id), ['a']);
+      expect((await raw('sources', 'a'))['deleted_at'], isNull);
+    });
+  });
+
+  group('tombstones', () {
+    Future<void> tombstone(String table, String id) => database.customStatement(
+      'UPDATE $table SET deleted_at = 1, updated_at = 1 WHERE id = ?',
+      [id],
+    );
+
+    Future<Object?> deletedAt(String table, String id) async =>
+        (await database
+                .customSelect(
+                  'SELECT deleted_at FROM $table WHERE id = ?',
+                  variables: [Variable.withString(id)],
+                )
+                .getSingle())
+            .data['deleted_at'];
+
+    test('getSources hides deleted sources and sources whose resources are '
+        'all deleted', () async {
+      await dataSource.cacheSources(const [
+        Source(id: 'gone'),
+        Source(id: 'kept'),
+      ]);
+      await dataSource.cacheFhirResources([
+        resource('r1', sourceId: 'gone-res'),
+        resource('r2', sourceId: 'live-res'),
+      ]);
+      await tombstone('sources', 'gone');
+      await tombstone('fhir_resource', 'r1');
+
+      expect(
+        (await dataSource.getSources()).map((s) => s.id),
+        unorderedEquals(['kept', 'live-res']),
+      );
+    });
+
+    test(
+      'cacheFhirResources and cacheSources bring deleted rows back',
+      () async {
+        await dataSource.cacheSources(const [Source(id: 's')]);
+        await dataSource.cacheFhirResources([resource('r', sourceId: 's')]);
+        await tombstone('sources', 's');
+        await tombstone('fhir_resource', 'r');
+
+        await dataSource.cacheSources(const [Source(id: 's')]);
+        await dataSource.cacheFhirResources([resource('r', sourceId: 's')]);
+
+        expect(await deletedAt('sources', 's'), isNull);
+        expect(await deletedAt('fhir_resource', 'r'), isNull);
+      },
+    );
+
+    test('createDemoDataSource brings a deleted demo source back with an ms '
+        'stamp', () async {
+      await dataSource.createDemoDataSource();
+      await tombstone('sources', 'demo_data');
+
+      await dataSource.createDemoDataSource();
+
+      expect(await deletedAt('sources', 'demo_data'), isNull);
+      final updatedAt =
+          (await database
+                      .customSelect(
+                        "SELECT updated_at FROM sources WHERE id = 'demo_data'",
+                      )
+                      .getSingle())
+                  .data['updated_at']
+              as int;
+      expect(updatedAt, greaterThan(1e12));
+      expect((await dataSource.getSources()).single.labelSource, 'Demo Data');
+    });
+
+    test('createWalletSource brings a deleted wallet source back with an ms '
+        'stamp', () async {
+      await dataSource.createWalletSource();
+      await tombstone('sources', 'wallet');
+
+      await dataSource.createWalletSource();
+
+      expect(await deletedAt('sources', 'wallet'), isNull);
+      final updatedAt =
+          (await database
+                      .customSelect(
+                        "SELECT updated_at FROM sources WHERE id = 'wallet'",
+                      )
+                      .getSingle())
+                  .data['updated_at']
+              as int;
+      expect(updatedAt, greaterThan(1e12));
+      expect((await dataSource.getSources()).single.labelSource, 'Wallet');
     });
   });
 }

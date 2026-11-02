@@ -118,6 +118,7 @@
   "vitals": "Vitals",
   "selectAll": "Select all",
   "clearAll": "Clear all",
+  "deselectAll": "Deselect all",
   "save": "Save",
   "noRecordsFound": "No records found",
   "noRecords": "No records",
@@ -185,6 +186,7 @@
   "processingFailed": "Processing failed",
   "modelNotFoundError": "Model file not found. Please download the AI model first.",
   "modelCorruptedError": "Model file is corrupted. Please re-download the AI model.",
+  "processingFailedGeneric": "Something went wrong while processing the document. Please try again.",
   "processingCancelled": "Processing was cancelled",
   "processingBasicDetails": "Processing basic details...",
   "processingPages": "Processing pages...",
@@ -613,6 +615,7 @@
   "desktopDisconnect": "Disconnect",
   "desktopReconnect": "Reconnect",
   "desktopVpnDetected": "VPN detected. Disconnect VPN to sync with desktop.",
+  "desktopVpnBlocksPhone": "A VPN is on for this computer. It can stop your phone from connecting: turn it off or allow local network access in the VPN settings.",
   "desktopPairing": "Pairing",
   "desktopLabel": "Desktop",
   "desktopScanFromPhoneToPair": "Scan from your phone to pair",
@@ -848,43 +851,17 @@
       }
     }
   },
+  "relatedResourcesKeptHint": "Related resources are kept unless you select them below.",
+  "relatedResourcesCount": "Related resources ({count})",
+  "@relatedResourcesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "fileNotAvailable": "File not available on this device",
-  "couldNotOpenFile": "Could not open file: {message}",
-  "@couldNotOpenFile": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "errorOpeningFile": "Error opening file: {error}",
-  "@errorOpeningFile": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "failedToLoadImage": "Failed to load image",
-  "errorLoadingPdf": "Error loading PDF: {error}",
-  "@errorLoadingPdf": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "errorOnPage": "Error on page {page}: {error}",
-  "@errorOnPage": {
-    "placeholders": {
-      "page": {
-        "type": "String"
-      },
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "notes": "Notes",
   "noNotesAttached": "This record has no notes attached",
   "addNote": "Add note",
@@ -923,6 +900,7 @@
   "linkToEncounter": "Link to Encounter",
   "noPdfDataAvailable": "No PDF data available",
   "failedToLoadPdf": "Failed to load PDF document",
+  "fileOpenFailed": "Could not open this file. Please try again.",
   "mediaInformation": "Media Information",
   "mediaInfoTitle": "Title:",
   "mediaInfoType": "Type:",
@@ -938,14 +916,7 @@
   "encounterId": "Encounter ID",
   "encounterIdHint": "e.g., encounter-123",
   "mediaLinkedSuccess": "Media linked to encounter successfully",
-  "failedToLinkMedia": "Failed to link media: {error}",
-  "@failedToLinkMedia": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
+  "linkMediaFailed": "Could not link the media to the encounter. Please try again.",
   "link": "Link",
   "connectionLabel": "Connection",
   "connectionStatusConnected": "Connected",
@@ -978,6 +949,8 @@
   "exportIpsPdf": "Export IPS (PDF)",
   "addIpsToAppleWallet": "Add IPS to Apple Wallet",
   "addIpsToGoogleWallet": "Add IPS to Google Wallet",
+  "ipsExportFailed": "Couldn't export your health summary. Please try again.",
+  "walletPassFailed": "Couldn't add the pass to your wallet. Please try again.",
   "sourcesTitle": "Sources",
   "emergencyMedicalId": "Emergency Medical ID",
   "phoneLabel": "Phone",
@@ -1228,22 +1201,6 @@
       }
     }
   },
-  "couldNotOpenPdf": "Could not open PDF: {message}",
-  "@couldNotOpenPdf": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "errorOpeningPdf": "Error opening PDF: {error}",
-  "@errorOpeningPdf": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "shareStatusReadyToShare": "Ready to share",
   "shareStatusWaitingForSender": "Waiting for sender...",
   "shareStatusPermissionsRequired": "Permissions required",
@@ -1378,6 +1335,8 @@
   "loadingRelatedResources": "Loading related resources...",
   "noRelatedResourcesForEncounter": "No related resources found for this encounter",
   "cannotAttachToDocumentReference": "Cannot attach files to DocumentReference resources",
+  "attachFileFailed": "The file could not be attached. Please try again.",
+  "attachmentDeleteFailed": "The attachment could not be deleted. Please try again.",
   "deleteRecordOfType": "Delete {type}",
   "@deleteRecordOfType": {
     "placeholders": {
@@ -1463,25 +1422,13 @@
       }
     }
   },
-  "scanFailedWithError": "Scan failed: {error}",
-  "@scanFailedWithError": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
+  "scanFailed": "The scan failed. Please try again.",
   "noValidFilesFound": "No valid files found",
-  "failedToImportDocument": "Failed to import document: {error}",
-  "@failedToImportDocument": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
+  "importDocumentFailed": "Couldn't import the document. Please try again.",
   "couldNotOpenLink": "Could not open link. Please try again.",
+  "importFilesFailed": "Could not open the selected files. Please try again.",
   "continueProcessingOnDesktop": "Continue processing on Desktop",
+  "handoverSendFailed": "Could not send the document to the desktop. Please try again.",
   "deleteResourcesTitle": "Delete Resources",
   "switchToDiagnosticReport": "Switch to Diagnostic Report",
   "switchToEncounter": "Switch to Encounter",
@@ -2033,14 +1980,6 @@
       }
     }
   },
-  "sizeBytes": "{size} bytes",
-  "@sizeBytes": {
-    "placeholders": {
-      "size": {
-        "type": "String"
-      }
-    }
-  },
   "doseNumberOfTotal": "Dose {dose} of {total}",
   "@doseNumberOfTotal": {
     "placeholders": {
@@ -2337,14 +2276,7 @@
   "syncErrorEndpointNotFound": "Sync endpoint not found. Please check server configuration.",
   "syncErrorAuthentication": "Authentication failed. Please check your token.",
   "syncErrorInvalidFormat": "Invalid sync data format",
-  "syncErrorGeneric": "Data sync failed: {error}",
-  "@syncErrorGeneric": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
+  "syncErrorGeneric": "Data sync failed. Please try again.",
   "syncPlaceholderSubtitle": "Sync or update your data to view {recordType} records",
   "@syncPlaceholderSubtitle": {
     "placeholders": {
@@ -2394,5 +2326,16 @@
   },
   "desktopPairedPhone": "Paired phone",
   "desktopNewQrUnpairsHint": "A new QR code unpairs this phone; use it to pair a different one.",
-  "desktopNotFound": "Desktop not found. Make sure HealthWallet is open on it and both devices are on the same network."
+  "desktopNotFound": "Desktop not found. Make sure HealthWallet is open on it and both devices are on the same network.",
+  "desktopBackupSucceededMessage": "\"{name}\" has been saved. It holds {count} records.",
+  "@desktopBackupSucceededMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

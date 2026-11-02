@@ -36,6 +36,8 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   CommunicationService? _mpcTransport;
   Timer? _reconnectTimer;
   Timer? _networkTimer;
+  Timer? _vpnRecheckTimer;
+  final Future<List<NetworkInterface>> Function() _listInterfaces;
 
   @visibleForTesting
   static Duration initialReconnectDelay = const Duration(seconds: 3);
@@ -47,6 +49,8 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   /// reconnect by itself; a resume or the Reconnect button clears it.
   bool _stayDisconnected = false;
 
+  /// On the desktop the VPN check runs every [vpnRecheckInterval], so the
+  /// notice follows a VPN turned on or off within seconds, connected or not.
   CommunicationBloc(
     this._platform,
     this._pairingStorage,
@@ -55,7 +59,10 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     CommunicationService? mpcTransport,
     bool? mpcAvailable,
     this.onPhoneConnected,
-  }) : super(DesktopSyncState.initial()) {
+    Duration vpnRecheckInterval = const Duration(seconds: 5),
+    Future<List<NetworkInterface>> Function()? listInterfaces,
+  }) : _listInterfaces = listInterfaces ?? TcpService.ipv4Interfaces,
+       super(DesktopSyncState.initial()) {
     on<CommunicationInitialised>(_onInitialised, transformer: droppable());
     on<CommunicationPairingRequested>(
       _onPairingRequested,
@@ -99,6 +106,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
       _onNetworkChecked,
       transformer: droppable(),
     );
+    on<CommunicationVpnChecked>(_onVpnChecked, transformer: droppable());
 
     _mpcTransport =
         mpcTransport ??
@@ -148,6 +156,13 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
         }),
       );
 
+    if (_platform.isDesktop) {
+      _vpnRecheckTimer = Timer.periodic(
+        vpnRecheckInterval,
+        (_) => add(const CommunicationVpnChecked()),
+      );
+    }
+
     final mpc = _mpcTransport;
     if (mpc != null && _platform.isDesktop) {
       _subscriptions.add(
@@ -192,7 +207,9 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   }
 
   Future<DevicePairing> _newDesktopPairing() async {
-    final (:ip, :vpnDetected) = await TcpService.localAddress();
+    final (:ip, :vpnDetected) = await TcpService.localAddress(
+      await _listInterfaces(),
+    );
     var hostname = Platform.localHostname;
     if (hostname.endsWith('.local')) {
       hostname = hostname.substring(0, hostname.length - 6);
@@ -230,7 +247,9 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     Emitter<DesktopSyncState> emit,
     DevicePairing pairing,
   ) async {
-    final (:ip, :vpnDetected) = await TcpService.localAddress();
+    final (:ip, :vpnDetected) = await TcpService.localAddress(
+      await _listInterfaces(),
+    );
     final int port;
     try {
       port = await _tcpService.startServer(
@@ -283,7 +302,9 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   ) async {
     final pairing = state.pairedDevice;
     if (pairing == null) return;
-    final (:ip, :vpnDetected) = await TcpService.localAddress();
+    final (:ip, :vpnDetected) = await TcpService.localAddress(
+      await _listInterfaces(),
+    );
     final address = ip ?? '';
     if (address == pairing.lastIp && state.networkUnavailable == (ip == null)) {
       return;
@@ -304,6 +325,22 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
         deviceId: updated.deviceId,
         token: discoveryToken(updated.pairingKey, updated.deviceId),
       );
+    }
+  }
+
+  Future<void> _onVpnChecked(
+    CommunicationVpnChecked event,
+    Emitter<DesktopSyncState> emit,
+  ) async {
+    if (!_platform.isDesktop) return;
+
+    try {
+      final (ip: _, :vpnDetected) = await TcpService.localAddress(
+        await _listInterfaces(),
+      );
+      emit(state.copyWith(vpnDetected: vpnDetected));
+    } on SocketException catch (e) {
+      debugPrint('[Communication] VPN check failed: $e');
     }
   }
 
@@ -523,6 +560,8 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
             ),
           );
         }
+        // A full-tunnel VPN lets the phone connect and then drops the link.
+        if (_platform.isDesktop) add(const CommunicationVpnChecked());
         if (!wasConnected || _platform.isDesktop) return;
         if (_tcpService.lastPeerCloseReason == 'user') {
           // The desktop's user disconnected this phone on purpose.
@@ -700,6 +739,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   Future<void> close() {
     _reconnectTimer?.cancel();
     _networkTimer?.cancel();
+    _vpnRecheckTimer?.cancel();
     for (final sub in _subscriptions) {
       sub.cancel();
     }

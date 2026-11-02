@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:bloc/bloc.dart';
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
@@ -44,7 +45,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     on<ClearDemoData>(_onClearDemoData);
     on<RecordsSearch>(_onSearch);
     on<RecordsSearchExecuted>(_onSearchExecuted);
-    on<RecordsSharePressed>(_onRecordsSharePressed);
+    on<RecordsSharePressed>(_onRecordsSharePressed, transformer: droppable());
     on<RecordsSelectionToggled>(_onSelectionToggled);
     on<RecordsSelectionCleared>(_onSelectionCleared);
     on<RecordsSelectionModeToggled>(_onSelectionModeToggled);
@@ -363,6 +364,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsSharePressed event,
     Emitter<RecordsState> emit,
   ) async {
+    emit(state.copyWith(ipsExportStatus: IpsExportStatus.exporting));
     try {
       final export = await _recordsRepository.buildIpsExport(
         sourceId: event.sourceId,
@@ -388,17 +390,19 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       ).writeAsBytes(export.bytes);
       _lastIpsPdfPath = pdfFile.path;
 
-      unawaited(
-        SharePlus.instance.share(
-          ShareParams(
-            title: fileName,
-            files: [XFile(pdfFile.path)],
-            sharePositionOrigin: const Rect.fromLTWH(0, 0, 100, 100),
-          ),
+      // Awaited so a share sheet that fails to open counts as a failed
+      // export; it returns once the sheet is dismissed.
+      await SharePlus.instance.share(
+        ShareParams(
+          title: fileName,
+          files: [XFile(pdfFile.path)],
+          sharePositionOrigin: const Rect.fromLTWH(0, 0, 100, 100),
         ),
       );
+      emit(state.copyWith(ipsExportStatus: IpsExportStatus.idle));
     } catch (e, s) {
       logger.e('IPS export failed', e, s);
+      emit(state.copyWith(ipsExportStatus: IpsExportStatus.failed));
     }
   }
 

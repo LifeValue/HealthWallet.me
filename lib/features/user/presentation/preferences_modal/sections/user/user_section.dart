@@ -5,6 +5,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -62,13 +63,11 @@ class _UserSectionState extends State<UserSection> {
       listener: (context, state) {
         if (state.status.runtimeType.toString().contains('Failure')) {
           // Show error message
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
+          AppSnackBar.show(
+            context,
+            message:
                 '${context.l10n.failedToUpdateDisplayName}: ${state.status.toString()}',
-              ),
-              backgroundColor: context.colorScheme.error,
-            ),
+            type: AppSnackBarType.error,
           );
         }
       },

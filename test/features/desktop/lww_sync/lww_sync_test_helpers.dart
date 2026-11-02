@@ -13,7 +13,7 @@ import 'package:health_wallet/features/desktop/communication/data/services/tcp_s
 
 /// Opens the real app database on an in-memory SQLite connection, so the
 /// schema, the `updated_at` triggers and the constraints are the production
-/// ones, foreign keys included.
+/// ones, foreign keys included (the app turns them on in `_openConnection`).
 AppDatabase openTestDatabase() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   return AppDatabase(
@@ -232,10 +232,11 @@ Future<void> insertNote(
   int? updatedAt,
   int? deletedAt,
   String resourceId = 'obs-1',
+  String? sourceId,
 }) => db.customStatement(
-  'INSERT INTO record_notes (id, resource_id, content, timestamp, '
-  'updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?)',
-  [id, resourceId, content, ms(t0) ~/ 1000, updatedAt, deletedAt],
+  'INSERT INTO record_notes (id, resource_id, source_id, content, timestamp, '
+  'updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+  [id, resourceId, sourceId, content, ms(t0) ~/ 1000, updatedAt, deletedAt],
 );
 
 Future<void> insertProcessingSession(

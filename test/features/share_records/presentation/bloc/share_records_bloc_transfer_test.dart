@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -41,6 +42,10 @@ class _SilentTransport implements ShareMessageTransport {
 class _FakeShareRecordsService extends Fake implements ShareRecordsService {
   String? preparedPath = _payloadPath;
   String? Function()? preparedPathFor;
+
+  /// When set, writing the payload waits for it, so a test can act while the
+  /// payload is being written.
+  Completer<void>? prepareGate;
   Uint8List? receivedFileBytes;
   final calls = <String>[];
   final cleanedFiles = <String>[];
@@ -98,10 +103,17 @@ class _FakeShareRecordsService extends Fake implements ShareRecordsService {
     SecureShareSession session,
   ) async {
     calls.add('prepareFilesForSending');
-    // Seals like the real service, which starts the session's key exchange.
-    await session.seal(utf8.encode('{}'));
+    // Seals like the real service, which starts the session's key exchange,
+    // and like it returns null when sealing fails (a closed session).
+    try {
+      await session.seal(utf8.encode('{}'));
+    } on SecureShareCancelled {
+      return null;
+    }
+    calls.add('payloadSealed');
     // Yields like the real file write, so concurrent handlers interleave.
     await Future<void>.delayed(Duration.zero);
+    await prepareGate?.future;
     return preparedPathFor?.call() ?? preparedPath;
   }
 
@@ -191,18 +203,18 @@ void main() {
     await bloc.close();
   }
 
-  /// Waits until the BLoC has connected [times] times or failed; sealing the
-  /// payload generates real keys, which outlasts the event queue.
-  Future<void> connected({int times = 1}) async {
-    for (var i = 0; i < 300; i++) {
-      if (service.calls.where((c) => c == 'selectPeer a').length >= times ||
-          bloc.state.phase == SharePhase.error) {
-        break;
-      }
+  /// Sealing a payload generates real keys, which takes longer than one pass
+  /// of the event queue on a slow machine (CI): wait until [done], or about
+  /// 3 s.
+  Future<void> waitFor(bool Function() done) async {
+    for (var i = 0; i < 300 && !done(); i++) {
       await Future<void>.delayed(const Duration(milliseconds: 10));
     }
     await settle();
   }
+
+  int connections(String deviceId) =>
+      service.calls.where((c) => c == 'selectPeer $deviceId').length;
 
   /// Puts the BLoC in send mode with one record selected and a peer chosen,
   /// so the payload has been written to temp.
@@ -218,7 +230,9 @@ void main() {
         ),
       )
       ..add(const ShareRecordsEvent.peerSelected('a'));
-    await connected();
+    await waitFor(
+      () => connections('a') >= 1 || bloc.state.phase == SharePhase.error,
+    );
   }
 
   group('sending', () {
@@ -249,9 +263,35 @@ void main() {
       service.preparedPath = '/tmp/share_second.bin';
 
       bloc.add(const ShareRecordsEvent.peerSelected('a'));
-      await connected(times: 2);
+      await waitFor(() => connections('a') == 2);
 
       expect(service.cleanedFiles, [_payloadPath]);
+    });
+
+    test('closing the screen while the payload is written deletes it and '
+        'starts no key exchange', () async {
+      final gate = Completer<void>();
+      service.prepareGate = gate;
+      bloc
+        ..add(const ShareRecordsEvent.sendModeSelected())
+        ..add(
+          ShareRecordsEvent.recordToggled(record(observationJson(), id: 'o1')),
+        )
+        ..add(const ShareRecordsEvent.peerSelected('a'));
+      // Sealed, and the file is being written.
+      await waitFor(() => service.calls.contains('payloadSealed'));
+
+      // Closing waits for the running handler, which waits for the write:
+      // start closing, then let the write finish.
+      final closing = closeBloc();
+      await settle();
+      gate.complete();
+      await closing;
+      await waitFor(() => service.cleanedFiles.isNotEmpty);
+
+      // Nothing else would delete it: the bloc's own cleanup already ran.
+      expect(service.cleanedFiles, [_payloadPath]);
+      expect(connections('a'), 0);
     });
 
     test('two quick peer selections run one after the other', () async {
@@ -264,9 +304,10 @@ void main() {
         )
         ..add(const ShareRecordsEvent.peerSelected('a'))
         ..add(const ShareRecordsEvent.peerSelected('a'));
-      await connected(times: 2);
+      await waitFor(() => connections('a') == 2);
 
       await closeBloc();
+      await waitFor(() => service.cleanedFiles.length == 2);
 
       // Concurrent handlers would both write before either deletes, leaking
       // the first payload.

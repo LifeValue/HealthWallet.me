@@ -83,7 +83,8 @@ void main() {
     bloc.add(RecordNotesNoteDeleted(note: bloc.state.notes.single));
     await shows(const []);
 
-    expect(await db.select(db.recordNotes).get(), isEmpty);
+    // Kept as a tombstone for the paired device.
+    expect((await db.select(db.recordNotes).getSingle()).deletedAt, isNotNull);
   });
 
   test('cancelling the editor saves nothing', () async {

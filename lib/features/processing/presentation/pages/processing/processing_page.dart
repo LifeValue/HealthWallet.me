@@ -11,6 +11,7 @@ import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
@@ -204,7 +205,9 @@ class _ProcessingPageState extends State<ProcessingPage> {
         if (state.status == const PipelineStatus.success()) {
           try {
             getIt<LwwSyncBloc>().add(const SyncTriggered());
-          } catch (_) {}
+          } catch (e) {
+            logger.w('Could not start a desktop sync after processing', e);
+          }
           final sessionToClear = displayedSession;
           final isImport =
               displayedSession.origin == ProcessingOrigin.import ||

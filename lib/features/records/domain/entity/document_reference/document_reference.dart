@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/utils/file_size_formatter.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -355,17 +356,17 @@ abstract class DocumentReference
         ),
       );
 
-      // Size
-      if (firstContent.attachment.size != null) {
-        final sizeValue = firstContent.attachment.size!.valueString;
-        ResourceFieldMapper.addIfNotNull(
-          infoLines,
-          ResourceFieldMapper.createAttachmentLine(
-            sizeValue != null ? l10n.sizeBytes(sizeValue) : null,
-            prefix: l10n.fieldSize,
-          ),
-        );
-      }
+      // Size, in bytes in FHIR
+      final sizeBytes = int.tryParse(
+        firstContent.attachment.size?.valueString ?? '',
+      );
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createAttachmentLine(
+          sizeBytes == null ? null : FileSizeFormatter.format(sizeBytes),
+          prefix: l10n.fieldSize,
+        ),
+      );
 
       // Language
       final language = firstContent.attachment.language?.toString();

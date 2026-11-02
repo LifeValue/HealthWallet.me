@@ -124,6 +124,18 @@ void main() {
       expect(BackupEntry.fromJson(meta as Map<String, dynamic>), entry);
     });
 
+    test('counts only records that are not deleted', () async {
+      await insertResource(db, 'r1');
+      await insertResource(db, 'r2');
+      await db.customStatement(
+        "UPDATE fhir_resource SET deleted_at = 1, updated_at = 1 WHERE id = 'r2'",
+      );
+
+      final entry = await service.createSnapshot();
+
+      expect(entry.recordCount, 1);
+    });
+
     test('sanitises a custom name into the file name', () async {
       final entry = await service.createSnapshot(
         name: '  Before trip/2026: v1!  ',
@@ -359,6 +371,66 @@ void main() {
         expect(row.data['uuid'], 'legacy-${row.data['id']}');
       },
     );
+
+    group('with foreign keys on, as in the app', () {
+      late AppDatabase fkDb;
+      late BackupService fkService;
+
+      setUp(() {
+        fkDb = AppDatabase(
+          NativeDatabase.memory(
+            setup: (raw) => raw.execute('PRAGMA foreign_keys = ON'),
+          ),
+        );
+        fkService = BackupService(fkDb, folderAccess);
+      });
+
+      tearDown(() => fkDb.close());
+
+      Future<void> insertSourceWithNote(AppDatabase db, String id) async {
+        await db.customStatement(
+          'INSERT INTO sources (id, platform_name) VALUES (?, ?)',
+          [id, 'Clinic'],
+        );
+        await db.customStatement(
+          'INSERT INTO record_notes (resource_id, source_id, content, '
+          'timestamp) VALUES (?, ?, ?, ?)',
+          ['r1', id, 'note of $id', 0],
+        );
+      }
+
+      test('restores notes that point at a source', () async {
+        await insertSourceWithNote(fkDb, 's1');
+        final entry = await fkService.createSnapshot();
+        await insertSourceWithNote(fkDb, 's2');
+
+        await fkService.restoreFromFile(entry.filePath);
+
+        expect(await notes(fkDb), ['note of s1']);
+        final sources = await fkDb.customSelect('SELECT id FROM sources').get();
+        expect(sources.map((r) => r.data['id']), ['s1']);
+      });
+
+      test('a backup whose note points at a missing source fails and leaves '
+          'the data alone', () async {
+        await insertSourceWithNote(fkDb, 's1');
+        final entry = await fkService.createSnapshot();
+        await editBackup(
+          entry,
+          (backup) => backup.customStatement('DELETE FROM sources'),
+        );
+
+        await expectLater(
+          fkService.restoreFromFile(entry.filePath),
+          throwsA(isA<SqliteException>()),
+        );
+
+        expect(await notes(fkDb), ['note of s1']);
+        final sources = await fkDb.customSelect('SELECT id FROM sources').get();
+        expect(sources.map((r) => r.data['id']), ['s1']);
+        expect(await attachedSchemas(), isNot(contains('backup_db')));
+      });
+    });
 
     test('keeps the backed-up updated_at, so sync sees no new edits', () async {
       await db.customStatement(

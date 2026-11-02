@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:health_wallet/core/data/local/app_database.dart' as db;
+import 'package:health_wallet/core/data/local/soft_delete.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart'
@@ -151,7 +152,8 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
   @override
   Future<List<domain.Source>> getSources({String? patientId}) async {
     // First get unique source IDs from FHIR resources
-    final query = _appDatabase.select(_appDatabase.fhirResource);
+    final query = _appDatabase.select(_appDatabase.fhirResource)
+      ..where((tbl) => tbl.deletedAt.isNull());
 
     if (patientId != null) {
       query.where((tbl) => tbl.sourceId.equals(patientId));
@@ -168,7 +170,9 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
         .toList();
 
     // Get all sources from Sources table (including those without resources)
-    final allSources = await _appDatabase.select(_appDatabase.sources).get();
+    final allSources = await (_appDatabase.select(
+      _appDatabase.sources,
+    )..where((s) => s.deletedAt.isNull())).get();
     final allSourceIds = allSources.map((source) => source.id).toSet();
 
     // Combine source IDs from both FHIR resources and Sources table
@@ -265,13 +269,15 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
         _appDatabase.sources,
       )..where((s) => s.id.equals('wallet'))).getSingleOrNull();
 
-      if (existingWallet != null) {
+      if (existingWallet != null && existingWallet.deletedAt == null) {
         // Wallet source already exists, no need to create
         return;
       }
 
-      final now = DateTime.now();
-      // Create Wallet source in sources table
+      // Create the Wallet source, replacing a deleted one. `updated_at` is
+      // left to the trigger, which stamps it in milliseconds (drift would
+      // store seconds), so the new row beats the older tombstone on the
+      // peer.
       await _appDatabase
           .into(_appDatabase.sources)
           .insert(
@@ -280,9 +286,9 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
               platformName: const Value('wallet'),
               labelSource: const Value('Wallet'),
               platformType: const Value('wallet'),
-              createdAt: Value(now),
+              createdAt: Value(DateTime.now()),
             ),
-            mode: InsertMode.insertOrIgnore,
+            mode: InsertMode.insertOrReplace,
           );
     } catch (e) {
       logger.e('Error creating wallet source: $e');
@@ -294,8 +300,10 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
   @override
   Future<void> createDemoDataSource() async {
     try {
-      final now = DateTime.now();
-      // Create demo_data source in sources table with correct name for display logic
+      // Create demo_data source in sources table with correct name for
+      // display logic. Replacing the row clears a tombstone; `updated_at` is
+      // left to the trigger, in milliseconds, so the new row beats the
+      // tombstone (see createWalletSource).
       await _appDatabase
           .into(_appDatabase.sources)
           .insert(
@@ -304,7 +312,7 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
               platformName: const Value('wallet-manual'), // Platform name
               labelSource: const Value('Demo Data'), // Custom display label
               platformType: const Value('wallet'),
-              createdAt: Value(now),
+              createdAt: Value(DateTime.now()),
             ),
             mode: InsertMode.insertOrReplace,
           );
@@ -314,29 +322,11 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
     }
   }
 
+  /// Soft-deletes the source, its records and their notes, so the delete
+  /// reaches the paired device (see [SoftDelete]).
   @override
-  Future<void> deleteSource(String sourceId) async {
-    // Notes refer to the source, so they go first; all or nothing.
-    await _appDatabase.transaction(() async {
-      final resourceIds = _appDatabase.selectOnly(_appDatabase.fhirResource)
-        ..addColumns([_appDatabase.fhirResource.id])
-        ..where(_appDatabase.fhirResource.sourceId.equals(sourceId));
-      await (_appDatabase.delete(_appDatabase.recordNotes)..where(
-            (note) =>
-                note.sourceId.equals(sourceId) |
-                note.resourceId.isInQuery(resourceIds),
-          ))
-          .go();
-
-      await (_appDatabase.delete(
-        _appDatabase.fhirResource,
-      )..where((tbl) => tbl.sourceId.equals(sourceId))).go();
-
-      await (_appDatabase.delete(
-        _appDatabase.sources,
-      )..where((tbl) => tbl.id.equals(sourceId))).go();
-    });
-  }
+  Future<void> deleteSource(String sourceId) =>
+      _appDatabase.softDeleteSource(sourceId);
 
   /// `updated_at` holds the sync stamp in milliseconds, which drift's
   /// DateTime column reads as seconds.

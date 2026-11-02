@@ -71,7 +71,9 @@ class DeviceCapabilityService {
             return GpuType.integratedOnly;
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        // A failed GPU probe falls through to the integrated-GPU default.
+      }
       return GpuType.integratedOnly;
     }
 
@@ -87,7 +89,9 @@ class DeviceCapabilityService {
             return GpuType.integratedOnly;
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        // A failed GPU probe falls through to the integrated-GPU default.
+      }
       return GpuType.integratedOnly;
     }
 

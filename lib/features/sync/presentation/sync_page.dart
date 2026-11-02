@@ -6,6 +6,7 @@ import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/desktop/communication/data/models/device_pairing.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
@@ -107,13 +108,16 @@ class _SyncPageState extends State<SyncPage> {
 
   void _handleQRCodeDetected(BuildContext context, String qrData) {
     final messenger = ScaffoldMessenger.of(context);
-    void tell(String message) =>
-        messenger.showSnackBar(SnackBar(content: Text(message)));
+    void tell(String message, {AppSnackBarType type = AppSnackBarType.error}) =>
+        AppSnackBar.showOn(messenger, message: message, type: type);
 
     switch (DevicePairing.parseQr(qrData)) {
       case ValidPairingQr(:final pairing):
         context.read<SyncBloc>().add(const SyncCancel());
-        tell(context.l10n.pairedWithDevice(pairing.deviceName));
+        tell(
+          context.l10n.pairedWithDevice(pairing.deviceName),
+          type: AppSnackBarType.success,
+        );
         getIt<CommunicationBloc>().add(
           CommunicationPairingCompleted(pairing: pairing),
         );
