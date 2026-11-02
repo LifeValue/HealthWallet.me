@@ -303,8 +303,11 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       final directory = await holderService.load();
       final holder = holderService.matchScanned(patient, directory);
       if (holder != null) {
+        // The unnamed default holder is proposed, not matched: the scan's
+        // details are kept to name them.
         return StagedPatient(
           existing: holder.representativePatient,
+          draft: holderService.isUnnamed(holder) ? patient : null,
           mode: ImportMode.linkExisting,
         );
       }
@@ -576,27 +579,16 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     final List<IFhirResource> resourcesToSave = [];
     if (activeSession.patient.mode == ImportMode.linkExisting &&
         activeSession.patient.existing != null) {
-      final Patient existingPatient = activeSession.patient.existing!;
-      final walletSource = await holderService.walletSourceForPatient(
-        existingPatient.id,
-        patientName: existingPatient.displayTitle,
+      // The person's own wallet Patient, never the row the match found
+      // (it may be a provider's); the scanned fields fill only what it
+      // leaves empty.
+      final written = await holderService.walletPatientOf(
+        activeSession.patient.existing!.id,
+        scanned: activeSession.patient.draft,
       );
-      subjectId = existingPatient.id;
-      sourceId = walletSource.id;
-      holderId = walletSource.holderId ?? existingPatient.id;
-
-      if (activeSession.patient.draft != null) {
-        final draftWithExistingId = activeSession.patient.draft!.copyWith(
-          id: existingPatient.id,
-        );
-        resourcesToSave.add(
-          draftWithExistingId.toFhirResource(
-            sourceId: existingPatient.sourceId,
-            subjectId: '',
-            encounterId: '',
-          ),
-        );
-      }
+      subjectId = written.patient.id;
+      sourceId = written.patient.sourceId;
+      holderId = written.holderId;
     } else {
       // Someone new: a holder of their own, named after their Patient row.
       final MappingPatient draftPatient = activeSession.patient.draft!;

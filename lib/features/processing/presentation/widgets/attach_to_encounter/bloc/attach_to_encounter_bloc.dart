@@ -68,6 +68,7 @@ class AttachToEncounterBloc
       emit(
         state.copyWith(
           existingPatients: uniquePatients,
+          scannedPatient: event.patient.draft,
           selectedPatient: selectedPatient,
           patient: event.patient.copyWith(
             draft: (selectedPatient is MappingPatient)
@@ -104,11 +105,11 @@ class AttachToEncounterBloc
     AttachToEncounterPatientChanged event,
     Emitter<AttachToEncounterState> emit,
   ) async {
-    if (event.patient is MappingPatient) {
+    if (event.patient case final MappingPatient scanned) {
       emit(
         state.copyWith(
           patient: StagedPatient(
-            draft: state.patient.draft,
+            draft: scanned,
             mode: ImportMode.createNew,
           ),
           existingEncounters: [],
@@ -121,7 +122,9 @@ class AttachToEncounterBloc
       emit(
         state.copyWith(
           selectedPatient: event.patient,
-          patient: state.patient.copyWith(
+          // The scanned fields are dropped, as the user was told; kept, they
+          // would be written into the chosen person.
+          patient: StagedPatient(
             existing: event.patient,
             mode: ImportMode.linkExisting,
           ),

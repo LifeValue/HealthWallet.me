@@ -409,11 +409,14 @@ class PatientEditService {
     }
   }
 
+  /// Saves the blood type of the person [patient] belongs to on their own
+  /// wallet Patient, made if they have none; never on a provider's row.
   Future<void> updateBloodTypeObservation(
-    Patient patient,
+    Patient person,
     String bloodType,
   ) async {
     try {
+      final patient = (await _holderService.walletPatientOf(person.id)).patient;
       final existingObservations = await _recordsRepository
           .getBloodTypeObservations(
             patientId: patient.id,

@@ -307,7 +307,9 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
 
       final availableSources = event.availableSources.cast<Source>();
 
-      await _patientEditService.savePatientEdits(
+      // The row the edit went to: the person's wallet copy when the row
+      // shown came from a provider.
+      final saved = await _patientEditService.savePatientEdits(
         currentPatient: currentPatient,
         given: event.given,
         family: event.family,
@@ -325,11 +327,11 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
           : <String>{};
 
       final currentBloodType = await _patientEditService.getCurrentBloodType(
-        currentPatient,
+        saved,
       );
       if (currentBloodType != event.bloodType) {
         await _patientEditService.updateBloodTypeObservation(
-          currentPatient,
+          saved,
           event.bloodType,
         );
       }

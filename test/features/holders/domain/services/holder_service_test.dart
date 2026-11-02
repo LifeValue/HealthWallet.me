@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -30,6 +32,7 @@ class _LocalSyncRepository extends Fake implements SyncRepository {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
   late AppDatabase db;
@@ -274,6 +277,79 @@ void main() {
         service.matchScanned(scanned(given: 'Ana'), directory)?.id,
         'default_patient',
       );
+    });
+  });
+
+  group("the person's wallet Patient", () {
+    Future<Map<String, dynamic>> rawOf(String id) async => jsonDecode(
+      (await db
+              .customSelect(
+                'SELECT resource_raw FROM fhir_resource WHERE id = ?',
+                variables: [Variable(id)],
+              )
+              .getSingle())
+          .read<String>('resource_raw'),
+    ) as Map<String, dynamic>;
+
+    test('a provider-only person gets a copy in their wallet source, and the '
+        "provider's row is left as it is", () async {
+      await source('epic', holderId: 'p1');
+      await patient('p1', 'epic', given: 'Jane', family: 'Doe');
+      final before = await rawOf('p1');
+
+      final first = await service.walletPatientOf('p1');
+      expect(first.holderId, 'p1');
+      expect(first.patient.sourceId, 'wallet-p1');
+      expect(first.patient.id, isNot('p1'));
+      expect((await rawOf(first.patient.id))['name'], before['name']);
+      expect(await rawOf('p1'), before);
+
+      final again = await service.walletPatientOf('p1');
+      expect(again.patient.id, first.patient.id);
+    });
+
+    test('scanned details fill only what the row leaves empty', () async {
+      await source('wallet-jane', holderId: 'jane');
+      await patient('jane', 'wallet-jane', given: 'Jane', family: 'Doe');
+
+      final written = await service.walletPatientOf(
+        'jane',
+        scanned: const MappingPatient(
+          id: 'draft',
+          givenName: MappedProperty(value: 'Janet'),
+          familyName: MappedProperty(value: 'Smith'),
+          dateOfBirth: MappedProperty(value: '1980-04-02'),
+        ),
+      );
+
+      final raw = await rawOf(written.patient.id);
+      expect(written.patient.id, 'jane');
+      expect(raw['birthDate'], '1980-04-02');
+      expect((raw['name'] as List).single['family'], 'Doe');
+    });
+
+    test('the default holder takes the scanned name and identifier', () async {
+      await placeholder();
+      await db.customStatement(
+        'UPDATE fhir_resource SET resource_raw = json_set(resource_raw, '
+        "'\$.identifier', json('[{\"value\":\"default_patient\"}]')) "
+        "WHERE id = 'default_patient'",
+      );
+
+      final written = await service.walletPatientOf(
+        'default_patient',
+        scanned: const MappingPatient(
+          id: 'draft',
+          givenName: MappedProperty(value: 'Ana'),
+          familyName: MappedProperty(value: 'Pop'),
+          patientIdentifier: MappedProperty(value: '1800402123456'),
+        ),
+      );
+
+      final raw = await rawOf('default_patient');
+      expect(written.patient.title, 'Pop, Ana');
+      expect((raw['name'] as List).single['given'], ['Ana']);
+      expect((raw['identifier'] as List).single['value'], '1800402123456');
     });
   });
 }
