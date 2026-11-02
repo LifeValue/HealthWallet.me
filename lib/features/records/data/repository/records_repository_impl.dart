@@ -709,17 +709,33 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
   @override
   Future<void> clearDemoData() async {
+    // The demo person's sources: the demo data and what was scanned or
+    // attached for them, which would otherwise outlive their patient.
+    final sourceIds = [
+      'demo_data',
+      for (final row
+          in await _database
+              .customSelect(
+                'SELECT id FROM sources WHERE deleted_at IS NULL '
+                "AND id != 'demo_data' AND holder_id = "
+                "(SELECT holder_id FROM sources WHERE id = 'demo_data')",
+              )
+              .get())
+        row.read<String>('id'),
+    ];
     final demoRows = await _datasource.getResources(
       resourceTypes: [],
-      sourceId: 'demo_data',
+      sourceIds: sourceIds,
     );
     final fileUrls = {
       for (final row in demoRows) ..._attachmentFileUrls(row.resourceRaw),
     };
 
-    // Tombstones the source, its records and their notes in one
+    // Each tombstones the source, its records and their notes in one
     // transaction.
-    await _syncLocalDataSource.deleteSource('demo_data');
+    for (final sourceId in sourceIds) {
+      await _syncLocalDataSource.deleteSource(sourceId);
+    }
 
     for (final url in fileUrls) {
       await _deleteFileIfUnused(url);
