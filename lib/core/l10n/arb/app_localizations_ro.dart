@@ -2022,6 +2022,18 @@ class AppLocalizationsRo extends AppLocalizations {
   String get backupStatusNotConnected => 'Neconectat';
 
   @override
+  String get backupStatusNoFolder => 'Fără folder de backup';
+
+  @override
+  String get backupStatusNoDesktopFolder => 'Fără folder pe desktop';
+
+  @override
+  String get backupNoFolderChosen => 'Niciun folder ales';
+
+  @override
+  String get chooseLabel => 'Alege';
+
+  @override
   String get exportIpsPdf => 'Exportă IPS (PDF)';
 
   @override

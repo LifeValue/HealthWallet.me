@@ -29,6 +29,7 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
   final AppStringsProvider _strings;
 
   StreamSubscription? _messageSub;
+  StreamSubscription? _linkSub;
   static const _chunkSize = 64 * 1024;
 
   /// `backup.error` code sent when the desktop has no backup folder. Desktops
@@ -48,12 +49,19 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     on<PhoneBackupRequested>(_onPhoneBackupRequested);
     on<RemoteBackupStatusChanged>(_onRemoteBackupStatusChanged);
     on<RemoteBackupStatusReceived>(_onRemoteBackupStatusReceived);
+    on<RemoteLinkLost>(_onRemoteLinkLost);
 
     _listenForMessages();
   }
 
   void _listenForMessages() {
     final isMobile = getIt<AppPlatform>().isMobile;
+
+    if (isMobile) {
+      _linkSub = _tcpService.connectionState
+          .where((s) => s == ConnectionState.disconnected)
+          .listen((_) => add(const RemoteLinkLost()));
+    }
 
     _messageSub = _tcpService.messages.listen((message) {
       if (message.type != MessageType.data) return;
@@ -340,10 +348,13 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
         state.copyWith(
           backupPath: path,
           backupHistory: history,
+          hasUserSelectedPath: false,
           selectedBackup: null,
           error: null,
         ),
       );
+
+      sendBackupStatus();
     } catch (e) {
       emit(
         state.copyWith(
@@ -434,9 +445,16 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     );
   }
 
+  /// A backup the desktop was making can't reach this phone any more, and
+  /// its folder may change before the next connection reports it again.
+  void _onRemoteLinkLost(RemoteLinkLost event, Emitter<BackupState> emit) {
+    emit(state.copyWith(isBackingUp: false, desktopBackupReady: null));
+  }
+
   @override
   Future<void> close() {
     _messageSub?.cancel();
+    _linkSub?.cancel();
     return super.close();
   }
 

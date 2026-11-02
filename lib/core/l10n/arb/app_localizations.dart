@@ -3671,6 +3671,30 @@ abstract class AppLocalizations {
   /// **'Not connected'**
   String get backupStatusNotConnected;
 
+  /// No description provided for @backupStatusNoFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'No backup folder'**
+  String get backupStatusNoFolder;
+
+  /// No description provided for @backupStatusNoDesktopFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'No folder on desktop'**
+  String get backupStatusNoDesktopFolder;
+
+  /// No description provided for @backupNoFolderChosen.
+  ///
+  /// In en, this message translates to:
+  /// **'No folder chosen'**
+  String get backupNoFolderChosen;
+
+  /// No description provided for @chooseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose'**
+  String get chooseLabel;
+
   /// No description provided for @exportIpsPdf.
   ///
   /// In en, this message translates to:

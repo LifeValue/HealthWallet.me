@@ -2021,6 +2021,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get backupStatusNotConnected => 'Nicht verbunden';
 
   @override
+  String get backupStatusNoFolder => 'Kein Backup-Ordner';
+
+  @override
+  String get backupStatusNoDesktopFolder => 'Kein Ordner am Desktop';
+
+  @override
+  String get backupNoFolderChosen => 'Kein Ordner gewählt';
+
+  @override
+  String get chooseLabel => 'Auswählen';
+
+  @override
   String get exportIpsPdf => 'IPS exportieren (PDF)';
 
   @override

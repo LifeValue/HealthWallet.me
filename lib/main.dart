@@ -10,6 +10,7 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/services/deep_link_service.dart';
 import 'package:health_wallet/core/services/share_intent_service.dart';
 import 'package:health_wallet/core/services/startup_hardening.dart';
+import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/discovery_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
@@ -45,6 +46,9 @@ void main() async {
   );
 
   getIt<CommunicationBloc>().add(const CommunicationInitialised());
+  // Listening before the first connection, so the desktop's backup status
+  // sent on connect isn't missed.
+  getIt<BackupBloc>();
 
   unawaited(getIt<ShareIntentService>().initialize());
   unawaited(getIt<DeepLinkService>().initialize());

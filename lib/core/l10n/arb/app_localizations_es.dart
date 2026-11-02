@@ -2017,6 +2017,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get backupStatusNotConnected => 'No conectado';
 
   @override
+  String get backupStatusNoFolder => 'Sin carpeta de respaldos';
+
+  @override
+  String get backupStatusNoDesktopFolder => 'Sin carpeta en el escritorio';
+
+  @override
+  String get backupNoFolderChosen => 'Ninguna carpeta elegida';
+
+  @override
+  String get chooseLabel => 'Elegir';
+
+  @override
   String get exportIpsPdf => 'Exportar IPS (PDF)';
 
   @override

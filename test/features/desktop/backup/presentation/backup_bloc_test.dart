@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/widgets.dart' hide ConnectionState;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
@@ -6,6 +6,7 @@ import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/desktop/backup/data/services/backup_service.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
+import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 
 import '../../desktop_test_fakes.dart';
 
@@ -59,6 +60,32 @@ void main() {
     test('with an unknown code is a generic backup failure', () async {
       expect(await errorFor({'code': 'disk_full'}), ro.desktopBackupFailed);
     });
+  });
+
+  group('on the phone, the desktop\'s backup folder', () {
+    setUp(() => bloc = buildBloc(AppPlatform.mobile));
+
+    test('is unknown until the desktop reports it', () async {
+      expect(bloc.state.desktopBackupReady, isNull);
+
+      tcp.deliver('backup.status', {'ready': false, 'count': 0});
+      await bloc.stream.firstWhere((s) => s.desktopBackupReady != null);
+      expect(bloc.state.desktopBackupReady, isFalse);
+    });
+
+    test(
+      'is unknown again, and no backup is running, once the link drops',
+      () async {
+        tcp.deliver('backup.status', {'ready': true, 'count': 1});
+        await bloc.stream.firstWhere((s) => s.desktopBackupReady == true);
+        tcp.deliver('backup.status', {'ready': true, 'backing_up': true});
+        await bloc.stream.firstWhere((s) => s.isBackingUp);
+
+        tcp.emitState(ConnectionState.disconnected);
+        await bloc.stream.firstWhere((s) => !s.isBackingUp);
+        expect(bloc.state.desktopBackupReady, isNull);
+      },
+    );
   });
 
   test(

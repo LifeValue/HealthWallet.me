@@ -650,15 +650,19 @@ class _BackupMiniCard extends StatelessWidget {
           final hasBackup = backupState.backupHistory.isNotEmpty;
           final hasRemoteBackup = backupState.desktopLastBackupTime != null;
           final hasAnyBackup = hasBackup || hasRemoteBackup;
+          // Backups go only to a folder the user chose.
+          final noFolder = !backupState.hasUserSelectedPath;
           final color = backupState.isBackingUp
               ? AppColors.primary
-              : hasAnyBackup
+              : hasAnyBackup && !noFolder
               ? AppColors.success
               : AppColors.warning;
 
           String subtitle;
           if (backupState.isBackingUp) {
             subtitle = context.l10n.backupStatusWorking;
+          } else if (noFolder) {
+            subtitle = context.l10n.backupStatusNoFolder;
           } else if (hasBackup) {
             subtitle = DateFormatUtils.getSincePretty(
               backupState.backupHistory.first.timestamp,

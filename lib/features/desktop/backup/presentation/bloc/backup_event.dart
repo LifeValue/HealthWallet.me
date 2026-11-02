@@ -27,4 +27,7 @@ sealed class BackupEvent with _$BackupEvent {
     required int count,
     DateTime? lastBackupTime,
   }) = RemoteBackupStatusReceived;
+
+  /// Phone: the link to the desktop dropped.
+  const factory BackupEvent.remoteLinkLost() = RemoteLinkLost;
 }

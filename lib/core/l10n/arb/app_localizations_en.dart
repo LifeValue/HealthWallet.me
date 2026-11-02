@@ -1997,6 +1997,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupStatusNotConnected => 'Not connected';
 
   @override
+  String get backupStatusNoFolder => 'No backup folder';
+
+  @override
+  String get backupStatusNoDesktopFolder => 'No folder on desktop';
+
+  @override
+  String get backupNoFolderChosen => 'No folder chosen';
+
+  @override
+  String get chooseLabel => 'Choose';
+
+  @override
   String get exportIpsPdf => 'Export IPS (PDF)';
 
   @override
