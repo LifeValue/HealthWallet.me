@@ -67,7 +67,7 @@ Envied reads `.env`: `HUGGING_FACE_TOKEN` (model downloads), `GOOGLE_WALLET_ISSU
 
 Capture hands files to `ProcessingBloc` with a `DocumentImported` event.
 
-Fasten sync flow: parse QR → create wallet source → create default patient → clear demo data → authenticate with a bearer token → sync FHIR resources from the backend sequentially.
+Fasten sync flow: parse QR → create the default holder if the wallet has no patient (a failure doesn't stop the sync) → clear demo data → authenticate with a bearer token → sync FHIR resources from the backend sequentially → link the new sources to holders on the next read (see Holders).
 
 ## Processing pipeline
 
@@ -213,7 +213,7 @@ Deletes travel as `deleted_at` tombstones:
 4. Every save or insert of a row clears `deleted_at` (upserts write `deleted_at = NULL`, and the `INSERT OR REPLACE` paths replace the whole row). The demo and wallet source rows leave `updated_at` to the trigger rather than drift (which stores seconds). The trigger stamps in milliseconds and never moves a row's stamp back, so a re-created row beats its tombstone. In-place updates of a single column (raw JSON, specialty, note text, encounter link) leave `deleted_at` as it is, so they never resurrect a row.
 5. `cleanupTombstones` (on `LwwSyncInitialised`) hard-deletes tombstones older than 30 days: notes first, then records, then sources, and a source stays while a newer note still points at it (`record_notes.source_id` is a foreign key the app enforces). A device offline for longer than that can bring the row back; this limit is accepted.
 
-Reset (`AppDataResetService`), `deleteAllFhirResources`, `deleteAllSources` and backup restore stay local hard wipes.
+Reset (`AppDataResetService`) and backup restore stay local hard wipes.
 
 Conflicts: the later `updated_at` wins; on a tie the row from the larger device id wins, the same answer on both sides; a row identical to the local one is not written. Incoming columns are kept only if the table has them. A local `DocumentReference` with a missing attachment loses to the incoming row, and an incoming one keeps the local file of an attachment that it names differently.
 

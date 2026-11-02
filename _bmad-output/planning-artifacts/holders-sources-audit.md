@@ -48,7 +48,7 @@ Decided with the product owner on 2026-11-02:
 
 ## Status
 
-On branch `feature/holders-and-sources` from `develop` at `b079f4f5`. Nothing has run on a device yet.
+On branch `feature/holders-and-sources` from `develop` at `b079f4f5`. All steps are implemented; nothing has run on a device yet (T4). Phone and desktop need to ship together: both read `holder_id` and link sources.
 
 | Step | Status |
 | ---- | ------ |
@@ -57,7 +57,8 @@ On branch `feature/holders-and-sources` from `develop` at `b079f4f5`. Nothing ha
 | 3    | Done. A5, A6, B1 and B2 fixed (B7 was in step 2). HomeBloc and PatientBloc handlers set transformers; the 500 ms wait after a sync and the 300 and 200 ms waits of the demo flow are gone (the onboarding flows themselves are step 6). The patient card shows the person's own row whatever the source filter |
 | 4    | Done. A7–A9 and A11 fixed. A scan linked to a person writes their wallet Patient (made as a copy of their row when they have none), and its records refer to that row; scanned details fill only empty fields, and are kept only when the review form carries them or the match is the unnamed default holder. Picking another person in the attach dialog drops the scanned details, as it says. Found on the way: a scanned patient without a gender failed to save (`AdministrativeGender('')`); fixed |
 | 5    | Done. A12–A14 and B9–B11 fixed. A provider fetch stores new sources with the provider's name and changes only the provider's own fields of known ones (the user's name for it, its holder and its delete stay; unchanged rows aren't rewritten); records of a deleted source aren't stored again; `getSources` returns the stored rows. Provider and demo sources can be removed from Home (the demo through its own removal), wallet sources can't. Wallet sources store no label and are shown under their person's current name, the same in the chip and the list (C4). The legacy `wallet` source counts as the wallet. B10's other half (a pre-v9 upgrade with several patients moves every record to the first) can't be undone after the fact. For B11, code outside the Fasten integration now only asks wallet or provider; moving the generic source code out of the Fasten repository binding is left for when the second integration comes |
-| 6–7  | Not started |
+| 6    | Done. B3 (step 3), B4, B5, B12, B13, C2 and C3 fixed. The demo dialog finishes on every load, goes back to its first step on a failure and can be closed there; demo records are written before `loadDemoData` returns. `createAndSetAsMain` passes failures on (a Fasten sync goes on without the default holder); ID card scan failures are logged. Patient loads no longer parse records or fetch sources per Patient row, and a record delete reads the people once. Blood types load in `PatientBloc`. Removed: `WalletPatientService`, `PatientDeduplicationService`, `PatientSelectionService`, `PatientSourceUtils`, `createWalletSource` and its event, `getSources({patientId})`, `deleteAllSources`, `deleteAllFhirResources`, `watchSources`, `addSource`, `PatientDataUpdatedFromSync`, `allPatientsAcrossSources`, `PatientEditSaved.sourceId`, `shouldCreateDefaultWalletHolder`, and `SourceTypeService`'s unused members |
+| 7    | T1–T3 done alongside each step: tests for the matcher, linker, repository, holder service, selection, `PatientBloc`, Home's scope, the scan and attach writes, the blood type, provider fetches, the source list and the v14 migration; each fix's test failed first where the code existed before. T4 (devices) is open |
 
 ---
 
