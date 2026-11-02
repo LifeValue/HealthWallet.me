@@ -54,7 +54,8 @@ On branch `feature/holders-and-sources` from `develop` at `b079f4f5`. Nothing ha
 | ---- | ------ |
 | 1    | Done. Schema v14 adds `sources.holder_id`; `cacheSources` keeps a source's holder when a provider fetch rewrites it. The start-up pass uses the new matching rules rather than today's grouping, so existing installs get A1 and A2 fixed too |
 | 2    | Done. A1–A4, A10, B6 and B8 fixed; B7 fixed with it (the attach dialog preselects the matched person). A holder's wallet source is made the first time something is written for them, not with the holder; the wallet Patient follows in step 4. With one holder and two newcomers at once, both are asked about rather than joined |
-| 3–7  | Not started |
+| 3    | Done. A5, A6, B1 and B2 fixed (B7 was in step 2). HomeBloc and PatientBloc handlers set transformers; the 500 ms wait after a sync and the 300 and 200 ms waits of the demo flow are gone (the onboarding flows themselves are step 6). The patient card shows the person's own row whatever the source filter |
+| 4–7  | Not started |
 
 ---
 
