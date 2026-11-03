@@ -2958,17 +2958,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String get aiModelDownloadFailed => 'Descărcarea a eșuat';
 
   @override
-  String get aiModelDownloadCancelledTitle => 'Descărcare anulată';
-
-  @override
-  String get aiModelDownloadInterruptedMessage =>
-      'Descărcarea a fost întreruptă. Încearcă din nou.';
-
-  @override
-  String get aiModelDownloadCancelledNotificationTitle =>
-      'Descărcarea modelului AI a fost anulată';
-
-  @override
   String get aiModelDownloadWasCancelled =>
       'Descărcarea modelului AI a fost anulată';
 

@@ -2918,17 +2918,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiModelDownloadFailed => 'Download failed';
 
   @override
-  String get aiModelDownloadCancelledTitle => 'Download Cancelled';
-
-  @override
-  String get aiModelDownloadInterruptedMessage =>
-      'The download was interrupted. Please try again.';
-
-  @override
-  String get aiModelDownloadCancelledNotificationTitle =>
-      'AI Model Download Cancelled';
-
-  @override
   String get aiModelDownloadWasCancelled => 'AI model download was cancelled';
 
   @override

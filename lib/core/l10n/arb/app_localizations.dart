@@ -5309,24 +5309,6 @@ abstract class AppLocalizations {
   /// **'Download failed'**
   String get aiModelDownloadFailed;
 
-  /// No description provided for @aiModelDownloadCancelledTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Download Cancelled'**
-  String get aiModelDownloadCancelledTitle;
-
-  /// No description provided for @aiModelDownloadInterruptedMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'The download was interrupted. Please try again.'**
-  String get aiModelDownloadInterruptedMessage;
-
-  /// No description provided for @aiModelDownloadCancelledNotificationTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'AI Model Download Cancelled'**
-  String get aiModelDownloadCancelledNotificationTitle;
-
   /// No description provided for @aiModelDownloadWasCancelled.
   ///
   /// In en, this message translates to:

@@ -2965,17 +2965,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get aiModelDownloadFailed => 'Download fehlgeschlagen';
 
   @override
-  String get aiModelDownloadCancelledTitle => 'Download abgebrochen';
-
-  @override
-  String get aiModelDownloadInterruptedMessage =>
-      'Der Download wurde unterbrochen. Bitte versuchen Sie es erneut.';
-
-  @override
-  String get aiModelDownloadCancelledNotificationTitle =>
-      'Download des KI-Modells abgebrochen';
-
-  @override
   String get aiModelDownloadWasCancelled =>
       'Der Download des KI-Modells wurde abgebrochen';
 
