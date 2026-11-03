@@ -2,7 +2,7 @@
 title: 'Desktop backups include attachment files; restore goes back in time on both devices and can be undone'
 type: 'feature'
 created: '2026-11-03'
-status: 'in-progress'
+status: 'done'
 route: 'dispatch'
 review_loop_iteration: 0
 baseline_commit: 'b079f4f5b097bbb7b2d2b679f00894e7e5b65b6c'
@@ -196,24 +196,24 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `lib/core/services/attachment_references.dart` and `test/core/services/attachment_references_test.dart` -- The API above, with tests for Windows, legacy, encoded, case-different and Media URLs, tombstones, and both unparseable modes.
-- [ ] `backup_entry.dart` -- The new fields, with an old-JSON test. Then run build_runner.
-- [ ] `backup_service.dart` and `backup_service_test.dart`:
+- [x] `lib/core/services/attachment_references.dart` and `test/core/services/attachment_references_test.dart` -- The API above, with tests for Windows, legacy, encoded, case-different and Media URLs, tombstones, and both unparseable modes.
+- [x] `backup_entry.dart` -- The new fields, with an old-JSON test. Then run build_runner.
+- [x] `backup_service.dart` and `backup_service_test.dart`:
   - Create with files, metadata written last, cleanup on failure, streamed hashes, paths derived from the meta location, Unicode names.
   - Restore with staging, the point-in-time rows, repointing that keeps the stamp, add-only files, a bad-file count, and `.restore-*` cleanup.
   - Delete the folder too, and auto-delete safety copies after 30 days.
   - Tests for each I/O row, including the default macOS folder and the stale `filePath` case.
-- [ ] `lww_sync_bloc.dart` and a new `test/features/desktop/lww_sync/presentation/bloc/lww_sync_pause_test.dart` -- `pauseApplying()` and `resumeApplying()`. A batch received while paused is applied after resume; no `ok:false` is sent.
-- [ ] `backup_bloc.dart` and `backup_bloc_test.dart` -- Sync first when the phone is connected (drain, digest, `tablesMatch`, 60 s timeout), pause received batches, safety backup, `localChanged()` after the restore instead of `resetPeerState`. If it fails, show the failure message and don't restore. `backup.error` on failure. Refuse phone requests while restoring. Log the empty catches.
-- [ ] `backup_card.dart`, the ARBs, then gen-l10n -- The strings from Decisions. Update the widget tests.
-- [ ] `test/features/desktop/backup/restore_sync_round_trip_test.dart` (new) -- Phone and desktop in memory:
+- [x] `lww_sync_bloc.dart` and a new `test/features/desktop/lww_sync/presentation/bloc/lww_sync_pause_test.dart` -- `pauseApplying()` and `resumeApplying()`. A batch received while paused is applied after resume; no `ok:false` is sent.
+- [x] `backup_bloc.dart` and `backup_bloc_test.dart` -- Sync first when the phone is connected (drain, digest, `tablesMatch`, 60 s timeout), pause received batches, safety backup, `localChanged()` after the restore instead of `resetPeerState`. If it fails, show the failure message and don't restore. `backup.error` on failure. Refuse phone requests while restoring. Log the empty catches.
+- [x] `backup_card.dart`, the ARBs, then gen-l10n -- The strings from Decisions. Update the widget tests.
+- [x] `test/features/desktop/backup/restore_sync_round_trip_test.dart` (new) -- Phone and desktop in memory:
   - After a restore and a sync, the phone matches the backup and newer rows are tombstones.
   - A phone clock that runs ahead doesn't win.
   - Backup tombstones survive a restart before the sync.
   - Notes with clashing ids are kept apart.
   - An offline phone's unsynced rows come back.
   - Restoring the safety copy brings everything back.
-- [ ] `_bmad-output/planning-artifacts/architecture.md` -- Backup format v2, point-in-time restore (stamp `S`, no `resetPeerState`; update `:198`) and the safety copy rules.
+- [x] `_bmad-output/planning-artifacts/architecture.md` -- Backup format v2, point-in-time restore (stamp `S`, no `resetPeerState`; update `:198`) and the safety copy rules.
 
 **Acceptance Criteria:**
 - Given a v2 backup of records with attachments, when every attachment file is deleted and the backup is restored, then every record opens its file on the desktop, and on the phone after sync.
@@ -223,6 +223,45 @@ context:
 ## Implementation Notes
 
 - Choices that don't block the work and aren't settled by this spec may be decided during implementation; record each one here with its reason.
+- Restore flow and UI package (in `.claude/worktrees/spec3-integration`; 2,605 tests pass there):
+  - Bloc order:
+    1. Find the backup.
+    2. `syncAndConfirmMatch()` when `LwwSyncBloc.state.connected`; false or a throw counts as offline.
+    3. `pauseApplying()`.
+    4. Safety copy (`backupSafetyName` in the app language's date and time); on failure, `backupSafetyFailed` and no restore.
+    5. `restoreFromFile`; on failure, `backupRestoreFailed` and the list is reloaded.
+    6. `localChanged()` and a Home reload, logged on failure.
+    7. List reload, `restoreNotice`, status to the phone.
+    8. `resumeApplying()` in `finally`.
+  - `isRestoring` is held throughout. `BackupRequested` and `RestoreRequested` are `droppable()` and refuse each other.
+  - Phone requests during a restore get `backup.error` `restore_in_progress`. A failed phone-requested backup gets `backup_failed`. Both also carry English text for old phones.
+  - `cleanUpOnStartup()` runs on the first history load on desktop.
+  - `BackupRequested.fromPhone` added. `backup_failed` is only sent for phone requests.
+  - Card:
+    - "Records only" label.
+    - `totalBytes` sizes.
+    - Confirm text, plus the old-backup and offline lines. "Paired" means `pairedDevice.peerDeviceId != null`.
+    - Notices are appended to the success dialog.
+    - The safety copy doesn't trigger "backup succeeded".
+  - A backup not found or a list failure shows `desktopBackupActionFailed`, not `backupRestoreFailed`, since no safety copy exists yet.
+  - Tests: `backup_bloc_test` (27, with real fakes), `backup_card_dialogs_test` (+11), new `restore_sync_round_trip_test` (6: phone matches the backup, the clock runs ahead, a backup tombstone survives the purge, a notes id clash, an offline phone's rows come back, the safety-copy undo).
+- Data-layer package (worktree `.claude/worktrees/agent-adca928c482252842`; combined with the sync package in `.claude/worktrees/spec3-integration`, analyze clean, 457 desktop and core-service tests passing):
+  - `BackupService(AppDatabase, FolderAccessService, PathResolver, AttachmentReferences)`.
+  - `createSnapshot({String? name, bool isSafetyCopy = false})` writes `.db`, then `.files/`, then the metadata, and never streams to the phone. On failure it removes what it wrote and rethrows. After a success it calls `deleteExpiredSafetyCopies()`.
+  - `restoreFromFile(String dbPath)` returns a `RestoreResult` (`hadFiles`, `filesAdded`, `filesAlreadyPresent`, `filesNotRestored`, `filesMissingFromBackup`). It throws only when the transaction didn't commit; the files it added are then removed.
+  - `cleanUpOnStartup()` removes `.restore-*` leftovers and expired safety copies, and never throws. It must be called on desktop start.
+  - Also public: `deleteExpiredSafetyCopies`, `removeRestoreLeftovers`, `listBackups` (newest first), `deleteBackup` (metadata first), atomic `saveBackupMetadata`, `safetyCopyRetention` (30 days).
+  - `BackupEntry` gained `formatVersion`, `files: List<BackupFile>`, `missing`, `isSafetyCopy`, `hasFiles` and `totalBytes`.
+  - `AttachmentReferences` provides `fromResourceRaw`, `referencedBasenames`, `matches`, `isReferenced` (strict raw-text match), `rewriteUrls`, `basenameOf` and `isDatabase` (moved from `AttachmentSyncService`). Every `file://` string in `resource_raw` counts, not only DocumentReference and Media.
+  - Decisions:
+    - Backup names are stored as typed; only the file name is sanitised (Unicode letters, digits, `-._,`; `:` becomes `.`).
+    - Absolute paths outside Documents are backed up only when they are top-level in the Windows Documents root; any other absolute path counts as missing. This stops a phone row pointing at e.g. `~/.ssh/id_rsa` from being copied and served.
+    - `filesNotRestored` counts only files the backup lists that are missing or damaged.
+    - Repointing matches the exact decoded path first, then a unique basename.
+    - Files are moved in before the transaction and removed again if it fails.
+    - `S` ignores non-numeric `updated_at` values, and `markTablesUpdated` runs after the commit.
+    - Two old restore tests now assert the new behaviour: a note whose source exists only now keeps that source as a tombstone; restored rows get stamp `S`.
+  - `architecture.md` is updated in that worktree: `:198`, `:208` and the Backup section.
 - Sync package (worktree `.claude/worktrees/agent-add831df0064503ce`, not yet applied to the branch): `LwwSyncBloc` (on `getIt<LwwSyncBloc>()`) gained:
   - `Future<bool> syncAndConfirmMatch({Duration timeout = 60s})`: drain, then a fresh digest, then wait for `tablesMatch`. It returns `false` at once when not connected or paused, on disconnect during the comparison, and on timeout. Each `false` is logged.
   - `pauseApplying()` and `resumeApplying()`, both idempotent. Held batches wait in `_onBatch` before `_applying` is set, and are never answered `ok:false`. `close()` resumes.
@@ -238,6 +277,42 @@ context:
 ## Spec Change Log
 
 ## Review Triage Log
+
+All `patch` rows below were fixed by the package agents, mostly in `fix(backup): keep the restore target, unreadable files and same-name files safe`; the bloc's part (awaited pause, `keepId`, the sync-throw test) is in `feat(backup): sync with the phone and save a safety copy before every restore`. `scripts/check.sh` passed with specs 1–3 together (2,734 tests).
+
+| # | Source | Finding | Verdict | Evidence | Route |
+|---|---|---|---|---|---|
+| 1 | edge | Restoring a safety copy older than 30 days: the new safety copy's expiry deletes the target | high | `createSnapshot` calls `deleteExpiredSafetyCopies` before the restore reads the target | patch |
+| 2 | edge | A batch mid-apply at `pauseApplying` lands after the safety copy and is then tombstoned | medium | `pauseApplying` doesn't wait for the in-flight apply | patch |
+| 3 | edge | One unreadable attachment makes every backup fail, including the safety copy | medium | `_copyAttachments` rethrows | patch |
+| 4 | edge | `byName` built from restored destinations only repoints to the wrong document | high | An unrestored same-name file isn't counted as ambiguous | patch |
+| 5 | verification | Same-name files restoring to their own records untested | medium | Only the backup side is tested | patch |
+| 6 | verification | Windows legacy-root derivation untested | medium | Runs only on Windows; every test overrides it | patch |
+| 7 | verification | Throwing `syncAndConfirmMatch` untested | medium | The fake can't throw | patch |
+| 8 | blind | `BackupService` builds `AttachmentSyncService`, uses a debug field and `Platform.isWindows` | medium | Breaks the AGENTS.md constructor-injection rule | patch |
+| 9 | edge | `_deleteEntry` continues after the metadata delete fails | low | A one-line rethrow | patch |
+| 10 | blind | `architecture.md` stale "nothing sets deleted_at"; pause scope and DocumentReference-only transfer not described | low | Doc text | patch |
+| 11 | blind | Pause holds the whole sync queue | low | As the spec prescribed (await in `_onBatch`); documented via #10 and doc comments | patch (docs) |
+| 12 | blind | Restored Media files never reach the phone | medium | `missingAttachmentPaths`/`fileForRequest` read DocumentReference only; this predates the change | defer |
+| 13 | blind | An offline phone's unsynced edits are overwritten by the restore with no warning | medium | Point-in-time semantics; the dialog mentions only added records | defer (human) |
+| 14 | blind | "Moved to deleted items for 30 days" promises a view that doesn't exist | medium | Frozen decision text; needs a human wording decision | defer (human) |
+| 15 | blind | Scan sessions are restored without their files | medium | `processing_sessions` restored "as today" | defer |
+| 16 | edge | The present/no-repoint decision uses the basename fallback while the viewer uses `toAbsolute` | medium | Affects legacy subfolder or absolute URLs, which were broken before | defer |
+| 17 | blind, edge | `restore_in_progress` shows a generic failure on new phones | low | Rare | reject |
+| 18 | edge | Paired but disconnected phone gets no post-restore notice; a timeout says "not connected" | low | The confirm dialog already says it | reject |
+| 19 | blind, edge | Orphan `.db`, `.files` or `.tmp` after a crash or an old-version delete | low | Disk only | reject |
+| 20 | edge | Check-then-rename race | false | File chunks queue behind the paused batch, so no concurrent writer | reject |
+| 21 | edge | `NOT IN` with a NULL key | false | Keys are primary keys or `COALESCE`d | reject |
+| 22 | edge | An old backup missing a synced table isn't point-in-time for it | low | Schema predates notes | reject |
+| 23 | edge | Files renamed in before a crash stay unreferenced | low | The sweep (spec 4) removes them after 7 days | reject |
+| 24 | edge | Stale digest nonce; `_sendDigest` throw waits 60 s | low | Rare; safe fallback | reject |
+| 25 | edge | `missing` lists decoded URLs, with duplicates | low | Cosmetic | reject |
+| 26 | edge | `resetPeerState` now has no caller | low | Batch 2 cleanup | reject |
+| 27 | edge | An offline phone clock running ahead can beat `S` | low | Needs an offline phone with a clock ahead | reject |
+| 28 | blind | `referencedBasenames` and `isReferenced` differ on unreadable rows | low | The cleaner decides with `isReferenced` inside the transaction | reject |
+| 29 | blind | Unreadable rows not listed in `missing`; `filesMissingFromBackup` not shown | low | Cosmetic reporting | reject |
+| 30 | blind | No free-space check before a restore | low | Fails safely with `backupSafetyFailed` | reject |
+| 31 | blind | Generated l10n not in the diff | false | Excluded on purpose | reject |
 
 ## Verification
 
