@@ -436,26 +436,10 @@ class RecordAttachmentsBloc
     emit(state.copyWith(status: const RecordAttachmentsStatus.loading()));
 
     try {
-      // A soft delete, so the paired device drops the attachment too.
+      // A soft delete, so the paired device drops the attachment too. The
+      // file stays until the 30-day tombstone purge, so an undo or a restore
+      // opens it again.
       await _recordsRepository.deleteResource(event.attachment.id);
-
-      try {
-        final content = event.attachment.rawResource['content'] as List?;
-        if (content != null && content.isNotEmpty) {
-          final attachment = content.first['attachment'];
-          final url = attachment?['url'] as String?;
-          if (url != null && url.startsWith('file://')) {
-            final rawPath = Uri.decodeComponent(url.substring(7));
-            final absolutePath = await _pathResolver.toAbsolute(rawPath);
-            final file = File(absolutePath);
-            if (await file.exists()) {
-              await file.delete();
-            }
-          }
-        }
-      } catch (_) {
-        // Best-effort cleanup; a leftover file is harmless.
-      }
 
       add(RecordAttachmentsInitialised(resource: state.resource));
     } catch (e, s) {

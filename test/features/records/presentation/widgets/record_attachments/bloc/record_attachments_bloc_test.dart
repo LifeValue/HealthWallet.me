@@ -977,8 +977,8 @@ void main() {
   });
 
   group('delete', () {
-    test('tombstones the record and removes its file, keeping a same-name '
-        'one', () async {
+    test('tombstones the record and keeps its file until the purge, next to '
+        'a same-name one', () async {
       await open(_observation());
       await run(
         RecordAttachmentsFileAttached([
@@ -998,8 +998,8 @@ void main() {
       expect(await documentRows(), hasLength(2), reason: 'rows are kept');
       await expectTombstone(first.id, before);
       expect((await liveDocumentRows()).map((r) => r.id), [rows.last.id]);
-      expect(storedFiles(), hasLength(1));
-      expect(storedFiles(), isNot(contains(firstFile)));
+      expect(storedFiles(), hasLength(2));
+      expect(storedFiles(), contains(firstFile));
       expect(state.attachments, hasLength(1));
       expect(
         File(state.attachments.single.filePath!).readAsStringSync(),
