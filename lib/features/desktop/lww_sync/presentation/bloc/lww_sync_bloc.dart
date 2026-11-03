@@ -67,8 +67,8 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
   final _drainWaiters = <Completer<void>>[];
   Completer<void>? _applying;
 
-  /// Set between [pauseApplying] and [resumeApplying]; received batches wait
-  /// for it before they are applied.
+  /// Set between [pauseApplying] and [resumeApplying]. A batch received
+  /// meanwhile waits for it, and so does every event queued behind it.
   Completer<void>? _paused;
 
   /// [syncAndConfirmMatch] callers whose comparison hasn't been sent yet, and
@@ -628,15 +628,21 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
     }
   }
 
-  /// Holds every batch received from now on until [resumeApplying], e.g.
-  /// while a backup is restored. They are applied afterwards, never refused.
-  /// Calling it again while paused changes nothing.
-  void pauseApplying() {
+  /// Holds the next batch received until [resumeApplying], e.g. while a
+  /// backup is restored; it is applied afterwards, never refused. Events run
+  /// one at a time, so a held batch also holds everything queued behind it
+  /// (acks, digests, file requests, connection changes) until the resume.
+  ///
+  /// Completes once a batch already being applied has finished, so its rows
+  /// are saved before the caller goes on. Calling it again while paused
+  /// changes nothing and also waits for that batch.
+  Future<void> pauseApplying() async {
     _paused ??= Completer<void>();
+    await _applying?.future;
   }
 
-  /// Applies the batches held since [pauseApplying]. Does nothing when not
-  /// paused.
+  /// Applies the batch held since [pauseApplying], then runs the events
+  /// queued behind it. Does nothing when not paused.
   void resumeApplying() {
     final paused = _paused;
     _paused = null;

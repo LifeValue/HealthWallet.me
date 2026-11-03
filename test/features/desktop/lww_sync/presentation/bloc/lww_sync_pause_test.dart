@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -6,23 +7,45 @@ import 'package:health_wallet/features/desktop/communication/data/services/messa
 import 'package:health_wallet/features/desktop/lww_sync/data/services/attachment_sync_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/change_watcher_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/lww_sync_service.dart';
+import 'package:health_wallet/features/desktop/lww_sync/domain/entity/sync_batch.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../lww_sync_test_helpers.dart';
 
+/// The real sync service, except that while [gate] is set a received batch
+/// waits at it before it is applied.
+class _GatedSyncService extends LwwSyncService {
+  _GatedSyncService(super.db, super.prefs, super.attachmentSync);
+
+  Completer<void>? gate;
+  bool atGate = false;
+
+  @override
+  Future<AppliedBatch> applyBatch(SyncBatch batch) async {
+    final gate = this.gate;
+    if (gate != null) {
+      atGate = true;
+      await gate.future;
+      atGate = false;
+    }
+    return super.applyBatch(batch);
+  }
+}
+
 /// A phone or a desktop: its own database, preferences, files and sync.
 class _Device {
-  _Device._(this.db, this.link, this.bloc);
+  _Device._(this.db, this.service, this.link, this.bloc);
 
   final AppDatabase db;
+  final _GatedSyncService service;
   final LinkedTcpService link;
   final LwwSyncBloc bloc;
 
   static Future<_Device> create(String id, String docs) async {
     await Directory(docs).create(recursive: true);
     final db = openTestDatabase();
-    final service = LwwSyncService(
+    final service = _GatedSyncService(
       db,
       _MemoryPrefs({'lww_local_device_id': id}),
       AttachmentSyncService(FakePathResolver(docs)),
@@ -34,7 +57,7 @@ class _Device {
       link,
       MessageRouter(link),
     );
-    return _Device._(db, link, bloc);
+    return _Device._(db, service, link, bloc);
   }
 
   Future<void> dispose() async {
@@ -138,7 +161,7 @@ void main() {
       await connect();
       final acksBefore = desktopAcks().length;
 
-      desktop.bloc.pauseApplying();
+      await desktop.bloc.pauseApplying();
       await insertFhir(phone.db, id: 'during-restore', title: 'from phone');
       await _until(
         () => phone.link.sentOfType('sync.batch').isNotEmpty,
@@ -165,7 +188,7 @@ void main() {
       await start();
       await connect();
 
-      desktop.bloc.pauseApplying();
+      await desktop.bloc.pauseApplying();
       await insertFhir(phone.db, id: 'slow', title: 'first');
       await _until(
         () => phone.bloc.state.syncStatus == LwwSyncStatus.error,
@@ -192,9 +215,8 @@ void main() {
       await start();
       await connect();
 
-      desktop.bloc
-        ..pauseApplying()
-        ..pauseApplying();
+      await desktop.bloc.pauseApplying();
+      await desktop.bloc.pauseApplying();
       await insertFhir(phone.db, id: 'twice');
       await Future<void>.delayed(const Duration(milliseconds: 300));
       expect(await onDesktop('twice'), isFalse);
@@ -203,10 +225,44 @@ void main() {
       await _untilAsync(() => onDesktop('twice'));
     });
 
+    test('pausing while a batch is being applied completes only once its '
+        'rows are saved, and holds the next batch', () async {
+      await start();
+      await connect();
+      final gate = Completer<void>();
+      desktop.service.gate = gate;
+      await insertFhir(phone.db, id: 'in-flight');
+      await _until(
+        () => desktop.service.atGate,
+        reason: 'the desktop starts applying',
+      );
+
+      var paused = false;
+      final pausing = desktop.bloc.pauseApplying().then((_) => paused = true);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      expect(paused, isFalse, reason: 'the batch is still being applied');
+
+      desktop.service.gate = null;
+      gate.complete();
+      await pausing;
+      expect(await onDesktop('in-flight'), isTrue, reason: 'saved first');
+
+      final batchesBefore = phone.link.sentOfType('sync.batch').length;
+      await insertFhir(phone.db, id: 'next');
+      await _until(
+        () => phone.link.sentOfType('sync.batch').length > batchesBefore,
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      expect(await onDesktop('next'), isFalse, reason: 'held');
+
+      desktop.bloc.resumeApplying();
+      await _untilAsync(() => onDesktop('next'));
+    });
+
     test('closing the bloc while a batch is held does not hang', () async {
       await start();
       await connect();
-      desktop.bloc.pauseApplying();
+      await desktop.bloc.pauseApplying();
       await insertFhir(phone.db, id: 'held');
       await _until(() => phone.link.sentOfType('sync.batch').isNotEmpty);
       await Future<void>.delayed(const Duration(milliseconds: 100));
@@ -320,7 +376,7 @@ void main() {
     test('returns false at once while applying is paused', () async {
       await start();
       await connect();
-      desktop.bloc.pauseApplying();
+      await desktop.bloc.pauseApplying();
 
       final watch = Stopwatch()..start();
       expect(await desktop.bloc.syncAndConfirmMatch(), isFalse);

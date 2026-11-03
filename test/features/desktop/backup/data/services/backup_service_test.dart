@@ -11,6 +11,7 @@ import 'package:health_wallet/core/services/folder_access_service.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/features/desktop/backup/data/services/backup_service.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
+import 'package:health_wallet/features/desktop/lww_sync/data/services/attachment_sync_service.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -62,6 +63,74 @@ class _BrokenPathResolver extends PathResolver {
       throw const FileSystemException('documents unavailable');
 }
 
+/// Fixed legacy attachment folders instead of the platform's.
+class _FixedLegacyFolders extends LegacyAttachmentFolders {
+  _FixedLegacyFolders([this.folders = const []]) : super(_DocsPathResolver(''));
+
+  final List<String> folders;
+
+  @override
+  Future<List<String>> roots() async => folders;
+}
+
+/// Resolves attachments as the app does, except that the file named
+/// [locked] exists but can't be read (another app holds it open).
+class _LockedAttachments extends AttachmentSyncService {
+  _LockedAttachments(super.pathResolver, this.locked);
+
+  final String locked;
+
+  @override
+  Future<File?> resolveFile(String storedPath) async {
+    final file = await super.resolveFile(storedPath);
+    if (file == null || p.basename(file.path) != locked) return file;
+    return _LockedFile(file.path);
+  }
+}
+
+class _LockedFile extends Fake implements File {
+  _LockedFile(this.path);
+
+  @override
+  final String path;
+
+  @override
+  Future<bool> exists() async => true;
+
+  @override
+  Future<File> copy(String newPath) async =>
+      throw FileSystemException('locked', path);
+}
+
+/// A metadata file that can't be deleted; every other file is real.
+final class _UndeletableMetadata extends IOOverrides {
+  @override
+  File createFile(String path) {
+    final file = super.createFile(path);
+    return path.endsWith('.db.meta.json') ? _UndeletableFile(file) : file;
+  }
+}
+
+class _UndeletableFile extends Fake implements File {
+  _UndeletableFile(this._file);
+
+  final File _file;
+
+  @override
+  String get path => _file.path;
+
+  @override
+  Future<bool> exists() => _file.exists();
+
+  @override
+  Future<String> readAsString({Encoding encoding = utf8}) =>
+      _file.readAsString(encoding: encoding);
+
+  @override
+  Future<FileSystemEntity> delete({bool recursive = false}) async =>
+      throw FileSystemException('in use', path);
+}
+
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
@@ -75,13 +144,22 @@ void main() {
   late _FakeFolderAccess folderAccess;
   late BackupService service;
 
-  BackupService serviceFor(AppDatabase db, {PathResolver? paths}) =>
-      BackupService(
-        db,
-        folderAccess,
-        paths ?? _DocsPathResolver(docs.path),
-        AttachmentReferences(db),
-      );
+  BackupService serviceFor(
+    AppDatabase db, {
+    PathResolver? paths,
+    AttachmentSyncService? attachments,
+    List<String> legacyFolders = const [],
+  }) {
+    final resolver = paths ?? _DocsPathResolver(docs.path);
+    return BackupService(
+      db,
+      folderAccess,
+      resolver,
+      AttachmentReferences(db),
+      attachments ?? AttachmentSyncService(resolver),
+      _FixedLegacyFolders(legacyFolders),
+    );
+  }
 
   setUp(() async {
     root = await Directory.systemTemp.createTemp('backup_service_test');
@@ -874,7 +952,7 @@ void main() {
     test('backs up a Windows attachment in the Documents root, and only '
         'top-level files there', () async {
       final winRoot = Directory(p.join(root.path, 'Documents'))..createSync();
-      service.debugExtraAttachmentRoots = [winRoot.path];
+      service = serviceFor(db, legacyFolders: [winRoot.path]);
       final old = File(p.join(winRoot.path, 'old_attach.pdf'))
         ..writeAsStringSync('windows file');
       final nested = File(p.join(winRoot.path, 'private', 'deep.pdf'))
@@ -901,6 +979,30 @@ void main() {
 
       expect(dir.listSync(), isEmpty);
       expect(await broken.listBackups(), isEmpty);
+    });
+
+    test('a file that exists but cannot be read is listed as missing and the '
+        'backup goes on', () async {
+      docFile('locked.pdf');
+      docFile('fine.pdf');
+      await insertDocument(db, 'd1', ['file://locked.pdf', 'file://fine.pdf']);
+      final locked = serviceFor(
+        db,
+        attachments: _LockedAttachments(
+          _DocsPathResolver(docs.path),
+          'locked.pdf',
+        ),
+      );
+
+      final entry = await locked.createSnapshot(isSafetyCopy: true);
+
+      expect(entry.files.map((f) => f.name), ['fine.pdf']);
+      expect(entry.missing, ['file://locked.pdf']);
+      expect(
+        Directory(filesDirOf(entry)).listSync().map((e) => p.basename(e.path)),
+        ['fine.pdf'],
+      );
+      expect(await locked.listBackups(), [entry]);
     });
 
     test('keeps file names in any script', () async {
@@ -988,6 +1090,64 @@ void main() {
       final repointed = await rowOf('fhir_resource', 'd1');
       final untouched = await rowOf('fhir_resource', 'd2');
       expect(repointed['updated_at'], untouched['updated_at']);
+    });
+
+    test('two files of the same name go back to their own records', () async {
+      docFile('a/scan.pdf', 'first');
+      docFile('b/scan.pdf', 'second');
+      await insertDocument(db, 'd1', ['file://a/scan.pdf']);
+      await insertDocument(db, 'd2', ['file://b/scan.pdf']);
+      final entry = await service.createSnapshot();
+      Directory(p.join(docs.path, 'a')).deleteSync(recursive: true);
+      Directory(p.join(docs.path, 'b')).deleteSync(recursive: true);
+
+      final result = await service.restoreFromFile(entry.filePath);
+
+      expect(result.filesAdded, 2);
+      final resolver = AttachmentSyncService(_DocsPathResolver(docs.path));
+      Future<String> opens(String id) async {
+        final url = (await urlsOf(id)).single;
+        final file = await resolver.resolveFile(AttachmentRef(url).path);
+        return file!.readAsStringSync();
+      }
+
+      expect(await opens('d1'), 'first');
+      expect(await opens('d2'), 'second');
+    });
+
+    test('a record of a file that was not restored is not pointed at another '
+        'file of the same name', () async {
+      docFile('a/scan.pdf', 'first');
+      docFile('b/scan.pdf', 'second');
+      await insertDocument(db, 'd1', ['file://a/scan.pdf']);
+      await insertDocument(db, 'd2', ['file://b/scan.pdf']);
+      final entry = await service.createSnapshot();
+      final second = entry.files.firstWhere(
+        (f) => f.sourcePaths.contains('b/scan.pdf'),
+      );
+      // The second copy is damaged, and its metadata names it other than
+      // d2's url does, so only the name links them.
+      File(
+        p.join(filesDirOf(entry), second.name),
+      ).writeAsStringSync('damaged');
+      await service.saveBackupMetadata(
+        entry.copyWith(
+          files: [
+            for (final f in entry.files)
+              f == second ? f.copyWith(sourcePaths: ['B/Scan.pdf']) : f,
+          ],
+        ),
+      );
+      Directory(p.join(docs.path, 'a')).deleteSync(recursive: true);
+      Directory(p.join(docs.path, 'b')).deleteSync(recursive: true);
+      // The first then goes under a free name, and d1 is repointed.
+      docFile('scan.pdf', 'current');
+
+      final result = await service.restoreFromFile(entry.filePath);
+
+      expect(result.filesNotRestored, 1);
+      expect(await urlsOf('d1'), isNot(['file://a/scan.pdf']));
+      expect(await urlsOf('d2'), ['file://b/scan.pdf']);
     });
 
     test('counts missing and damaged files and restores the rest', () async {
@@ -1395,6 +1555,97 @@ void main() {
       await service.cleanUpOnStartup();
 
       expect(await service.listBackups(), isEmpty);
+    });
+
+    test('the safety copy made before restoring an expired safety copy keeps '
+        'the one being restored', () async {
+      await insertResource(db, 'then');
+      final old = await service.createSnapshot(isSafetyCopy: true);
+      final expired = old.copyWith(
+        timestamp: DateTime.now().subtract(const Duration(days: 31)),
+      );
+      await service.saveBackupMetadata(expired);
+      await insertResource(db, 'now');
+
+      final undo = await service.createSnapshot(
+        isSafetyCopy: true,
+        keepId: old.id,
+      );
+
+      final ids = (await service.listBackups()).map((e) => e.id).toSet();
+      expect(ids, {old.id, undo.id});
+      await service.restoreFromFile(expired.filePath);
+      expect(await resourceIds(db), ['then']);
+    });
+
+    test('a metadata file that cannot be deleted keeps the whole '
+        'backup', () async {
+      docFile('scan.pdf');
+      await insertDocument(db, 'd1', ['file://scan.pdf']);
+      final entry = await service.createSnapshot();
+
+      await IOOverrides.runWithIOOverrides(
+        () => expectLater(
+          service.deleteBackup(entry.id),
+          throwsA(isA<FileSystemException>()),
+        ),
+        _UndeletableMetadata(),
+      );
+
+      expect(File(entry.filePath).existsSync(), isTrue);
+      expect(Directory(filesDirOf(entry)).existsSync(), isTrue);
+      expect(await service.listBackups(), [entry]);
+    });
+  });
+
+  group('LegacyAttachmentFolders', () {
+    test('finds the Documents folder above HealthWallet\\Documents', () {
+      expect(
+        LegacyAttachmentFolders.legacyWindowsRoot(
+          r'C:\Users\ana\Documents\HealthWallet\Documents',
+          p.windows,
+        ),
+        r'C:\Users\ana\Documents',
+      );
+      expect(
+        LegacyAttachmentFolders.legacyWindowsRoot(
+          r'C:\Users\ana\Documents\HealthWallet\Documents\',
+          p.windows,
+        ),
+        r'C:\Users\ana\Documents',
+      );
+    });
+
+    test('another layout has none', () {
+      for (final path in [
+        r'C:\Users\ana\Documents',
+        r'C:\Users\ana\AppData\Roaming\HealthWallet',
+        r'C:\Users\ana\Documents\Other\Documents',
+      ]) {
+        expect(
+          LegacyAttachmentFolders.legacyWindowsRoot(path, p.windows),
+          isNull,
+          reason: path,
+        );
+      }
+      expect(
+        LegacyAttachmentFolders.legacyWindowsRoot(
+          '/Users/ana/Library/Containers/app/Data/Documents',
+          p.posix,
+        ),
+        isNull,
+      );
+    });
+
+    test('has no folders off Windows', () async {
+      final folders = LegacyAttachmentFolders(
+        _DocsPathResolver(p.join(root.path, 'HealthWallet', 'Documents')),
+      );
+
+      expect(
+        await folders.roots(),
+        Platform.isWindows ? hasLength(1) : isEmpty,
+      );
     });
   });
 }

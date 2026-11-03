@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
-import 'package:flutter/foundation.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/services/attachment_references.dart';
@@ -29,13 +28,16 @@ class BackupService {
   final PathResolver _pathResolver;
   final AttachmentReferences _references;
   final AttachmentSyncService _attachments;
+  final LegacyAttachmentFolders _legacyFolders;
 
   BackupService(
     this._database,
     this._folderAccess,
     this._pathResolver,
     this._references,
-  ) : _attachments = AttachmentSyncService(_pathResolver);
+    this._attachments,
+    this._legacyFolders,
+  );
 
   /// "Before restore" copies older than this are deleted automatically.
   static const safetyCopyRetention = Duration(days: 30);
@@ -49,12 +51,6 @@ class BackupService {
 
   static const _stagingPrefix = '.restore-';
   static const _metaSuffix = '.meta.json';
-
-  /// Folders whose top-level files also count as attachments, besides
-  /// [PathResolver.getDocumentsPath]. Null uses the platform's (on Windows,
-  /// the Documents folder that older versions saved attachments to).
-  @visibleForTesting
-  List<String>? debugExtraAttachmentRoots;
 
   /// Whether this run has already reopened the chosen folder from its
   /// bookmark (macOS only; see [FolderAccessService]).
@@ -141,10 +137,13 @@ class BackupService {
   /// shown as given; the file name keeps its letters (any script), digits
   /// and the date's punctuation. With [isSafetyCopy] it is the automatic
   /// "Before restore" copy, deleted after [safetyCopyRetention]. Nothing is
-  /// sent to the phone.
+  /// sent to the phone. The expired safety copies it deletes afterwards
+  /// never include [keepId]: the backup about to be restored, which may be
+  /// an old safety copy itself.
   Future<BackupEntry> createSnapshot({
     String? name,
     bool isSafetyCopy = false,
+    String? keepId,
   }) async {
     final backupDir = await getBackupDirectory();
     final displayName = name?.trim() ?? '';
@@ -204,7 +203,7 @@ class BackupService {
         'device and are not in the backup',
       );
     }
-    await deleteExpiredSafetyCopies();
+    await deleteExpiredSafetyCopies(keep: {?keepId});
     return entry;
   }
 
@@ -280,9 +279,10 @@ class BackupService {
       try {
         await source.file.copy(copy.path);
       } on FileSystemException catch (e) {
-        if (await source.file.exists()) rethrow;
-        // Removed while the backup was running.
-        logger.w('[Backup] ${source.file.path} vanished; not backed up', e);
+        // Removed, locked or unreadable: one file must not stop the backup
+        // (or the safety copy a restore needs).
+        logger.w('[Backup] ${source.file.path} could not be backed up', e);
+        await _deleteQuietly(copy);
         missing.addAll(source.paths.map((path) => 'file://$path'));
         continue;
       }
@@ -446,6 +446,7 @@ class BackupService {
     }
 
     return _FilePlan(
+      files: entry.files,
       destinations: destinations,
       added: addedCount,
       alreadyPresent: alreadyPresent,
@@ -694,9 +695,11 @@ class BackupService {
     if (!tables.contains('fhir_resource')) return const {};
     if (plan.destinations.values.every((d) => d == null)) return const {};
 
+    // Every file the backup lists, restored or not, so a url of a file that
+    // wasn't restored never goes to another file of the same name.
     final byPath = <String, BackupFile>{};
     final byName = <String, List<BackupFile>>{};
-    for (final file in plan.destinations.keys) {
+    for (final file in plan.files) {
       for (final path in file.sourcePaths) {
         byPath[path] = file;
         (byName[AttachmentReferences.basenameOf(path).toLowerCase()] ??= [])
@@ -824,12 +827,19 @@ class BackupService {
   }
 
   /// Removes the metadata first, so a backup is never listed half deleted,
-  /// then the `.db` and `.files/`.
+  /// then the `.db` and `.files/`. When the metadata can't be removed the
+  /// backup is left whole, still listed and restorable.
   Future<void> _deleteEntry(BackupEntry entry) async {
     final dbPath = entry.filePath;
+    final meta = File('$dbPath$_metaSuffix');
+    try {
+      if (await meta.exists()) await meta.delete();
+    } on FileSystemException catch (e) {
+      logger.e('[Backup] could not delete ${meta.path}; backup kept', e);
+      rethrow;
+    }
     FileSystemException? firstError;
     for (final entity in <FileSystemEntity>[
-      File('$dbPath$_metaSuffix'),
       File(dbPath),
       Directory(_filesPathFor(dbPath)),
     ]) {
@@ -845,13 +855,21 @@ class BackupService {
   }
 
   /// Deletes "Before restore" copies older than [safetyCopyRetention] and
-  /// returns how many. User backups are never deleted. Failures are logged.
-  Future<int> deleteExpiredSafetyCopies({DateTime? now}) async {
+  /// returns how many. User backups and the ids in [keep] are never deleted.
+  /// Failures are logged.
+  Future<int> deleteExpiredSafetyCopies({
+    DateTime? now,
+    Set<String> keep = const {},
+  }) async {
     final cutoff = (now ?? DateTime.now()).subtract(safetyCopyRetention);
     var deleted = 0;
     try {
       for (final entry in await listBackups()) {
-        if (!entry.isSafetyCopy || !entry.timestamp.isBefore(cutoff)) continue;
+        if (!entry.isSafetyCopy ||
+            !entry.timestamp.isBefore(cutoff) ||
+            keep.contains(entry.id)) {
+          continue;
+        }
         try {
           await _deleteEntry(entry);
           deleted++;
@@ -910,7 +928,7 @@ class BackupService {
     final normalized = p.normalize(path);
     if (p.isAbsolute(normalized) &&
         !AttachmentReferences.isDatabase(normalized)) {
-      for (final root in await _extraAttachmentRoots()) {
+      for (final root in await _legacyFolders.roots()) {
         if (!p.equals(p.dirname(normalized), p.normalize(root))) continue;
         final type = await FileSystemEntity.type(
           normalized,
@@ -920,20 +938,6 @@ class BackupService {
       }
     }
     return _attachments.resolveFile(path);
-  }
-
-  Future<List<String>> _extraAttachmentRoots() async {
-    final roots = debugExtraAttachmentRoots;
-    if (roots != null) return roots;
-    if (!Platform.isWindows) return const [];
-    // PathResolver keeps Windows files in Documents\HealthWallet\Documents;
-    // older versions saved attachments in Documents itself.
-    final docs = p.normalize(await _pathResolver.getDocumentsPath());
-    final app = p.dirname(docs);
-    if (p.basename(docs) != 'Documents' || p.basename(app) != 'HealthWallet') {
-      return const [];
-    }
-    return [p.dirname(app)];
   }
 
   /// [wanted], or the same name with a unique suffix when [dir] (or
@@ -1019,6 +1023,7 @@ class BackupService {
 /// Where a restore put the backup's files.
 class _FilePlan {
   const _FilePlan({
+    required this.files,
     required this.destinations,
     required this.added,
     required this.alreadyPresent,
@@ -1027,6 +1032,7 @@ class _FilePlan {
   });
 
   static final none = _FilePlan(
+    files: const [],
     destinations: const {},
     added: 0,
     alreadyPresent: 0,
@@ -1034,8 +1040,12 @@ class _FilePlan {
     resolvesTo: (_) async => null,
   );
 
+  /// Every file the backup lists, restored or not.
+  final List<BackupFile> files;
+
   /// Each restored file's name in Documents; null when the records already
-  /// find its content where they point.
+  /// find its content where they point. Files that couldn't be restored
+  /// are absent.
   final Map<BackupFile, String?> destinations;
   final int added;
   final int alreadyPresent;
@@ -1043,4 +1053,34 @@ class _FilePlan {
 
   /// The SHA-256 of the file a stored path opens now, or null.
   final Future<String?> Function(String path) resolvesTo;
+}
+
+/// Folders outside [PathResolver.getDocumentsPath] whose top-level files
+/// also count as attachments: on Windows, the Documents folder that older
+/// versions saved attachments to. None elsewhere.
+@lazySingleton
+class LegacyAttachmentFolders {
+  LegacyAttachmentFolders(this._pathResolver);
+
+  final PathResolver _pathResolver;
+
+  Future<List<String>> roots() async {
+    if (!Platform.isWindows) return const [];
+    final root = legacyWindowsRoot(await _pathResolver.getDocumentsPath());
+    return root == null ? const [] : [root];
+  }
+
+  /// The Documents folder above [documentsPath] when it has the Windows
+  /// layout `<Documents>\HealthWallet\Documents`, else null.
+  static String? legacyWindowsRoot(String documentsPath, [p.Context? context]) {
+    final ctx = context ?? p.context;
+    final docs = ctx.normalize(documentsPath);
+    final app = ctx.dirname(docs);
+    if (ctx.basename(docs) != 'Documents' ||
+        ctx.basename(app) != 'HealthWallet') {
+      return null;
+    }
+    final root = ctx.dirname(app);
+    return root == app ? null : root;
+  }
 }
