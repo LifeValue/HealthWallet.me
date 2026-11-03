@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/services/attachment_file_cleaner.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/attachment_sync_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/domain/entity/sync_batch.dart';
@@ -108,10 +110,16 @@ class LwwSyncService {
   final AppDatabase _db;
   final SharedPreferences _prefs;
   final AttachmentSyncService _attachmentSync;
+  final AttachmentFileCleaner _fileCleaner;
 
   final _columns = <String, Set<String>>{};
 
-  LwwSyncService(this._db, this._prefs, this._attachmentSync);
+  LwwSyncService(
+    this._db,
+    this._prefs,
+    this._attachmentSync,
+    this._fileCleaner,
+  );
 
   /// The column that identifies a row on every device.
   static String keyColumn(String tableName) =>
@@ -908,12 +916,17 @@ class LwwSyncService {
   // ---------------------------------------------------------------------------
   // Housekeeping
 
+  /// Purges tombstones older than 30 days, then deletes the attachment files
+  /// of the purged records that no remaining row (live or deleted, or scan
+  /// session) refers to, and starts the start-up sweep of older unreferenced
+  /// files in the background. Returns how many rows were purged.
   Future<int> cleanupTombstones() async {
     final cutoff = DateTime.now()
         .subtract(const Duration(days: _tombstoneRetentionDays))
         .millisecondsSinceEpoch;
 
     var totalDeleted = 0;
+    final candidateUrls = <String>{};
 
     // Notes point at their source (a foreign key the app enforces), so they
     // go first, and a source stays while a newer note still points at it.
@@ -929,20 +942,48 @@ class LwwSyncService {
       'every synced table is purged',
     );
 
-    for (final MapEntry(key: table, value: guard) in purges.entries) {
-      final where = 'deleted_at IS NOT NULL AND deleted_at < ?$guard';
-      final result = await _db
-          .customSelect(
-            'SELECT COUNT(*) as count FROM $table WHERE $where',
-            variables: [Variable(cutoff)],
-          )
-          .getSingle();
-      final count = result.data['count'] as int? ?? 0;
-      if (count > 0) {
-        await _db.customStatement('DELETE FROM $table WHERE $where', [cutoff]);
-        totalDeleted += count;
+    // The urls are read in the same transaction as the purge, so they are
+    // exactly the files of the rows it removes.
+    await _db.transaction(() async {
+      for (final MapEntry(key: table, value: guard) in purges.entries) {
+        final where = 'deleted_at IS NOT NULL AND deleted_at < ?$guard';
+        if (table == 'fhir_resource') {
+          final rows = await _db
+              .customSelect(
+                'SELECT resource_raw FROM fhir_resource WHERE $where',
+                variables: [Variable(cutoff)],
+              )
+              .get();
+          for (final row in rows) {
+            final raw = row.data['resource_raw'];
+            if (raw is String) {
+              candidateUrls.addAll(await _fileCleaner.fileUrlsOf(raw));
+            }
+          }
+        }
+        final result = await _db
+            .customSelect(
+              'SELECT COUNT(*) as count FROM $table WHERE $where',
+              variables: [Variable(cutoff)],
+            )
+            .getSingle();
+        final count = result.data['count'] as int? ?? 0;
+        if (count > 0) {
+          await _db.customStatement('DELETE FROM $table WHERE $where', [
+            cutoff,
+          ]);
+          totalDeleted += count;
+        }
       }
+    });
+    if (totalDeleted > 0) logger.i('[LwwSync] purged $totalDeleted tombstones');
+
+    // Each file is checked against the remaining rows in its own
+    // transaction, so a row brought back meanwhile keeps its file.
+    if (candidateUrls.isNotEmpty) {
+      await _fileCleaner.deleteUnreferenced(candidateUrls);
     }
+    unawaited(_fileCleaner.sweep());
     return totalDeleted;
   }
 
