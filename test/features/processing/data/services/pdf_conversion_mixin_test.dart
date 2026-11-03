@@ -136,6 +136,82 @@ void main() {
     expect(await converter.convertPdfToImages('${root.path}/none.pdf'), []);
   });
 
+  group('preview pages', () {
+    late PrintingPlatform realPrinting;
+    late File pdf;
+
+    setUp(() {
+      realPrinting = PrintingPlatform.instance;
+      pdf = File('${root.path}/scan.pdf')..writeAsBytesSync([1, 2, 3]);
+    });
+    tearDown(() => PrintingPlatform.instance = realPrinting);
+
+    /// A transparent [width] x [height] page with one black pixel.
+    Uint8List pagePng(int width, int height) {
+      final image = img.Image(width: width, height: height, numChannels: 4);
+      image.setPixelRgba(0, 0, 0, 0, 0, 255);
+      return img.encodePng(image);
+    }
+
+    test('are JPEGs on white in the page cache, one set per dpi', () async {
+      PrintingPlatform.instance = _FakePrinting([
+        _Page(pagePng(4, 6)),
+        _Page(pagePng(4, 6)),
+      ]);
+
+      final preview = await converter.convertPdfToImagesForPreview(pdf.path);
+      final ocr = await converter.convertPdfToImagesForPreview(
+        pdf.path,
+        dpi: 200,
+      );
+
+      expect(preview, hasLength(2));
+      expect(ocr, hasLength(2));
+      expect(preview.toSet().intersection(ocr.toSet()), isEmpty);
+      for (final page in [...preview, ...ocr]) {
+        expect(page, startsWith('${root.path}/Documents/pdf_preview_cache/'));
+        expect(page, matches(RegExp(r'[0-9a-f]{64}_page_\d\.jpg$')));
+        final image = img.decodeJpg(File(page).readAsBytesSync())!;
+        expect((image.width, image.height), (4, 6));
+        // The transparent background became white.
+        expect(image.getPixel(3, 5).r, greaterThan(240));
+        expect(image.getPixel(0, 0).r, lessThan(60));
+      }
+      expect(preview.first, endsWith('_page_1.jpg'));
+      expect(ocr.last, endsWith('_page_2.jpg'));
+    });
+
+    test('come from the cache the second time', () async {
+      final printing = _FakePrinting([_Page(pagePng(2, 2))]);
+      PrintingPlatform.instance = printing;
+
+      final first = await converter.convertPdfToImagesForPreview(pdf.path);
+      PrintingPlatform.instance = _FakePrinting([]);
+      final second = await converter.convertPdfToImagesForPreview(pdf.path);
+
+      expect(second, first);
+    });
+
+    test('skip a page that cannot be decoded, keeping the page '
+        'numbers', () async {
+      PrintingPlatform.instance = _FakePrinting([
+        _Page(Uint8List.fromList([1, 2, 3])),
+        _Page(null),
+        _Page(pagePng(2, 2)),
+      ]);
+
+      final pages = await converter.convertPdfToImagesForPreview(pdf.path);
+
+      expect(pages, hasLength(1));
+      expect(pages.single, endsWith('_page_3.jpg'));
+      expect(logs, loggedWarning('Error processing page 2'));
+    });
+  });
+
+  test('jpegOnWhite returns null for bytes that are not a PNG', () {
+    expect(jpegOnWhite(Uint8List.fromList([1, 2, 3]), 75), isNull);
+  });
+
   test('a page that cannot be converted is skipped and logged', () async {
     final realPrinting = PrintingPlatform.instance;
     addTearDown(() => PrintingPlatform.instance = realPrinting);

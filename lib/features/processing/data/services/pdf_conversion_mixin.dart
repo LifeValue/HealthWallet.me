@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:health_wallet/core/services/temp_file_sweeper.dart';
@@ -134,6 +136,10 @@ mixin PdfConversionMixin implements TextRecognitionService {
     }
   }
 
+  /// The pages of [pdfPath] as JPEGs in the page cache, rendered at [dpi]:
+  /// 72 for the preview, `OcrProcessingHelper.ocrDpi` for OCR and the AI.
+  /// Rendering stays on this isolate (it goes through the platform), the
+  /// decode, white background and JPEG encode run in another one.
   @override
   Future<List<String>> convertPdfToImagesForPreview(
     String pdfPath, {
@@ -157,24 +163,18 @@ mixin PdfConversionMixin implements TextRecognitionService {
       final List<String> imagePaths = [];
       final cacheDir = await getCacheDirectory();
       final bytes = await file.readAsBytes();
+      // Small print needs a sharper JPEG once the page is big enough to read.
+      final quality = dpi > 72 ? 85 : 75;
 
       int index = 1;
       await for (final page in Printing.raster(bytes, dpi: dpi)) {
         try {
           final pngBytes = await page.toPng();
-          final decoded = img.decodePng(pngBytes);
-          if (decoded == null) {
+          final jpegBytes = await _jpegOnWhiteInIsolate(pngBytes, quality);
+          if (jpegBytes == null) {
             index++;
             continue;
           }
-
-          final whiteBg = img.Image(
-            width: decoded.width,
-            height: decoded.height,
-          );
-          img.fill(whiteBg, color: img.ColorRgba8(255, 255, 255, 255));
-          img.compositeImage(whiteBg, decoded);
-          final jpegBytes = img.encodeJpg(whiteBg, quality: 75);
 
           final cachedImageFile = File(
             path.join(cacheDir.path, '${cacheKey}_page_$index.jpg'),
@@ -236,4 +236,21 @@ mixin PdfConversionMixin implements TextRecognitionService {
       return 'Unsupported file type. Please select a PDF or image file.';
     }
   }
+}
+
+/// [png] on a white background as a JPEG, encoded in another isolate: at
+/// 200 dpi a page is about 15 MB of pixels, too much for the UI isolate.
+/// Null when [png] can't be decoded.
+Future<Uint8List?> _jpegOnWhiteInIsolate(Uint8List png, int quality) =>
+    Isolate.run(() => jpegOnWhite(png, quality));
+
+/// [png] on a white background, encoded as a JPEG of [quality]; null when
+/// [png] can't be decoded.
+Uint8List? jpegOnWhite(Uint8List png, int quality) {
+  final decoded = img.decodePng(png);
+  if (decoded == null) return null;
+  final whiteBg = img.Image(width: decoded.width, height: decoded.height);
+  img.fill(whiteBg, color: img.ColorRgba8(255, 255, 255, 255));
+  img.compositeImage(whiteBg, decoded);
+  return img.encodeJpg(whiteBg, quality: quality);
 }

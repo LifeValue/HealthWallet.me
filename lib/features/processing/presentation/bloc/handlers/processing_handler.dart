@@ -84,8 +84,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       );
       final isDesktop =
           Platform.isMacOS || Platform.isLinux || Platform.isWindows;
-      final sessionImages =
-          state.sessionImagePaths[event.sessionId] ?? state.allImagePathsForOCR;
+      final sessionImages = state.ocrPagesFor(event.sessionId);
       if (sessionImages.isEmpty) {
         updateSession(
           emit,
@@ -360,8 +359,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         sessionId: event.sessionId,
         status: ProcessingStatus.processing,
       );
-      final sessionImages =
-          state.sessionImagePaths[event.sessionId] ?? state.allImagePathsForOCR;
+      final sessionImages = state.ocrPagesFor(event.sessionId);
       final activeSession = state.sessions.firstWhereOrNull(
         (s) => s.id == event.sessionId,
       );

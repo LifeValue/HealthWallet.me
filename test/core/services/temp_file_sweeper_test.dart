@@ -226,6 +226,55 @@ void main() {
       }
     });
 
+    test('page images and session page maps go on reset, not at '
+        'startup', () async {
+      final pages = [
+        cacheFile('${cacheKey}_page_1.jpg'),
+        cacheFile('${cacheKey}_page_12.jpg'),
+        cacheFile('${cacheKey}_page_2_r3.jpg'),
+        cacheFile(TempFileSweeper.sessionPageMapName(_id)),
+        cacheFile('${TempFileSweeper.sessionPageMapName(_id)}.tmp'),
+      ];
+      final kept = [
+        cacheFile('${cacheKey}_page_1.png'),
+        cacheFile('${cacheKey}_page_x.jpg'),
+        cacheFile('${cacheKey}_page_1_r4.jpg'),
+        cacheFile('not-a-session.pages.json'),
+        cacheFile('photo.jpg'),
+      ];
+
+      await sweeper(deleteDebugLogs: true).sweep();
+      for (final file in [...pages, ...kept]) {
+        expect(file.existsSync(), isTrue, reason: file.path);
+      }
+
+      await TempFileSweeper(
+        temporaryDirectory: () async => temp,
+        documentsDirectory: () async => docs,
+        deleteDebugLogs: false,
+        includeProcessingCache: true,
+      ).sweep();
+      for (final file in pages) {
+        expect(file.existsSync(), isFalse, reason: file.path);
+      }
+      for (final file in kept) {
+        expect(file.existsSync(), isTrue, reason: file.path);
+      }
+    });
+
+    test('the page pattern reads the cache key and page number', () {
+      final match = TempFileSweeper.ocrCachePagePattern.firstMatch(
+        '${cacheKey}_page_7_r2.jpg',
+      )!;
+
+      expect(match.group(1), cacheKey);
+      expect(match.group(2), '7');
+      expect(
+        TempFileSweeper.sessionPageMapName(_id),
+        '$_id${TempFileSweeper.sessionPageMapSuffix}',
+      );
+    });
+
     test('completes without a cache directory', () async {
       await expectLater(
         TempFileSweeper(

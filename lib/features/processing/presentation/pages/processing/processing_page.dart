@@ -304,6 +304,15 @@ class _ProcessingPageState extends State<ProcessingPage> {
                                         ),
                                       );
                                     },
+                                    onPageRotated: (path, turns) {
+                                      context.read<ProcessingBloc>().add(
+                                        PageRotated(
+                                          sessionId: widget.sessionId,
+                                          previewPath: path,
+                                          quarterTurns: turns,
+                                        ),
+                                      );
+                                    },
                                   ),
                                   const SizedBox(height: Insets.small),
                                 ],

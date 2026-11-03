@@ -84,9 +84,20 @@ abstract class ProcessingState with _$ProcessingState {
     String? deletingSessionId,
     @Default([]) List<String> allImagePathsForOCR,
     @Default({}) Map<String, List<String>> sessionImagePaths,
+
+    /// The 200 dpi page OCR and the AI read for a 72 dpi preview page of a
+    /// PDF. A page without one (a photo, or a page not rendered yet or that
+    /// failed) is read as it is.
+    @Default({}) Map<String, String> ocrPageByPreviewPath,
     Notification? notification,
     @Default(false) bool useVision,
   }) = _ProcessingState;
+
+  /// The pages OCR and the AI read for [sessionId], in the preview's order.
+  List<String> ocrPagesFor(String sessionId) => [
+    for (final preview in sessionImagePaths[sessionId] ?? allImagePathsForOCR)
+      ocrPageByPreviewPath[preview] ?? preview,
+  ];
 
   bool canRetrySession(String sessionId) {
     final session = sessions.firstWhereOrNull((s) => s.id == sessionId);

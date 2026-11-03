@@ -96,8 +96,9 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     on<CaptureButtonPressed>(onCaptureButtonPressed);
     on<DocumentImported>(onDocumentImported);
     on<SessionChangedProgress>(onSessionChangedProgress);
-    on<SessionCleared>(onSessionCleared);
-    on<SessionActivated>(onSessionActivated);
+    // Concurrent: opening one session must not wait for another's pages.
+    on<SessionCleared>(onSessionCleared, transformer: concurrent());
+    on<SessionActivated>(onSessionActivated, transformer: concurrent());
     on<MappingInitiated>(onMappingInitiated, transformer: restartable());
     on<ResourceChanged>(onResourceChanged);
     on<PatientReverted>(onPatientReverted);
@@ -107,7 +108,10 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     on<MappingCancelled>(onMappingCancelled);
     on<ResourcesAdded>(onResourcesAdded);
     on<EncounterAttached>(onEncounterAttached);
-    on<ProcessRemainingResources>(onProcessRemainingResources);
+    on<ProcessRemainingResources>(
+      onProcessRemainingResources,
+      transformer: concurrent(),
+    );
     on<DocumentAttached>(onDocumentAttached);
     on<TokenCapacityUpdated>(
       onTokenCapacityUpdated,
@@ -116,6 +120,8 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     on<VisionToggled>(onVisionToggled, transformer: sequential());
     on<PagesReordered>(onPagesReordered);
     on<ContainerTypeSwitched>(_onContainerTypeSwitched);
+    on<PageRotated>(onPageRotated, transformer: sequential());
+    on<OcrPagesReleased>(onOcrPagesReleased, transformer: sequential());
   }
 
   @override

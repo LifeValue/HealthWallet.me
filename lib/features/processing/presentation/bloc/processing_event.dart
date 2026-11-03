@@ -210,6 +210,30 @@ abstract class PagesReordered extends ProcessingEvent with _$PagesReordered {
   }) = _PagesReordered;
 }
 
+/// The user turned the preview page [previewPath] of [sessionId] by
+/// [quarterTurns] clockwise quarter turns; its OCR page turns too.
+@freezed
+abstract class PageRotated extends ProcessingEvent with _$PageRotated {
+  const PageRotated._();
+
+  const factory PageRotated({
+    required String sessionId,
+    required String previewPath,
+    @Default(1) int quarterTurns,
+  }) = _PageRotated;
+}
+
+/// Sent by the bloc itself once the records of [sessionId] are saved: its
+/// 200 dpi OCR pages are no longer needed.
+@freezed
+abstract class OcrPagesReleased extends ProcessingEvent
+    with _$OcrPagesReleased {
+  const OcrPagesReleased._();
+
+  const factory OcrPagesReleased({required String sessionId}) =
+      _OcrPagesReleased;
+}
+
 @freezed
 abstract class ContainerTypeSwitched extends ProcessingEvent
     with _$ContainerTypeSwitched {

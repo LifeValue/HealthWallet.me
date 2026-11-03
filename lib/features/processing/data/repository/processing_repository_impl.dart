@@ -310,8 +310,13 @@ class ProcessingRepositoryImpl extends Object
   @override
   Future<int> deleteProcessingSession(ProcessingSession session) async {
     for (final filePath in session.filePaths) {
-      final absolutePath = await _pathResolver.toAbsolute(filePath);
-      File(absolutePath).delete().ignore();
+      try {
+        final file = File(await _pathResolver.toAbsolute(filePath));
+        if (await file.exists()) await file.delete();
+      } catch (e, s) {
+        // The session goes anyway; a leftover file only takes space.
+        logger.w('Deleting a file of session ${session.id} failed', e, s);
+      }
     }
 
     return _localDataSource.deleteProcessingSession(session.id);

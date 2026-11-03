@@ -215,6 +215,8 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
       final newSessions = [...state.sessions]
         ..removeWhere((session) => session.id == event.session.id);
 
+      final previews = state.sessionImagePaths[event.session.id] ?? const [];
+      final ocrPages = _ocrPagesOf(previews);
       final updatedImageMap = Map<String, List<String>>.from(
         state.sessionImagePaths,
       )..remove(event.session.id);
@@ -223,12 +225,17 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         state.copyWith(
           sessions: newSessions,
           sessionImagePaths: updatedImageMap,
+          ocrPageByPreviewPath: _withoutOcrPages(previews),
           status: const PipelineStatus.initial(),
           deletingSessionId: null,
         ),
       );
 
       await processingRepository.deleteProcessingSession(event.session);
+      await _discardSessionPages(
+        event.session,
+        pages: [...previews, ...ocrPages],
+      );
 
       final hasPendingSessions = newSessions.any(
         (s) => s.status == ProcessingStatus.pending,
@@ -302,6 +309,11 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         ),
       );
 
+      // A draft is never read again; every other session may be.
+      if (session.status != ProcessingStatus.draft) {
+        await _prepareOcrPages(emit, session, allImages);
+      }
+
       if (session.status == ProcessingStatus.pending) {
         try {
           final isModelLoaded = await processingRepository
@@ -367,7 +379,123 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     );
 
     await processingRepository.editProcessingSession(updatedSession);
+
+    // The OCR pages follow by preview page; only deleted pages leave the map.
+    try {
+      await ocrProcessingHelper.keepOcrPages(
+        sessionId: event.sessionId,
+        previewPaths: event.reorderedPaths,
+      );
+    } catch (e, s) {
+      logger.w('[ProcessingBloc] updating the page map failed', e, s);
+    }
   }
+
+  Future<void> onPageRotated(
+    PageRotated event,
+    Emitter<ProcessingState> emit,
+  ) async {
+    String? ocrPage;
+    try {
+      ocrPage = await ocrProcessingHelper.rotateOcrPage(
+        sessionId: event.sessionId,
+        previewPath: event.previewPath,
+        quarterTurns: event.quarterTurns,
+      );
+    } catch (e, s) {
+      // The preview page is turned already: OCR reads that one instead.
+      logger.w('[ProcessingBloc] turning the OCR page failed', e, s);
+    }
+    final pages = Map<String, String>.from(state.ocrPageByPreviewPath);
+    if (ocrPage == null) {
+      pages.remove(event.previewPath);
+    } else {
+      pages[event.previewPath] = ocrPage;
+    }
+    emit(state.copyWith(ocrPageByPreviewPath: pages));
+  }
+
+  Future<void> onOcrPagesReleased(
+    OcrPagesReleased event,
+    Emitter<ProcessingState> emit,
+  ) async {
+    final previews = state.sessionImagePaths[event.sessionId] ?? const [];
+    final ocrPages = _ocrPagesOf(previews);
+    emit(state.copyWith(ocrPageByPreviewPath: _withoutOcrPages(previews)));
+    try {
+      await ocrProcessingHelper.discardOcrPages(
+        sessionId: event.sessionId,
+        ocrPages: ocrPages,
+      );
+    } catch (e, s) {
+      logger.w('[ProcessingBloc] deleting the saved OCR pages failed', e, s);
+    }
+  }
+
+  @override
+  void onTransition(Transition<ProcessingEvent, ProcessingState> transition) {
+    super.onTransition(transition);
+    final event = transition.event;
+    if (event is ResourceCreationInitiated &&
+        transition.nextState.status is Success &&
+        transition.currentState.status is! Success) {
+      add(OcrPagesReleased(sessionId: event.sessionId));
+    }
+  }
+
+  /// Renders the 200 dpi OCR pages of [session]'s PDF pages after its
+  /// [previews] are shown. Any failure leaves OCR on the 72 dpi previews.
+  Future<void> _prepareOcrPages(
+    Emitter<ProcessingState> emit,
+    ProcessingSession session,
+    List<String> previews,
+  ) async {
+    try {
+      final ocrPages = await ocrProcessingHelper.prepareOcrPages(
+        sessionId: session.id,
+        filePaths: session.filePaths,
+        previewPaths: previews,
+      );
+      // A session deleted meanwhile has had its pages deleted after these.
+      if (emit.isDone || state.sessions.every((s) => s.id != session.id)) {
+        return;
+      }
+      emit(
+        state.copyWith(
+          ocrPageByPreviewPath: {...state.ocrPageByPreviewPath, ...ocrPages},
+        ),
+      );
+    } catch (e, s) {
+      logger.w(
+        '[ProcessingBloc] rendering the 200 dpi pages failed; OCR reads the '
+        'preview pages',
+        e,
+        s,
+      );
+    }
+  }
+
+  Future<void> _discardSessionPages(
+    ProcessingSession session, {
+    required List<String> pages,
+  }) async {
+    try {
+      await ocrProcessingHelper.discardSessionPages(
+        sessionId: session.id,
+        pages: [...pages, ...session.filePaths],
+      );
+    } catch (e, s) {
+      logger.w('[ProcessingBloc] deleting the session pages failed', e, s);
+    }
+  }
+
+  List<String> _ocrPagesOf(List<String> previews) => [
+    for (final preview in previews) ?state.ocrPageByPreviewPath[preview],
+  ];
+
+  Map<String, String> _withoutOcrPages(List<String> previews) =>
+      Map<String, String>.from(state.ocrPageByPreviewPath)
+        ..removeWhere((preview, _) => previews.contains(preview));
 
   void onResourceChanged(
     ResourceChanged event,
