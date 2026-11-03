@@ -221,6 +221,11 @@ class AppLocalizationsDe extends AppLocalizations {
       'Fehler beim Aktualisieren des Anzeigenamens';
 
   @override
+  String failedToSaveSetting(String setting) {
+    return '„$setting“ konnte nicht gespeichert werden. Versuche es erneut.';
+  }
+
+  @override
   String get actionCannotBeUndone =>
       'Diese Aktion kann nicht rückgängig gemacht werden.';
 

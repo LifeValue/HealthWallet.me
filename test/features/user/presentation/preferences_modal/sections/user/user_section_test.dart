@@ -72,17 +72,64 @@ void main() {
     expect(find.text('Ana'), findsOne);
   });
 
-  testWidgets('saving an edited name updates it', (tester) async {
+  Future<void> editName(WidgetTester tester, String name) async {
+    await tester.tap(find.byType(IconButton));
+    await tester.pump();
+    await tester.enterText(find.byType(TextField), name);
+    await tester.tap(find.byIcon(Icons.check));
+    await tester.pump();
+  }
+
+  testWidgets('saving an edited name sends it and closes the field once it '
+      'is saved', (tester) async {
+    await pumpSection(tester);
+
+    await editName(tester, '  Ana Pop  ');
+
+    expect(userBloc.events, [const UserNameUpdated('Ana Pop')]);
+    // Still open while it saves.
+    expect(find.byType(TextField), findsOne);
+
+    userStates.add(
+      const UserState(
+        user: User(name: 'Ana Pop'),
+        status: UserStatus.success(setting: UserSetting.name),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TextField), findsNothing);
+    expect(find.text('Ana Pop'), findsOne);
+    expect(find.byKey(AppSnackBar.cardKey), findsNothing);
+  });
+
+  testWidgets('pressing Enter saves the name once', (tester) async {
     await pumpSection(tester);
 
     await tester.tap(find.byType(IconButton));
     await tester.pump();
-    await tester.enterText(find.byType(TextField), '  Ana Pop  ');
-    await tester.tap(find.byIcon(Icons.check));
+    await tester.enterText(find.byType(TextField), 'Ana Pop');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
 
     expect(userBloc.events, [const UserNameUpdated('Ana Pop')]);
-    expect(find.byType(TextField), findsNothing);
+  });
+
+  testWidgets('another setting saved while editing keeps the field open', (
+    tester,
+  ) async {
+    await pumpSection(tester);
+
+    await editName(tester, 'Ana Pop');
+    userStates.add(
+      const UserState(
+        user: User(name: 'Ana', isDarkMode: true),
+        status: UserStatus.success(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TextField), findsOne);
   });
 
   testWidgets('a blank name is not saved', (tester) async {
@@ -98,14 +145,15 @@ void main() {
     expect(find.byType(TextField), findsOne);
   });
 
-  testWidgets('a failed update shows an error snackbar', (tester) async {
+  testWidgets('a failed save shows the display-name error and keeps the '
+      'typed name editable', (tester) async {
     await pumpSection(tester);
 
-    const failure = UserStatus.failure('disk full');
+    await editName(tester, 'Maria');
     userStates.add(
       const UserState(
         user: User(name: 'Ana'),
-        status: failure,
+        status: UserStatus.failure('disk full', UserSetting.name),
       ),
     );
     await tester.pumpAndSettle();
@@ -113,14 +161,38 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(AppSnackBar.cardKey),
-        matching: find.text('${_en.failedToUpdateDisplayName}: $failure'),
+        matching: find.text(_en.failedToUpdateDisplayName),
       ),
       findsOne,
     );
+    expect(find.textContaining('disk full'), findsNothing);
+    expect(find.widgetWithText(TextField, 'Maria'), findsOne);
+
+    // ✓ tries again with the typed name.
+    await tester.tap(find.byIcon(Icons.check));
+    await tester.pump();
+    expect(userBloc.events, [
+      const UserNameUpdated('Maria'),
+      const UserNameUpdated('Maria'),
+    ]);
 
     // Let the snackbar time out so no timer is left pending.
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('another setting failing shows nothing here', (tester) async {
+    await pumpSection(tester);
+
+    userStates.add(
+      const UserState(
+        user: User(name: 'Ana'),
+        status: UserStatus.failure('disk full', UserSetting.theme),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(AppSnackBar.cardKey), findsNothing);
   });
 
   testWidgets('a successful update shows no snackbar', (tester) async {

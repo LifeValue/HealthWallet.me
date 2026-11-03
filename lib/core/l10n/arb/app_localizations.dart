@@ -486,6 +486,12 @@ abstract class AppLocalizations {
   /// **'Failed to update display name'**
   String get failedToUpdateDisplayName;
 
+  /// No description provided for @failedToSaveSetting.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save “{setting}”. Try again.'**
+  String failedToSaveSetting(String setting);
+
   /// No description provided for @actionCannotBeUndone.
   ///
   /// In en, this message translates to:

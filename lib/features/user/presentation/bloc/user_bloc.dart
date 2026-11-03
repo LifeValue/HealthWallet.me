@@ -8,6 +8,7 @@ import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/services/biometric_auth_service.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/features/user/domain/entity/user.dart';
 import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
@@ -28,17 +29,38 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     this._biometricAuthService,
   ) : super(const UserState()) {
     on<UserInitialised>(_onInitialised);
-    on<UserThemeToggled>(_onThemeToggled);
+    on<UserThemeToggled>(_onThemeToggled, transformer: sequential());
     on<UserBiometricAuthToggled>(
       _onBiometricAuthToggled,
       transformer: droppable(),
     );
     on<UserBiometricsSetupShown>(_onBiometricsSetupShown);
     on<UserDataUpdatedFromSync>(_onUserDataUpdatedFromSync);
-    on<UserNameUpdated>(_onUserNameUpdated);
-    on<UserReceiveModeToggled>(_onReceiveModeToggled);
+    on<UserNameUpdated>(_onUserNameUpdated, transformer: sequential());
+    on<UserReceiveModeToggled>(
+      _onReceiveModeToggled,
+      transformer: sequential(),
+    );
     on<UserRegionPresetChanged>(_onRegionPresetChanged);
     on<UserLocaleChanged>(_onLocaleChanged);
+  }
+
+  /// The theme, name and receive-mode saves queued so far. Each one writes
+  /// the whole user, so they run one after another and each applies its
+  /// field to the user the previous one left in state; run side by side, the
+  /// later write would drop the earlier field from storage.
+  Future<void> _userSaves = Future<void>.value();
+
+  Future<void> _queueUserSave(Future<void> Function() save) {
+    final next = _userSaves.then((_) => save());
+    // The saves report their own failures; this only keeps the queue going
+    // if one ever throws past them.
+    _userSaves = next.then(
+      (_) {},
+      onError: (Object e, StackTrace s) =>
+          logger.e('A user save threw past its handler', e, s),
+    );
+    return next;
   }
 
   Future<void> _onInitialised(
@@ -116,7 +138,8 @@ class UserBloc extends Bloc<UserEvent, UserState> {
           appLocale: savedLocale,
         ),
       );
-    } catch (e) {
+    } catch (e, s) {
+      logger.e('Failed to save the new user', e, s);
       final systemTheme =
           WidgetsBinding.instance.platformDispatcher.platformBrightness;
       final isSystemDarkMode = systemTheme == Brightness.dark;
@@ -141,19 +164,27 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   Future<void> _onThemeToggled(
     UserThemeToggled event,
     Emitter<UserState> emit,
-  ) async {
+  ) {
     emit(state.copyWith(status: const UserStatus.loading()));
-    try {
-      final updatedUser = state.user.copyWith(
-        isDarkMode: !state.user.isDarkMode,
-      );
-      await _userRepository.updateUser(updatedUser);
-      emit(
-        state.copyWith(status: const UserStatus.success(), user: updatedUser),
-      );
-    } catch (e) {
-      emit(state.copyWith(status: UserStatus.failure(e)));
-    }
+    return _queueUserSave(() async {
+      final isDarkMode = !state.user.isDarkMode;
+      try {
+        await _userRepository.updateUser(
+          state.user.copyWith(isDarkMode: isDarkMode),
+        );
+        emit(
+          state.copyWith(
+            status: const UserStatus.success(),
+            user: state.user.copyWith(isDarkMode: isDarkMode),
+          ),
+        );
+      } catch (e, s) {
+        logger.e('Failed to save the theme', e, s);
+        emit(
+          state.copyWith(status: UserStatus.failure(e, UserSetting.theme)),
+        );
+      }
+    });
   }
 
   Future<void> _onBiometricAuthToggled(
@@ -166,33 +197,18 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         final isDeviceSecure = await _biometricAuthService.isDeviceSecure();
 
         if (isDeviceSecure) {
-          try {
-            final didAuthenticate = await _biometricAuthService.authenticate();
-            if (didAuthenticate) {
-              await _userRepository.saveBiometricAuth(true);
-
-              emit(
-                state.copyWith(
-                  status: const UserStatus.success(),
-                  isBiometricAuthEnabled: true,
-                ),
-              );
-            } else {
-              emit(
-                state.copyWith(
-                  status: const UserStatus.success(),
-                  isBiometricAuthEnabled: false,
-                ),
-              );
-            }
-          } catch (e) {
-            emit(
-              state.copyWith(
-                status: const UserStatus.success(),
-                isBiometricAuthEnabled: false,
-              ),
-            );
+          // A declined or cancelled prompt answers false and leaves the lock
+          // off without a message; only a throw is a failure.
+          final didAuthenticate = await _biometricAuthService.authenticate();
+          if (didAuthenticate) {
+            await _userRepository.saveBiometricAuth(true);
           }
+          emit(
+            state.copyWith(
+              status: const UserStatus.success(),
+              isBiometricAuthEnabled: didAuthenticate,
+            ),
+          );
         } else {
           emit(
             state.copyWith(
@@ -221,28 +237,42 @@ class UserBloc extends Bloc<UserEvent, UserState> {
           ),
         );
       }
-    } catch (e) {
-      emit(state.copyWith(status: UserStatus.failure(e)));
+    } catch (e, s) {
+      logger.e('Failed to change the biometric lock', e, s);
+      emit(
+        state.copyWith(status: UserStatus.failure(e, UserSetting.biometric)),
+      );
     }
   }
 
   Future<void> _onUserNameUpdated(
     UserNameUpdated event,
     Emitter<UserState> emit,
-  ) async {
-    final updatedUser = state.user.copyWith(
-      name: event.name,
-    );
-
-    emit(state.copyWith(user: updatedUser));
-    await _userRepository.updateUser(updatedUser);
+  ) {
+    emit(state.copyWith(status: const UserStatus.loading()));
+    return _queueUserSave(() async {
+      try {
+        await _userRepository.updateUser(state.user.copyWith(name: event.name));
+        emit(
+          state.copyWith(
+            status: const UserStatus.success(setting: UserSetting.name),
+            user: state.user.copyWith(name: event.name),
+          ),
+        );
+      } catch (e, s) {
+        logger.e('Failed to save the display name', e, s);
+        emit(state.copyWith(status: UserStatus.failure(e, UserSetting.name)));
+      }
+    });
   }
 
   Future<void> _onUserDataUpdatedFromSync(
     UserDataUpdatedFromSync event,
     Emitter<UserState> emit,
-  ) async {
-    await _getCurrentUser(emit);
+  ) {
+    // Waits for queued saves, or it could read storage before one writes and
+    // then show the user without that save's change.
+    return _queueUserSave(() => _getCurrentUser(emit));
   }
 
   Future<void> _onBiometricsSetupShown(
@@ -255,33 +285,61 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   Future<void> _onReceiveModeToggled(
     UserReceiveModeToggled event,
     Emitter<UserState> emit,
-  ) async {
+  ) {
     emit(state.copyWith(status: const UserStatus.loading()));
-    try {
-      final updatedUser = state.user.copyWith(
-        isReceiveModeEnabled: event.isEnabled,
-      );
-      await _userRepository.updateUser(updatedUser);
-
-      final manager = getIt<ReceiveModeService>();
-      if (event.isEnabled) {
-        if (!manager.isListening) {
-          await manager.startListening();
+    return _queueUserSave(() async {
+      ReceiveModeService? manager;
+      bool? wasListening;
+      try {
+        manager = getIt<ReceiveModeService>();
+        wasListening = manager.isListening;
+        // Listen first: if it can't start, nothing is saved and the switch
+        // stays as it was.
+        await _setListening(manager, event.isEnabled);
+        await _userRepository.updateUser(
+          state.user.copyWith(isReceiveModeEnabled: event.isEnabled),
+        );
+        emit(
+          state.copyWith(
+            status: const UserStatus.success(),
+            user: state.user.copyWith(isReceiveModeEnabled: event.isEnabled),
+          ),
+        );
+      } catch (e, s) {
+        logger.e('Failed to save Share Proximity', e, s);
+        if (manager != null && wasListening != null) {
+          await _restoreListening(manager, wasListening);
         }
-      } else {
-        if (manager.isListening) {
-          await manager.stopListening();
-        }
+        emit(
+          state.copyWith(
+            status: UserStatus.failure(e, UserSetting.receiveMode),
+          ),
+        );
       }
+    });
+  }
 
-      emit(
-        state.copyWith(
-          status: const UserStatus.success(),
-          user: updatedUser,
-        ),
-      );
-    } catch (e) {
-      emit(state.copyWith(status: UserStatus.failure(e)));
+  static Future<void> _setListening(
+    ReceiveModeService manager,
+    bool listen,
+  ) async {
+    if (listen && !manager.isListening) {
+      await manager.startListening();
+    } else if (!listen && manager.isListening) {
+      await manager.stopListening();
+    }
+  }
+
+  /// Puts listening back as it was after the setting could not be saved, so
+  /// the service matches the switch.
+  static Future<void> _restoreListening(
+    ReceiveModeService manager,
+    bool wasListening,
+  ) async {
+    try {
+      await _setListening(manager, wasListening);
+    } catch (e, s) {
+      logger.e('Failed to put Share Proximity listening back', e, s);
     }
   }
 

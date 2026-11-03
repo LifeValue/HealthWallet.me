@@ -8,6 +8,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/ai-model/ai_model_section.dart';
@@ -46,8 +47,64 @@ class PreferenceModal extends StatelessWidget {
     );
   }
 
+  /// Key of the transparent [Scaffold] the modal's snackbars show in.
+  static const Key scaffoldKey = Key('preference_modal_scaffold');
+
   @override
   Widget build(BuildContext context) {
+    // Its own messenger shows the modal's snackbars above the blur, inside
+    // the modal, instead of behind it on the page underneath.
+    return ScaffoldMessenger(
+      child: Scaffold(
+        key: scaffoldKey,
+        backgroundColor: Colors.transparent,
+        body: BlocListener<UserBloc, UserState>(
+          listenWhen: (previous, current) =>
+              previous.status != current.status &&
+              _failedSetting(current.status) != null,
+          listener: (context, state) => AppSnackBar.show(
+            context,
+            message: context.l10n.failedToSaveSetting(
+              _settingLabel(context, _failedSetting(state.status)!),
+            ),
+            type: AppSnackBarType.error,
+          ),
+          child: Stack(
+            children: [
+              // The scaffold covers the dialog's barrier: a tap outside the
+              // dialog still closes it. Screen readers keep the barrier's own
+              // "Dismiss", so this adds no second one.
+              Positioned.fill(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  excludeFromSemantics: true,
+                  onTap: () => context.popDialog(),
+                ),
+              ),
+              _buildDialog(context),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// The setting whose save failed; null for the display name, which the
+  /// user section reports next to its field.
+  static UserSetting? _failedSetting(UserStatus status) => status.maybeWhen(
+    failure: (_, setting) => setting == UserSetting.name ? null : setting,
+    orElse: () => null,
+  );
+
+  static String _settingLabel(BuildContext context, UserSetting setting) =>
+      switch (setting) {
+        UserSetting.theme => context.l10n.theme,
+        UserSetting.receiveMode => context.l10n.shareProximityTitle,
+        UserSetting.biometric => context.l10n.biometricAuthentication,
+        UserSetting.name => context.l10n.displayName,
+      };
+
+  Widget _buildDialog(BuildContext context) {
     final borderColor = context.theme.dividerColor;
 
     return Dialog(

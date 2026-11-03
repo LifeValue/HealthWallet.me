@@ -218,6 +218,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get failedToUpdateDisplayName => 'Failed to update display name';
 
   @override
+  String failedToSaveSetting(String setting) {
+    return 'Couldn\'t save “$setting”. Try again.';
+  }
+
+  @override
   String get actionCannotBeUndone => 'This action cannot be undone.';
 
   @override

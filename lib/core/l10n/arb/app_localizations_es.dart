@@ -220,6 +220,11 @@ class AppLocalizationsEs extends AppLocalizations {
       'Error al actualizar nombre para mostrar';
 
   @override
+  String failedToSaveSetting(String setting) {
+    return 'No se pudo guardar «$setting». Inténtalo de nuevo.';
+  }
+
+  @override
   String get actionCannotBeUndone => 'Esta acción no se puede deshacer.';
 
   @override

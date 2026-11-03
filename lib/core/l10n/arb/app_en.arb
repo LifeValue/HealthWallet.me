@@ -63,6 +63,14 @@
   "errorUpdatingSourceLabel": "Error updating source label",
   "getStarted": "Get Started",
   "failedToUpdateDisplayName": "Failed to update display name",
+  "failedToSaveSetting": "Couldn't save “{setting}”. Try again.",
+  "@failedToSaveSetting": {
+    "placeholders": {
+      "setting": {
+        "type": "String"
+      }
+    }
+  },
   "actionCannotBeUndone": "This action cannot be undone.",
   "deleteSourceConfirmPrefix": "This will permanently delete ",
   "deleteSourceConfirmSuffix": " and all its records. To confirm, type the source name below.",

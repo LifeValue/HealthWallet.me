@@ -64,6 +64,7 @@
   "preferNotToSay": "Prefiero no decir",
   "errorUpdatingSourceLabel": "Error al actualizar etiqueta de fuente",
   "failedToUpdateDisplayName": "Error al actualizar nombre para mostrar",
+  "failedToSaveSetting": "No se pudo guardar «{setting}». Inténtalo de nuevo.",
   "actionCannotBeUndone": "Esta acción no se puede deshacer.",
   "deleteRecordConfirm": "¿Estás seguro de que quieres eliminar este registro?",
   "deleteNoteConfirm": "¿Estás seguro de que quieres eliminar esta nota?",

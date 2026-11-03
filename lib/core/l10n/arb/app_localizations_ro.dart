@@ -221,6 +221,11 @@ class AppLocalizationsRo extends AppLocalizations {
       'Nu s-a putut actualiza numele afișat';
 
   @override
+  String failedToSaveSetting(String setting) {
+    return 'Nu s-a putut salva setarea „$setting”. Încearcă din nou.';
+  }
+
+  @override
   String get actionCannotBeUndone => 'Această acțiune nu poate fi anulată.';
 
   @override

@@ -60,6 +60,7 @@
   "preferNotToSay": "Keine Angabe",
   "errorUpdatingSourceLabel": "Fehler beim Aktualisieren der Quellenbezeichnung",
   "failedToUpdateDisplayName": "Fehler beim Aktualisieren des Anzeigenamens",
+  "failedToSaveSetting": "„{setting}“ konnte nicht gespeichert werden. Versuche es erneut.",
   "actionCannotBeUndone": "Diese Aktion kann nicht rückgängig gemacht werden.",
   "deleteRecordConfirm": "Bist du sicher, dass du diesen Eintrag löschen möchtest?",
   "deleteNoteConfirm": "Bist du sicher, dass du diese Notiz löschen möchtest?",
