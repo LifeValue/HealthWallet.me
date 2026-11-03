@@ -9,6 +9,7 @@ import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/services/attachment_file_cleaner.dart';
 import 'package:health_wallet/core/services/attachment_references.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/features/desktop/lww_sync/data/services/attachment_sync_service.dart';
 import 'package:path/path.dart' as p;
 
 class _FakePaths extends Fake implements PathResolver {
@@ -70,14 +71,18 @@ void main() {
   /// The sweep's clock: by default 8 days ahead, so every file is old.
   late DateTime Function() now;
 
-  AttachmentFileCleaner cleaner({String os = 'android', String? docsPath}) =>
-      AttachmentFileCleaner.forTesting(
-        db,
-        _FakePaths(docsPath ?? docs.path),
-        refs,
-        operatingSystem: os,
-        now: () => now(),
-      );
+  AttachmentFileCleaner cleaner({
+    String os = 'android',
+    String? docsPath,
+    List<String> legacyRoots = const [],
+  }) => AttachmentFileCleaner.forTesting(
+    db,
+    _FakePaths(docsPath ?? docs.path),
+    refs,
+    operatingSystem: os,
+    now: () => now(),
+    legacyRoots: legacyRoots,
+  );
 
   setUp(() async {
     root = await Directory.systemTemp.createTemp('attachment_cleaner_test_');
@@ -364,6 +369,114 @@ void main() {
     });
   });
 
+  group('deleteUnreferenced, age', () {
+    test('keeps a purged record\'s file written less than an hour ago, and '
+        'deletes it after', () async {
+      // A new file under a fixed name (e.g. the demo PDF) whose row isn't
+      // committed yet.
+      await writeDoc('demo_medical_report.pdf');
+      now = () => DateTime.now().add(const Duration(minutes: 50));
+
+      expect(
+        await cleaner().deleteUnreferenced(['file://demo_medical_report.pdf']),
+        0,
+      );
+      expect(doc('demo_medical_report.pdf').existsSync(), isTrue);
+
+      now = () => DateTime.now().add(const Duration(minutes: 70));
+      expect(
+        await cleaner().deleteUnreferenced(['file://demo_medical_report.pdf']),
+        1,
+      );
+      expect(doc('demo_medical_report.pdf').existsSync(), isFalse);
+    });
+  });
+
+  group('deleteUnreferenced, legacy attachment folders', () {
+    late Directory legacy;
+
+    setUp(() async {
+      legacy = await Directory(p.join(root.path, 'UserDocuments')).create();
+    });
+
+    File legacyFile(String name) => File(p.join(legacy.path, name));
+
+    Future<File> writeLegacy(String name) async {
+      final file = legacyFile(name);
+      await file.parent.create(recursive: true);
+      return file.writeAsString('content of $name');
+    }
+
+    String urlOf(String name) =>
+        'file://${Uri.encodeComponent(p.join(legacy.path, name))}';
+
+    test('deletes a purged record\'s top-level file there', () async {
+      await writeLegacy('Old Scan.pdf');
+
+      expect(
+        await cleaner(
+          legacyRoots: [legacy.path],
+        ).deleteUnreferenced([urlOf('Old Scan.pdf')]),
+        1,
+      );
+
+      expect(legacyFile('Old Scan.pdf').existsSync(), isFalse);
+    });
+
+    test('keeps one another row uses, a protected one, one in a subfolder '
+        'and a fresh one', () async {
+      await writeLegacy('shared.pdf');
+      await writeLegacy('notes.log');
+      await writeLegacy('sub/deep.pdf');
+      await insertResource('other', documentReference(['file://shared.pdf']));
+
+      expect(
+        await cleaner(legacyRoots: [legacy.path]).deleteUnreferenced([
+          urlOf('shared.pdf'),
+          urlOf('notes.log'),
+          urlOf('sub/deep.pdf'),
+        ]),
+        0,
+      );
+      expect(legacyFile('shared.pdf').existsSync(), isTrue);
+      expect(legacyFile('notes.log').existsSync(), isTrue);
+      expect(legacyFile('sub/deep.pdf').existsSync(), isTrue);
+
+      await writeLegacy('fresh.pdf');
+      now = DateTime.now;
+      expect(
+        await cleaner(
+          legacyRoots: [legacy.path],
+        ).deleteUnreferenced([urlOf('fresh.pdf')]),
+        0,
+      );
+      expect(legacyFile('fresh.pdf').existsSync(), isTrue);
+    });
+
+    test('touches nothing there for a url outside it, and the sweep never '
+        'enters it', () async {
+      await writeLegacy('orphan.pdf');
+
+      expect(
+        await cleaner(
+          legacyRoots: [legacy.path],
+        ).deleteUnreferenced(['file://orphan.pdf']),
+        0,
+      );
+      expect(await cleaner(legacyRoots: [legacy.path]).sweep(), 0);
+
+      expect(legacyFile('orphan.pdf').existsSync(), isTrue);
+    });
+
+    test('deletes nothing there without a legacy root', () async {
+      await writeLegacy('Old Scan.pdf');
+
+      expect(await cleaner().deleteUnreferenced([urlOf('Old Scan.pdf')]), 0);
+
+      expect(legacyFile('Old Scan.pdf').existsSync(), isTrue);
+    });
+  });
+
   group('fileUrlsOf', () {
     test('lists every file url of a record, and none of an unreadable '
         'one', () async {
@@ -378,8 +491,16 @@ void main() {
   });
 
   group('sweep', () {
-    test('deletes old top-level files nothing refers to and keeps the '
-        'rest', () async {
+    File trashed(String name) => File(p.join(docs.path, '.trash', name));
+
+    List<String> trashNames() {
+      final trash = Directory(p.join(docs.path, '.trash'));
+      if (!trash.existsSync()) return [];
+      return [for (final e in trash.listSync()) p.basename(e.path)]..sort();
+    }
+
+    test('moves old top-level files nothing refers to into .trash, with '
+        'their content, and keeps the rest', () async {
       await writeDoc('orphan.pdf');
       await writeDoc('live.pdf');
       await writeDoc('tombstoned.pdf');
@@ -402,6 +523,8 @@ void main() {
       expect(await cleaner().sweep(), 1);
 
       expect(doc('orphan.pdf').existsSync(), isFalse);
+      expect(trashNames(), ['orphan.pdf']);
+      expect(trashed('orphan.pdf').readAsStringSync(), 'content of orphan.pdf');
       for (final name in [
         'live.pdf',
         'tombstoned.pdf',
@@ -414,6 +537,23 @@ void main() {
         expect(doc(name).existsSync(), isTrue, reason: name);
       }
     });
+
+    test(
+      'keeps backup metadata when the backup folder is Documents itself',
+      () async {
+        await writeDoc('Weekly_1700000000000.db.meta.json');
+        await writeDoc('Weekly_1700000000000.db.meta.json.tmp');
+        now = () => DateTime.now().add(const Duration(days: 30));
+
+        expect(await cleaner().sweep(), 0);
+
+        expect(doc('Weekly_1700000000000.db.meta.json').existsSync(), isTrue);
+        expect(
+          doc('Weekly_1700000000000.db.meta.json.tmp').existsSync(),
+          isTrue,
+        );
+      },
+    );
 
     test('keeps a file not yet 7 days old', () async {
       await writeDoc('fresh.pdf');
@@ -438,6 +578,7 @@ void main() {
       now = () => DateTime.now().add(const Duration(days: 8));
       expect(await cleaner().sweep(), 1);
       expect(file.existsSync(), isFalse);
+      expect(trashNames(), ['copied.pdf']);
     });
 
     test('keeps a file whose row is written after the sweep listed the '
@@ -495,6 +636,109 @@ void main() {
 
       expect(results, [1, 1]);
       expect(doc('orphan.pdf').existsSync(), isFalse);
+      expect(trashNames(), ['orphan.pdf']);
+    });
+
+    test('never moves a protected name', () async {
+      final names = [
+        '.hidden',
+        'db.sqlite',
+        'db.sqlite-wal',
+        'scan_debug.log',
+        'cache.db',
+        'Weekly_1.db.meta.json',
+      ];
+      for (final name in names) {
+        await writeDoc(name);
+      }
+      now = () => DateTime.now().add(const Duration(days: 60));
+
+      expect(await cleaner().sweep(), 0);
+
+      expect(trashNames(), isEmpty);
+      for (final name in names) {
+        expect(doc(name).existsSync(), isTrue, reason: name);
+      }
+    });
+
+    test('a name already in .trash keeps both files', () async {
+      await writeDoc('.trash/orphan.pdf');
+      await trashed('orphan.pdf').writeAsString('the earlier one');
+      await writeDoc('orphan.pdf');
+
+      expect(await cleaner().sweep(), 1);
+
+      final names = trashNames();
+      expect(names, hasLength(2));
+      expect(trashed('orphan.pdf').readAsStringSync(), 'the earlier one');
+      final other = names.singleWhere((n) => n != 'orphan.pdf');
+      expect(other, startsWith('orphan_'));
+      expect(other, endsWith('.pdf'));
+      expect(trashed(other).readAsStringSync(), 'content of orphan.pdf');
+    });
+
+    test('keeps a file in .trash for 30 days from the move, then deletes '
+        'it', () async {
+      await writeDoc('orphan.pdf');
+      final moved = DateTime.now().add(const Duration(days: 8));
+      now = () => moved;
+      expect(await cleaner().sweep(), 1);
+
+      now = () => moved.add(const Duration(days: 29));
+      expect(await cleaner().sweep(), 0);
+      expect(trashNames(), ['orphan.pdf']);
+
+      now = () => moved.add(const Duration(days: 31));
+      expect(await cleaner().sweep(), 0);
+      expect(trashNames(), isEmpty);
+    });
+
+    test('empties only old top-level regular files of .trash', () async {
+      await writeDoc('.trash/young.pdf');
+      await writeDoc('.trash/sub/deep.pdf');
+      final outside = File(p.join(root.path, 'outside.pdf'))
+        ..writeAsStringSync('not an attachment');
+      await Link(p.join(docs.path, '.trash', 'link.pdf')).create(outside.path);
+      now = () => DateTime.now().add(const Duration(days: 29));
+
+      expect(await cleaner().sweep(), 0);
+      expect(trashNames(), ['link.pdf', 'sub', 'young.pdf']);
+
+      now = () => DateTime.now().add(const Duration(days: 31));
+      expect(await cleaner().sweep(), 0);
+      expect(trashNames(), ['link.pdf', 'sub']);
+      expect(trashed('sub/deep.pdf').existsSync(), isTrue);
+      expect(outside.existsSync(), isTrue);
+    });
+
+    test('a quarantined file is not served as an attachment', () async {
+      await writeDoc('orphan.pdf');
+      expect(await cleaner().sweep(), 1);
+      final attachments = AttachmentSyncService(_FakePaths(docs.path));
+
+      expect(await attachments.resolveFile('orphan.pdf'), isNull);
+      expect(await attachments.resolveFile('.trash/orphan.pdf'), isNull);
+      expect(
+        await attachments.resolveFile(
+          p.join(docs.path, '.trash', 'orphan.pdf'),
+        ),
+        isNull,
+      );
+    });
+
+    test('the purge never takes a file from .trash', () async {
+      await writeDoc('.trash/orphan.pdf');
+
+      expect(
+        await cleaner().deleteUnreferenced([
+          'file://.trash/orphan.pdf',
+          'file://${p.join(docs.path, '.trash', 'orphan.pdf')}',
+          'file://.trash',
+        ]),
+        0,
+      );
+
+      expect(trashNames(), ['orphan.pdf']);
     });
   });
 }

@@ -981,6 +981,23 @@ void main() {
       expect(await broken.listBackups(), isEmpty);
     });
 
+    test('a file the sweep quarantined in .trash is never backed up', () async {
+      docFile('.trash/scan.pdf');
+      docFile('.trash/other.pdf');
+      await insertDocument(db, 'd1', [
+        'file://scan.pdf',
+        'file://.trash/other.pdf',
+      ]);
+
+      final entry = await service.createSnapshot();
+
+      expect(entry.files, isEmpty);
+      expect(entry.missing.toSet(), {
+        'file://scan.pdf',
+        'file://.trash/other.pdf',
+      });
+    });
+
     test('a file that exists but cannot be read is listed as missing and the '
         'backup goes on', () async {
       docFile('locked.pdf');

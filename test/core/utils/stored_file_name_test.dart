@@ -41,9 +41,38 @@ void main() {
     test('never gives a hidden or empty name', () async {
       expect(await name('.pdf'), matches(r'^file_[0-9a-f]{8}\.pdf$'));
       expect(await name('..report.pdf'), matches(r'^report_[0-9a-f]{8}\.pdf$'));
-      expect(await name('отчет.pdf'), matches(r'^file_[0-9a-f]{8}\.pdf$'));
+      expect(await name('---.pdf'), matches(r'^file_[0-9a-f]{8}\.pdf$'));
+      expect(await name(' .pdf'), matches(r'^file_[0-9a-f]{8}\.pdf$'));
       expect(await name(''), matches(r'^file_[0-9a-f]{8}$'));
       expect(await name('report.'), matches(r'^report\._[0-9a-f]{8}$'));
+    });
+
+    test('keeps letters of any script, accents and spaces', () async {
+      expect(
+        await name('Scrisoare medicală.pdf'),
+        matches(r'^Scrisoare medicală_[0-9a-f]{8}\.pdf$'),
+      );
+      expect(
+        await name('Befund Größe (2).pdf'),
+        matches(r'^Befund Größe \(2\)_[0-9a-f]{8}\.pdf$'),
+      );
+      expect(await name('отчет.pdf'), matches(r'^отчет_[0-9a-f]{8}\.pdf$'));
+      // A decomposed name, as macOS file pickers give, keeps its accent marks.
+      expect(
+        await name('informe me\u0301dico.pdf'),
+        matches('^informe me\u0301dico_[0-9a-f]{8}\\.pdf\$'),
+      );
+      expect(
+        await name(' análisis  .pdf'),
+        matches(r'^análisis_[0-9a-f]{8}\.pdf$'),
+      );
+    });
+
+    test('replaces characters unsafe in a path or a file url', () async {
+      expect(
+        await name('a:b*c?d"e<f>g|h%i#j\tk\nl.pdf'),
+        matches(r'^a_b_c_d_e_f_g_h_i_j_k_l_[0-9a-f]{8}\.pdf$'),
+      );
     });
 
     test('shortens long names and ignores a long extension', () async {
@@ -85,6 +114,23 @@ void main() {
     });
   });
 
+  group('originalFileStem', () {
+    test('drops the extension and the unique suffix', () async {
+      final stored = await uniqueStoredFileName(
+        docs.path,
+        'Scrisoare medicală.pdf',
+      );
+
+      expect(originalFileStem(p.join(docs.path, stored)), 'Scrisoare medicală');
+      expect(originalFileStem('/in/report.v2.pdf'), 'report.v2');
+      expect(
+        originalFileStem('/in/scan_1793714741338.pdf'),
+        'scan_1793714741338',
+      );
+      expect(originalFileStem('/in/notes_ab12cd34'), 'notes');
+    });
+  });
+
   group('copyAsNewFile', () {
     test('copies the content and marks the copy as modified now', () async {
       final source = File(p.join(docs.path, 'source.pdf'));
@@ -101,6 +147,19 @@ void main() {
       expect(logs, isEmpty);
     });
 
+    test('a copy whose time cannot be set is kept and the failure '
+        'logged', () async {
+      final source = File(p.join(docs.path, 'source.pdf'));
+      await source.writeAsString('%PDF');
+      final destination = p.join(docs.path, 'copy.pdf');
+
+      final copy = await copyAsNewFile(_CopiesUntouchable(source), destination);
+
+      expect(copy.path, destination);
+      expect(await File(destination).readAsString(), '%PDF');
+      expect(logs, loggedWarning('modification time of $destination'));
+    });
+
     test('a missing source fails', () async {
       await expectLater(
         copyAsNewFile(
@@ -112,4 +171,32 @@ void main() {
       expect(File(p.join(docs.path, 'copy.pdf')).existsSync(), isFalse);
     });
   });
+}
+
+/// A file whose copies refuse a new modification time, as on a file system
+/// that does not allow setting it.
+class _CopiesUntouchable extends Fake implements File {
+  _CopiesUntouchable(this._file);
+
+  final File _file;
+
+  @override
+  String get path => _file.path;
+
+  @override
+  Future<File> copy(String newPath) async =>
+      _Untouchable(await _file.copy(newPath));
+}
+
+class _Untouchable extends Fake implements File {
+  _Untouchable(this._file);
+
+  final File _file;
+
+  @override
+  String get path => _file.path;
+
+  @override
+  Future<void> setLastModified(DateTime time) =>
+      Future.error(FileSystemException('Operation not permitted', path));
 }

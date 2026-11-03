@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/services/attachment_file_cleaner.dart';
 import 'package:health_wallet/core/services/attachment_references.dart';
+import 'package:health_wallet/features/desktop/backup/data/services/backup_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/message_router.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/attachment_sync_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/change_watcher_service.dart';
@@ -35,6 +36,7 @@ class _Device {
         db,
         FakePathResolver(docs),
         AttachmentReferences(db),
+        LegacyAttachmentFolders(FakePathResolver(docs)),
       ),
     );
     final link = LinkedTcpService(id, 'Device $id');

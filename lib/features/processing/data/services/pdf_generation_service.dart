@@ -130,7 +130,9 @@ class PdfGenerationService {
 
       for (int i = 0; i < pdfPaths.length; i++) {
         final originalPdfPath = pdfPaths[i];
-        final fileName = p.basenameWithoutExtension(originalPdfPath);
+        // Imports are stored under a unique name; the title is the name the
+        // user gave the file.
+        final fileName = originalFileStem(originalPdfPath);
 
         final pdfPath = await copyPdfWithNewName(
           sourcePdfPath: originalPdfPath,

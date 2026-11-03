@@ -3,6 +3,9 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/services/attachment_file_cleaner.dart';
+import 'package:health_wallet/core/services/attachment_references.dart';
+import 'package:health_wallet/features/desktop/backup/data/services/backup_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/message_router.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/attachment_sync_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/change_watcher_service.dart';
@@ -16,7 +19,12 @@ import '../../lww_sync_test_helpers.dart';
 /// The real sync service, except that while [gate] is set a received batch
 /// waits at it before it is applied.
 class _GatedSyncService extends LwwSyncService {
-  _GatedSyncService(super.db, super.prefs, super.attachmentSync);
+  _GatedSyncService(
+    super.db,
+    super.prefs,
+    super.attachmentSync,
+    super.fileCleaner,
+  );
 
   Completer<void>? gate;
   bool atGate = false;
@@ -49,6 +57,12 @@ class _Device {
       db,
       _MemoryPrefs({'lww_local_device_id': id}),
       AttachmentSyncService(FakePathResolver(docs)),
+      AttachmentFileCleaner(
+        db,
+        FakePathResolver(docs),
+        AttachmentReferences(db),
+        LegacyAttachmentFolders(FakePathResolver(docs)),
+      ),
     );
     final link = LinkedTcpService(id, 'Device $id');
     final bloc = LwwSyncBloc(

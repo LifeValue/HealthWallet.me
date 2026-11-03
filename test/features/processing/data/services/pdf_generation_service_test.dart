@@ -85,7 +85,7 @@ void main() {
 
     test('a name with unsafe characters is stored under a safe one and keeps '
         'its title', () async {
-      final source = await inboxFile('My scan (1).pdf', utf8.encode('%PDF'));
+      final source = await inboxFile('a:b?c (1).pdf', utf8.encode('%PDF'));
 
       final group = (await service.groupAndConvertDocuments(
         filePaths: [source],
@@ -94,9 +94,27 @@ void main() {
 
       expect(
         p.basename(group.pdfPath),
-        matches(r'^My_scan__1__[0-9a-f]{8}\.pdf$'),
+        matches(r'^a_b_c \(1\)_[0-9a-f]{8}\.pdf$'),
       );
-      expect(group.title, 'Imported My scan (1)');
+      expect(group.title, 'Imported a:b?c (1)');
+    });
+
+    test('a PDF already stored under a unique name is titled and named after '
+        'its original name', () async {
+      final source = await inboxFile(
+        'Scrisoare medicală_ab12cd34.pdf',
+        utf8.encode('%PDF'),
+      );
+
+      final group = (await service.groupAndConvertDocuments(
+        filePaths: [source],
+      )).single;
+
+      expect(group.title, 'PDF: Scrisoare medicală');
+      expect(
+        p.basename(group.pdfPath),
+        matches(r'^Scrisoare medicală_[0-9a-f]{8}\.pdf$'),
+      );
     });
 
     test('the copy counts as new even when the source is old', () async {

@@ -228,6 +228,77 @@ void main() {
       expect(await refs.isReferenced('Odd Name.pdf'), isTrue);
       expect(await refs.isReferenced('other.pdf'), isFalse);
     });
+
+    test('finds every stored form through the SQL pre-filter', () async {
+      await insertResource(
+        'windows',
+        documentReference([
+          'file://C%3A%5CUsers%5Cana%5CDocuments%5CMy%20Scan%20(Final).PDF',
+        ]),
+      );
+      // JSON-escaped non-ASCII, as another encoder may write it.
+      await insertResource(
+        'escaped',
+        r'{"content":[{"attachment":{"url":"file://R\u00c9SUM\u00c9.pdf"}}]}',
+      );
+      await insertSession(
+        's',
+        resources: jsonEncode([
+          {
+            'resourceType': 'Media',
+            'content': {'url': 'file:///var/mobile/Containers/IMG%201.JPG'},
+          },
+        ]),
+      );
+
+      expect(await refs.isReferenced('my scan (final).pdf'), isTrue);
+      expect(await refs.isReferenced('My%20Scan%20(Final).pdf'), isTrue);
+      expect(await refs.isReferenced('Résumé.pdf'), isTrue);
+      expect(await refs.isReferenced('img 1.jpg'), isTrue);
+      expect(await refs.isReferenced('img 2.jpg'), isFalse);
+    });
+
+    test('gives the same answers among many rows that don\'t name the '
+        'file', () async {
+      await db.batch((b) {
+        for (var i = 0; i < 3000; i++) {
+          b.customStatement(
+            'INSERT INTO fhir_resource (id, resource_raw, updated_at) '
+            'VALUES (?, ?, ?)',
+            [
+              'r$i',
+              documentReference(['file://other_$i.pdf']),
+              1,
+            ],
+          );
+        }
+      });
+      await insertResource('broken', '{not json, no file here');
+
+      expect(await refs.isReferenced('wanted.pdf'), isFalse);
+      expect(await refs.isReferenced('other_2999.pdf'), isTrue);
+
+      await insertResource('hit', documentReference(['file://WANTED.pdf']));
+      expect(await refs.isReferenced('wanted.pdf'), isTrue);
+    });
+  });
+
+  group('sqlNeedle', () {
+    test('is the longest ASCII letter and digit run in every form of the '
+        'name', () {
+      expect(AttachmentReferences.sqlNeedle('Scan 2024 (Final).PDF'), 'final');
+      expect(AttachmentReferences.sqlNeedle('My%20Scan.pdf'), 'scan');
+      expect(
+        AttachmentReferences.sqlNeedle('3f2b8c1e-aa11-4bcd-9f00-1234.pdf'),
+        '3f2b8c1e',
+      );
+      expect(AttachmentReferences.sqlNeedle('日本語.pdf'), 'pdf');
+    });
+
+    test('is null when the name has no such run', () {
+      expect(AttachmentReferences.sqlNeedle('日本語'), isNull);
+      expect(AttachmentReferences.sqlNeedle('%20'), isNull);
+    });
   });
 
   group('rewriteUrls', () {

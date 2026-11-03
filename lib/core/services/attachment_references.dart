@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:drift/drift.dart' show Variable;
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:injectable/injectable.dart';
@@ -148,12 +150,15 @@ class AttachmentReferences {
     String basename, {
     bool includeSessions = true,
   }) async {
-    for (final raw in await _resourceRaws()) {
+    // Only rows whose text holds the name can refer to it: SQLite picks them,
+    // so a check doesn't decode every row.
+    final needle = sqlNeedle(basename);
+    for (final raw in await _resourceRaws(needle: needle)) {
       final refs = await fromResourceRaw(raw, mode: OnUnparseable.rawText);
       if (refs.any((r) => r.refersTo(basename))) return true;
     }
     if (!includeSessions) return false;
-    for (final value in await _sessionValues()) {
+    for (final value in await _sessionValues(needle: needle)) {
       final json = _decode(value);
       if (json == null) {
         if (AttachmentRef.rawText(value).refersTo(basename)) return true;
@@ -164,6 +169,30 @@ class AttachmentReferences {
       }
     }
     return false;
+  }
+
+  /// A lower-case text that every stored form of [basename] contains (raw,
+  /// percent-encoded or decoded, JSON-escaped, any case), for a SQL
+  /// pre-filter; null when there is none and every row must be read.
+  ///
+  /// It is the longest run of ASCII letters and digits outside `%XX`
+  /// escapes: encoders leave those characters as they are, and SQLite's
+  /// `lower()` folds them like Dart. A row that spells a letter as `%XX`
+  /// isn't found; no encoder the app meets does that.
+  @visibleForTesting
+  static String? sqlNeedle(String basename) {
+    final lower = basename.toLowerCase();
+    final runs = RegExp(
+      '[a-z0-9]+',
+    ).allMatches(lower.replaceAll(RegExp('%[0-9a-f]{2}'), ' '));
+    String? best;
+    for (final run in runs) {
+      final text = run.group(0)!;
+      if (best == null || text.length > best.length) best = text;
+    }
+    if (best == null) return null;
+    final needle = best;
+    return _variants(basename).every((v) => v.contains(needle)) ? needle : null;
   }
 
   /// Whether [url] (a `file://` url or a stored path) names the file
@@ -209,10 +238,14 @@ class AttachmentReferences {
 
   // ---------------------------------------------------------------------------
 
-  Future<List<String>> _resourceRaws() async {
+  Future<List<String>> _resourceRaws({String? needle}) async {
     final rows = await _db
         .customSelect(
-          'SELECT resource_raw FROM fhir_resource',
+          needle == null
+              ? 'SELECT resource_raw FROM fhir_resource'
+              : 'SELECT resource_raw FROM fhir_resource '
+                    'WHERE instr(lower(resource_raw), ?) > 0',
+          variables: [if (needle != null) Variable.withString(needle)],
           readsFrom: {_db.fhirResource},
         )
         .get();
@@ -222,10 +255,15 @@ class AttachmentReferences {
     ];
   }
 
-  Future<List<String>> _sessionValues() async {
+  Future<List<String>> _sessionValues({String? needle}) async {
     final rows = await _db
         .customSelect(
-          'SELECT file_paths, resources FROM processing_sessions',
+          needle == null
+              ? 'SELECT file_paths, resources FROM processing_sessions'
+              : 'SELECT file_paths, resources FROM processing_sessions '
+                    'WHERE instr(lower(file_paths), ?1) > 0 '
+                    'OR instr(lower(resources), ?1) > 0',
+          variables: [if (needle != null) Variable.withString(needle)],
           readsFrom: {_db.processingSessions},
         )
         .get();

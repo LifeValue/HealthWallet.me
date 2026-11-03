@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -12,7 +13,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../lww_sync_test_helpers.dart';
 
 /// A cleaner that acts as on a phone, whatever the test runs on, and keeps
-/// the sweeps it started so a test can wait for them.
+/// the sweeps it started so a test can wait for them. While [hold] is set, a
+/// sweep starts only once it completes.
 class _RecordingCleaner extends AttachmentFileCleaner {
   _RecordingCleaner(AppDatabase db, String docs, DateTime Function() now)
     : super.forTesting(
@@ -24,10 +26,14 @@ class _RecordingCleaner extends AttachmentFileCleaner {
       );
 
   final sweeps = <Future<int>>[];
+  Completer<void>? hold;
 
   @override
   Future<int> sweep() {
-    final sweep = super.sweep();
+    final gate = hold;
+    final sweep = gate == null
+        ? super.sweep()
+        : gate.future.then((_) => super.sweep());
     sweeps.add(sweep);
     return sweep;
   }
@@ -40,8 +46,9 @@ void main() {
   late AttachmentSyncService attachments;
   late _RecordingCleaner cleaner;
 
-  /// The sweep's clock. Files written by a test are fresh, so by default
-  /// the sweep keeps them and every deletion seen comes from the purge.
+  /// The cleaner's clock. By default two hours ahead: files written by a
+  /// test are past the purge's one hour but not the sweep's seven days, so
+  /// every deletion seen comes from the purge.
   late DateTime Function() now;
 
   final daysAgo40 = ms(DateTime.now().subtract(const Duration(days: 40)));
@@ -73,7 +80,7 @@ void main() {
     SharedPreferences.setMockInitialValues({
       'lww_local_device_id': 'device-local',
     });
-    now = DateTime.now;
+    now = () => DateTime.now().add(const Duration(hours: 2));
     cleaner = _RecordingCleaner(db, dirs.docs.path, () => now());
     attachments = AttachmentSyncService(FakePathResolver(dirs.docs.path));
     service = LwwSyncService(
@@ -176,8 +183,12 @@ void main() {
   group('a record deleted and brought back within 30 days opens its file', () {
     setUp(() async {
       await dirs.writeDoc('scan.pdf', utf8.encode('%PDF'));
+      // An older copy of the record, purged now: its file is a candidate.
+      await insertDoc('old', 'file://scan.pdf', deletedAt: daysAgo40);
       await insertDoc('doc', 'file://scan.pdf', deletedAt: daysAgo10);
-      expect(await purge(), 0);
+      // Past both the purge's and the sweep's minimum age.
+      now = () => DateTime.now().add(const Duration(days: 8));
+      expect(await purge(), 1);
     });
 
     test('by a re-sync', () async {
@@ -212,17 +223,78 @@ void main() {
     });
   });
 
+  test('a file only a scan session still uses is kept', () async {
+    await dirs.writeDoc('scan.pdf', utf8.encode('%PDF'));
+    await insertDoc('doc', 'file://scan.pdf', deletedAt: daysAgo40);
+    await db.customStatement(
+      'INSERT INTO processing_sessions (id, status, resources) '
+      'VALUES (?, ?, ?)',
+      [
+        'session',
+        'pending',
+        jsonEncode([jsonDecode(docRef('file://Scan.pdf'))]),
+      ],
+    );
+
+    expect(await purge(), 1);
+
+    expect(dirs.docFile('scan.pdf').existsSync(), isTrue);
+  });
+
+  group('a Media record whose content is a single attachment', () {
+    String media(String url) => jsonEncode({
+      'resourceType': 'Media',
+      'content': {'url': url, 'contentType': 'image/jpeg'},
+    });
+
+    test('has its file deleted when it is purged', () async {
+      await dirs.writeDoc('photo.jpg', utf8.encode('jpeg'));
+      await insertFhir(
+        db,
+        id: 'media',
+        resourceType: 'Media',
+        raw: media('file://photo.jpg'),
+        updatedAt: daysAgo40,
+        deletedAt: daysAgo40,
+      );
+
+      expect(await purge(), 1);
+
+      expect(dirs.docFile('photo.jpg').existsSync(), isFalse);
+    });
+
+    test('keeps the file of a purged record it also uses', () async {
+      await dirs.writeDoc('photo.jpg', utf8.encode('jpeg'));
+      await insertDoc('doc', 'file://photo.jpg', deletedAt: daysAgo40);
+      await insertFhir(
+        db,
+        id: 'media',
+        resourceType: 'Media',
+        raw: media('file://photo.jpg'),
+      );
+
+      expect(await purge(), 1);
+
+      expect(dirs.docFile('photo.jpg').existsSync(), isTrue);
+    });
+  });
+
   test('a purge starts the sweep without waiting for it', () async {
     await dirs.writeDoc('orphan.pdf', utf8.encode('%PDF'));
     await dirs.writeDoc('used.pdf', utf8.encode('%PDF'));
     await insertDoc('live', 'file://used.pdf');
     now = () => DateTime.now().add(const Duration(days: 8));
+    final hold = cleaner.hold = Completer<void>();
 
-    await service.cleanupTombstones();
+    await service.cleanupTombstones().timeout(const Duration(seconds: 5));
 
     expect(cleaner.sweeps, hasLength(1));
+    expect(dirs.docFile('orphan.pdf').existsSync(), isTrue);
+
+    hold.complete();
     expect(await cleaner.sweeps.single, 1);
     expect(dirs.docFile('orphan.pdf').existsSync(), isFalse);
+    expect(dirs.docFile('.trash/orphan.pdf').existsSync(), isTrue);
     expect(dirs.docFile('used.pdf').existsSync(), isTrue);
   });
 }

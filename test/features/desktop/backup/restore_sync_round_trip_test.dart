@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/data/local/app_database.dart'
     show AppDatabase;
+import 'package:health_wallet/core/services/attachment_file_cleaner.dart';
 import 'package:health_wallet/core/services/attachment_references.dart';
 import 'package:health_wallet/core/services/folder_access_service.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
@@ -86,7 +87,17 @@ void main() {
     return _Device(
       db,
       docs,
-      LwwSyncService(db, prefs, AttachmentSyncService(paths)),
+      LwwSyncService(
+        db,
+        prefs,
+        AttachmentSyncService(paths),
+        AttachmentFileCleaner(
+          db,
+          paths,
+          AttachmentReferences(db),
+          LegacyAttachmentFolders(paths),
+        ),
+      ),
       syncLocal,
       RecordsRepositoryImpl(db, syncLocal, SharedNotesDatasource(), paths),
     );
@@ -403,9 +414,11 @@ void main() {
     // The restore keeps every current file.
     expect(File('${desktop.docs.path}/report.pdf').existsSync(), isTrue);
 
-    // The record is deleted on the desktop, which removes its file too.
+    // The record is deleted on the desktop. Its file stays until the 30-day
+    // purge; remove it as the purge would, so only the backup still has it.
     await desktop.records.deleteResource('doc-1');
-    expect(File('${desktop.docs.path}/report.pdf').existsSync(), isFalse);
+    expect(File('${desktop.docs.path}/report.pdf').existsSync(), isTrue);
+    await File('${desktop.docs.path}/report.pdf').delete();
 
     // Undo: restore the "Before restore" copy.
     await restore(safety);

@@ -8,19 +8,22 @@ import 'package:uuid/uuid.dart';
 /// sanitised name with an 8-character unique suffix, so two attachments
 /// with the same name never replace each other. The original name stays
 /// the attachment's title.
+///
+/// Letters and digits of any script, accents, spaces, `_`, `.`, `-`, `(` and
+/// `)` are kept, so a title read back from the name ([originalFileStem])
+/// stays readable; path separators and every other character become `_`.
 Future<String> uniqueStoredFileName(
   String directory,
   String originalName,
 ) async {
-  final base = originalName.replaceAll(RegExp(r'[^\w.\-]'), '_');
+  final base = originalName.replaceAll(_unsafeCharacter, '_');
   final dot = base.lastIndexOf('.');
   final hasExtension =
       dot >= 0 && dot < base.length - 1 && base.length - dot <= 16;
-  var stem = (hasExtension ? base.substring(0, dot) : base).replaceFirst(
-    RegExp(r'^\.+'),
-    '',
-  );
-  if (!stem.contains(RegExp('[A-Za-z0-9]'))) stem = 'file';
+  var stem = (hasExtension ? base.substring(0, dot) : base)
+      .replaceFirst(RegExp(r'^[. ]+'), '')
+      .trimRight();
+  if (!stem.contains(RegExp(r'[\p{L}\p{N}]', unicode: true))) stem = 'file';
   if (stem.length > 100) stem = stem.substring(0, 100);
   final extension = hasExtension ? base.substring(dot) : '';
   while (true) {
@@ -32,6 +35,15 @@ Future<String> uniqueStoredFileName(
     if (type == FileSystemEntityType.notFound) return name;
   }
 }
+
+final _unsafeCharacter = RegExp(r'[^\p{L}\p{M}\p{N}_.\- ()]', unicode: true);
+
+final _uniqueSuffix = RegExp(r'_[0-9a-f]{8}$');
+
+/// The name of the file at [path] without its extension and without the
+/// suffix [uniqueStoredFileName] added, for use as a title.
+String originalFileStem(String path) =>
+    basenameWithoutExtension(path).replaceFirst(_uniqueSuffix, '');
 
 /// Copies [source] to [destination] and marks the copy as modified now.
 ///

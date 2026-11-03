@@ -3,9 +3,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/message_router.dart';
 import 'package:health_wallet/features/desktop/handover/data/services/handover_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
+import 'package:health_wallet/features/processing/data/services/pdf_generation_service.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
@@ -307,6 +309,22 @@ void main() {
       expect(p.dirname(path), p.join(docs.path, 'imports'));
       expect(p.basename(path), matches(RegExp(r'^escape_[0-9a-f]{8}\.jpg$')));
       expect(File(path).readAsBytesSync(), [7]);
+    });
+
+    test('a PDF from the phone keeps its name as the document title', () async {
+      await offer('s1', 1);
+      final started = imported();
+      deliverFile('s1', 0, 'Scrisoare medicală.pdf', utf8.encode('%PDF'));
+
+      final path = (await started).filePaths.single;
+      expect(
+        p.basename(path),
+        matches(RegExp(r'^Scrisoare medicală_[0-9a-f]{8}\.pdf$')),
+      );
+      final group = (await PdfGenerationService(
+        PathResolver(),
+      ).groupAndConvertDocuments(filePaths: [path])).single;
+      expect(group.title, 'PDF: Scrisoare medicală');
     });
   });
 

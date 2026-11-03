@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/services/attachment_file_cleaner.dart';
 import 'package:health_wallet/core/services/attachment_references.dart';
+import 'package:health_wallet/features/desktop/backup/data/services/backup_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/attachment_sync_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/lww_sync_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/domain/entity/sync_batch.dart';
@@ -67,6 +68,7 @@ void main() {
         db,
         FakePathResolver(dirs.docs.path),
         AttachmentReferences(db),
+        LegacyAttachmentFolders(FakePathResolver(dirs.docs.path)),
       ),
     );
   });
@@ -502,6 +504,7 @@ void main() {
           otherDb,
           FakePathResolver(dirs.docs.path),
           AttachmentReferences(otherDb),
+          LegacyAttachmentFolders(FakePathResolver(dirs.docs.path)),
         ),
       );
     });

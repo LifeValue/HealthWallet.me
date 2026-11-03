@@ -5,7 +5,9 @@ import 'package:flutter/widgets.dart' hide Notification;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
+import 'package:health_wallet/features/processing/data/services/pdf_generation_service.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
@@ -301,6 +303,24 @@ void main() {
         [1],
         [2],
       ]);
+    });
+
+    test('an imported PDF keeps its name as the document title', () async {
+      final pdf = File('${root.path}/Scrisoare medicală.pdf')
+        ..writeAsStringSync('%PDF');
+
+      bloc.add(DocumentImported(filePaths: [pdf.path]));
+      await bloc.stream.firstWhere((s) => s.status is SessionCreated);
+
+      final stored = repository.created.single.single;
+      expect(
+        stored,
+        matches(RegExp(r'/imports/Scrisoare medicală_[0-9a-f]{8}\.pdf$')),
+      );
+      final group = (await PdfGenerationService(
+        PathResolver(),
+      ).groupAndConvertDocuments(filePaths: [stored])).single;
+      expect(group.title, 'PDF: Scrisoare medicală');
     });
 
     test('a patient found on the desktop starts the session at step two', () {

@@ -711,19 +711,20 @@ void main() {
       expect(await documentRows(), hasLength(2));
     });
 
-    test('a name with spaces and accents is stored sanitised', () async {
+    test('a name with spaces and accents keeps them, and its url is '
+        'encoded', () async {
       await open(_observation());
 
       final state = await run(
-        RecordAttachmentsFileAttached([picked('Blood test é 1.PNG')]),
+        RecordAttachmentsFileAttached([picked('Blood test é: 1.PNG')]),
       );
 
       final stored = storedFiles().single;
-      expect(stored, matches(RegExp(r'^Blood_test___1_[0-9a-f]{8}\.PNG$')));
+      expect(stored, matches(RegExp(r'^Blood test é_ 1_[0-9a-f]{8}\.PNG$')));
       final row = (await documentRows()).single;
-      expect(row.title, 'Blood test é 1.PNG');
-      expect(attachmentOf(row)['title'], 'Blood test é 1.PNG');
-      expect(attachmentOf(row)['url'], 'file://$stored');
+      expect(row.title, 'Blood test é: 1.PNG');
+      expect(attachmentOf(row)['title'], 'Blood test é: 1.PNG');
+      expect(attachmentOf(row)['url'], 'file://${Uri.encodeComponent(stored)}');
       expect(attachmentOf(row)['contentType'], 'image/png');
       expect(state.attachments.single.filePath, '${docs.path}/$stored');
     });
