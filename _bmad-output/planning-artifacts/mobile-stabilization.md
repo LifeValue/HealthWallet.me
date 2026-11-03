@@ -37,7 +37,7 @@ Checked in the code on `develop` at `b079f4f5`, after `feature/mobile-stabilizat
 
 **Still open, in two batches.** Each item is one spec on `feature/mobile-stabilization-remaining`. Nothing that `feature/holders-and-sources` changes is planned here.
 
-Batch 1, in this order (specs in `_bmad-output/implementation-artifacts/`):
+Batch 1, in this order (specs in `_bmad-output/implementation-artifacts/`). **Done 2026-11-03** on `feature/mobile-stabilization-remaining`, all four specs reviewed and committed. Coverage of the 55 touched `lib/` files went from 57.0% to 95.2% (the whole app from 45.8% to 54.0%; 3,192 tests). The coverage pass pinned five bugs as skipped `BUG:` tests, listed in `deferred-work.md`. Device checks are still to do; each spec lists its own.
 
 1. **Profile and patient dialogs** (`spec-profile-and-patient-dialogs.md`).
    - Every profile change waits 1 s (B8).

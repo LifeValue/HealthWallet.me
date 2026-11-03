@@ -164,3 +164,25 @@
   summary: Two Windows PCs sharing a OneDrive-redirected HealthWallet\Documents could sweep each other's files.
   evidence: Each device sees only its own database's references.
 
+- source_spec: none (batch 1 coverage pass, 2026-11-03)
+  summary: Saving a scanned patient with an empty gender fails; MappingPatient.toFhirResource builds AdministrativeGender('') and throws "Invalid FHIR code", so the user gets a generic save failure.
+  evidence: lib/features/processing/domain/entity/mapping_resources/mapping_patient.dart; the phase-1 schema allows ''. Pinned by a skipped BUG test in processing_handler_coverage_test.dart.
+- source_spec: none (batch 1 coverage pass, 2026-11-03)
+  summary: Saving a scan for a session that no longer exists leaves the status at savingResources, so Done stays disabled.
+  evidence: onResourceCreationInitiated looks the session up with firstWhere outside its try. Pinned in processing_handler_coverage_test.dart.
+- source_spec: none (batch 1 coverage pass, 2026-11-03)
+  summary: If step 2 is cancelled and its stream then ends with no further result, the session still becomes a draft and "processing finished" is announced.
+  evidence: onProcessRemainingResources. Pinned in processing_handler_coverage_test.dart.
+- source_spec: none (batch 1 coverage pass, 2026-11-03)
+  summary: In the patient setup dialog an emergency phone entered on its own is not saved.
+  evidence: The phone isn't among patientFieldsChanged (patient_setup_dialog.dart ~200-205). Pinned in patient_setup_dialog_coverage_test.dart.
+- source_spec: none (batch 1 coverage pass, 2026-11-03)
+  summary: The legacy AiModelDownloadService.startDownload never removes its subscription, so isAnyDownloading stays true and later starts are ignored; its repository stream also can't be cancelled.
+  evidence: No caller in lib/; it belongs to the dead download methods slated for removal in batch 2. Pinned in ai_model_download_service_coverage_test.dart.
+- source_spec: none (batch 1 coverage pass, 2026-11-03)
+  summary: Clearing a given or family name in the patient edit dialog keeps the stored name, because an empty name is sent as null ("unchanged").
+  evidence: patient_edit_dialog.dart save; pinned as current behaviour in patient_edit_dialog_coverage_test.dart.
+- source_spec: none (batch 1 coverage pass, 2026-11-03)
+  summary: The ID-scan dialog's Retry button starts a new scan instead of re-reading the last image (DialogContent never uses onRetryOcr).
+  evidence: Pinned as current behaviour in the patient dialog coverage tests.
+
