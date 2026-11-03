@@ -56,6 +56,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
 
   bool isCapacityError(String errorString);
   void startNextPendingSession();
+  Future<void> ensureOcrPages(Emitter<ProcessingState> emit, String sessionId);
 
   void onMappingInitiated(
     MappingInitiated event,
@@ -84,6 +85,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       );
       final isDesktop =
           Platform.isMacOS || Platform.isLinux || Platform.isWindows;
+      await ensureOcrPages(emit, event.sessionId);
       final sessionImages = state.ocrPagesFor(event.sessionId);
       if (sessionImages.isEmpty) {
         updateSession(
@@ -359,6 +361,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         sessionId: event.sessionId,
         status: ProcessingStatus.processing,
       );
+      await ensureOcrPages(emit, event.sessionId);
       final sessionImages = state.ocrPagesFor(event.sessionId);
       final activeSession = state.sessions.firstWhereOrNull(
         (s) => s.id == event.sessionId,

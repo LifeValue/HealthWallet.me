@@ -121,6 +121,26 @@ void main() {
       expect(tokens.customController.text, '4096');
     });
 
+    testWidgets('a saved limit that is no preset opens as custom and an '
+        'unchanged Save keeps it', (tester) async {
+      SharedPreferences.setMockInitialValues({
+        SharedPrefsConstants.aiMaxTokens: 1000,
+      });
+      await register(AppPlatform.mobile);
+      await pumpOpener(tester);
+
+      final tokens = tester.widget<AiTokenOptionsSection>(
+        find.byType(AiTokenOptionsSection),
+      );
+      expect(tokens.selectedPreset, TokenPreset.custom);
+      expect(tokens.customController.text, '1000');
+
+      await tapSave(tester);
+
+      expect(result!.maxTokens, isNull);
+      expect(result!.changesModel, isFalse);
+    });
+
     testWidgets('a Save with no change returns no changed value', (
       tester,
     ) async {
@@ -225,6 +245,21 @@ void main() {
           sessionId: 's1',
         ),
       ]);
+    });
+
+    testWidgets('a changed context size alone is saved and restarts mapping '
+        'without a new token limit', (tester) async {
+      await openFromProcessingPage(tester);
+
+      // The first slider is the context size; its first step is 512.
+      tester.widget<Slider>(find.byType(Slider).first).onChanged!(0);
+      await tester.pump();
+      await tapSave(tester);
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getKeys(), {SharedPrefsConstants.aiContextSize});
+      expect(prefs.getInt(SharedPrefsConstants.aiContextSize), 512);
+      expect(bloc.events, [const TokenCapacityUpdated(sessionId: 's1')]);
     });
 
     testWidgets('Deep Scan alone goes through VisionToggled without '

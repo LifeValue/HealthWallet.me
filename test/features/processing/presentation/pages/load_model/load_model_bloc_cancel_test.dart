@@ -26,6 +26,10 @@ class _FakeDownloadService extends Fake implements AiModelDownloadService {
   bool get isAnyDownloading => false;
 
   @override
+  bool isVariantDownloading(AiModelVariant variant) =>
+      downloading.contains(variant);
+
+  @override
   Future<void> cancelDownload() async {
     cancelCalls++;
     await transfersEnded.future;
@@ -93,6 +97,21 @@ void main() {
     expect(bloc.state.isAnyDownloading, isTrue);
     notifications.events.clear();
   });
+
+  void serviceReports(
+    AiModelDownloadStatus status,
+    AiModelVariant variant, {
+    bool isMmprojDownload = false,
+  }) => bloc.add(
+    LoadModelServiceStateChanged(
+      serviceState: AiModelDownloadState(
+        status: status,
+        progress: 40,
+        variant: variant,
+        isMmprojDownload: isMmprojDownload,
+      ),
+    ),
+  );
 
   tearDown(() async {
     await bloc.close();
@@ -173,4 +192,70 @@ void main() {
       expect(bloc.state.isVariantDownloaded(AiModelVariant.qwen35x2b), isFalse);
     },
   );
+
+  test(
+    'cancelling another model keeps the selected downloaded model ready',
+    () async {
+      // qwen finishes and becomes the selected model; qwen35x2b keeps going.
+      service.downloading.remove(AiModelVariant.qwen);
+      service.onDisk.add(AiModelVariant.qwen);
+      serviceReports(AiModelDownloadStatus.completed, AiModelVariant.qwen);
+      await settle();
+      expect(bloc.state.selectedVariant, AiModelVariant.qwen);
+
+      service.transfersEnded.complete();
+      bloc.add(const LoadModelDownloadCancelled());
+      await settle();
+      await settle();
+
+      expect(bloc.state.status, LoadModelStatus.modelLoaded);
+      expect(bloc.state.isVariantDownloaded(AiModelVariant.qwen), isTrue);
+      expect(bloc.state.isAnyDownloading, isFalse);
+    },
+  );
+
+  test('a variant downloading only its vision file stays listed', () async {
+    const vision = AiModelVariant.qwen7b;
+    serviceReports(
+      AiModelDownloadStatus.downloading,
+      vision,
+      isMmprojDownload: true,
+    );
+    await settle();
+
+    service.transfersEnded.complete();
+    bloc.add(const LoadModelDownloadCancelled());
+    await settle();
+    await settle();
+
+    expect(bloc.state.isVariantDownloading(vision), isTrue);
+    expect(bloc.state.variantProgressOf(vision), 40);
+    for (final variant in variants) {
+      expect(bloc.state.isVariantDownloading(variant), isFalse);
+      expect(bloc.state.variantProgressOf(variant), isNull);
+    }
+    expect(bloc.state.status, LoadModelStatus.loading);
+    expect(bloc.state.isBackgroundDownload, isTrue);
+  });
+
+  test('a download started while the cancel runs stays listed', () async {
+    const later = AiModelVariant.qwen7b;
+    bloc.add(const LoadModelDownloadCancelled());
+    await settle();
+    serviceReports(AiModelDownloadStatus.downloading, later);
+    await settle();
+
+    service.transfersEnded.complete();
+    await settle();
+    await settle();
+
+    expect(bloc.state.isVariantDownloading(later), isTrue);
+    expect(
+      notifications.events.whereType<NotificationRemovedById>().map(
+        (e) => e.id,
+      ),
+      isNot(contains(_notificationId(later))),
+    );
+    expect(bloc.state.status, LoadModelStatus.loading);
+  });
 }

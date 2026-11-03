@@ -97,27 +97,10 @@ class OcrProcessingHelper {
     required List<String> previewPaths,
   }) => _serialized(sessionId, () async {
     final cacheDir = await _cacheDirectory();
-    var map = await _readPageMap(cacheDir, sessionId);
-
-    final pages = {...map.pages};
-    final previewKeys = {...map.previewKeys};
-    for (final file in filePaths) {
-      if (!_textRecognitionService.isPDF(file)) continue;
-      // The preview has just rendered them: these come from its cache.
-      final previews = await _textRecognitionService
-          .convertPdfToImagesForPreview(file);
-      final stored = await _pathResolver.toRelative(file);
-      for (final preview in previews) {
-        final name = p.basename(preview);
-        final match = TempFileSweeper.ocrCachePagePattern.firstMatch(name);
-        if (match == null) continue;
-        previewKeys.add(match.group(1)!);
-        final known = pages[name];
-        if (known != null && known.file == stored) continue;
-        pages[name] = PageSource(file: stored, page: int.parse(match[2]!));
-      }
-    }
-    map = map.copyWith(pages: pages, previewKeys: previewKeys);
+    final map = await _withSources(
+      await _readPageMap(cacheDir, sessionId),
+      filePaths,
+    );
 
     final byFile = <String, List<(String, PageSource)>>{};
     for (final preview in previewPaths) {
@@ -160,14 +143,21 @@ class OcrProcessingHelper {
 
   /// Records that the user turned [previewPath] by [quarterTurns] clockwise
   /// quarter turns and returns its OCR page turned the same way, or null when
-  /// it has none (a photo is turned in place by the preview).
+  /// it has none: a photo (turned in place by the preview), or a session
+  /// whose OCR pages aren't rendered yet (they are rendered turned).
+  /// [filePaths] are the session's files, so a turn made before the OCR pages
+  /// are prepared is still recorded.
   Future<String?> rotateOcrPage({
     required String sessionId,
+    required List<String> filePaths,
     required String previewPath,
     required int quarterTurns,
   }) => _serialized(sessionId, () async {
     final cacheDir = await _cacheDirectory();
-    final map = await _readPageMap(cacheDir, sessionId);
+    final map = await _withSources(
+      await _readPageMap(cacheDir, sessionId),
+      filePaths,
+    );
     final name = p.basename(previewPath);
     final source = map.pages[name];
     if (source == null) return null;
@@ -181,6 +171,8 @@ class OcrProcessingHelper {
       map.copyWith(pages: {...map.pages, name: turned}),
     );
 
+    // Not prepared yet: preparing renders the page turned.
+    if (map.ocrKeys.isEmpty) return null;
     final rendered = await _renderOcrPages(turned.file);
     final page = rendered?.pages[turned.page];
     if (page == null) return null;
@@ -188,20 +180,24 @@ class OcrProcessingHelper {
   });
 
   /// Drops the page map entries of the pages no longer in [previewPaths],
-  /// after the user reordered or deleted pages.
+  /// after the user reordered or deleted pages. [filePaths] are the session's
+  /// files before the edit (the session then stores only its preview pages),
+  /// so the sources are recorded even when the OCR pages aren't prepared yet.
   Future<void> keepOcrPages({
     required String sessionId,
+    required List<String> filePaths,
     required List<String> previewPaths,
   }) => _serialized(sessionId, () async {
     final cacheDir = await _cacheDirectory();
-    final map = await _readPageMap(cacheDir, sessionId);
-    if (map.pages.isEmpty) return;
+    final map = await _withSources(
+      await _readPageMap(cacheDir, sessionId),
+      filePaths,
+    );
     final kept = previewPaths.map(p.basename).toSet();
     final pages = {
       for (final entry in map.pages.entries)
         if (kept.contains(entry.key)) entry.key: entry.value,
     };
-    if (pages.length == map.pages.length) return;
     await _writePageMap(cacheDir, sessionId, map.copyWith(pages: pages));
   });
 
@@ -222,12 +218,17 @@ class OcrProcessingHelper {
   /// OCR pages, and its page map, when the session is deleted. [pages] are
   /// pages the caller knows of (preview and OCR), for a session whose page
   /// map is gone; only those in the page cache are deleted.
+  ///
+  /// Once its pages were edited the session stores only preview pages, so
+  /// the original imported files the page map records are deleted here too
+  /// (only those in `imports/`).
   Future<void> discardSessionPages({
     required String sessionId,
     Iterable<String> pages = const [],
   }) => _serialized(sessionId, () async {
     final cacheDir = await _cacheDirectory();
     final map = await _readPageMap(cacheDir, sessionId);
+    await _deleteImportedOriginals(map);
     await _deleteCacheKeys(cacheDir, {
       ...map.previewKeys,
       ...map.ocrKeys,
@@ -236,6 +237,54 @@ class OcrProcessingHelper {
     });
     await _deletePageMap(cacheDir, sessionId);
   });
+
+  /// [map] with where each preview page of the PDFs in [filePaths] came
+  /// from; a page already recorded keeps its turns.
+  Future<SessionPageMap> _withSources(
+    SessionPageMap map,
+    List<String> filePaths,
+  ) async {
+    final pages = {...map.pages};
+    final previewKeys = {...map.previewKeys};
+    for (final file in filePaths) {
+      if (!_textRecognitionService.isPDF(file)) continue;
+      // The preview has just rendered them: these come from its cache.
+      final previews = await _textRecognitionService
+          .convertPdfToImagesForPreview(file);
+      final stored = await _pathResolver.toRelative(file);
+      for (final preview in previews) {
+        final name = p.basename(preview);
+        final match = TempFileSweeper.ocrCachePagePattern.firstMatch(name);
+        if (match == null) continue;
+        previewKeys.add(match.group(1)!);
+        final known = pages[name];
+        if (known != null && known.file == stored) continue;
+        pages[name] = PageSource(file: stored, page: int.parse(match[2]!));
+      }
+    }
+    return map.copyWith(pages: pages, previewKeys: previewKeys);
+  }
+
+  Future<void> _deleteImportedOriginals(SessionPageMap map) async {
+    if (map.pages.isEmpty) return;
+    final String imports;
+    try {
+      final docs = await getApplicationDocumentsDirectory();
+      imports = p.join(docs.path, 'imports');
+    } catch (e, s) {
+      logger.w('OCR page set: finding the imports directory failed', e, s);
+      return;
+    }
+    for (final stored in map.pages.values.map((s) => s.file).toSet()) {
+      try {
+        final original = File(await _pathResolver.toAbsolute(stored));
+        if (!p.isWithin(imports, original.path)) continue;
+        if (await original.exists()) await original.delete();
+      } catch (e, s) {
+        logger.w('OCR page set: deleting the original $stored failed', e, s);
+      }
+    }
+  }
 
   Future<T> _serialized<T>(String sessionId, Future<T> Function() work) {
     final previous = _sessionWork[sessionId] ?? Future<void>.value();
@@ -296,7 +345,14 @@ class OcrProcessingHelper {
     final turnedFile = File(turnedPath);
     if (await turnedFile.exists()) return turnedPath;
     final bytes = await File(page).readAsBytes();
-    await turnedFile.writeAsBytes(await _rotateJpeg(bytes, quarterTurns));
+    // Written aside and renamed, so a crash never leaves half a page that
+    // would be reused.
+    final pending = File('$turnedPath.tmp');
+    await pending.writeAsBytes(
+      await _rotateJpeg(bytes, quarterTurns),
+      flush: true,
+    );
+    await pending.rename(turnedPath);
     return turnedPath;
   }
 
@@ -383,7 +439,10 @@ class OcrProcessingHelper {
     for (final entry in entries) {
       if (entry is! File) continue;
       final name = p.basename(entry.path);
-      final match = TempFileSweeper.ocrCachePagePattern.firstMatch(name);
+      // A `.tmp` page is a turned copy a crash left half written.
+      final match = TempFileSweeper.ocrCachePagePattern.firstMatch(
+        name.endsWith('.jpg.tmp') ? name.substring(0, name.length - 4) : name,
+      );
       final key = match?.group(1) ?? p.basenameWithoutExtension(name);
       final ours = match != null || name == '$key.json';
       if (!ours || !keys.contains(key)) continue;

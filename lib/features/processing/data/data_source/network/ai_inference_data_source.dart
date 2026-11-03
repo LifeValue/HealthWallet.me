@@ -111,6 +111,12 @@ abstract class AiInferenceDataSource {
 /// One running model file download. A restart of the same file waits for
 /// [ended], so only one writer ever touches its partial file.
 class _ModelTransfer {
+  _ModelTransfer(this.previous);
+
+  /// The earlier transfer of the same file this one waits for; cleared once
+  /// that has ended.
+  _ModelTransfer? previous;
+
   final cancelToken = CancelToken();
 
   /// The background_downloader task, on mobile.
@@ -124,8 +130,17 @@ class _ModelTransfer {
   /// gone or in place.
   Future<void> get ended => _ended.future;
 
+  bool get hasEnded => _ended.isCompleted;
+
   void end() {
     if (!_ended.isCompleted) _ended.complete();
+  }
+
+  /// This transfer and the earlier ones of its file that are still running.
+  Iterable<_ModelTransfer> get unfinishedChain sync* {
+    for (_ModelTransfer? t = this; t != null; t = t.previous) {
+      if (!t.hasEnded) yield t;
+    }
   }
 }
 
@@ -139,15 +154,18 @@ class AiInferenceDataSourceImpl
   final bool _useDio;
   final Future<Directory> Function() _documentsDirectory;
 
-  /// [createDio], [fileDownloader], [useDio] and [documentsDirectory] are for
-  /// tests. Desktop downloads with Dio, mobile with background_downloader.
+  /// [createDio], [fileDownloader], [useDio], [documentsDirectory] and
+  /// [transferEndLimit] are for tests. Desktop downloads with Dio, mobile
+  /// with background_downloader.
   AiInferenceDataSourceImpl(
     this._prefs, {
     @ignoreParam Dio Function()? createDio,
     @ignoreParam FileDownloader? fileDownloader,
     @ignoreParam bool? useDio,
     @ignoreParam Future<Directory> Function()? documentsDirectory,
-  }) : _createDio = createDio ?? Dio.new,
+    @ignoreParam Duration? transferEndLimit,
+  }) : _transferEndLimit = transferEndLimit ?? const Duration(seconds: 15),
+       _createDio = createDio ?? Dio.new,
        _fileDownloaderOverride = fileDownloader,
        _useDio =
            useDio ??
@@ -155,9 +173,10 @@ class AiInferenceDataSourceImpl
        _documentsDirectory =
            documentsDirectory ?? getApplicationDocumentsDirectory;
 
-  /// How long a cancel waits for the transfer to report its end before it
-  /// gives up waiting. A restart of the same file still waits for the end.
-  static const _cancelWaitLimit = Duration(seconds: 15);
+  /// How long a cancel, or a restart of the same file, waits for a transfer
+  /// to report its end. A restart that runs out of time fails rather than
+  /// write next to a transfer that may still be running.
+  final Duration _transferEndLimit;
 
   final Map<String, _ModelTransfer> _transfers = {};
 
@@ -410,20 +429,33 @@ class AiInferenceDataSourceImpl
     required String filename,
     required void Function(int) onProgress,
   }) async {
-    // A quick restart waits for the cancelled transfer of the same file to
-    // stop writing and delete its partial file.
-    for (
-      var previous = _transfers[filename];
-      previous != null;
-      previous = _transfers[filename]
-    ) {
-      await previous.ended;
-    }
-    // Registered before the next await, so a second caller waits for this one.
-    final transfer = _ModelTransfer();
+    // Registered before any await, so a cancel always finds it and a later
+    // caller waits for it.
+    final transfer = _ModelTransfer(_transfers[filename]);
     _transfers[filename] = transfer;
 
     try {
+      // A quick restart waits for the earlier transfers of the same file to
+      // stop writing and delete their partial file.
+      final earlier = transfer.unfinishedChain.skip(1).toList();
+      if (earlier.isNotEmpty) {
+        try {
+          await Future.wait(
+            earlier.map((t) => t.ended),
+          ).timeout(_transferEndLimit);
+        } on TimeoutException {
+          logger.e(
+            'The previous download of $filename has not ended after '
+            '${_transferEndLimit.inSeconds}s; not starting another',
+          );
+          throw Exception(
+            'Download failed for $filename: the previous download has not '
+            'ended',
+          );
+        }
+      }
+      transfer.previous = null;
+
       final dir = await _getModelDirectory();
       final filePath = path.join(dir, filename);
 
@@ -452,16 +484,26 @@ class AiInferenceDataSourceImpl
         );
       }
     } finally {
-      _transfers.remove(filename);
+      if (identical(_transfers[filename], transfer)) {
+        // An earlier transfer that outlived the wait stays the one to wait for.
+        final stillRunning = transfer.unfinishedChain.skip(1).firstOrNull;
+        if (stillRunning != null) {
+          _transfers[filename] = stillRunning;
+        } else {
+          _transfers.remove(filename);
+        }
+      }
       transfer.end();
     }
   }
 
   Future<void> _cancelDownload(String filename) async {
-    final transfer = _transfers[filename];
-    if (transfer == null) return;
+    final latest = _transfers[filename];
+    if (latest == null) return;
 
-    if (!transfer.isCancelled) {
+    // Also reaches a restart still waiting for the transfer it replaces.
+    for (final transfer in latest.unfinishedChain.toList()) {
+      if (transfer.isCancelled) continue;
       logger.i('Cancelling the download of $filename');
       transfer.cancelToken.cancel('Download cancelled for $filename');
       final taskId = transfer.taskId;
@@ -474,11 +516,11 @@ class AiInferenceDataSourceImpl
       }
     }
 
-    await transfer.ended.timeout(
-      _cancelWaitLimit,
+    await latest.ended.timeout(
+      _transferEndLimit,
       onTimeout: () => logger.w(
         'The cancelled download of $filename has not ended after '
-        '${_cancelWaitLimit.inSeconds}s',
+        '${_transferEndLimit.inSeconds}s',
       ),
     );
   }

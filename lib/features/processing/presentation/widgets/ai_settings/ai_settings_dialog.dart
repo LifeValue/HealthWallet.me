@@ -251,12 +251,12 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
     super.dispose();
   }
 
-  TokenPreset _presetFromValue(int value) {
-    if (value <= 100) return TokenPreset.low;
-    if (value <= 500) return TokenPreset.medium;
-    if (value <= 2000) return TokenPreset.high;
-    return TokenPreset.custom;
-  }
+  /// Only an exact preset value opens on that preset; any other value opens
+  /// as custom, so an unchanged Save keeps it.
+  TokenPreset _presetFromValue(int value) => TokenPreset.values.firstWhere(
+    (p) => p != TokenPreset.custom && p.tokens == value,
+    orElse: () => TokenPreset.custom,
+  );
 
   int _currentTokenValue() {
     if (_selectedPreset == TokenPreset.custom) {

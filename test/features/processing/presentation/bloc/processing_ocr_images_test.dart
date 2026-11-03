@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -61,11 +62,19 @@ class _FakePrinting extends PrintingPlatform {
   int? ocrPageCount;
   final rendered = <double>[];
 
+  /// Rendering at a dpi in here waits for its completer.
+  final gates = <double, Completer<void>>{};
+
   @override
-  Stream<PdfRaster> raster(Uint8List document, List<int>? pages, double dpi) {
+  Stream<PdfRaster> raster(
+    Uint8List document,
+    List<int>? pages,
+    double dpi,
+  ) async* {
     rendered.add(dpi);
+    await gates[dpi]?.future;
     final count = dpi > 72 ? ocrPageCount ?? pageCount : pageCount;
-    return Stream.fromIterable([for (var i = 0; i < count; i++) _Page(dpi)]);
+    yield* Stream.fromIterable([for (var i = 0; i < count; i++) _Page(dpi)]);
   }
 
   @override
@@ -571,6 +580,81 @@ void main() {
     expect(previews.every((p) => File(p).existsSync()), isTrue);
     final ocrKey = ocrPages.first.split('/').last.split('_page_').first;
     expect(File('${cacheDir().path}/$ocrKey.json').existsSync(), isFalse);
+  });
+
+  for (final dpi in [72.0, 200.0]) {
+    test('a session deleted while its ${dpi.round()} dpi pages render leaves '
+        'no pages behind', () async {
+      seed(session());
+      printing.gates[dpi] = Completer<void>();
+      bloc.add(const SessionActivated(sessionId: _sessionId));
+      await eventually(() => printing.rendered.contains(dpi));
+
+      bloc.add(SessionCleared(session: session()));
+      await bloc.stream.firstWhere((s) => s.sessions.isEmpty);
+      printing.gates[dpi]!.complete();
+      await eventually(
+        () =>
+            !pageMap().existsSync() &&
+            (!cacheDir().existsSync() || cacheDir().listSync().isEmpty),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(printing.rendered, dpi == 72 ? [72] : [72, 200]);
+      expect(
+        cacheDir().existsSync() && cacheDir().listSync().isNotEmpty,
+        false,
+      );
+      expect(bloc.state.sessionImagePaths, isEmpty);
+      expect(bloc.state.ocrPageByPreviewPath, isEmpty);
+    });
+  }
+
+  test('a session opened while another is processing gets its 200 dpi '
+      'pages when its step starts, with the turns made meanwhile', () async {
+    const busy = ProcessingSession(
+      id: 'busy',
+      status: ProcessingStatus.processing,
+    );
+    // ignore: invalid_use_of_visible_for_testing_member
+    bloc.emit(ProcessingState(sessions: [session(), busy]));
+    bloc.add(const SessionActivated(sessionId: _sessionId));
+    await bloc.stream.firstWhere((s) => s.sessionImagePaths.isNotEmpty);
+    final previews = bloc.state.sessionImagePaths[_sessionId]!;
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(printing.rendered, [72]);
+
+    bloc.add(PageRotated(sessionId: _sessionId, previewPath: previews[1]));
+    await eventually(
+      () => pageMapHas(
+        previews.map(name),
+        turned: name(previews[1]),
+        turns: 1,
+      ),
+    );
+    expect(printing.rendered, [72]);
+
+    // The other session finishes.
+    // ignore: invalid_use_of_visible_for_testing_member
+    bloc.emit(
+      bloc.state.copyWith(
+        sessions: [
+          session(),
+          busy.copyWith(status: ProcessingStatus.draft),
+        ],
+      ),
+    );
+    bloc.add(const ProcessRemainingResources(sessionId: _sessionId));
+    await bloc.stream.firstWhere(
+      (s) => s.sessions.first.status == ProcessingStatus.draft,
+    );
+    final pages = repository.remainingImages!;
+
+    expect(printing.rendered, [72, 200]);
+    expect(isOcrPage(pages[0]), isTrue);
+    expect(pages[1], endsWith('_page_2_r1.jpg'));
+    expect(decode(pages[1]).width, _heightAt(200));
+    expect(isOcrPage(pages[2]), isTrue);
   });
 
   test('a session deleted while its pages render leaves no pages '

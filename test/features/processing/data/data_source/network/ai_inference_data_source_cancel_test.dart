@@ -124,6 +124,10 @@ class _FakeFileDownloader extends Fake implements FileDownloader {
     );
   }
 
+  /// Ends the task as failed; the plugin moves no file in.
+  void fail(String filename, {TaskStatus status = TaskStatus.failed}) =>
+      _ends[filename]!.complete(TaskStatusUpdate(tasks[filename]!, status));
+
   /// Ends the task as the plugin does once a cancel has gone through.
   void endCancelled(String filename) => _ends[filename]!.complete(
     TaskStatusUpdate(tasks[filename]!, TaskStatus.canceled),
@@ -194,13 +198,24 @@ void main() {
         documentsDirectory: () async => docs,
       );
 
-  AiInferenceDataSourceImpl mobileDataSource(_FakeFileDownloader downloader) =>
-      AiInferenceDataSourceImpl(
-        prefs,
-        fileDownloader: downloader,
-        useDio: false,
-        documentsDirectory: () async => docs,
-      );
+  AiInferenceDataSourceImpl mobileDataSource(
+    _FakeFileDownloader downloader, {
+    Duration? transferEndLimit,
+  }) => AiInferenceDataSourceImpl(
+    prefs,
+    fileDownloader: downloader,
+    useDio: false,
+    documentsDirectory: () async => docs,
+    transferEndLimit: transferEndLimit,
+  );
+
+  final throwsNonCancelError = throwsA(
+    isA<Exception>().having(
+      (e) => e,
+      'not a cancel',
+      isNot(isA<ModelDownloadCancelledException>()),
+    ),
+  );
 
   final throwsCancelled = throwsA(isA<ModelDownloadCancelledException>());
 
@@ -493,6 +508,128 @@ void main() {
         downloader.complete(_config.modelId);
         await second;
 
+        expect(modelFile().existsSync(), isTrue);
+      },
+    );
+  });
+
+  group('mobile (background_downloader), more end states', () {
+    for (final status in [TaskStatus.failed, TaskStatus.notFound]) {
+      test('a task ending ${status.name} is an error, not a cancel, and '
+          'leaves no model file', () async {
+        final downloader = _FakeFileDownloader(modelDir);
+        final dataSource = mobileDataSource(downloader);
+
+        final download = expectLater(
+          dataSource.downloadModelForVariant(_variant, onProgress: (_) {}),
+          throwsNonCancelError,
+        );
+        await _until(() => downloader.tasks.isNotEmpty);
+        downloader.fail(_config.modelId, status: status);
+        await download;
+
+        expect(modelFile().existsSync(), isFalse);
+        expect(
+          await dataSource.checkModelExistenceForVariant(_variant),
+          isFalse,
+        );
+      });
+    }
+
+    test(
+      'a download stream cancelled at once never starts its task',
+      () async {
+        final downloader = _FakeFileDownloader(modelDir);
+        final repository = ProcessingRepositoryImpl(
+          mobileDataSource(downloader),
+          _FakeLocalDataSource(),
+          _FakeOcr(),
+          _FakePathResolver(),
+        );
+
+        final sub = repository
+            .downloadModelForVariant(_variant)
+            .listen((_) {}, onError: (Object _) {});
+        await sub.cancel();
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        expect(downloader.downloadCalls, 0);
+        expect(modelFile().existsSync(), isFalse);
+      },
+    );
+
+    test(
+      'a cancel reaches a restart still waiting for the transfer it replaces',
+      () async {
+        final downloader = _FakeFileDownloader(modelDir, cancelEndsTask: false);
+        final dataSource = mobileDataSource(downloader);
+
+        final first = expectLater(
+          dataSource.downloadModelForVariant(_variant, onProgress: (_) {}),
+          throwsCancelled,
+        );
+        await _until(() => downloader.tasks.isNotEmpty);
+
+        final firstCancel = dataSource.cancelModelDownloadForVariant(_variant);
+        final restart = expectLater(
+          dataSource.downloadModelForVariant(_variant, onProgress: (_) {}),
+          throwsCancelled,
+        );
+        final secondCancel = dataSource.cancelModelDownloadForVariant(
+          _variant,
+        );
+
+        downloader.endCancelled(_config.modelId);
+        await firstCancel;
+        await secondCancel;
+        await first;
+        await restart;
+
+        expect(downloader.downloadCalls, 1);
+        expect(modelFile().existsSync(), isFalse);
+      },
+    );
+
+    test(
+      'a restart whose earlier transfer never ends fails instead of hanging',
+      () async {
+        final downloader = _FakeFileDownloader(modelDir, cancelEndsTask: false);
+        final dataSource = mobileDataSource(
+          downloader,
+          transferEndLimit: const Duration(milliseconds: 50),
+        );
+
+        final first = expectLater(
+          dataSource.downloadModelForVariant(_variant, onProgress: (_) {}),
+          throwsCancelled,
+        );
+        await _until(() => downloader.tasks.isNotEmpty);
+
+        // The native cancel never reports back within the limit.
+        await dataSource.cancelModelDownloadForVariant(_variant);
+        await expectLater(
+          dataSource.downloadModelForVariant(_variant, onProgress: (_) {}),
+          throwsNonCancelError,
+        );
+        expect(downloader.downloadCalls, 1);
+
+        // A third try still waits for the stuck transfer, not just the failed
+        // restart.
+        await expectLater(
+          dataSource.downloadModelForVariant(_variant, onProgress: (_) {}),
+          throwsNonCancelError,
+        );
+        expect(downloader.downloadCalls, 1);
+
+        downloader.endCancelled(_config.modelId);
+        await first;
+        final again = dataSource.downloadModelForVariant(
+          _variant,
+          onProgress: (_) {},
+        );
+        await _until(() => downloader.downloadCalls == 2);
+        downloader.complete(_config.modelId);
+        await again;
         expect(modelFile().existsSync(), isTrue);
       },
     );

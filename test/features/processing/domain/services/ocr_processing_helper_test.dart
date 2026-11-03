@@ -125,7 +125,11 @@ void main() {
         filePaths: [photo],
         previewPaths: [photo],
       );
-      await helper.keepOcrPages(sessionId: 's', previewPaths: [photo]);
+      await helper.keepOcrPages(
+        sessionId: 's',
+        filePaths: [photo],
+        previewPaths: [photo],
+      );
 
       expect(pages, isEmpty);
       expect(pageMap('s').existsSync(), isFalse);
@@ -183,6 +187,7 @@ void main() {
       );
       final turned = helper.rotateOcrPage(
         sessionId: 's',
+        filePaths: const [],
         previewPath: previews.first,
         quarterTurns: 1,
       );
@@ -206,6 +211,109 @@ void main() {
       expect(previews.any((p) => File(p).existsSync()), isFalse);
       expect(metadata.existsSync(), isFalse);
       expect(unrelated.existsSync(), isTrue);
+    });
+
+    test('a turn made before the OCR pages are prepared is kept', () async {
+      final pdf = file('report.pdf').path;
+      final previews = await helper.prepareAllImages(filePaths: [pdf]);
+
+      final before = await helper.rotateOcrPage(
+        sessionId: 's',
+        filePaths: [pdf],
+        previewPath: previews[1],
+        quarterTurns: 1,
+      );
+      final pages = await helper.prepareOcrPages(
+        sessionId: 's',
+        filePaths: const [],
+        previewPaths: previews,
+      );
+
+      expect(before, isNull);
+      expect(pages[previews[0]], endsWith('_page_1.jpg'));
+      expect(pages[previews[1]], endsWith('_page_2_r1.jpg'));
+    });
+
+    test('pages reordered before the OCR pages are prepared keep their '
+        'source', () async {
+      final pdf = file('report.pdf').path;
+      final previews = await helper.prepareAllImages(filePaths: [pdf]);
+
+      // After the edit the session stores only its preview pages.
+      await helper.keepOcrPages(
+        sessionId: 's',
+        filePaths: [pdf],
+        previewPaths: [previews[1]],
+      );
+      final pages = await helper.prepareOcrPages(
+        sessionId: 's',
+        filePaths: [previews[1]],
+        previewPaths: [previews[1]],
+      );
+
+      expect(pages.keys, [previews[1]]);
+      expect(pages[previews[1]], endsWith('_page_2.jpg'));
+      expect(logs, isEmpty);
+    });
+
+    test('a turned page a crash left half written is not reused, and goes '
+        'with the session', () async {
+      final pdf = file('report.pdf').path;
+      final previews = await helper.prepareAllImages(filePaths: [pdf]);
+      final pages = await helper.prepareOcrPages(
+        sessionId: 's',
+        filePaths: [pdf],
+        previewPaths: previews,
+      );
+      final partial = File(
+        '${pages[previews[0]]!.replaceAll('.jpg', '')}'
+        '_r1.jpg.tmp',
+      )..writeAsBytesSync([0xFF, 0xD8]);
+
+      final turned = await helper.rotateOcrPage(
+        sessionId: 's',
+        filePaths: const [],
+        previewPath: previews[0],
+        quarterTurns: 1,
+      );
+
+      expect(turned, endsWith('_page_1_r1.jpg'));
+      final image = img.decodeJpg(File(turned!).readAsBytesSync())!;
+      expect((image.width, image.height), (2, 4));
+      expect(partial.existsSync(), isFalse);
+
+      // A partial left by a later crash goes when the session is deleted.
+      partial.writeAsBytesSync([0xFF, 0xD8]);
+      await helper.discardSessionPages(sessionId: 's');
+      expect(partial.existsSync(), isFalse);
+    });
+
+    test('deleting the session deletes the imported originals in its page '
+        'map; saving keeps them', () async {
+      final pdf = file('report.pdf');
+      final outside = File('${root.path}/Documents/elsewhere/other.pdf')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('x');
+      final previews = await helper.prepareAllImages(
+        filePaths: [pdf.path, outside.path],
+      );
+      await helper.prepareOcrPages(
+        sessionId: 's',
+        filePaths: [pdf.path, outside.path],
+        previewPaths: previews,
+      );
+
+      await helper.discardOcrPages(sessionId: 's');
+      expect(pdf.existsSync(), isTrue);
+
+      await helper.prepareOcrPages(
+        sessionId: 's',
+        filePaths: [pdf.path, outside.path],
+        previewPaths: previews,
+      );
+      await helper.discardSessionPages(sessionId: 's');
+      expect(pdf.existsSync(), isFalse);
+      expect(outside.existsSync(), isTrue);
     });
 
     test('discarding without a cache directory completes', () async {

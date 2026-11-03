@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
+import 'package:health_wallet/core/services/temp_file_sweeper.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
@@ -285,6 +286,11 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         allImages = await ocrProcessingHelper.prepareAllImages(
           filePaths: session.filePaths,
         );
+        // Deleted while its pages rendered: its delete found none of them.
+        if (_isGone(session.id)) {
+          await _discardSessionPages(session, pages: allImages);
+          return;
+        }
       }
 
       final updatedImageMap = Map<String, List<String>>.from(
@@ -361,6 +367,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     );
     if (sessionIndex == -1) return;
 
+    final filePathsBefore = state.sessions[sessionIndex].filePaths;
     final updatedSession = state.sessions[sessionIndex].copyWith(
       filePaths: event.reorderedPaths,
     );
@@ -384,6 +391,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     try {
       await ocrProcessingHelper.keepOcrPages(
         sessionId: event.sessionId,
+        filePaths: filePathsBefore,
         previewPaths: event.reorderedPaths,
       );
     } catch (e, s) {
@@ -395,10 +403,15 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     PageRotated event,
     Emitter<ProcessingState> emit,
   ) async {
+    final sessionIndex = state.sessions.indexWhere(
+      (s) => s.id == event.sessionId,
+    );
+    if (sessionIndex == -1) return;
     String? ocrPage;
     try {
       ocrPage = await ocrProcessingHelper.rotateOcrPage(
         sessionId: event.sessionId,
+        filePaths: state.sessions[sessionIndex].filePaths,
         previewPath: event.previewPath,
         quarterTurns: event.quarterTurns,
       );
@@ -456,10 +469,14 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         filePaths: session.filePaths,
         previewPaths: previews,
       );
-      // A session deleted meanwhile has had its pages deleted after these.
-      if (emit.isDone || state.sessions.every((s) => s.id != session.id)) {
+      if (_isGone(session.id)) {
+        await _discardSessionPages(
+          session,
+          pages: [...previews, ...ocrPages.values],
+        );
         return;
       }
+      if (emit.isDone) return;
       emit(
         state.copyWith(
           ocrPageByPreviewPath: {...state.ocrPageByPreviewPath, ...ocrPages},
@@ -474,6 +491,26 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
       );
     }
   }
+
+  /// Renders the 200 dpi pages of [sessionId] when its mapping starts, if
+  /// opening it didn't (another session was processing then).
+  Future<void> ensureOcrPages(
+    Emitter<ProcessingState> emit,
+    String sessionId,
+  ) async {
+    final index = state.sessions.indexWhere((s) => s.id == sessionId);
+    if (index == -1) return;
+    final previews = state.sessionImagePaths[sessionId] ?? const <String>[];
+    final missing = previews.any(
+      (preview) =>
+          TempFileSweeper.ocrCachePagePattern.hasMatch(p.basename(preview)) &&
+          !state.ocrPageByPreviewPath.containsKey(preview),
+    );
+    if (missing) await _prepareOcrPages(emit, state.sessions[index], previews);
+  }
+
+  bool _isGone(String sessionId) =>
+      state.sessions.every((s) => s.id != sessionId);
 
   Future<void> _discardSessionPages(
     ProcessingSession session, {

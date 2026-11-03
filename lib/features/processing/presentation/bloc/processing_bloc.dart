@@ -118,7 +118,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
       transformer: sequential(),
     );
     on<VisionToggled>(onVisionToggled, transformer: sequential());
-    on<PagesReordered>(onPagesReordered);
+    on<PagesReordered>(onPagesReordered, transformer: sequential());
     on<ContainerTypeSwitched>(_onContainerTypeSwitched);
     on<PageRotated>(onPageRotated, transformer: sequential());
     on<OcrPagesReleased>(onOcrPagesReleased, transformer: sequential());

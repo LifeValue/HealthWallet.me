@@ -416,11 +416,18 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
           (e) => e.value && e.key != variant,
         );
 
+        // A cancel of one model leaves a selected model on disk usable.
+        final selected = state.selectedVariant;
+        final selectedIsLoaded =
+            selected != null && state.isVariantDownloaded(selected);
+
         emit(
           state.copyWith(
             status: anyStillDownloading
                 ? LoadModelStatus.loading
-                : LoadModelStatus.modelAbsent,
+                : (selectedIsLoaded
+                      ? LoadModelStatus.modelLoaded
+                      : LoadModelStatus.modelAbsent),
             isBackgroundDownload: anyStillDownloading,
             downloadingVariants: updatedDownloading,
             variantProgress: updatedProgress,
@@ -442,10 +449,10 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     LoadModelDownloadCancelled event,
     Emitter<LoadModelState> emit,
   ) async {
-    final cancelled = state.downloadingVariants.entries
-        .where((e) => e.value)
-        .map((e) => e.key)
-        .toList();
+    // Only model downloads are cancelled; a vision-file download keeps going.
+    final cancelled = AiModelVariant.values
+        .where(_downloadService.isVariantDownloading)
+        .toSet();
 
     // Returns once every transfer has ended and its partial file is gone.
     await _downloadService.cancelDownload();
@@ -464,14 +471,28 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
       );
     }
 
+    // Read after the awaits: a download started meanwhile stays listed.
+    final downloading = {...state.downloadingVariants}
+      ..removeWhere((variant, _) => cancelled.contains(variant));
+    final progress = {...state.variantProgress}
+      ..removeWhere((variant, _) => cancelled.contains(variant));
+    final anyStillDownloading = downloading.values.any((v) => v);
+    final selected = state.selectedVariant;
+    final selectedIsLoaded =
+        selected != null && (downloaded[selected] ?? false);
+
     emit(
       state.copyWith(
-        status: LoadModelStatus.modelAbsent,
-        isBackgroundDownload: false,
-        downloadProgress: null,
+        status: anyStillDownloading
+            ? LoadModelStatus.loading
+            : (selectedIsLoaded
+                  ? LoadModelStatus.modelLoaded
+                  : LoadModelStatus.modelAbsent),
+        isBackgroundDownload: anyStillDownloading,
+        downloadProgress: anyStillDownloading ? state.downloadProgress : null,
         downloadedVariants: downloaded,
-        downloadingVariants: {},
-        variantProgress: {},
+        downloadingVariants: downloading,
+        variantProgress: progress,
       ),
     );
   }
