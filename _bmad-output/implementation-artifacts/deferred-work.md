@@ -124,3 +124,14 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
   summary: Decide whether the Home vitals card should show a scanned weight, height, temperature or glucose as on the document, like the records screens now do, instead of in the region unit.
   evidence: 2026-10-29: the records screens show scanned values as recorded; `patient_vitals_factory` still converts every source for the card, which is a summary in the region units. Product decision.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-profile-and-patient-dialogs.md`
+  summary: BiometricAuthService.authenticate swallows every error and returns false, so lockout or not-enrolled errors turn the lock off silently and the bloc's biometric failure message never shows.
+  evidence: lib/core/services/biometric_auth_service.dart:47-50 catches all exceptions; pre-existing, found in spec 1 review.
+- source_spec: `_bmad-output/implementation-artifacts/spec-profile-and-patient-dialogs.md`
+  summary: Setting failures outside the Preferences modal (receive mode from the records page, biometric switch in onboarding) show no message.
+  evidence: Only PreferenceModal listens for UserStatus.failure; records_page.dart:554 and onboarding_screen.dart:132,140 never had one.
+- source_spec: `_bmad-output/implementation-artifacts/spec-profile-and-patient-dialogs.md`
+  summary: The patient setup dialog overwrites a stored male or female gender with unknown when the user only fills in other fields.
+  evidence: patient_setup_dialog.dart starts at unknown and writes it whenever any field changed; same before this change.
+

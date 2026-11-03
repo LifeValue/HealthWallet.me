@@ -12,6 +12,88 @@ Items marked _(likely)_ were inferred from the code and need to be confirmed on 
 4. **Don't break the desktop contract.** The desktop isn't being worked on, but phones already pair with it. A mobile change to `fhir_resource`, `sources` or `record_notes`, or to the messages sent to the desktop, must keep working on the desktop side. The LWW sync, wire protocol and handover tests protect this; keep them green.
 5. **No silent failures in new code.** Never write an empty `catch`; log the error and show the user what happened.
 
+## Status on `develop` (2026-11-03)
+
+Checked in the code on `develop` at `b079f4f5`, after `feature/mobile-stabilization`, `bugfix/record-values-errors-and-deletes` and `feature/records-stabilization` were merged. "Holders" is `feature/holders-and-sources` (17 commits, not merged yet). Nothing was run on a device.
+
+**Fixed on `develop`:**
+
+- Notes on phone and desktop no longer share ids (`uuid` since schema v12).
+- Doses keep their decimals (0.5 mg stays 0.5). `extractDosage`, which rounds, is only called from tests.
+- `<` and `>` are kept on record values, components and ranges.
+- US weight ranges convert both bounds.
+- The calendar week starts on Monday in de, es and ro (from the app language). English with the Europe region still starts on Sunday.
+- Every empty `catch` outside `desktop/` and `share_records/` has a comment.
+
+**Fixed on holders only (not repeated elsewhere):**
+
+- D3, the duplicate patient after the first Fasten sync.
+- The empty `Patient/` link on scanned documents.
+- Source renames not saved, and Fasten overwriting source names and deletes.
+- `canEditSource`, `PatientDataUpdatedFromSync`.
+- Home scope and Patient BLoC tests.
+
+**Left out for now:** the Fasten items (D1, D2, and every Fasten sync bringing back records the user deleted), because fetching from Fasten can't be checked at the moment. Also the Home counts (B3), because holders rewrites that code.
+
+**Still open, in two batches.** Each item is one spec on `feature/mobile-stabilization-remaining`. Nothing that `feature/holders-and-sources` changes is planned here.
+
+Batch 1, in this order (specs in `_bmad-output/implementation-artifacts/`):
+
+1. **Profile and patient dialogs** (`spec-profile-and-patient-dialogs.md`).
+   - Every profile change waits 1 s (B8).
+   - A failed name save still shows the new name (pinned by a skipped test in `user_bloc_test.dart`).
+   - Profile errors show raw exception text and name the wrong setting.
+   - The Preferences snackbar renders under the modal's blur.
+   - Both patient dialogs reset the gender when the theme or language changes (`didChangeDependencies`).
+2. **Scan and AI settings (B5)** (`spec-scan-and-ai-settings.md`).
+   - The default token limit is 500 in Preferences and 4,096 in Processing; saving Preferences caps every later scan at 500. The Processing screen saves every value, so its first Save restarts mapping.
+   - Deep Scan isn't sent to the running `ProcessingBloc`, and its default differs between the dialog and the bloc.
+   - PDF pages reach OCR and AI at 72 dpi.
+   - Cancelling a model download only stops listening, so the file still lands; the "cancelled" notification uses the wrong id.
+   - Out of memory shows "too large for the current AI context size" (pinned by a skipped test in `processing_failures_test.dart`).
+3. **Complete backups** (`spec-complete-backups.md`, desktop).
+   - Backups hold only the database.
+   - A restore keeps old stamps, so a paired phone partly undoes it, and the dialog says the phone isn't affected.
+   - Nothing lets a wrong restore be undone.
+   - This must ship before item 4 deletes any file.
+   - For the holders merge: `sources.holder_id` (v14) is filled only at start-up (`linkUnassigned`), so after a restore of a pre-holders backup, the linker must run again.
+4. **Attachment ids and files** (`spec-attachment-ids-and-files.md`).
+   - Scanned and encounter documents get millisecond ids, so two saved in the same millisecond overwrite each other (pinned by a skipped test in `document_reference_service_test.dart`). Stored file names collide or get reused.
+   - Files of deleted records stay for ever, while record and attachment deletes remove the file immediately, so an undo can't bring it back. From now on files follow their record: kept 30 days, deleted at the purge. A start-up sweep removes files nothing refers to.
+   - Source deletes are left to the same purge and sweep, because holders rewrites that code.
+
+Batch 2:
+
+5. **Records filters and paging (B4).**
+   - Choosing a specialty clears the type filter.
+   - Specialty is filtered after paging, so pages come up empty and load-more duplicates rows.
+   - Search ignores the type and date filters.
+   - The Attachments view ignores the date filter.
+   - A25–A28 in `records-audit.md`.
+6. **Cleanup and logging.**
+   - Section 5 dead code: `PdfStorageService` (two copies), `ClearDemoData`, `deleteResourceWithRelated`, the old model download methods, `CaptureMode.pdf`, the `add-document` intent filter, the `build.yaml` exclude.
+   - `extractDosage`.
+   - Model sizes written in two places.
+   - The Spanish-only key `counterAppBarTitle`.
+   - 18 empty `catch (_) {}` (11 in `desktop/`, 7 in `share_records/`); the backup ones (`backup_service.dart`, `backup_bloc.dart`, `backup_card.dart`) are fixed in item 3.
+7. **Tests and CI (section 6).**
+   - No BLoC tests for Home, Onboarding, Notifications, Focus Mode, Preview; Load Model and Attach to Encounter are only partly covered.
+   - No widget tests for the review form, scanning and the Preferences toggles (the patient dialog and Preferences modal tests come with item 1).
+   - No data tests for migrations 1→8.
+   - `integration_test/` (including `app_l10n_test.dart`) isn't run in CI.
+   - No coverage gate.
+   - The translation tests don't catch dropped plurals or outdated translations.
+
+**Also open, not in a batch:**
+
+- Notifications: routes aren't stored, so taps do nothing after a restart, and handover notifications have no route (B6).
+- Untitled records show the English "Resource", and other types fall back to the English type name.
+- `<` and `>` are dropped, and 0.004 shows as "0.00", in the IPS PDF (`fhir_ips_export` package). They are also dropped in age onsets, encounter length, specimen quantities and the Home blood pressure.
+- D7, one bad entry drops a received share.
+- A source renamed after it was deleted on the other device comes back without its records. The fix is a sync rule on both ends.
+- Google Wallet never reports a failed or cancelled save to the app, and the button shows without checking that Wallet is available. Whether adding again updates the pass needs a device.
+- Release path (section 7): `master` is 505 commits behind and has no `.gitlab-ci.yml`; the Shorebird fallback is still silent; `fhir_ips_export` and `airdrop` aren't pinned to tags.
+
 ## 1. Security (first)
 
 | #   | Problem                                                                                                                                                                                                                                                     | Where                                                                    |
