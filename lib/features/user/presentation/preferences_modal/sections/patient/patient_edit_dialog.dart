@@ -80,8 +80,9 @@ class _PatientEditDialogState extends State<PatientEditDialog>
   String _selectedFamily = '';
   DateTime? _selectedBirthDate;
 
-  /// A label of [_getGenderOptions]; set in [didChangeDependencies].
-  late String _selectedGender;
+  /// A code of [GenderMapper.normalizeFhirGenderCode]; [build] shows its
+  /// label, so a theme or language change keeps the edit.
+  late String _selectedGenderCode;
   String _selectedBloodType = 'N/A';
   String _selectedIdentifier = '';
   String _selectedContactPhone = '';
@@ -140,9 +141,8 @@ class _PatientEditDialogState extends State<PatientEditDialog>
       _selectedBirthDate = DateTime.tryParse(result.dateOfBirth!);
     }
     if (result.gender != null) {
-      _selectedGender = GenderMapper.mapFhirGenderToDisplay(
-        result.gender!,
-        context.l10n,
+      _selectedGenderCode = GenderMapper.normalizeFhirGenderCode(
+        result.gender,
       );
     }
   }
@@ -176,18 +176,6 @@ class _PatientEditDialogState extends State<PatientEditDialog>
     _initializeCurrentPatient();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final extractedGender = FhirFieldExtractor.extractPatientGender(
-      widget.patient,
-    );
-    _selectedGender = GenderMapper.mapFhirGenderToDisplay(
-      extractedGender,
-      context.l10n,
-    );
-  }
-
   Future<void> _loadCountryCode() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(SharedPrefsConstants.countryCode);
@@ -206,6 +194,7 @@ class _PatientEditDialogState extends State<PatientEditDialog>
     _selectedBirthDate = FhirFieldExtractor.extractPatientBirthDate(
       widget.patient,
     );
+    _selectedGenderCode = _storedGenderCode(widget.patient);
   }
 
   void _initializeCurrentPatient() {
@@ -231,13 +220,7 @@ class _PatientEditDialogState extends State<PatientEditDialog>
         _currentPatient!,
       );
 
-      final extractedGender = FhirFieldExtractor.extractPatientGender(
-        _currentPatient!,
-      );
-      _selectedGender = GenderMapper.mapFhirGenderToDisplay(
-        extractedGender,
-        context.l10n,
-      );
+      _selectedGenderCode = _storedGenderCode(_currentPatient!);
 
       _selectedIdentifier = FhirFieldExtractor.extractPatientIdentifierValue(
         _currentPatient!,
@@ -271,6 +254,11 @@ class _PatientEditDialogState extends State<PatientEditDialog>
     }
     return '';
   }
+
+  String _storedGenderCode(Patient patient) =>
+      GenderMapper.normalizeFhirGenderCode(
+        FhirFieldExtractor.extractPatientGender(patient),
+      );
 
   String _extractContactPhone(Patient patient) {
     final contact = patient.contact?.firstOrNull;
@@ -330,7 +318,10 @@ class _PatientEditDialogState extends State<PatientEditDialog>
       final hasServiceChanges = await _patientEditService.hasPatientChanges(
         currentPatient: _currentPatient!,
         newBirthDate: _selectedBirthDate,
-        newGender: _selectedGender,
+        newGender: GenderMapper.mapFhirGenderToDisplay(
+          _selectedGenderCode,
+          l10n,
+        ),
         newBloodType: _selectedBloodType,
         newIdentifierValue: _selectedIdentifier,
         l10n: l10n,
@@ -362,9 +353,6 @@ class _PatientEditDialogState extends State<PatientEditDialog>
       final currentBirthDate = FhirFieldExtractor.extractPatientBirthDate(
         _currentPatient!,
       );
-      final currentGender = FhirFieldExtractor.extractPatientGender(
-        _currentPatient!,
-      );
       final currentGivenValue = _givenController.text;
       final currentFamilyValue = _familyController.text;
       final currentIdentifierValue = _identifierController.text;
@@ -381,8 +369,7 @@ class _PatientEditDialogState extends State<PatientEditDialog>
       final nameChanged = givenChanged || familyChanged;
       final birthDateChanged = currentBirthDate != _selectedBirthDate;
       final genderChanged =
-          GenderMapper.mapFhirGenderToDisplay(currentGender, l10n) !=
-          _selectedGender;
+          _storedGenderCode(_currentPatient!) != _selectedGenderCode;
       final bloodTypeChanged = currentBloodType != _selectedBloodType;
       final identifierChanged = currentIdentifier != currentIdentifierValue;
       final contactPhoneChanged =
@@ -440,12 +427,7 @@ class _PatientEditDialogState extends State<PatientEditDialog>
                   ? (currentFamilyValue.isNotEmpty ? currentFamilyValue : null)
                   : null,
               birthDate: birthDateChanged ? _selectedBirthDate : null,
-              gender: genderChanged
-                  ? GenderMapper.mapLocalizedDisplayToFhirCode(
-                      _selectedGender,
-                      l10n,
-                    )
-                  : null,
+              gender: genderChanged ? _selectedGenderCode : null,
               bloodType: bloodTypeChanged
                   ? _selectedBloodType
                   : currentBloodType ?? 'N/A',
@@ -543,7 +525,10 @@ class _PatientEditDialogState extends State<PatientEditDialog>
             selectedIdentifier: _selectedIdentifier,
             selectedContactPhone: _selectedContactPhone,
             selectedBirthDate: _selectedBirthDate,
-            selectedGender: _selectedGender,
+            selectedGender: GenderMapper.mapFhirGenderToDisplay(
+              _selectedGenderCode,
+              context.l10n,
+            ),
             selectedBloodType: _selectedBloodType,
             genderOptions: _getGenderOptions(context.l10n),
             bloodTypeOptions: _bloodTypeOptions,
@@ -565,8 +550,13 @@ class _PatientEditDialogState extends State<PatientEditDialog>
             identifierController: _identifierController,
             onBirthDateChanged: (DateTime? date) =>
                 setState(() => _selectedBirthDate = date),
-            onGenderChanged: (String value) =>
-                setState(() => _selectedGender = value),
+            onGenderChanged: (String value) => setState(
+              () => _selectedGenderCode =
+                  GenderMapper.mapLocalizedDisplayToFhirCode(
+                    value,
+                    context.l10n,
+                  ),
+            ),
             onBloodTypeChanged: (String value) =>
                 setState(() => _selectedBloodType = value),
           ),

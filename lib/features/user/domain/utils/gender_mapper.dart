@@ -18,6 +18,20 @@ class GenderMapper {
     }
   }
 
+  /// The gender picker's code for a stored or scanned FHIR gender: `male`,
+  /// `female`, or `unknown` for anything else (`other`, `unknown`, null), all
+  /// of which the picker shows as [AppLocalizations.preferNotToSay].
+  static String normalizeFhirGenderCode(String? fhirGender) {
+    switch (fhirGender?.toLowerCase()) {
+      case 'male':
+        return 'male';
+      case 'female':
+        return 'female';
+      default:
+        return 'unknown';
+    }
+  }
+
   /// The FHIR gender code for an option of the gender picker, whose options
   /// are [AppLocalizations.male], [AppLocalizations.female] and
   /// [AppLocalizations.preferNotToSay] in the active language. Save this code,

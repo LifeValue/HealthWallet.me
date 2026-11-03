@@ -68,8 +68,9 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
     with IdCardScanMixin {
   DateTime? _selectedBirthDate;
 
-  /// A label of [_getGenderOptions]; set in [didChangeDependencies].
-  late String _selectedGender;
+  /// A code of [GenderMapper.normalizeFhirGenderCode]; [build] shows its
+  /// label, so a theme or language change keeps the choice.
+  String _selectedGenderCode = 'unknown';
   String _selectedBloodType = 'N/A';
   String _selectedContactPhone = '';
   bool _isLoading = false;
@@ -116,9 +117,8 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
       _selectedBirthDate = DateTime.tryParse(result.dateOfBirth!);
     }
     if (result.gender != null) {
-      _selectedGender = GenderMapper.mapFhirGenderToDisplay(
-        result.gender!,
-        context.l10n,
+      _selectedGenderCode = GenderMapper.normalizeFhirGenderCode(
+        result.gender,
       );
     }
   }
@@ -147,12 +147,6 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
         'US';
 
     _initializeCurrentPatient();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _selectedGender = context.l10n.preferNotToSay;
   }
 
   void _initializeCurrentPatient() {
@@ -198,7 +192,7 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
       final familyChanged = currentFamilyValue.isNotEmpty;
       final nameChanged = givenChanged || familyChanged;
       final birthDateChanged = _selectedBirthDate != null;
-      final genderChanged = _selectedGender != context.l10n.preferNotToSay;
+      final genderChanged = _selectedGenderCode != 'unknown';
       final bloodTypeChanged = _selectedBloodType != 'N/A';
       final identifierChanged = currentIdentifierValue.isNotEmpty;
 
@@ -224,10 +218,7 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
               given: givenList,
               family: currentFamilyValue.isNotEmpty ? currentFamilyValue : null,
               birthDate: _selectedBirthDate,
-              gender: GenderMapper.mapLocalizedDisplayToFhirCode(
-                _selectedGender,
-                context.l10n,
-              ),
+              gender: _selectedGenderCode,
               bloodType: _selectedBloodType,
               identifierValue: currentIdentifierValue.isNotEmpty
                   ? currentIdentifierValue
@@ -316,7 +307,10 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
             selectedFamily: '',
             selectedIdentifier: '',
             selectedBirthDate: _selectedBirthDate,
-            selectedGender: _selectedGender,
+            selectedGender: GenderMapper.mapFhirGenderToDisplay(
+              _selectedGenderCode,
+              context.l10n,
+            ),
             selectedBloodType: _selectedBloodType,
             genderOptions: _getGenderOptions(context.l10n),
             bloodTypeOptions: _bloodTypeOptions,
@@ -333,8 +327,13 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
             identifierController: _identifierController,
             onBirthDateChanged: (DateTime? date) =>
                 setState(() => _selectedBirthDate = date),
-            onGenderChanged: (String value) =>
-                setState(() => _selectedGender = value),
+            onGenderChanged: (String value) => setState(
+              () => _selectedGenderCode =
+                  GenderMapper.mapLocalizedDisplayToFhirCode(
+                    value,
+                    context.l10n,
+                  ),
+            ),
             onBloodTypeChanged: (String value) =>
                 setState(() => _selectedBloodType = value),
           ),
