@@ -1431,11 +1431,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get desktopRestoreBackupTitle => '¿Restaurar respaldo?';
 
   @override
-  String desktopRestoreBackupMessage(String name, int count) {
-    return 'Esto reemplazará todos los datos actuales en este dispositivo con \"$name\".\n\n Se restaurarán $count registros.\n\nTus datos en el teléfono vinculado no se verán afectados.';
-  }
-
-  @override
   String get desktopRestore => 'Restaurar';
 
   @override
@@ -2567,12 +2562,48 @@ class AppLocalizationsEs extends AppLocalizations {
       'La copia de seguridad falló. Inténtalo de nuevo.';
 
   @override
-  String get desktopRestoreFailed =>
-      'La restauración falló. Inténtalo de nuevo.';
-
-  @override
   String get desktopBackupActionFailed =>
       'No se pudieron actualizar las copias de seguridad. Inténtalo de nuevo.';
+
+  @override
+  String get backupRecordsOnly => 'Solo registros';
+
+  @override
+  String backupRestoreConfirmPointInTime(String date) {
+    return 'Esto reemplaza tus registros en este ordenador y en tu teléfono vinculado por la copia del $date. Los registros añadidos desde entonces pasan a eliminados durante 30 días. Antes se guarda una copia de seguridad de tus datos actuales para que puedas deshacerlo.';
+  }
+
+  @override
+  String get backupOldNoFiles =>
+      'Esta copia no tiene archivos. Se restaurarán los registros y se conservarán tus archivos actuales.';
+
+  @override
+  String backupSafetyName(String date) {
+    return 'Antes de restaurar $date';
+  }
+
+  @override
+  String get backupRestoreFailed =>
+      'La restauración falló. Tus datos no cambiaron; la copia \"Antes de restaurar\" está en la lista.';
+
+  @override
+  String get backupSafetyFailed =>
+      'No se pudo crear la copia de seguridad previa, así que no se restauró nada. Comprueba el espacio libre y la carpeta.';
+
+  @override
+  String backupFilesNotRestored(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'No se pudieron restaurar $count archivos.',
+      one: 'No se pudo restaurar 1 archivo.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupRestorePhoneOffline =>
+      'Tu teléfono no está conectado. Los registros añadidos en él desde la última sincronización volverán cuando se conecte.';
 
   @override
   String get desktopSyncFailed =>

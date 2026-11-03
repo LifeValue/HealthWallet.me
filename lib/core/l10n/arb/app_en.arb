@@ -648,17 +648,6 @@
   "desktopChecksum": "Checksum",
   "desktopRestoreThisBackup": "Restore this backup",
   "desktopRestoreBackupTitle": "Restore Backup?",
-  "desktopRestoreBackupMessage": "This will replace all current data on this device with \"{name}\".\n\n{count} records will be restored.\n\nYour data on the paired phone will not be affected.",
-  "@desktopRestoreBackupMessage": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      },
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "desktopRestore": "Restore",
   "desktopDeleteBackupTitle": "Delete Backup?",
   "desktopDeleteBackupMessage": "Delete \"{name}\"?\n\nThis cannot be undone.",
@@ -1152,8 +1141,36 @@
   },
   "desktopNoBackupLocation": "No backup location set on desktop. Open the desktop app and choose a backup folder first.",
   "desktopBackupFailed": "Backup failed. Please try again.",
-  "desktopRestoreFailed": "Restore failed. Please try again.",
   "desktopBackupActionFailed": "Could not update the backups. Please try again.",
+  "backupRecordsOnly": "Records only",
+  "backupRestoreConfirmPointInTime": "This replaces your records on this computer and on your paired phone with the backup from {date}. Records added since then are moved to deleted items for 30 days. A safety copy of your current data is saved first, so you can undo this.",
+  "@backupRestoreConfirmPointInTime": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOldNoFiles": "This backup has no files. Records will be restored and your current files kept.",
+  "backupSafetyName": "Before restore {date}",
+  "@backupSafetyName": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreFailed": "Restore failed. Your data was not changed; the \"Before restore\" backup is in the list.",
+  "backupSafetyFailed": "Couldn't make a safety backup, so nothing was restored. Check free space and the backup folder.",
+  "backupFilesNotRestored": "{count, plural, =1{1 file couldn't be restored.} other{{count} files couldn't be restored.}}",
+  "@backupFilesNotRestored": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestorePhoneOffline": "Your phone isn't connected. Records added on it since its last sync will come back after it reconnects.",
   "desktopSyncFailed": "Sync failed. Check the connection and try again.",
   "desktopHandoverTransfer": "Transfer",
   "desktopHandoverNoActive": "No active handovers",

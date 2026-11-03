@@ -1437,11 +1437,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get desktopRestoreBackupTitle => 'Backup wiederherstellen?';
 
   @override
-  String desktopRestoreBackupMessage(String name, int count) {
-    return 'Alle aktuellen Daten auf diesem Gerät werden durch \"$name\" ersetzt.\n\n$count Aufzeichnungen werden wiederhergestellt.\n\nDeine Daten auf dem gekoppelten Handy bleiben unberührt.';
-  }
-
-  @override
   String get desktopRestore => 'Wiederherstellen';
 
   @override
@@ -2570,12 +2565,48 @@ class AppLocalizationsDe extends AppLocalizations {
       'Backup fehlgeschlagen. Bitte versuche es erneut.';
 
   @override
-  String get desktopRestoreFailed =>
-      'Wiederherstellung fehlgeschlagen. Bitte versuche es erneut.';
-
-  @override
   String get desktopBackupActionFailed =>
       'Die Backups konnten nicht aktualisiert werden. Bitte versuche es erneut.';
+
+  @override
+  String get backupRecordsOnly => 'Nur Aufzeichnungen';
+
+  @override
+  String backupRestoreConfirmPointInTime(String date) {
+    return 'Dadurch werden deine Aufzeichnungen auf diesem Computer und deinem gekoppelten Telefon durch das Backup vom $date ersetzt. Seitdem hinzugefügte Aufzeichnungen werden für 30 Tage in die gelöschten Elemente verschoben. Vorher wird eine Sicherheitskopie deiner aktuellen Daten gespeichert, damit du das rückgängig machen kannst.';
+  }
+
+  @override
+  String get backupOldNoFiles =>
+      'Dieses Backup enthält keine Dateien. Die Aufzeichnungen werden wiederhergestellt, deine aktuellen Dateien bleiben erhalten.';
+
+  @override
+  String backupSafetyName(String date) {
+    return 'Vor Wiederherstellung $date';
+  }
+
+  @override
+  String get backupRestoreFailed =>
+      'Wiederherstellung fehlgeschlagen. Deine Daten wurden nicht geändert; das Backup \"Vor Wiederherstellung\" ist in der Liste.';
+
+  @override
+  String get backupSafetyFailed =>
+      'Das Sicherheits-Backup konnte nicht erstellt werden, daher wurde nichts wiederhergestellt. Prüfe den freien Speicher und den Ordner.';
+
+  @override
+  String backupFilesNotRestored(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Dateien konnten nicht wiederhergestellt werden.',
+      one: '1 Datei konnte nicht wiederhergestellt werden.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupRestorePhoneOffline =>
+      'Dein Telefon ist nicht verbunden. Seit der letzten Synchronisierung darauf hinzugefügte Aufzeichnungen kommen zurück, sobald es sich wieder verbindet.';
 
   @override
   String get desktopSyncFailed =>

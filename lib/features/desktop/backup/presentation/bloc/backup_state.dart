@@ -17,6 +17,11 @@ abstract class BackupState with _$BackupState {
     @Default(0) int desktopBackupCount,
     DateTime? desktopLastBackupTime,
     String? error,
+
+    /// Desktop: what the user should know about the restore that just
+    /// finished, such as files that couldn't be restored; null when there
+    /// is nothing to add.
+    String? restoreNotice,
   }) = _BackupState;
 
   factory BackupState.initial() => const BackupState();

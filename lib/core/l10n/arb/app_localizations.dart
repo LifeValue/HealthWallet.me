@@ -2610,12 +2610,6 @@ abstract class AppLocalizations {
   /// **'Restore Backup?'**
   String get desktopRestoreBackupTitle;
 
-  /// No description provided for @desktopRestoreBackupMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'This will replace all current data on this device with \"{name}\".\n\n{count} records will be restored.\n\nYour data on the paired phone will not be affected.'**
-  String desktopRestoreBackupMessage(String name, int count);
-
   /// No description provided for @desktopRestore.
   ///
   /// In en, this message translates to:
@@ -4715,17 +4709,59 @@ abstract class AppLocalizations {
   /// **'Backup failed. Please try again.'**
   String get desktopBackupFailed;
 
-  /// No description provided for @desktopRestoreFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Restore failed. Please try again.'**
-  String get desktopRestoreFailed;
-
   /// No description provided for @desktopBackupActionFailed.
   ///
   /// In en, this message translates to:
   /// **'Could not update the backups. Please try again.'**
   String get desktopBackupActionFailed;
+
+  /// No description provided for @backupRecordsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Records only'**
+  String get backupRecordsOnly;
+
+  /// No description provided for @backupRestoreConfirmPointInTime.
+  ///
+  /// In en, this message translates to:
+  /// **'This replaces your records on this computer and on your paired phone with the backup from {date}. Records added since then are moved to deleted items for 30 days. A safety copy of your current data is saved first, so you can undo this.'**
+  String backupRestoreConfirmPointInTime(String date);
+
+  /// No description provided for @backupOldNoFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup has no files. Records will be restored and your current files kept.'**
+  String get backupOldNoFiles;
+
+  /// No description provided for @backupSafetyName.
+  ///
+  /// In en, this message translates to:
+  /// **'Before restore {date}'**
+  String backupSafetyName(String date);
+
+  /// No description provided for @backupRestoreFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore failed. Your data was not changed; the \"Before restore\" backup is in the list.'**
+  String get backupRestoreFailed;
+
+  /// No description provided for @backupSafetyFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t make a safety backup, so nothing was restored. Check free space and the backup folder.'**
+  String get backupSafetyFailed;
+
+  /// No description provided for @backupFilesNotRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file couldn\'t be restored.} other{{count} files couldn\'t be restored.}}'**
+  String backupFilesNotRestored(int count);
+
+  /// No description provided for @backupRestorePhoneOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone isn\'t connected. Records added on it since its last sync will come back after it reconnects.'**
+  String get backupRestorePhoneOffline;
 
   /// No description provided for @desktopSyncFailed.
   ///

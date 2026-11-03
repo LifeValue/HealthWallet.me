@@ -1436,11 +1436,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String get desktopRestoreBackupTitle => 'Restaurezi copia de siguranță?';
 
   @override
-  String desktopRestoreBackupMessage(String name, int count) {
-    return 'Toate datele actuale de pe acest dispozitiv vor fi înlocuite cu \"$name\".\n\n$count înregistrări vor fi restaurate.\n\nDatele de pe telefonul asociat nu vor fi afectate.';
-  }
-
-  @override
   String get desktopRestore => 'Restaurează';
 
   @override
@@ -2570,11 +2565,49 @@ class AppLocalizationsRo extends AppLocalizations {
   String get desktopBackupFailed => 'Backup-ul a eșuat. Încearcă din nou.';
 
   @override
-  String get desktopRestoreFailed => 'Restaurarea a eșuat. Încearcă din nou.';
-
-  @override
   String get desktopBackupActionFailed =>
       'Backup-urile nu au putut fi actualizate. Încearcă din nou.';
+
+  @override
+  String get backupRecordsOnly => 'Doar înregistrări';
+
+  @override
+  String backupRestoreConfirmPointInTime(String date) {
+    return 'Aceasta înlocuiește înregistrările de pe acest computer și de pe telefonul asociat cu copia din $date. Înregistrările adăugate între timp sunt mutate la șterse timp de 30 de zile. Mai întâi se salvează o copie de siguranță a datelor actuale, ca să poți anula.';
+  }
+
+  @override
+  String get backupOldNoFiles =>
+      'Această copie nu conține fișiere. Înregistrările vor fi restaurate, iar fișierele actuale păstrate.';
+
+  @override
+  String backupSafetyName(String date) {
+    return 'Înainte de restaurare $date';
+  }
+
+  @override
+  String get backupRestoreFailed =>
+      'Restaurarea a eșuat. Datele nu au fost modificate; copia \"Înainte de restaurare\" este în listă.';
+
+  @override
+  String get backupSafetyFailed =>
+      'Copia de siguranță nu a putut fi creată, așa că nu s-a restaurat nimic. Verifică spațiul liber și folderul.';
+
+  @override
+  String backupFilesNotRestored(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de fișiere nu au putut fi restaurate.',
+      few: '$count fișiere nu au putut fi restaurate.',
+      one: 'Un fișier nu a putut fi restaurat.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupRestorePhoneOffline =>
+      'Telefonul nu este conectat. Înregistrările adăugate pe el de la ultima sincronizare vor reveni după ce se reconectează.';
 
   @override
   String get desktopSyncFailed =>

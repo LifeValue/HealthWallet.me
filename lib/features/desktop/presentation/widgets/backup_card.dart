@@ -10,6 +10,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/widgets/app_message_card.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
@@ -99,6 +100,9 @@ class _BackupCardState extends State<BackupCard> {
     if (state.error != null || state.backupHistory.isEmpty) return;
     // The history is sorted newest first, so the new backup leads it.
     final created = state.backupHistory.first;
+    // The "Before restore" copy is part of a restore, not a backup the user
+    // made.
+    if (created.isSafetyCopy) return;
     setState(
       () => _backupSucceeded = context.l10n.desktopBackupSucceededMessage(
         _backupDisplayName(context, created),
@@ -117,13 +121,14 @@ class _BackupCardState extends State<BackupCard> {
     // A failed restore shows its error in the card; only success is
     // announced here, so the user knows the data was replaced.
     if (restored == null || state.error != null) return;
+    final message = context.l10n.desktopRestoreSucceededMessage(
+      _backupDisplayName(context, restored),
+      restored.recordCount,
+    );
     AppSimpleDialog.showSuccess(
       context: context,
       title: context.l10n.desktopRestoreSucceededTitle,
-      message: context.l10n.desktopRestoreSucceededMessage(
-        _backupDisplayName(context, restored),
-        restored.recordCount,
-      ),
+      message: [message, ?state.restoreNotice].join('\n\n'),
     );
   }
 
@@ -137,12 +142,17 @@ class _BackupCardState extends State<BackupCard> {
         widget.syncState.connectionStatus == ConnectionStatus.connected) {
       try {
         context.read<LwwSyncBloc>().add(const SyncTriggered());
-      } catch (_) {}
+      } catch (e) {
+        // The backup still runs, with what this desktop has.
+        logger.w('[Backup] could not sync before the backup', e);
+      }
     }
 
     try {
       context.read<BackupBloc>().add(BackupRequested(name: effectiveName));
-    } catch (_) {}
+    } catch (e) {
+      logger.e('[Backup] could not start the backup', e);
+    }
     _nameController.clear();
     setState(() => _showForm = false);
   }
@@ -151,6 +161,9 @@ class _BackupCardState extends State<BackupCard> {
   Widget build(BuildContext context) {
     final isConnected =
         widget.syncState.connectionStatus == ConnectionStatus.connected;
+    // A phone paired with this desktop that isn't connected now.
+    final isPhoneOffline =
+        !isConnected && widget.syncState.pairedDevice?.peerDeviceId != null;
     final isWorking =
         widget.backupState.isBackingUp || widget.backupState.isRestoring;
     final selected = widget.backupState.selectedBackup;
@@ -324,7 +337,7 @@ class _BackupCardState extends State<BackupCard> {
                       child: _BackupPreview(
                         backup: selected,
                         isWorking: isWorking,
-                        isConnected: isConnected,
+                        isPhoneOffline: isPhoneOffline,
                         onRestoreConfirmed: (backup) => _restoring = backup,
                       ),
                     )
@@ -616,7 +629,8 @@ class _BackupTile extends StatelessWidget {
                       if (backup.name.isNotEmpty)
                         DateFormat.yMMMd().add_Hm().format(backup.timestamp),
                       '${backup.recordCount} ${context.l10n.records.toLowerCase()}',
-                      _formatBytes(backup.sizeBytes),
+                      _formatBytes(backup.totalBytes),
+                      if (!backup.hasFiles) context.l10n.backupRecordsOnly,
                     ].join('  \u2022  '),
                     style: AppTextStyle.labelSmall.copyWith(
                       color: context.colorScheme.onSurface.withValues(
@@ -643,7 +657,10 @@ class _BackupTile extends StatelessWidget {
 class _BackupPreview extends StatelessWidget {
   final BackupEntry backup;
   final bool isWorking;
-  final bool isConnected;
+
+  /// A paired phone isn't connected, so its newest records come back only
+  /// after it reconnects.
+  final bool isPhoneOffline;
 
   /// Called when the user confirms the restore, before it starts.
   final ValueChanged<BackupEntry> onRestoreConfirmed;
@@ -651,7 +668,7 @@ class _BackupPreview extends StatelessWidget {
   const _BackupPreview({
     required this.backup,
     required this.isWorking,
-    required this.isConnected,
+    required this.isPhoneOffline,
     required this.onRestoreConfirmed,
   });
 
@@ -682,7 +699,7 @@ class _BackupPreview extends StatelessWidget {
         ),
         InfoRow(
           label: context.l10n.desktopSize,
-          value: _formatBytes(backup.sizeBytes),
+          value: _formatBytes(backup.totalBytes),
         ),
         InfoRow(
           label: context.l10n.desktopChecksum,
@@ -725,10 +742,17 @@ class _BackupPreview extends StatelessWidget {
     AppSimpleDialog.showConfirmation(
       context: context,
       title: context.l10n.desktopRestoreBackupTitle,
-      subtitle: context.l10n.desktopRestoreBackupMessage(
-        _backupDisplayName(context, backup),
-        backup.recordCount,
-      ),
+      subtitle: [
+        context.l10n.backupRestoreConfirmPointInTime(
+          backupNameDate(
+            backup.timestamp,
+            context.l10n.localeName,
+            withTime: true,
+          ),
+        ),
+        if (!backup.hasFiles) context.l10n.backupOldNoFiles,
+        if (isPhoneOffline) context.l10n.backupRestorePhoneOffline,
+      ].join('\n\n'),
       cancelText: context.l10n.cancel,
       confirmText: context.l10n.desktopRestore,
       confirmColor: AppColors.warning,

@@ -610,17 +610,6 @@
   "desktopChecksum": "Sumă de control",
   "desktopRestoreThisBackup": "Restaurează această copie",
   "desktopRestoreBackupTitle": "Restaurezi copia de siguranță?",
-  "desktopRestoreBackupMessage": "Toate datele actuale de pe acest dispozitiv vor fi înlocuite cu \"{name}\".\n\n{count} înregistrări vor fi restaurate.\n\nDatele de pe telefonul asociat nu vor fi afectate.",
-  "@desktopRestoreBackupMessage": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      },
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "desktopRestore": "Restaurează",
   "desktopDeleteBackupTitle": "Ștergi copia de siguranță?",
   "desktopDeleteBackupMessage": "Ștergi \"{name}\"?\n\nAceastă acțiune nu poate fi anulată.",
@@ -1096,8 +1085,36 @@
   "desktopRemoteBackupName": "De pe telefon {date}",
   "desktopNoBackupLocation": "Nu este setată o locație de backup pe desktop. Deschide aplicația desktop și alege mai întâi un folder de backup.",
   "desktopBackupFailed": "Backup-ul a eșuat. Încearcă din nou.",
-  "desktopRestoreFailed": "Restaurarea a eșuat. Încearcă din nou.",
   "desktopBackupActionFailed": "Backup-urile nu au putut fi actualizate. Încearcă din nou.",
+  "backupRecordsOnly": "Doar înregistrări",
+  "backupRestoreConfirmPointInTime": "Aceasta înlocuiește înregistrările de pe acest computer și de pe telefonul asociat cu copia din {date}. Înregistrările adăugate între timp sunt mutate la șterse timp de 30 de zile. Mai întâi se salvează o copie de siguranță a datelor actuale, ca să poți anula.",
+  "@backupRestoreConfirmPointInTime": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOldNoFiles": "Această copie nu conține fișiere. Înregistrările vor fi restaurate, iar fișierele actuale păstrate.",
+  "backupSafetyName": "Înainte de restaurare {date}",
+  "@backupSafetyName": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreFailed": "Restaurarea a eșuat. Datele nu au fost modificate; copia \"Înainte de restaurare\" este în listă.",
+  "backupSafetyFailed": "Copia de siguranță nu a putut fi creată, așa că nu s-a restaurat nimic. Verifică spațiul liber și folderul.",
+  "backupFilesNotRestored": "{count, plural, one{Un fișier nu a putut fi restaurat.} few{{count} fișiere nu au putut fi restaurate.} other{{count} de fișiere nu au putut fi restaurate.}}",
+  "@backupFilesNotRestored": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestorePhoneOffline": "Telefonul nu este conectat. Înregistrările adăugate pe el de la ultima sincronizare vor reveni după ce se reconectează.",
   "desktopSyncFailed": "Sincronizarea a eșuat. Verifică conexiunea și încearcă din nou.",
   "desktopHandoverTransfer": "Transfer",
   "desktopHandoverNoActive": "Nicio predare activă",

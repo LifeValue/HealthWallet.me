@@ -1416,11 +1416,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get desktopRestoreBackupTitle => 'Restore Backup?';
 
   @override
-  String desktopRestoreBackupMessage(String name, int count) {
-    return 'This will replace all current data on this device with \"$name\".\n\n$count records will be restored.\n\nYour data on the paired phone will not be affected.';
-  }
-
-  @override
   String get desktopRestore => 'Restore';
 
   @override
@@ -2542,11 +2537,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get desktopBackupFailed => 'Backup failed. Please try again.';
 
   @override
-  String get desktopRestoreFailed => 'Restore failed. Please try again.';
-
-  @override
   String get desktopBackupActionFailed =>
       'Could not update the backups. Please try again.';
+
+  @override
+  String get backupRecordsOnly => 'Records only';
+
+  @override
+  String backupRestoreConfirmPointInTime(String date) {
+    return 'This replaces your records on this computer and on your paired phone with the backup from $date. Records added since then are moved to deleted items for 30 days. A safety copy of your current data is saved first, so you can undo this.';
+  }
+
+  @override
+  String get backupOldNoFiles =>
+      'This backup has no files. Records will be restored and your current files kept.';
+
+  @override
+  String backupSafetyName(String date) {
+    return 'Before restore $date';
+  }
+
+  @override
+  String get backupRestoreFailed =>
+      'Restore failed. Your data was not changed; the \"Before restore\" backup is in the list.';
+
+  @override
+  String get backupSafetyFailed =>
+      'Couldn\'t make a safety backup, so nothing was restored. Check free space and the backup folder.';
+
+  @override
+  String backupFilesNotRestored(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files couldn\'t be restored.',
+      one: '1 file couldn\'t be restored.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupRestorePhoneOffline =>
+      'Your phone isn\'t connected. Records added on it since its last sync will come back after it reconnects.';
 
   @override
   String get desktopSyncFailed =>

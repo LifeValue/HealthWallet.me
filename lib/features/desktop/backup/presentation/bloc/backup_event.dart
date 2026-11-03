@@ -2,7 +2,12 @@ part of 'backup_bloc.dart';
 
 @freezed
 sealed class BackupEvent with _$BackupEvent {
-  const factory BackupEvent.backupRequested({String? name}) = BackupRequested;
+  /// [fromPhone]: the paired phone asked for it, so it is told when the
+  /// backup fails.
+  const factory BackupEvent.backupRequested({
+    String? name,
+    @Default(false) bool fromPhone,
+  }) = BackupRequested;
   const factory BackupEvent.restoreRequested({required String backupId}) =
       RestoreRequested;
   const factory BackupEvent.historyLoaded() = BackupHistoryLoaded;

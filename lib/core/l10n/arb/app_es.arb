@@ -611,17 +611,6 @@
   "desktopChecksum": "Suma de verificación",
   "desktopRestoreThisBackup": "Restaurar este respaldo",
   "desktopRestoreBackupTitle": "¿Restaurar respaldo?",
-  "desktopRestoreBackupMessage": "Esto reemplazará todos los datos actuales en este dispositivo con \"{name}\".\n\n Se restaurarán {count} registros.\n\nTus datos en el teléfono vinculado no se verán afectados.",
-  "@desktopRestoreBackupMessage": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      },
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "desktopRestore": "Restaurar",
   "desktopDeleteBackupTitle": "¿Eliminar respaldo?",
   "desktopDeleteBackupMessage": "¿Eliminar \"{name}\"?\n\nEsto no se puede deshacer.",
@@ -1101,8 +1090,36 @@
   "desktopRemoteBackupName": "Desde el móvil {date}",
   "desktopNoBackupLocation": "No hay una ubicación de copia de seguridad en el escritorio. Abre la app de escritorio y elige primero una carpeta.",
   "desktopBackupFailed": "La copia de seguridad falló. Inténtalo de nuevo.",
-  "desktopRestoreFailed": "La restauración falló. Inténtalo de nuevo.",
   "desktopBackupActionFailed": "No se pudieron actualizar las copias de seguridad. Inténtalo de nuevo.",
+  "backupRecordsOnly": "Solo registros",
+  "backupRestoreConfirmPointInTime": "Esto reemplaza tus registros en este ordenador y en tu teléfono vinculado por la copia del {date}. Los registros añadidos desde entonces pasan a eliminados durante 30 días. Antes se guarda una copia de seguridad de tus datos actuales para que puedas deshacerlo.",
+  "@backupRestoreConfirmPointInTime": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOldNoFiles": "Esta copia no tiene archivos. Se restaurarán los registros y se conservarán tus archivos actuales.",
+  "backupSafetyName": "Antes de restaurar {date}",
+  "@backupSafetyName": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreFailed": "La restauración falló. Tus datos no cambiaron; la copia \"Antes de restaurar\" está en la lista.",
+  "backupSafetyFailed": "No se pudo crear la copia de seguridad previa, así que no se restauró nada. Comprueba el espacio libre y la carpeta.",
+  "backupFilesNotRestored": "{count, plural, =1{No se pudo restaurar 1 archivo.} other{No se pudieron restaurar {count} archivos.}}",
+  "@backupFilesNotRestored": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestorePhoneOffline": "Tu teléfono no está conectado. Los registros añadidos en él desde la última sincronización volverán cuando se conecte.",
   "desktopSyncFailed": "La sincronización falló. Comprueba la conexión e inténtalo de nuevo.",
   "desktopHandoverTransfer": "Transferencia",
   "desktopHandoverNoActive": "No hay transferencias activas",
