@@ -1,22 +1,60 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/services/attachment_references.dart';
 import 'package:health_wallet/core/services/folder_access_service.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
+import 'package:health_wallet/features/desktop/backup/domain/entity/restore_result.dart';
+import 'package:health_wallet/features/desktop/lww_sync/data/services/attachment_sync_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
-import 'package:pointycastle/export.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
+/// Desktop backups: `<name>.db` (a `VACUUM INTO` copy of the database),
+/// `<name>.files/` (every attachment file its records refer to) and
+/// `<name>.db.meta.json`, written last as the commit marker. A restore makes
+/// the backup the current state on this device and, through sync, on the
+/// paired phone (see `restoreFromFile`).
 @lazySingleton
 class BackupService {
   final AppDatabase _database;
   final FolderAccessService _folderAccess;
+  final PathResolver _pathResolver;
+  final AttachmentReferences _references;
+  final AttachmentSyncService _attachments;
 
-  BackupService(this._database, this._folderAccess);
+  BackupService(
+    this._database,
+    this._folderAccess,
+    this._pathResolver,
+    this._references,
+  ) : _attachments = AttachmentSyncService(_pathResolver);
+
+  /// "Before restore" copies older than this are deleted automatically.
+  static const safetyCopyRetention = Duration(days: 30);
+
+  /// The tables that sync with the phone, parents first. A restore makes
+  /// them the backup's state at a fresh stamp (see [restoreFromFile]).
+  static const _syncedTables = ['fhir_resource', 'sources', 'record_notes'];
+
+  /// Never restored: its entries describe this device's own writes.
+  static const _localOnlyTables = {'sync_outbox'};
+
+  static const _stagingPrefix = '.restore-';
+  static const _metaSuffix = '.meta.json';
+
+  /// Folders whose top-level files also count as attachments, besides
+  /// [PathResolver.getDocumentsPath]. Null uses the platform's (on Windows,
+  /// the Documents folder that older versions saved attachments to).
+  @visibleForTesting
+  List<String>? debugExtraAttachmentRoots;
 
   /// Whether this run has already reopened the chosen folder from its
   /// bookmark (macOS only; see [FolderAccessService]).
@@ -94,99 +132,628 @@ class BackupService {
     await prefs.remove(SharedPrefsConstants.backupDirectoryBookmark);
   }
 
-  Future<BackupEntry> createSnapshot({String? name}) async {
+  // ---------------------------------------------------------------------------
+  // Create
+
+  /// Writes a backup of the database and every attachment file its records
+  /// (live and deleted) refer to: the `.db`, then `.files/`, then the
+  /// metadata. A failure removes what was written and rethrows. [name] is
+  /// shown as given; the file name keeps its letters (any script), digits
+  /// and the date's punctuation. With [isSafetyCopy] it is the automatic
+  /// "Before restore" copy, deleted after [safetyCopyRetention]. Nothing is
+  /// sent to the phone.
+  Future<BackupEntry> createSnapshot({
+    String? name,
+    bool isSafetyCopy = false,
+  }) async {
     final backupDir = await getBackupDirectory();
-    final timestamp = DateTime.now();
-    final id = timestamp.millisecondsSinceEpoch.toString();
-    final safeName = (name != null && name.trim().isNotEmpty)
-        ? name.trim().replaceAll(RegExp(r'[^\w\s\-.]'), '_')
-        : '';
-    final prefix = safeName.isNotEmpty
-        ? '${safeName}_'
-        : 'healthwallet_backup_';
-    final fileName = '$prefix$id.db';
-    final snapshotPath = p.join(backupDir.path, fileName);
+    final displayName = name?.trim() ?? '';
+    final stem = _fileStem(displayName);
+    final prefix = stem.isNotEmpty ? '${stem}_' : 'healthwallet_backup_';
 
-    await _database.customStatement('VACUUM INTO ?', [snapshotPath]);
+    // A fresh id, so a failure never removes another backup's files.
+    var timestamp = DateTime.now();
+    late String base;
+    while (true) {
+      base = p.join(
+        backupDir.path,
+        '$prefix${timestamp.millisecondsSinceEpoch}',
+      );
+      if (!await _exists('$base.db') &&
+          !await _exists('$base.files') &&
+          !await _exists('$base.db$_metaSuffix')) {
+        break;
+      }
+      timestamp = timestamp.add(const Duration(milliseconds: 1));
+    }
+    final dbPath = '$base.db';
+    final filesDir = Directory(_filesPathFor(dbPath));
 
-    final snapshotFile = File(snapshotPath);
-    final sizeBytes = await snapshotFile.length();
-    final checksum = await _computeChecksum(snapshotFile);
-    final recordCount = await _getRecordCount();
+    final BackupEntry entry;
+    try {
+      await _database.customStatement('VACUUM INTO ?', [dbPath]);
+      final snapshot = await _readSnapshot(dbPath);
+      final (files, missing) = await _copyAttachments(snapshot.raws, filesDir);
+      final dbFile = File(dbPath);
+      entry = BackupEntry(
+        id: timestamp.millisecondsSinceEpoch.toString(),
+        timestamp: timestamp,
+        sizeBytes: await dbFile.length(),
+        recordCount: snapshot.recordCount,
+        checksum: await _sha256(dbFile),
+        filePath: dbPath,
+        name: displayName,
+        formatVersion: BackupEntry.filesFormat,
+        files: files,
+        missing: missing,
+        isSafetyCopy: isSafetyCopy,
+      );
+      await saveBackupMetadata(entry);
+    } catch (e, s) {
+      logger.e('[Backup] creating $dbPath failed; removing it', e, s);
+      await _deleteQuietly(File('$dbPath$_metaSuffix.tmp'));
+      await _deleteQuietly(File('$dbPath$_metaSuffix'));
+      await _deleteQuietly(File(dbPath));
+      await _deleteQuietly(filesDir);
+      rethrow;
+    }
 
-    final entry = BackupEntry(
-      id: id,
-      timestamp: timestamp,
-      sizeBytes: sizeBytes,
-      recordCount: recordCount,
-      checksum: checksum,
-      filePath: snapshotPath,
-      name: safeName,
-    );
-
-    await saveBackupMetadata(entry);
-
+    if (entry.missing.isNotEmpty) {
+      logger.w(
+        '[Backup] ${entry.missing.length} attachments were not on this '
+        'device and are not in the backup',
+      );
+    }
+    await deleteExpiredSafetyCopies();
     return entry;
   }
 
-  Future<void> restoreFromFile(String backupPath) async {
+  /// The records' raw JSON and the live record count, read from the copy so
+  /// they match it exactly.
+  Future<({List<String> raws, int recordCount})> _readSnapshot(
+    String dbPath,
+  ) async {
+    await _detachIfAttached('backup_snapshot');
+    await _database.customStatement('ATTACH DATABASE ? AS backup_snapshot', [
+      dbPath,
+    ]);
+    try {
+      final rows = await _database
+          .customSelect(
+            'SELECT resource_raw FROM backup_snapshot.fhir_resource',
+          )
+          .get();
+      final count = await _database
+          .customSelect(
+            'SELECT COUNT(*) AS c FROM backup_snapshot.fhir_resource '
+            'WHERE deleted_at IS NULL',
+          )
+          .getSingle();
+      return (
+        raws: [
+          for (final r in rows)
+            if (r.data['resource_raw'] is String)
+              r.data['resource_raw'] as String,
+        ],
+        recordCount: count.data['c'] as int,
+      );
+    } finally {
+      await _database.customStatement('DETACH DATABASE backup_snapshot');
+    }
+  }
+
+  /// Copies each file the records refer to into [filesDir] once, under a
+  /// free name, and lists the urls whose file isn't on this device.
+  Future<(List<BackupFile>, List<String>)> _copyAttachments(
+    List<String> raws,
+    Directory filesDir,
+  ) async {
+    final sources = <String, ({File file, Set<String> paths})>{};
+    final missing = <String>{};
+    for (final raw in raws) {
+      final refs = await _references.fromResourceRaw(
+        raw,
+        mode: OnUnparseable.skip,
+      );
+      for (final ref in refs) {
+        final file = await _resolveAttachment(ref.path);
+        if (file == null) {
+          missing.add(ref.url);
+          continue;
+        }
+        (sources[file.path] ??= (file: file, paths: <String>{})).paths.add(
+          ref.path,
+        );
+      }
+    }
+
+    final files = <BackupFile>[];
+    final taken = <String>{};
+    for (final source in sources.values) {
+      if (files.isEmpty) await filesDir.create(recursive: true);
+      final name = await _freeName(
+        filesDir.path,
+        _safeFileName(p.basename(source.file.path)),
+        taken,
+      );
+      final copy = File(p.join(filesDir.path, name));
+      try {
+        await source.file.copy(copy.path);
+      } on FileSystemException catch (e) {
+        if (await source.file.exists()) rethrow;
+        // Removed while the backup was running.
+        logger.w('[Backup] ${source.file.path} vanished; not backed up', e);
+        missing.addAll(source.paths.map((path) => 'file://$path'));
+        continue;
+      }
+      taken.add(name.toLowerCase());
+      files.add(
+        BackupFile(
+          name: name,
+          sourcePaths: source.paths.toList(),
+          sha256: await _sha256(copy),
+          size: await copy.length(),
+        ),
+      );
+    }
+    return (files, missing.toList());
+  }
+
+  // ---------------------------------------------------------------------------
+  // Restore
+
+  /// Makes the backup at [backupPath] (its `.db`) the current state, and
+  /// returns what happened to its files. It throws only when nothing was
+  /// committed: the database is then unchanged and every file it added is
+  /// removed again. Errors after the commit are logged.
+  ///
+  /// Point in time, for the synced tables, in one transaction with a stamp
+  /// `S` later than every row on either side (and the clock):
+  /// 1. Current rows whose key isn't in the backup are kept aside.
+  /// 2. Every table is emptied, children first.
+  /// 3. The backup's rows are copied in with `updated_at = S`; its
+  ///    tombstones also get `deleted_at = S`, so they reach the phone
+  ///    before the 30-day purge.
+  /// 4. The rows kept aside go back as tombstones stamped at least `S`
+  ///    (notes without their per-device `id`).
+  ///
+  /// Every write lands in the outbox, so the next sync makes the phone the
+  /// same; the caller sends `LwwSyncEvent.localChanged()` and must not reset
+  /// the peer state, which would prune the outbox. `sync_outbox` itself is
+  /// never restored; other local tables are replaced by the backup's.
+  ///
+  /// Files (format 2): each is copied into `Documents/.restore-<id>/`,
+  /// checked against its SHA-256, and moved into Documents. Nothing current
+  /// is deleted or overwritten: a file already there with the same content
+  /// is reused, one with other content keeps its name and the backup's goes
+  /// under a free name, with the restored records repointed to it. A
+  /// missing or damaged file is counted in [RestoreResult.filesNotRestored]
+  /// and the rest is restored. A database-only backup keeps every current
+  /// file.
+  Future<RestoreResult> restoreFromFile(String backupPath) async {
     final backupFile = File(backupPath);
     if (!await backupFile.exists()) {
       throw StateError('Backup file not found: $backupPath');
     }
+    await removeRestoreLeftovers();
 
-    final metadataPath = _metadataPathFor(backupPath);
-    final metadataFile = File(metadataPath);
-    if (await metadataFile.exists()) {
-      final metadataJson = jsonDecode(await metadataFile.readAsString());
-      final savedChecksum = metadataJson['checksum'] as String;
-      final currentChecksum = await _computeChecksum(backupFile);
-
-      if (savedChecksum != currentChecksum) {
-        throw StateError('Backup checksum mismatch — file may be corrupted');
-      }
+    final entry = await _readMetadata(backupPath);
+    if (entry != null && entry.checksum != await _sha256(backupFile)) {
+      throw StateError('Backup checksum mismatch — file may be corrupted');
     }
 
+    final docs = await _pathResolver.getDocumentsPath();
+    final staging = Directory(
+      p.join(
+        docs,
+        '$_stagingPrefix${DateTime.now().millisecondsSinceEpoch}'
+        '_${const Uuid().v4().substring(0, 8)}',
+      ),
+    );
+    final added = <File>[];
+    var plan = _FilePlan.none;
+    var committed = false;
+    try {
+      if (entry != null && entry.hasFiles) {
+        plan = await _placeFiles(entry, backupPath, staging, docs, added);
+      }
+      await _restoreRows(backupPath, plan, onCommitted: () => committed = true);
+    } catch (e, s) {
+      if (!committed) {
+        logger.e('[Backup] restore failed; the data was not changed', e, s);
+        for (final file in added) {
+          await _deleteQuietly(file);
+        }
+        rethrow;
+      }
+      // The restore stands; what failed after it is only logged.
+      logger.e('[Backup] error after the restore committed', e, s);
+    } finally {
+      await _deleteQuietly(staging);
+    }
+    return RestoreResult(
+      hadFiles: entry?.hasFiles ?? false,
+      filesAdded: plan.added,
+      filesAlreadyPresent: plan.alreadyPresent,
+      filesNotRestored: plan.notRestored,
+      filesMissingFromBackup: entry?.missing.length ?? 0,
+    );
+  }
+
+  /// Stages, checks and moves the backup's files into [docs], and works out
+  /// which restored attachment urls must point at another name.
+  Future<_FilePlan> _placeFiles(
+    BackupEntry entry,
+    String backupPath,
+    Directory staging,
+    String docs,
+    List<File> added,
+  ) async {
+    final filesDir = _filesPathFor(backupPath);
+    final hashes = <String, String>{};
+    Future<String> hashOf(File file) async =>
+        hashes[file.path] ??= await _sha256(file);
+
+    var notRestored = 0;
+    var addedCount = 0;
+    var alreadyPresent = 0;
+    final destinations = <BackupFile, String?>{};
+
+    await staging.create(recursive: true);
+    for (final file in entry.files) {
+      final staged = await _stage(file, filesDir, staging);
+      if (staged == null) {
+        notRestored++;
+        continue;
+      }
+
+      // Where the restored records already find the same content.
+      var present = false;
+      for (final path in file.sourcePaths) {
+        final current = await _resolveAttachment(path);
+        if (current != null && await hashOf(current) == file.sha256) {
+          present = true;
+          break;
+        }
+      }
+      if (present) {
+        alreadyPresent++;
+        destinations[file] = null;
+        continue;
+      }
+
+      final named = File(p.join(docs, file.name));
+      final type = await FileSystemEntity.type(named.path, followLinks: false);
+      if (type == FileSystemEntityType.file &&
+          await hashOf(named) == file.sha256) {
+        alreadyPresent++;
+        destinations[file] = file.name;
+        continue;
+      }
+      final name = type == FileSystemEntityType.notFound
+          ? file.name
+          : await _freeName(docs, file.name, const {});
+      final target = await staged.rename(p.join(docs, name));
+      added.add(target);
+      try {
+        await target.setLastModified(DateTime.now());
+      } on FileSystemException catch (e) {
+        logger.w('[Backup] could not touch ${target.path}', e);
+      }
+      hashes[target.path] = file.sha256;
+      addedCount++;
+      destinations[file] = name;
+    }
+
+    return _FilePlan(
+      destinations: destinations,
+      added: addedCount,
+      alreadyPresent: alreadyPresent,
+      notRestored: notRestored,
+      resolvesTo: (path) async {
+        final current = await _resolveAttachment(path);
+        return current == null ? null : await hashOf(current);
+      },
+    );
+  }
+
+  /// [file] copied from the backup into [staging] and checked, or null when
+  /// it is missing or damaged.
+  Future<File?> _stage(
+    BackupFile file,
+    String filesDir,
+    Directory staging,
+  ) async {
+    if (!_isPlainName(file.name)) {
+      logger.w('[Backup] ignored a backup file named ${file.name}');
+      return null;
+    }
+    final source = File(p.join(filesDir, file.name));
+    final type = await FileSystemEntity.type(source.path, followLinks: false);
+    if (type != FileSystemEntityType.file) {
+      logger.w('[Backup] ${file.name} is missing from the backup');
+      return null;
+    }
+    final staged = File(p.join(staging.path, file.name));
+    try {
+      await source.copy(staged.path);
+      if (await _sha256(staged) != file.sha256) {
+        logger.w('[Backup] ${file.name} is damaged (checksum mismatch)');
+        await _deleteQuietly(staged);
+        return null;
+      }
+      return staged;
+    } on FileSystemException catch (e) {
+      logger.w('[Backup] ${file.name} could not be read', e);
+      await _deleteQuietly(staged);
+      return null;
+    }
+  }
+
+  Future<void> _restoreRows(
+    String backupPath,
+    _FilePlan plan, {
+    required void Function() onCommitted,
+  }) async {
     await _database.customStatement('PRAGMA wal_checkpoint(TRUNCATE)');
 
     // SQLite refuses ATTACH inside a transaction, so attach first, copy in
     // one transaction (all or nothing), and always detach afterwards.
-    final escaped = backupPath.replaceAll("'", "''");
-    await _database.customStatement("ATTACH DATABASE '$escaped' AS backup_db");
+    await _detachIfAttached('backup_db');
+    await _database.customStatement('ATTACH DATABASE ? AS backup_db', [
+      backupPath,
+    ]);
     try {
       final mainTables = await _tableNames('main');
       final backupTables = await _tableNames('backup_db');
       final tables = _database.allTables
           .map((t) => t.actualTableName)
+          .where((t) => !_localOnlyTables.contains(t))
           .where((t) => mainTables.contains(t) && backupTables.contains(t))
           .toList();
+      final columns = {
+        for (final t in tables)
+          t: (
+            main: await _columnNames('main', t),
+            backup: (await _columnNames('backup_db', t)).toSet(),
+          ),
+      };
+      final synced = tables.where(_syncedTables.contains).toList();
+      final rewrites = await _attachmentRewrites(plan, tables);
 
       await _database.transaction(() async {
-        // Tables are declared parents first: delete in reverse so no row is
-        // left pointing at a deleted one, then insert in order. Foreign keys
-        // are still checked once, at commit, against the restored data, in
-        // case a backup holds a row whose parent comes later.
+        // Foreign keys are checked once, at commit, against the restored
+        // data, in case a backup holds a row whose parent comes later.
         await _database.customStatement('PRAGMA defer_foreign_keys = ON');
-        for (final name in tables.reversed) {
-          await _database.customStatement('DELETE FROM main."$name"');
-        }
-        for (final name in tables) {
-          // Only the columns both have, so a backup from an older schema
-          // restores; newer columns take their defaults and triggers.
-          final backupColumns = await _columnNames('backup_db', name);
-          final columns = [
-            for (final c in await _columnNames('main', name))
-              if (backupColumns.contains(c)) '"$c"',
-          ].join(', ');
+        final stamp = await _restoreStamp(synced, columns);
+
+        for (final t in synced) {
           await _database.customStatement(
-            'INSERT INTO main."$name" ($columns) '
-            'SELECT $columns FROM backup_db."$name"',
+            'DROP TABLE IF EXISTS temp."${_keep(t)}"',
+          );
+          await _database.customStatement(
+            'CREATE TEMP TABLE "${_keep(t)}" AS SELECT * FROM main."$t" '
+            'WHERE ${_key(t, hasUuid: true)} NOT IN ('
+            'SELECT ${_key(t, hasUuid: columns[t]!.backup.contains('uuid'))} '
+            'FROM backup_db."$t")',
+          );
+        }
+
+        // Tables are declared parents first: delete in reverse so no row is
+        // left pointing at a deleted one.
+        for (final t in tables.reversed) {
+          await _database.customStatement('DELETE FROM main."$t"');
+        }
+
+        for (final t in tables) {
+          final (:main, :backup) = columns[t]!;
+          final isSynced = synced.contains(t);
+          final insert = <String>[];
+          final select = <String>[];
+          for (final c in main) {
+            final expr = isSynced
+                ? _restoredColumn(t, c, backup, stamp)
+                : (backup.contains(c) ? '"$c"' : null);
+            if (expr == null) continue;
+            insert.add('"$c"');
+            select.add(expr);
+          }
+          await _database.customStatement(
+            'INSERT INTO main."$t" (${insert.join(', ')}) '
+            'SELECT ${select.join(', ')} FROM backup_db."$t"',
+          );
+        }
+
+        for (final t in synced) {
+          final insert = <String>[];
+          final select = <String>[];
+          for (final c in columns[t]!.main) {
+            final expr = _tombstoneColumn(t, c, stamp);
+            if (expr == null) continue;
+            insert.add('"$c"');
+            select.add(expr);
+          }
+          await _database.customStatement(
+            'INSERT INTO main."$t" (${insert.join(', ')}) '
+            'SELECT ${select.join(', ')} FROM temp."${_keep(t)}"',
+          );
+          await _database.customStatement('DROP TABLE temp."${_keep(t)}"');
+        }
+
+        // The url is device-local: the row keeps the restore stamp, which
+        // the update trigger would otherwise move.
+        for (final MapEntry(key: id, value: raw) in rewrites.entries) {
+          await _database.customStatement(
+            'UPDATE main.fhir_resource SET resource_raw = ? WHERE id = ?',
+            [raw, id],
+          );
+          await _database.customStatement(
+            'UPDATE main.fhir_resource SET updated_at = ? '
+            'WHERE id = ? AND (updated_at IS NULL OR updated_at != ?)',
+            [stamp, id, stamp],
           );
         }
       });
+      onCommitted();
+      logger.i(
+        '[Backup] restored ${p.basename(backupPath)}; '
+        '${rewrites.length} records repointed to restored files',
+      );
     } finally {
-      await _database.customStatement('DETACH DATABASE backup_db');
+      // Never thrown: after a commit the restore stands, and before it the
+      // first error is the one that matters. The next restore detaches it.
+      try {
+        await _database.customStatement('DETACH DATABASE backup_db');
+      } catch (e, s) {
+        logger.e('[Backup] could not detach the backup', e, s);
+      }
     }
+    try {
+      _database.markTablesUpdated(_database.allTables);
+    } catch (e, s) {
+      logger.w('[Backup] could not notify listeners of the restore', e, s);
+    }
+  }
+
+  /// `S`: later than the clock and than every stamp on either side, so the
+  /// restored rows win on the phone even when its clock runs ahead.
+  Future<int> _restoreStamp(
+    List<String> synced,
+    Map<String, ({List<String> main, Set<String> backup})> columns,
+  ) async {
+    var latest = 0;
+    for (final t in synced) {
+      for (final schema in ['main', 'backup_db']) {
+        final has = schema == 'main'
+            ? columns[t]!.main.contains('updated_at')
+            : columns[t]!.backup.contains('updated_at');
+        if (!has) continue;
+        final row = await _database
+            .customSelect(
+              "SELECT MAX(CASE WHEN typeof(updated_at) IN ('integer', 'real') "
+              'THEN updated_at END) AS m FROM $schema."$t"',
+            )
+            .getSingle();
+        final value = (row.data['m'] as num?)?.toInt() ?? 0;
+        if (value > latest) latest = value;
+      }
+    }
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return now > latest + 1 ? now : latest + 1;
+  }
+
+  /// The SELECT expression for column [c] of a synced backup row.
+  static String? _restoredColumn(
+    String table,
+    String c,
+    Set<String> backup,
+    int stamp,
+  ) {
+    if (c == 'updated_at') return '$stamp';
+    if (c == 'deleted_at') {
+      return backup.contains('deleted_at')
+          ? 'CASE WHEN deleted_at IS NULL THEN NULL ELSE $stamp END'
+          : 'NULL';
+    }
+    if (table == 'record_notes' && c == 'uuid') {
+      return _key(table, hasUuid: backup.contains('uuid'));
+    }
+    return backup.contains(c) ? '"$c"' : null;
+  }
+
+  /// The SELECT expression for column [c] of a current row that goes back
+  /// as a tombstone.
+  static String? _tombstoneColumn(String table, String c, int stamp) {
+    final isNote = table == 'record_notes';
+    // A note's id counts per device; the backup's notes may use it.
+    if (isNote && c == 'id') return null;
+    if (c == 'updated_at' || c == 'deleted_at') {
+      return 'MAX($stamp, COALESCE(CASE WHEN typeof(updated_at) IN '
+          "('integer', 'real') THEN updated_at END, 0) + 1)";
+    }
+    if (isNote && c == 'uuid') return _key(table, hasUuid: true);
+    return '"$c"';
+  }
+
+  /// A row's sync key, as `LwwSyncService.keyColumn`, with the legacy key of
+  /// a note that has no uuid.
+  static String _key(String table, {required bool hasUuid}) {
+    if (table != 'record_notes') return 'id';
+    return hasUuid ? "COALESCE(uuid, 'legacy-' || id)" : "'legacy-' || id";
+  }
+
+  static String _keep(String table) => 'restore_keep_$table';
+
+  /// The restored records whose attachment urls must point at a restored
+  /// file's name: urls the backup listed for a file that went under another
+  /// name, or that don't find that file's content where they point now.
+  Future<Map<String, String>> _attachmentRewrites(
+    _FilePlan plan,
+    List<String> tables,
+  ) async {
+    if (!tables.contains('fhir_resource')) return const {};
+    if (plan.destinations.values.every((d) => d == null)) return const {};
+
+    final byPath = <String, BackupFile>{};
+    final byName = <String, List<BackupFile>>{};
+    for (final file in plan.destinations.keys) {
+      for (final path in file.sourcePaths) {
+        byPath[path] = file;
+        (byName[AttachmentReferences.basenameOf(path).toLowerCase()] ??= [])
+            .add(file);
+      }
+    }
+    BackupFile? fileFor(AttachmentRef ref) {
+      final exact = byPath[ref.path];
+      if (exact != null) return exact;
+      final named = byName[ref.basename.toLowerCase()]?.toSet();
+      return named != null && named.length == 1 ? named.single : null;
+    }
+
+    final rows = await _database
+        .customSelect('SELECT id, resource_raw FROM backup_db.fhir_resource')
+        .get();
+    final rewrites = <String, String>{};
+    for (final row in rows) {
+      final raw = row.data['resource_raw'];
+      if (raw is! String) continue;
+      final replacements = <String, String>{};
+      for (final ref in await _references.fromResourceRaw(
+        raw,
+        mode: OnUnparseable.skip,
+      )) {
+        final file = fileFor(ref);
+        final destination = file == null ? null : plan.destinations[file];
+        if (file == null || destination == null) continue;
+        if (await plan.resolvesTo(ref.path) == file.sha256) continue;
+        replacements[ref.url] = 'file://${Uri.encodeComponent(destination)}';
+      }
+      if (replacements.isEmpty) continue;
+      final rewritten = _references.rewriteUrls(
+        raw,
+        (ref) => replacements[ref.url],
+      );
+      if (rewritten != null) rewrites['${row.data['id']}'] = rewritten;
+    }
+    return rewrites;
+  }
+
+  /// Detaches [schema] when an earlier run left it attached.
+  Future<void> _detachIfAttached(String schema) async {
+    final attached = await _database.customSelect('PRAGMA database_list').get();
+    if (attached.any((r) => r.data['name'] == schema)) {
+      logger.w('[Backup] $schema was still attached; detaching it');
+      await _database.customStatement('DETACH DATABASE $schema');
+    }
+  }
+
+  /// The metadata next to [dbPath], or null when there is none (a backup
+  /// copied without it restores its rows only).
+  Future<BackupEntry?> _readMetadata(String dbPath) async {
+    final file = File('$dbPath$_metaSuffix');
+    if (!await file.exists()) return null;
+    final json = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+    return BackupEntry.fromJson(json).copyWith(filePath: dbPath);
   }
 
   Future<List<String>> _columnNames(String schema, String table) async {
@@ -206,6 +773,12 @@ class BackupService {
     return rows.map((r) => r.data['name'] as String).toSet();
   }
 
+  // ---------------------------------------------------------------------------
+  // List, delete, housekeeping
+
+  /// Every backup in the folder, newest first, with [BackupEntry.filePath]
+  /// taken from where its metadata is. Unreadable metadata is logged and
+  /// skipped.
   Future<List<BackupEntry>> listBackups() async {
     final backupDir = await getBackupDirectory();
     final entries = <BackupEntry>[];
@@ -213,12 +786,18 @@ class BackupService {
     if (!await backupDir.exists()) return entries;
 
     await for (final entity in backupDir.list()) {
-      if (entity is File && entity.path.endsWith('.db.meta.json')) {
+      if (entity is File && entity.path.endsWith('.db$_metaSuffix')) {
         try {
           final content = await entity.readAsString();
           final json = jsonDecode(content) as Map<String, dynamic>;
-          entries.add(BackupEntry.fromJson(json));
-        } catch (_) {}
+          final dbPath = entity.path.substring(
+            0,
+            entity.path.length - _metaSuffix.length,
+          );
+          entries.add(BackupEntry.fromJson(json).copyWith(filePath: dbPath));
+        } catch (e) {
+          logger.w('[Backup] skipped unreadable metadata ${entity.path}', e);
+        }
       }
     }
 
@@ -226,28 +805,13 @@ class BackupService {
     return entries;
   }
 
+  /// Writes [entry]'s metadata next to its `.db`, through a temporary file
+  /// so a listed backup is always complete.
   Future<void> saveBackupMetadata(BackupEntry entry) async {
-    final metadataPath = _metadataPathFor(entry.filePath);
-    final metadataFile = File(metadataPath);
-    final json = jsonEncode(entry.toJson());
-    await metadataFile.writeAsString(json);
-  }
-
-  Future<String> _computeChecksum(File file) async {
-    final bytes = await file.readAsBytes();
-    final digest = SHA256Digest();
-    final hash = digest.process(Uint8List.fromList(bytes));
-    return hash.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
-  }
-
-  Future<int> _getRecordCount() async {
-    final result = await _database
-        .customSelect(
-          'SELECT COUNT(*) as count FROM fhir_resource WHERE deleted_at IS NULL',
-          readsFrom: {_database.fhirResource},
-        )
-        .getSingle();
-    return result.data['count'] as int;
+    final metadataPath = '${entry.filePath}$_metaSuffix';
+    final temporary = File('$metadataPath.tmp');
+    await temporary.writeAsString(jsonEncode(entry.toJson()), flush: true);
+    await temporary.rename(metadataPath);
   }
 
   Future<void> deleteBackup(String backupId) async {
@@ -256,13 +820,227 @@ class BackupService {
       (b) => b.id == backupId,
       orElse: () => throw StateError('Backup not found: $backupId'),
     );
-
-    final dbFile = File(target.filePath);
-    if (await dbFile.exists()) await dbFile.delete();
-
-    final metaFile = File(_metadataPathFor(target.filePath));
-    if (await metaFile.exists()) await metaFile.delete();
+    await _deleteEntry(target);
   }
 
-  String _metadataPathFor(String dbPath) => '$dbPath.meta.json';
+  /// Removes the metadata first, so a backup is never listed half deleted,
+  /// then the `.db` and `.files/`.
+  Future<void> _deleteEntry(BackupEntry entry) async {
+    final dbPath = entry.filePath;
+    FileSystemException? firstError;
+    for (final entity in <FileSystemEntity>[
+      File('$dbPath$_metaSuffix'),
+      File(dbPath),
+      Directory(_filesPathFor(dbPath)),
+    ]) {
+      try {
+        if (await entity.exists()) await entity.delete(recursive: true);
+      } on FileSystemException catch (e) {
+        logger.e('[Backup] could not delete ${entity.path}', e);
+        firstError ??= e;
+      }
+    }
+    if (firstError != null) throw firstError;
+    logger.i('[Backup] deleted ${p.basename(dbPath)}');
+  }
+
+  /// Deletes "Before restore" copies older than [safetyCopyRetention] and
+  /// returns how many. User backups are never deleted. Failures are logged.
+  Future<int> deleteExpiredSafetyCopies({DateTime? now}) async {
+    final cutoff = (now ?? DateTime.now()).subtract(safetyCopyRetention);
+    var deleted = 0;
+    try {
+      for (final entry in await listBackups()) {
+        if (!entry.isSafetyCopy || !entry.timestamp.isBefore(cutoff)) continue;
+        try {
+          await _deleteEntry(entry);
+          deleted++;
+          logger.i('[Backup] deleted the expired safety copy ${entry.id}');
+        } catch (e) {
+          logger.e('[Backup] could not delete safety copy ${entry.id}', e);
+        }
+      }
+    } catch (e, s) {
+      logger.e('[Backup] could not look for expired safety copies', e, s);
+    }
+    return deleted;
+  }
+
+  /// Removes `Documents/.restore-*` staging folders a crashed restore left
+  /// behind and returns how many. Failures are logged.
+  Future<int> removeRestoreLeftovers() async {
+    var removed = 0;
+    try {
+      final docs = Directory(await _pathResolver.getDocumentsPath());
+      if (!await docs.exists()) return 0;
+      await for (final entity in docs.list(followLinks: false)) {
+        if (entity is! Directory ||
+            !p.basename(entity.path).startsWith(_stagingPrefix)) {
+          continue;
+        }
+        try {
+          await entity.delete(recursive: true);
+          removed++;
+          logger.i('[Backup] removed the leftover ${entity.path}');
+        } on FileSystemException catch (e) {
+          logger.e('[Backup] could not remove ${entity.path}', e);
+        }
+      }
+    } catch (e, s) {
+      logger.e('[Backup] could not look for restore leftovers', e, s);
+    }
+    return removed;
+  }
+
+  /// Start-up housekeeping: restore leftovers and expired safety copies.
+  /// Never throws.
+  Future<void> cleanUpOnStartup() async {
+    await removeRestoreLeftovers();
+    await deleteExpiredSafetyCopies();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Files
+
+  /// The local file behind a stored attachment path: inside Documents (see
+  /// `AttachmentSyncService.resolveFile`), or a top-level file of an extra
+  /// attachment folder (Windows attachments in the Documents root).
+  Future<File?> _resolveAttachment(String path) async {
+    if (path.isEmpty) return null;
+    final normalized = p.normalize(path);
+    if (p.isAbsolute(normalized) &&
+        !AttachmentReferences.isDatabase(normalized)) {
+      for (final root in await _extraAttachmentRoots()) {
+        if (!p.equals(p.dirname(normalized), p.normalize(root))) continue;
+        final type = await FileSystemEntity.type(
+          normalized,
+          followLinks: false,
+        );
+        if (type == FileSystemEntityType.file) return File(normalized);
+      }
+    }
+    return _attachments.resolveFile(path);
+  }
+
+  Future<List<String>> _extraAttachmentRoots() async {
+    final roots = debugExtraAttachmentRoots;
+    if (roots != null) return roots;
+    if (!Platform.isWindows) return const [];
+    // PathResolver keeps Windows files in Documents\HealthWallet\Documents;
+    // older versions saved attachments in Documents itself.
+    final docs = p.normalize(await _pathResolver.getDocumentsPath());
+    final app = p.dirname(docs);
+    if (p.basename(docs) != 'Documents' || p.basename(app) != 'HealthWallet') {
+      return const [];
+    }
+    return [p.dirname(app)];
+  }
+
+  /// [wanted], or the same name with a unique suffix when [dir] (or
+  /// [taken], lower-case names) already has it.
+  static Future<String> _freeName(
+    String dir,
+    String wanted,
+    Set<String> taken,
+  ) async {
+    if (!taken.contains(wanted.toLowerCase()) &&
+        !await _exists(p.join(dir, wanted))) {
+      return wanted;
+    }
+    final dot = wanted.lastIndexOf('.');
+    final stem = dot > 0 ? wanted.substring(0, dot) : wanted;
+    final ext = dot > 0 ? wanted.substring(dot) : '';
+    while (true) {
+      final name = '${stem}_${const Uuid().v4().substring(0, 8)}$ext';
+      if (!taken.contains(name.toLowerCase()) &&
+          !await _exists(p.join(dir, name))) {
+        return name;
+      }
+    }
+  }
+
+  /// A file's name made safe on every desktop: separators and characters
+  /// Windows refuses become `_`; no leading dot (hidden), no trailing dot or
+  /// space, never the database's name. Letters of any script stay.
+  static String _safeFileName(String basename) {
+    var name = basename
+        .replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1F]'), '_')
+        .replaceFirst(RegExp(r'^[.\s]+'), '')
+        .replaceFirst(RegExp(r'[.\s]+$'), '');
+    if (name.replaceAll('.', '').isEmpty) name = 'file';
+    if (AttachmentReferences.isDatabase(name)) name = 'file_$name';
+    return name;
+  }
+
+  /// A name from the metadata that stays inside `.files/`.
+  static bool _isPlainName(String name) =>
+      name.isNotEmpty &&
+      name != '.' &&
+      name != '..' &&
+      !name.contains('/') &&
+      !name.contains(r'\') &&
+      _safeFileName(name) == name;
+
+  /// The backup's display name as a file name: letters of any script,
+  /// digits, spaces and `-._,`; a time's `:` becomes `.`, anything else `_`.
+  static String _fileStem(String name) {
+    final stem = name
+        .replaceAll(':', '.')
+        .replaceAll(RegExp(r'[^\p{L}\p{M}\p{N} \-._,]', unicode: true), '_')
+        .replaceFirst(RegExp(r'^[.\s]+'), '')
+        .trim();
+    final runes = stem.runes;
+    return runes.length > 80 ? String.fromCharCodes(runes.take(80)) : stem;
+  }
+
+  static String _filesPathFor(String dbPath) {
+    final base = dbPath.endsWith('.db')
+        ? dbPath.substring(0, dbPath.length - 3)
+        : dbPath;
+    return '$base.files';
+  }
+
+  static Future<String> _sha256(File file) async =>
+      (await sha256.bind(file.openRead()).first).toString();
+
+  static Future<bool> _exists(String path) async =>
+      await FileSystemEntity.type(path, followLinks: false) !=
+      FileSystemEntityType.notFound;
+
+  static Future<void> _deleteQuietly(FileSystemEntity entity) async {
+    try {
+      if (await entity.exists()) await entity.delete(recursive: true);
+    } on FileSystemException catch (e) {
+      logger.w('[Backup] could not remove ${entity.path}', e);
+    }
+  }
+}
+
+/// Where a restore put the backup's files.
+class _FilePlan {
+  const _FilePlan({
+    required this.destinations,
+    required this.added,
+    required this.alreadyPresent,
+    required this.notRestored,
+    required this.resolvesTo,
+  });
+
+  static final none = _FilePlan(
+    destinations: const {},
+    added: 0,
+    alreadyPresent: 0,
+    notRestored: 0,
+    resolvesTo: (_) async => null,
+  );
+
+  /// Each restored file's name in Documents; null when the records already
+  /// find its content where they point.
+  final Map<BackupFile, String?> destinations;
+  final int added;
+  final int alreadyPresent;
+  final int notRestored;
+
+  /// The SHA-256 of the file a stored path opens now, or null.
+  final Future<String?> Function(String path) resolvesTo;
 }

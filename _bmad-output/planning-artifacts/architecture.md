@@ -195,7 +195,7 @@ Either side drops a link it heard nothing from for 25 s (phone) or 35 s (desktop
 
 Sending: one batch at a time, the next after the `sync.ack`. The outbox position the peer acknowledged (`ackedSeq`, per peer in `lww_sync_state`) is the only thing that moves, so nothing is lost to a dropped link, a crash or a rejected write, and nothing depends on either device's clock. A batch not acknowledged within 60 s is sent again on the next trigger. The receiver applies a batch in one transaction (row by row when one row fails), and the writes don't go back into the outbox.
 
-Reconciliation: on connecting both sides send `sync.digest`; for each table that differs they exchange `sync.manifest` once per connection and queue the rows the other lacks or holds older. After a round of sending, the sender compares digests again; "in sync" means connected, nothing waiting, nothing in flight and the digests matching. A new peer (another desktop, a new phone) starts with a fresh outbox position and reconciles; a desktop restore resets the position.
+Reconciliation: on connecting both sides send `sync.digest`; for each table that differs they exchange `sync.manifest` once per connection and queue the rows the other lacks or holds older. After a round of sending, the sender compares digests again; "in sync" means connected, nothing waiting, nothing in flight and the digests matching. A new peer (another desktop, a new phone) starts with a fresh outbox position and reconciles. A desktop restore keeps the position: it writes every restored and superseded row through the outbox with a fresh stamp (see **Backup**), so it reaches the phone like any edit, and the digest on the next connect covers a phone that was offline.
 
 Deletes travel as `deleted_at` tombstones:
 
@@ -205,7 +205,7 @@ Deletes travel as `deleted_at` tombstones:
 4. Every save or insert of a row clears `deleted_at` (upserts write `deleted_at = NULL`, and the `INSERT OR REPLACE` paths replace the whole row). The demo and wallet source rows leave `updated_at` to the trigger rather than drift (which stores seconds). The trigger stamps in milliseconds and never moves a row's stamp back, so a re-created row beats its tombstone. In-place updates of a single column (raw JSON, specialty, note text, encounter link) leave `deleted_at` as it is, so they never resurrect a row.
 5. `cleanupTombstones` (on `LwwSyncInitialised`) hard-deletes tombstones older than 30 days: notes first, then records, then sources, and a source stays while a newer note still points at it (`record_notes.source_id` is a foreign key the app enforces). A device offline for longer than that can bring the row back; this limit is accepted.
 
-Reset (`AppDataResetService`), `deleteAllFhirResources`, `deleteAllSources` and backup restore stay local hard wipes.
+Reset (`AppDataResetService`), `deleteAllFhirResources` and `deleteAllSources` stay local hard wipes. A backup restore doesn't: rows added since the backup become tombstones (see **Backup**).
 
 Conflicts: the later `updated_at` wins; on a tie the row from the larger device id wins, the same answer on both sides; a row identical to the local one is not written. Incoming columns are kept only if the table has them. A local `DocumentReference` with a missing attachment loses to the incoming row, and an incoming one keeps the local file of an attachment that it names differently.
 
@@ -213,7 +213,24 @@ Files never travel inside rows. The receiver asks for the attachments of the row
 
 Deletes: no code in `lib/` sets `deleted_at`, and none ever has; repositories hard-delete synced rows, and reconciliation brings a deleted row back from the other device. The archived PRD (FR35, NFR14) asked for soft-delete propagation with 30-day tombstone cleanup; only the columns and the cleanup were built.
 
-**Backup** (`desktop/backup/`): desktop snapshots with `VACUUM INTO` to `~/Documents/HealthWallet/Backups/` (`USERPROFILE` on Windows). Restore empties the tables children first and copies only the columns the backup and the current schema share, so backups from an older schema restore.
+**Backup** (`desktop/backup/`): desktop backups in the chosen folder, by default `~/Documents/HealthWallet/Backups/` (`USERPROFILE` on Windows; on macOS a subfolder of the sandbox Documents, which no file sweep enters). `BackupService` (`backup_service.dart`) writes, lists, restores and deletes them.
+
+Format 2, one backup:
+
+- `<name>.db`: `VACUUM INTO` copy of the database.
+- `<name>.files/`: one copy of every attachment file a `fhir_resource` row (live or tombstoned) refers to, found through `AttachmentReferences` (`lib/core/services/attachment_references.dart`: every `file://` url in `resource_raw`, basenames split on `/` and `\`, compared raw and decoded, ignoring case). Files resolve inside `PathResolver.getDocumentsPath()` (as `AttachmentSyncService.resolveFile`), plus top-level files of the Windows Documents root, where older versions saved attachments. Same-named files get free names. Scan-session files (`imports/`) are not backed up.
+- `<name>.db.meta.json`, written last (through a `.tmp` and a rename) as the commit marker: `BackupEntry` with `formatVersion: 2`, `files: [{name, sourcePaths, sha256, size}]` (`sourcePaths` are the decoded paths the rows store), `missing: [url]` (files not on the device) and `isSafetyCopy`. A failed backup removes its `.db`, `.files/` and metadata. Metadata without `formatVersion` is a database-only backup (format 1); older app versions list format 2 and restore its rows only.
+
+Listing reads every `*.db.meta.json` and takes the `.db` and `.files/` paths from where the metadata is, not from the stored `filePath`, so a moved folder still works; unreadable metadata is logged and skipped. The display name is kept as typed; the file name keeps letters of any script, digits and `-._,`, with `:` as `.`. Hashes (SHA-256) are streamed. Deleting removes the metadata first, then the `.db` and `.files/`.
+
+Restore (`restoreFromFile`) makes the backup the current state on the desktop and, through sync, on the phone:
+
+1. Leftover `Documents/.restore-*` folders are removed (also at start-up, `cleanUpOnStartup`), and the `.db` checksum is checked against the metadata.
+2. Format 2 files are copied into `Documents/.restore-<id>/`, hashed and moved into Documents with `setLastModified(now)`. No current file is deleted or overwritten: a file already found by the restored rows, or of the same name, with the same hash is reused; one with other content keeps its name and the backup's file goes under a free name. A missing or damaged file is counted (`RestoreResult.filesNotRestored`) and the rest goes on. A format 1 backup adds no file and keeps every current one.
+3. In one transaction, for `fhir_resource`, `sources` and `record_notes`, with `S = MAX(now, max(updated_at) over current and backup rows + 1)`: current rows whose key isn't in the backup (`id`; `COALESCE(uuid, 'legacy-' || id)` for notes, the same on both sides) go to TEMP tables; every table is emptied children first; the backup's rows are inserted with `updated_at = S`, their tombstones with `deleted_at = S` (so the 30-day purge doesn't drop them before they reach the phone), and missing `updated_at`, `deleted_at` or `uuid` columns of an old backup read as `S`, `NULL` and `'legacy-' || id`; the TEMP rows go back as tombstones with `deleted_at = updated_at = MAX(S, updated_at + 1)` and their `resource_raw`, notes without their per-device `id`. Plain INSERTs, so the insert trigger leaves `S`; the outbox triggers queue every row. Attachment urls of restored rows that must point at a renamed file are rewritten in the same transaction and keep `S`. `sync_outbox` is never restored; `processing_sessions` and other local tables are replaced by the backup's.
+4. A failure before or inside the transaction leaves the database as it was and removes the files the restore added and the staging folder; `restoreFromFile` throws only then. After the commit the caller sends `LwwSyncEvent.localChanged()` and doesn't call `resetPeerState`, which would prune the outbox the restore filled. The phone then applies the rows (they win on `S`, even against a phone clock that runs ahead) and requests the restored files as for any missing attachment.
+
+Before a restore the backup bloc saves a safety copy, "Before restore {date}" with files (`createSnapshot(isSafetyCopy: true)`, never streamed to the phone). It is the undo. Safety copies older than 30 days are deleted at start-up and after each backup (`deleteExpiredSafetyCopies`); user backups never are.
 
 | Type              | Direction         | Meaning                              |
 | ----------------- | ----------------- | ------------------------------------ |

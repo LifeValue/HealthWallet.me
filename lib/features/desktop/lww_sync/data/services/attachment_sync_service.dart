@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:health_wallet/core/services/attachment_references.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:injectable/injectable.dart';
@@ -62,21 +63,24 @@ class AttachmentSyncService {
   /// The real file behind [candidate] when it is inside [docsPath] and is not
   /// the database (`db.sqlite`, `-wal`, `-shm`, …), which lives there too.
   Future<File?> _insideDocs(String candidate, String docsPath) async {
-    if (!p.isWithin(docsPath, candidate) || _isDatabase(candidate)) return null;
+    if (!p.isWithin(docsPath, candidate) ||
+        AttachmentReferences.isDatabase(candidate)) {
+      return null;
+    }
     final file = File(candidate);
     if (!await file.exists()) return null;
     final String realFile;
     try {
       final realDocs = await Directory(docsPath).resolveSymbolicLinks();
       realFile = await file.resolveSymbolicLinks();
-      if (!p.isWithin(realDocs, realFile) || _isDatabase(realFile)) return null;
+      if (!p.isWithin(realDocs, realFile) ||
+          AttachmentReferences.isDatabase(realFile)) {
+        return null;
+      }
     } on FileSystemException catch (e) {
       logger.w('Attachment path could not be resolved: $candidate', e);
       return null;
     }
     return File(realFile);
   }
-
-  static bool _isDatabase(String path) =>
-      p.basename(path).toLowerCase().startsWith('db.sqlite');
 }
