@@ -24,7 +24,7 @@ class _FakeUserRepository extends Fake implements UserRepository {
   final List<bool> savedLockValues = [];
 
   @override
-  Future<User> getCurrentUser({bool fetchFromNetwork = false}) async {
+  Future<User> getCurrentUser() async {
     final error = getUserError;
     if (error != null) throw error;
     return storedUser ?? const User();

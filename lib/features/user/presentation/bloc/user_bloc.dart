@@ -45,13 +45,10 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     UserInitialised event,
     Emitter<UserState> emit,
   ) async {
-    await _getCurrentUser(false, emit);
+    await _getCurrentUser(emit);
   }
 
-  Future<void> _getCurrentUser(
-    bool fetchFromNetwork,
-    Emitter<UserState> emit,
-  ) async {
+  Future<void> _getCurrentUser(Emitter<UserState> emit) async {
     emit(state.copyWith(status: const UserStatus.loading()));
 
     final isBiometricAuthEnabled = await _userRepository
@@ -96,9 +93,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     try {
       User user;
       try {
-        user = await _userRepository.getCurrentUser(
-          fetchFromNetwork: fetchFromNetwork,
-        );
+        user = await _userRepository.getCurrentUser();
       } catch (e) {
         final systemTheme =
             WidgetsBinding.instance.platformDispatcher.platformBrightness;
@@ -247,7 +242,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     UserDataUpdatedFromSync event,
     Emitter<UserState> emit,
   ) async {
-    await _getCurrentUser(false, emit);
+    await _getCurrentUser(emit);
   }
 
   Future<void> _onBiometricsSetupShown(

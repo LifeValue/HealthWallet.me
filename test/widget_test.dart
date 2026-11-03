@@ -55,8 +55,7 @@ import 'features/app_lock/app_lock_test_fakes.dart';
 
 class FakeUserRepository extends Fake implements UserRepository {
   @override
-  Future<User> getCurrentUser({bool fetchFromNetwork = false}) async =>
-      const User();
+  Future<User> getCurrentUser() async => const User();
 
   @override
   Future<void> updateUser(User user) async {}
