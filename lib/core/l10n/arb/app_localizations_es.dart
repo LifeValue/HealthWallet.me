@@ -708,6 +708,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'El documento es demasiado grande para el tamaño de contexto actual de IA.';
 
   @override
+  String get processingFailedMemory =>
+      'No hay suficiente memoria libre para ejecutar el modelo de IA. Cierra otras apps e inténtalo de nuevo, o desactiva el Escaneo profundo en Ajustes de IA.';
+
+  @override
   String get processingFailedCapacitySuggestion =>
       'Toca el icono de ajustes arriba y aumenta el tamaño de contexto a 2048 o más, luego reintenta.';
 

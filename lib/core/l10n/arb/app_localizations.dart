@@ -1374,6 +1374,12 @@ abstract class AppLocalizations {
   /// **'The document is too large for the current AI context size.'**
   String get processingFailedCapacity;
 
+  /// No description provided for @processingFailedMemory.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough free memory to run the AI model. Close other apps and try again, or turn off Deep Scan in AI Settings.'**
+  String get processingFailedMemory;
+
   /// No description provided for @processingFailedCapacitySuggestion.
   ///
   /// In en, this message translates to:

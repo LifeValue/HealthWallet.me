@@ -12,6 +12,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/ai_settings/ai_settings_dialog.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
@@ -359,23 +360,23 @@ class _AiModelSectionState extends State<AiModelSection> {
   }
 
   void _openAiSettings(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    final currentTokens = prefs.getInt(SharedPrefsConstants.aiMaxTokens) ?? 500;
-
-    if (!context.mounted) return;
-
-    final result = await AiTokenSettingsDialog.show(
-      context,
-      currentTokens: currentTokens,
-    );
-
+    final result = await AiTokenSettingsDialog.show(context);
     if (result == null) return;
 
-    await prefs.setInt(SharedPrefsConstants.aiMaxTokens, result.maxTokens);
-    await prefs.setInt(SharedPrefsConstants.aiGpuLayers, result.gpuLayers);
-    await prefs.setInt(SharedPrefsConstants.aiThreads, result.threads);
-    await prefs.setInt(SharedPrefsConstants.aiContextSize, result.contextSize);
-    await prefs.setBool(SharedPrefsConstants.aiUseVision, result.useVision);
+    // Only what the user changed is saved, so the defaults stay in force.
+    final prefs = await SharedPreferences.getInstance();
+    final maxTokens = result.maxTokens;
+    if (maxTokens != null) {
+      await prefs.setInt(SharedPrefsConstants.aiMaxTokens, maxTokens);
+    }
+    await result.saveLoadSettings(prefs);
+
+    // Deep Scan goes through the bloc, which saves it, so an open Processing
+    // screen follows the change.
+    final useVision = result.useVision;
+    if (useVision != null) {
+      getIt<ProcessingBloc>().add(VisionToggled(useVision: useVision));
+    }
   }
 
   Color _getStatusColor(LoadModelStatus status) {

@@ -10,6 +10,8 @@ import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
+import 'package:health_wallet/features/processing/domain/ai_settings_reset.dart';
+import 'package:health_wallet/features/processing/domain/deep_scan_defaults.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
@@ -87,7 +89,10 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     this._prefs,
     this._strings,
   ) : super(const ProcessingState()) {
-    on<ProcessingInitialised>(onProcessingInitialised);
+    on<ProcessingInitialised>(
+      onProcessingInitialised,
+      transformer: sequential(),
+    );
     on<CaptureButtonPressed>(onCaptureButtonPressed);
     on<DocumentImported>(onDocumentImported);
     on<SessionChangedProgress>(onSessionChangedProgress);
@@ -104,8 +109,11 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     on<EncounterAttached>(onEncounterAttached);
     on<ProcessRemainingResources>(onProcessRemainingResources);
     on<DocumentAttached>(onDocumentAttached);
-    on<TokenCapacityUpdated>(onTokenCapacityUpdated);
-    on<VisionToggled>(onVisionToggled);
+    on<TokenCapacityUpdated>(
+      onTokenCapacityUpdated,
+      transformer: sequential(),
+    );
+    on<VisionToggled>(onVisionToggled, transformer: sequential());
     on<PagesReordered>(onPagesReordered);
     on<ContainerTypeSwitched>(_onContainerTypeSwitched);
   }
@@ -179,13 +187,16 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   ) async {
     emit(state.copyWith(status: const PipelineStatus.loading()));
 
+    final isDesktop =
+        Platform.isMacOS || Platform.isLinux || Platform.isWindows;
+    await _resetMistakenAiSettingsOnce(isDesktop: isDesktop);
+
     try {
       final sessions = await _repository.getProcessingSessions();
 
-      final isDesktop =
-          Platform.isMacOS || Platform.isLinux || Platform.isWindows;
       final useVision =
-          _prefs.getBool(SharedPrefsConstants.aiUseVision) ?? isDesktop;
+          _prefs.getBool(SharedPrefsConstants.aiUseVision) ??
+          defaultDeepScan(isDesktop);
       emit(
         state.copyWith(
           sessions: sessions,
@@ -213,21 +224,51 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     emit(state.copyWith(notification: null));
   }
 
-  void onTokenCapacityUpdated(
+  Future<void> onTokenCapacityUpdated(
     TokenCapacityUpdated event,
     Emitter<ProcessingState> emit,
   ) async {
-    await _prefs.setInt(SharedPrefsConstants.aiMaxTokens, event.newMaxTokens);
+    final newMaxTokens = event.newMaxTokens;
+    if (newMaxTokens != null) {
+      await _prefs.setInt(SharedPrefsConstants.aiMaxTokens, newMaxTokens);
+    }
     await _repository.disposeModel();
     add(MappingInitiated(sessionId: event.sessionId));
   }
 
-  void onVisionToggled(
+  /// Sent by both AI settings screens, so a running Processing screen
+  /// follows a change made in Preferences.
+  Future<void> onVisionToggled(
     VisionToggled event,
     Emitter<ProcessingState> emit,
-  ) {
-    _prefs.setBool(SharedPrefsConstants.aiUseVision, event.useVision);
+  ) async {
     emit(state.copyWith(useVision: event.useVision));
+    await _prefs.setBool(SharedPrefsConstants.aiUseVision, event.useVision);
+  }
+
+  /// Removes, once, the AI settings that earlier versions saved by mistake
+  /// (see [mistakenAiSettings]). A failure is logged and retried on the next
+  /// start; it never stops the sessions from loading.
+  Future<void> _resetMistakenAiSettingsOnce({required bool isDesktop}) async {
+    if (_prefs.getBool(SharedPrefsConstants.aiMistakenSettingsReset) ?? false) {
+      return;
+    }
+    try {
+      final keys = mistakenAiSettings(
+        savedMaxTokens: _prefs.getInt(SharedPrefsConstants.aiMaxTokens),
+        savedUseVision: _prefs.getBool(SharedPrefsConstants.aiUseVision),
+        isDesktop: isDesktop,
+      );
+      for (final key in keys) {
+        await _prefs.remove(key);
+      }
+      await _prefs.setBool(SharedPrefsConstants.aiMistakenSettingsReset, true);
+      if (keys.isNotEmpty) {
+        logger.i('Reset mistakenly saved AI settings: $keys');
+      }
+    } on Exception catch (e, s) {
+      logger.e('Resetting the mistakenly saved AI settings failed', e, s);
+    }
   }
 
   void _onContainerTypeSwitched(

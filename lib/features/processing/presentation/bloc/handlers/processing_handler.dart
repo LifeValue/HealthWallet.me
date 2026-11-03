@@ -10,6 +10,7 @@ import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
+import 'package:health_wallet/features/processing/domain/deep_scan_defaults.dart';
 import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
@@ -382,7 +383,8 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           ? null
           : prefs.getInt(SharedPrefsConstants.aiContextSize);
       final useVision =
-          prefs.getBool(SharedPrefsConstants.aiUseVision) ?? isDesktop;
+          prefs.getBool(SharedPrefsConstants.aiUseVision) ??
+          defaultDeepScan(isDesktop);
       final Stream<MappingResourcesWithProgress> stream = processingRepository
           .mapRemainingResources(
             sessionImages,

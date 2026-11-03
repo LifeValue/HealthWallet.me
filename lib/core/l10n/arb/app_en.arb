@@ -232,6 +232,7 @@
   "chargerPluggedIn": "Charger plugged in.",
   "plugInChargerEllipsis": "Plug in the charger...",
   "processingFailedCapacity": "The document is too large for the current AI context size.",
+  "processingFailedMemory": "Not enough free memory to run the AI model. Close other apps and try again, or turn off Deep Scan in AI Settings.",
   "processingFailedCapacitySuggestion": "Tap the settings icon above and increase the Context Size to 2048 or higher, then retry.",
   "increaseAiModelCapacity": "Increase AI Capacity",
   "goBack": "Go Back",

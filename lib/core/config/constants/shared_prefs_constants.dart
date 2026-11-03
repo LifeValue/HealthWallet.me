@@ -17,6 +17,10 @@ class SharedPrefsConstants {
   static const aiSelectedModel = 'aiSelectedModel';
   static const aiUseVision = 'aiUseVision';
 
+  /// Set once the AI settings that earlier versions saved by mistake have
+  /// been removed, so a value the user saves later is never removed.
+  static const aiMistakenSettingsReset = 'aiMistakenSettingsReset';
+
   /// `ExtractionOutputMode` name: grammar, schema or schemaDraft.
   static const aiOutputMode = 'aiOutputMode';
   static const regionPreset = 'regionPreset';

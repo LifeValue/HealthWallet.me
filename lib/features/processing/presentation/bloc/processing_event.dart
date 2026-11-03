@@ -185,8 +185,10 @@ abstract class TokenCapacityUpdated extends ProcessingEvent
     with _$TokenCapacityUpdated {
   const TokenCapacityUpdated._();
 
+  /// Reloads the model and maps [sessionId] again. [newMaxTokens] is saved
+  /// when given; leave it out when only another model setting changed.
   const factory TokenCapacityUpdated({
-    required int newMaxTokens,
+    int? newMaxTokens,
     required String sessionId,
   }) = _TokenCapacityUpdated;
 }

@@ -215,6 +215,7 @@
   "chargerPluggedIn": "Încărcătorul este conectat.",
   "plugInChargerEllipsis": "Conectează încărcătorul...",
   "processingFailedCapacity": "Documentul este prea mare pentru dimensiunea curentă a contextului AI.",
+  "processingFailedMemory": "Nu există suficientă memorie liberă pentru a rula modelul AI. Închide alte aplicații și încearcă din nou, sau dezactivează Scanare Profundă din Setări AI.",
   "processingFailedCapacitySuggestion": "Apasă pe pictograma de setări de mai sus și crește Dimensiunea Contextului la 2048 sau mai mare, apoi reîncearcă.",
   "increaseAiModelCapacity": "Crește Capacitatea AI",
   "goBack": "Înapoi",

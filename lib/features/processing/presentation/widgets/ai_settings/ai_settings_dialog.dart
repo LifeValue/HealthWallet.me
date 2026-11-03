@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/config/constants/app_constants.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
@@ -16,26 +17,56 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
+import 'package:health_wallet/features/processing/domain/deep_scan_defaults.dart';
 import 'package:health_wallet/features/processing/domain/services/ai_model_download_service.dart';
 import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/ai_settings/ai_settings_token_section.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/ai_settings/ai_settings_vision_toggle.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// What the user changed in [AiTokenSettingsDialog]. Each field is the new
+/// value, or null when it was left as the dialog opened with it, so a Save
+/// writes only what changed and a default stays a default.
 class AiSettingsResult {
-  final int maxTokens;
-  final int gpuLayers;
-  final int threads;
-  final int contextSize;
-  final bool useVision;
+  final int? maxTokens;
+  final int? gpuLayers;
+  final int? threads;
+  final int? contextSize;
+  final bool? useVision;
 
   const AiSettingsResult({
-    required this.maxTokens,
-    required this.gpuLayers,
-    required this.threads,
-    required this.contextSize,
-    required this.useVision,
+    this.maxTokens,
+    this.gpuLayers,
+    this.threads,
+    this.contextSize,
+    this.useVision,
   });
+
+  /// Whether a setting the model is loaded with changed, so a running scan
+  /// has to reload the model.
+  bool get changesModel =>
+      maxTokens != null ||
+      gpuLayers != null ||
+      threads != null ||
+      contextSize != null;
+
+  /// Saves the changed GPU layers, threads and context size. The token limit
+  /// and Deep Scan are left to the caller: each screen applies them its own
+  /// way.
+  Future<void> saveLoadSettings(SharedPreferences prefs) async {
+    final gpuLayers = this.gpuLayers;
+    final threads = this.threads;
+    final contextSize = this.contextSize;
+    if (gpuLayers != null) {
+      await prefs.setInt(SharedPrefsConstants.aiGpuLayers, gpuLayers);
+    }
+    if (threads != null) {
+      await prefs.setInt(SharedPrefsConstants.aiThreads, threads);
+    }
+    if (contextSize != null) {
+      await prefs.setInt(SharedPrefsConstants.aiContextSize, contextSize);
+    }
+  }
 }
 
 class AiTokenSettingsDialog extends StatefulWidget {
@@ -64,11 +95,13 @@ class AiTokenSettingsDialog extends StatefulWidget {
     super.key,
   });
 
-  static Future<AiSettingsResult?> show(
-    BuildContext context, {
-    required int currentTokens,
-  }) async {
+  /// Opens the dialog on the saved settings, or each one's default when none
+  /// is saved, and returns what the user changed.
+  static Future<AiSettingsResult?> show(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
+    final currentTokens =
+        prefs.getInt(SharedPrefsConstants.aiMaxTokens) ??
+        AppConstants.defaultMaxTokens;
     final deviceRamMB = await _detectDeviceRamMB();
     final profile = await DeviceCapabilityService.buildProfile(
       ramMB: deviceRamMB,
@@ -82,7 +115,8 @@ class AiTokenSettingsDialog extends StatefulWidget {
     final savedThreads = prefs.getInt(SharedPrefsConstants.aiThreads);
     final savedCtx = prefs.getInt(SharedPrefsConstants.aiContextSize);
     final savedVision = prefs.getBool(SharedPrefsConstants.aiUseVision);
-    final useVision = savedVision ?? false;
+    final useVision =
+        savedVision ?? defaultDeepScan(getIt<AppPlatform>().isDesktop);
 
     if (!context.mounted) return null;
 
@@ -265,13 +299,15 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
   }
 
   void _apply() {
+    T? changed<T>(T value, T opening) => value == opening ? null : value;
+
     Navigator.of(context).pop(
       AiSettingsResult(
-        maxTokens: _currentTokenValue(),
-        gpuLayers: _gpuLayers,
-        threads: _threads,
-        contextSize: _contextSize,
-        useVision: _useVision,
+        maxTokens: changed(_currentTokenValue(), widget.currentTokens),
+        gpuLayers: changed(_gpuLayers, widget.currentGpuLayers),
+        threads: changed(_threads, widget.currentThreads),
+        contextSize: changed(_contextSize, widget.currentContextSize),
+        useVision: changed(_useVision, widget.currentUseVision),
       ),
     );
   }

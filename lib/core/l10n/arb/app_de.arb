@@ -212,6 +212,7 @@
   "chargerPluggedIn": "Ladegerät eingesteckt.",
   "plugInChargerEllipsis": "Stecke das Ladegerät ein...",
   "processingFailedCapacity": "Das Dokument ist zu groß für die aktuelle KI-Kontextgröße.",
+  "processingFailedMemory": "Nicht genügend freier Speicher, um das KI-Modell auszuführen. Schließe andere Apps und versuche es erneut, oder schalte den Tiefenscan in den KI-Einstellungen aus.",
   "processingFailedCapacitySuggestion": "Tippe oben auf das Einstellungssymbol und erhöhe die Kontextgröße auf 2048 oder höher, dann erneut versuchen.",
   "increaseAiModelCapacity": "KI-Kapazität erhöhen",
   "goBack": "Zurück",

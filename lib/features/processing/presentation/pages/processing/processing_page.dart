@@ -3,8 +3,6 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
-import 'package:health_wallet/core/config/constants/app_constants.dart';
-import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
@@ -151,45 +149,25 @@ class _ProcessingPageState extends State<ProcessingPage> {
   }
 
   void _showAiSettingsDialog() async {
-    final prefs = getIt<SharedPreferences>();
-    final previousTokens =
-        prefs.getInt(SharedPrefsConstants.aiMaxTokens) ??
-        AppConstants.defaultMaxTokens;
-    final previousGpu = prefs.getInt(SharedPrefsConstants.aiGpuLayers);
-    final previousThreads = prefs.getInt(SharedPrefsConstants.aiThreads);
-    final previousCtx = prefs.getInt(SharedPrefsConstants.aiContextSize);
+    final result = await AiTokenSettingsDialog.show(context);
+    if (result == null || !mounted) return;
 
-    final result = await AiTokenSettingsDialog.show(
-      context,
-      currentTokens: previousTokens,
-    );
+    // Only what the user changed is saved, and mapping restarts only when a
+    // setting the model loads with changed.
+    await result.saveLoadSettings(getIt<SharedPreferences>());
+    if (!mounted) return;
 
-    if (result != null && mounted) {
-      await prefs.setInt(SharedPrefsConstants.aiGpuLayers, result.gpuLayers);
-      await prefs.setInt(SharedPrefsConstants.aiThreads, result.threads);
-      await prefs.setInt(
-        SharedPrefsConstants.aiContextSize,
-        result.contextSize,
+    final bloc = context.read<ProcessingBloc>();
+    final useVision = result.useVision;
+    if (useVision != null) bloc.add(VisionToggled(useVision: useVision));
+
+    if (result.changesModel) {
+      bloc.add(
+        TokenCapacityUpdated(
+          newMaxTokens: result.maxTokens,
+          sessionId: widget.sessionId,
+        ),
       );
-      if (!mounted) return;
-
-      final bloc = context.read<ProcessingBloc>();
-      bloc.add(VisionToggled(useVision: result.useVision));
-
-      final modelSettingsChanged =
-          result.maxTokens != previousTokens ||
-          result.gpuLayers != previousGpu ||
-          result.threads != previousThreads ||
-          result.contextSize != previousCtx;
-
-      if (modelSettingsChanged) {
-        bloc.add(
-          TokenCapacityUpdated(
-            newMaxTokens: result.maxTokens,
-            sessionId: widget.sessionId,
-          ),
-        );
-      }
     }
   }
 

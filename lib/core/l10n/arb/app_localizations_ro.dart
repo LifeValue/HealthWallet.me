@@ -708,6 +708,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'Documentul este prea mare pentru dimensiunea curentă a contextului AI.';
 
   @override
+  String get processingFailedMemory =>
+      'Nu există suficientă memorie liberă pentru a rula modelul AI. Închide alte aplicații și încearcă din nou, sau dezactivează Scanare Profundă din Setări AI.';
+
+  @override
   String get processingFailedCapacitySuggestion =>
       'Apasă pe pictograma de setări de mai sus și crește Dimensiunea Contextului la 2048 sau mai mare, apoi reîncearcă.';
 

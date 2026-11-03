@@ -43,7 +43,7 @@ enum PipelineFailureReason {
   String localizedMessage(AppLocalizations l10n) => switch (this) {
     modelNotFound => l10n.modelNotFoundError,
     modelCorrupted => l10n.modelCorruptedError,
-    notEnoughMemory => l10n.processingFailedCapacity,
+    notEnoughMemory => l10n.processingFailedMemory,
     scanFailed => l10n.scanFailed,
     importFailed => l10n.importDocumentFailed,
     noValidFiles => l10n.noValidFilesFound,

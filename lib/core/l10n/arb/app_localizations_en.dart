@@ -697,6 +697,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'The document is too large for the current AI context size.';
 
   @override
+  String get processingFailedMemory =>
+      'Not enough free memory to run the AI model. Close other apps and try again, or turn off Deep Scan in AI Settings.';
+
+  @override
   String get processingFailedCapacitySuggestion =>
       'Tap the settings icon above and increase the Context Size to 2048 or higher, then retry.';
 

@@ -711,6 +711,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Das Dokument ist zu groß für die aktuelle KI-Kontextgröße.';
 
   @override
+  String get processingFailedMemory =>
+      'Nicht genügend freier Speicher, um das KI-Modell auszuführen. Schließe andere Apps und versuche es erneut, oder schalte den Tiefenscan in den KI-Einstellungen aus.';
+
+  @override
   String get processingFailedCapacitySuggestion =>
       'Tippe oben auf das Einstellungssymbol und erhöhe die Kontextgröße auf 2048 oder höher, dann erneut versuchen.';
 
