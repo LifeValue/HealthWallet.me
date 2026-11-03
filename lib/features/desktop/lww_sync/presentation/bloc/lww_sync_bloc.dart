@@ -67,6 +67,16 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
   final _drainWaiters = <Completer<void>>[];
   Completer<void>? _applying;
 
+  /// Set between [pauseApplying] and [resumeApplying]; received batches wait
+  /// for it before they are applied.
+  Completer<void>? _paused;
+
+  /// [syncAndConfirmMatch] callers whose comparison hasn't been sent yet, and
+  /// those waiting for its answer. Kept apart so a match seen before the
+  /// fresh digest went out doesn't count.
+  final _matchWaiters = <Completer<bool>>[];
+  final _armedMatchWaiters = <Completer<bool>>[];
+
   LwwSyncBloc(
     this._syncService,
     this._changeWatcher,
@@ -113,6 +123,8 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
               ),
             );
           }
+        case LwwMatchCheckRequested():
+          await _onMatchCheckRequested(emit);
       }
     } catch (e, stack) {
       logger.e('[LwwSync] ${event.runtimeType} failed', e, stack);
@@ -129,6 +141,7 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
       );
     }
     _notifyDrained();
+    _notifyMatched();
   }
 
   Future<void> _onInitialised(Emitter<LwwSyncState> emit) async {
@@ -304,6 +317,16 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
     );
   }
 
+  Future<void> _onMatchCheckRequested(Emitter<LwwSyncState> emit) async {
+    _armedMatchWaiters.addAll(_matchWaiters);
+    _matchWaiters.clear();
+    if (!state.connected) return;
+    // Only an answer to this digest, or a later one, may say they match.
+    emit(state.copyWith(tablesMatch: false));
+    await _sendDigest(reply: false);
+    _syncStatusFromWork(emit);
+  }
+
   Future<void> _sendDigest({required bool reply}) async {
     final digest = await _syncService.computeDigest();
     if (!reply) {
@@ -399,6 +422,12 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
       final id = payload['id'];
       if (id is int) await _send('sync.ack', {'id': id, 'ok': false});
       return;
+    }
+    // Held, never refused: the peer sends it again after its ack timeout,
+    // which is harmless because applying a batch twice changes nothing.
+    for (var paused = _paused; paused != null; paused = _paused) {
+      logger.i('[LwwSync] holding batch ${batch.id} until applying resumes');
+      await paused.future;
     }
     _applying = Completer<void>();
     emit(state.copyWith(receiving: true, syncStatus: LwwSyncStatus.syncing));
@@ -589,6 +618,67 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
     }
   }
 
+  void _notifyMatched() {
+    if (_armedMatchWaiters.isEmpty) return;
+    if (!state.connected || state.tablesMatch) {
+      for (final waiter in _armedMatchWaiters) {
+        if (!waiter.isCompleted) waiter.complete(state.connected);
+      }
+      _armedMatchWaiters.clear();
+    }
+  }
+
+  /// Holds every batch received from now on until [resumeApplying], e.g.
+  /// while a backup is restored. They are applied afterwards, never refused.
+  /// Calling it again while paused changes nothing.
+  void pauseApplying() {
+    _paused ??= Completer<void>();
+  }
+
+  /// Applies the batches held since [pauseApplying]. Does nothing when not
+  /// paused.
+  void resumeApplying() {
+    final paused = _paused;
+    _paused = null;
+    if (paused != null && !paused.isCompleted) paused.complete();
+  }
+
+  /// Sends every local change to the connected peer, then compares both
+  /// sides' tables afresh and waits until they match, all within [timeout].
+  /// Returns whether they matched; false at once when no peer is connected
+  /// or applying is paused (the peer's rows couldn't be saved).
+  Future<bool> syncAndConfirmMatch({
+    Duration timeout = const Duration(seconds: 60),
+  }) async {
+    if (isClosed || !state.connected) return false;
+    if (_paused != null) {
+      logger.w('[LwwSync] not comparing with the other device while paused');
+      return false;
+    }
+    final watch = Stopwatch()..start();
+    if (!await waitUntilDrained(timeout: timeout)) {
+      logger.w('[LwwSync] changes still waiting for the other device');
+      return false;
+    }
+    final remaining = timeout - watch.elapsed;
+    if (remaining <= Duration.zero || isClosed) return false;
+    final waiter = Completer<bool>();
+    _matchWaiters.add(waiter);
+    add(const LwwMatchCheckRequested());
+    try {
+      final matched = await waiter.future.timeout(remaining);
+      if (!matched) {
+        logger.w('[LwwSync] disconnected before the tables matched');
+      }
+      return matched;
+    } on TimeoutException {
+      _matchWaiters.remove(waiter);
+      _armedMatchWaiters.remove(waiter);
+      logger.w('[LwwSync] the tables did not match within $timeout');
+      return false;
+    }
+  }
+
   /// Completes once every local change reached the peer, or after
   /// [timeout]. Returns whether it did.
   Future<bool> waitUntilDrained({
@@ -623,6 +713,12 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
     _digestTimer?.cancel();
     _settleTimer?.cancel();
     _changeWatcher.stopWatching();
+    resumeApplying();
+    for (final waiter in [..._matchWaiters, ..._armedMatchWaiters]) {
+      if (!waiter.isCompleted) waiter.complete(false);
+    }
+    _matchWaiters.clear();
+    _armedMatchWaiters.clear();
     return super.close();
   }
 }

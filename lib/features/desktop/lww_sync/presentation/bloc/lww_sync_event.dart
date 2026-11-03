@@ -23,6 +23,10 @@ sealed class LwwSyncEvent with _$LwwSyncEvent {
   /// The peer did not answer this side's digest.
   const factory LwwSyncEvent.digestTimedOut() = LwwDigestTimedOut;
 
+  /// Compare both sides' tables afresh: forget the last comparison and send
+  /// a digest (see [LwwSyncBloc.syncAndConfirmMatch]).
+  const factory LwwSyncEvent.matchCheckRequested() = LwwMatchCheckRequested;
+
   /// Received rows stopped arriving for a moment; screens reload once.
   const factory LwwSyncEvent.recordsSettled() = LwwRecordsSettled;
 }
