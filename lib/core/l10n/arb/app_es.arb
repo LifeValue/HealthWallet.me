@@ -1092,7 +1092,7 @@
   "desktopBackupFailed": "La copia de seguridad falló. Inténtalo de nuevo.",
   "desktopBackupActionFailed": "No se pudieron actualizar las copias de seguridad. Inténtalo de nuevo.",
   "backupRecordsOnly": "Solo registros",
-  "backupRestoreConfirmPointInTime": "Esto reemplaza tus registros en este ordenador y en tu teléfono vinculado por la copia del {date}. Los registros añadidos desde entonces pasan a eliminados durante 30 días. Antes se guarda una copia de seguridad de tus datos actuales para que puedas deshacerlo.",
+  "backupRestoreConfirmPointInTime": "Esto reemplaza tus registros en este ordenador y en tu teléfono vinculado por la copia del {date}. Los registros añadidos desde entonces se eliminan. Antes se guarda una copia «Antes de restaurar» de tus datos actuales, que se conserva 30 días para que puedas deshacerlo.",
   "@backupRestoreConfirmPointInTime": {
     "placeholders": {
       "date": {
@@ -1119,7 +1119,7 @@
       }
     }
   },
-  "backupRestorePhoneOffline": "Tu teléfono no está conectado. Los registros añadidos en él desde la última sincronización volverán cuando se conecte.",
+  "backupRestorePhoneOffline": "Tu teléfono no está conectado. Los registros añadidos en él desde la última sincronización volverán cuando se conecte; los cambios que hizo en registros existentes se reemplazarán por la copia.",
   "desktopSyncFailed": "La sincronización falló. Comprueba la conexión e inténtalo de nuevo.",
   "desktopHandoverTransfer": "Transferencia",
   "desktopHandoverNoActive": "No hay transferencias activas",

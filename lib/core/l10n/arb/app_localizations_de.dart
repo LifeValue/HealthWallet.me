@@ -2573,7 +2573,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String backupRestoreConfirmPointInTime(String date) {
-    return 'Dadurch werden deine Aufzeichnungen auf diesem Computer und deinem gekoppelten Telefon durch das Backup vom $date ersetzt. Seitdem hinzugefügte Aufzeichnungen werden für 30 Tage in die gelöschten Elemente verschoben. Vorher wird eine Sicherheitskopie deiner aktuellen Daten gespeichert, damit du das rückgängig machen kannst.';
+    return 'Dadurch werden deine Aufzeichnungen auf diesem Computer und deinem gekoppelten Telefon durch das Backup vom $date ersetzt. Seitdem hinzugefügte Aufzeichnungen werden entfernt. Vorher wird eine Kopie „Vor Wiederherstellung“ deiner aktuellen Daten gespeichert und 30 Tage aufbewahrt, damit du das rückgängig machen kannst.';
   }
 
   @override
@@ -2606,7 +2606,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get backupRestorePhoneOffline =>
-      'Dein Telefon ist nicht verbunden. Seit der letzten Synchronisierung darauf hinzugefügte Aufzeichnungen kommen zurück, sobald es sich wieder verbindet.';
+      'Dein Telefon ist nicht verbunden. Seit der letzten Synchronisierung darauf hinzugefügte Aufzeichnungen kommen zurück, sobald es sich wieder verbindet; Änderungen an vorhandenen Aufzeichnungen werden durch das Backup ersetzt.';
 
   @override
   String get desktopSyncFailed =>

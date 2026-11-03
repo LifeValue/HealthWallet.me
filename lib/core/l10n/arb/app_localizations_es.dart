@@ -2570,7 +2570,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String backupRestoreConfirmPointInTime(String date) {
-    return 'Esto reemplaza tus registros en este ordenador y en tu teléfono vinculado por la copia del $date. Los registros añadidos desde entonces pasan a eliminados durante 30 días. Antes se guarda una copia de seguridad de tus datos actuales para que puedas deshacerlo.';
+    return 'Esto reemplaza tus registros en este ordenador y en tu teléfono vinculado por la copia del $date. Los registros añadidos desde entonces se eliminan. Antes se guarda una copia «Antes de restaurar» de tus datos actuales, que se conserva 30 días para que puedas deshacerlo.';
   }
 
   @override
@@ -2603,7 +2603,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get backupRestorePhoneOffline =>
-      'Tu teléfono no está conectado. Los registros añadidos en él desde la última sincronización volverán cuando se conecte.';
+      'Tu teléfono no está conectado. Los registros añadidos en él desde la última sincronización volverán cuando se conecte; los cambios que hizo en registros existentes se reemplazarán por la copia.';
 
   @override
   String get desktopSyncFailed =>

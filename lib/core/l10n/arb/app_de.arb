@@ -1088,7 +1088,7 @@
   "desktopBackupFailed": "Backup fehlgeschlagen. Bitte versuche es erneut.",
   "desktopBackupActionFailed": "Die Backups konnten nicht aktualisiert werden. Bitte versuche es erneut.",
   "backupRecordsOnly": "Nur Aufzeichnungen",
-  "backupRestoreConfirmPointInTime": "Dadurch werden deine Aufzeichnungen auf diesem Computer und deinem gekoppelten Telefon durch das Backup vom {date} ersetzt. Seitdem hinzugefügte Aufzeichnungen werden für 30 Tage in die gelöschten Elemente verschoben. Vorher wird eine Sicherheitskopie deiner aktuellen Daten gespeichert, damit du das rückgängig machen kannst.",
+  "backupRestoreConfirmPointInTime": "Dadurch werden deine Aufzeichnungen auf diesem Computer und deinem gekoppelten Telefon durch das Backup vom {date} ersetzt. Seitdem hinzugefügte Aufzeichnungen werden entfernt. Vorher wird eine Kopie „Vor Wiederherstellung“ deiner aktuellen Daten gespeichert und 30 Tage aufbewahrt, damit du das rückgängig machen kannst.",
   "@backupRestoreConfirmPointInTime": {
     "placeholders": {
       "date": {
@@ -1115,7 +1115,7 @@
       }
     }
   },
-  "backupRestorePhoneOffline": "Dein Telefon ist nicht verbunden. Seit der letzten Synchronisierung darauf hinzugefügte Aufzeichnungen kommen zurück, sobald es sich wieder verbindet.",
+  "backupRestorePhoneOffline": "Dein Telefon ist nicht verbunden. Seit der letzten Synchronisierung darauf hinzugefügte Aufzeichnungen kommen zurück, sobald es sich wieder verbindet; Änderungen an vorhandenen Aufzeichnungen werden durch das Backup ersetzt.",
   "desktopSyncFailed": "Synchronisierung fehlgeschlagen. Prüfe die Verbindung und versuche es erneut.",
   "desktopHandoverTransfer": "Übertragung",
   "desktopHandoverNoActive": "Keine aktiven Übergaben",

@@ -2545,7 +2545,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String backupRestoreConfirmPointInTime(String date) {
-    return 'This replaces your records on this computer and on your paired phone with the backup from $date. Records added since then are moved to deleted items for 30 days. A safety copy of your current data is saved first, so you can undo this.';
+    return 'This replaces your records on this computer and on your paired phone with the backup from $date. Records added since then are removed. A “Before restore” copy of your current data is saved first and kept for 30 days, so you can undo this.';
   }
 
   @override
@@ -2578,7 +2578,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupRestorePhoneOffline =>
-      'Your phone isn\'t connected. Records added on it since its last sync will come back after it reconnects.';
+      'Your phone isn\'t connected. Records added on it since its last sync will come back after it reconnects; changes it made to existing records will be replaced by the backup.';
 
   @override
   String get desktopSyncFailed =>

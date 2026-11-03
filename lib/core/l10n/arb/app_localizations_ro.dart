@@ -2573,7 +2573,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String backupRestoreConfirmPointInTime(String date) {
-    return 'Aceasta înlocuiește înregistrările de pe acest computer și de pe telefonul asociat cu copia din $date. Înregistrările adăugate între timp sunt mutate la șterse timp de 30 de zile. Mai întâi se salvează o copie de siguranță a datelor actuale, ca să poți anula.';
+    return 'Aceasta înlocuiește înregistrările de pe acest computer și de pe telefonul asociat cu copia din $date. Înregistrările adăugate între timp sunt eliminate. Mai întâi se salvează o copie „Înainte de restaurare” a datelor actuale, păstrată 30 de zile, ca să poți anula.';
   }
 
   @override
@@ -2607,7 +2607,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get backupRestorePhoneOffline =>
-      'Telefonul nu este conectat. Înregistrările adăugate pe el de la ultima sincronizare vor reveni după ce se reconectează.';
+      'Telefonul nu este conectat. Înregistrările adăugate pe el de la ultima sincronizare vor reveni după ce se reconectează; modificările făcute la înregistrările existente vor fi înlocuite de copie.';
 
   @override
   String get desktopSyncFailed =>

@@ -1087,7 +1087,7 @@
   "desktopBackupFailed": "Backup-ul a eșuat. Încearcă din nou.",
   "desktopBackupActionFailed": "Backup-urile nu au putut fi actualizate. Încearcă din nou.",
   "backupRecordsOnly": "Doar înregistrări",
-  "backupRestoreConfirmPointInTime": "Aceasta înlocuiește înregistrările de pe acest computer și de pe telefonul asociat cu copia din {date}. Înregistrările adăugate între timp sunt mutate la șterse timp de 30 de zile. Mai întâi se salvează o copie de siguranță a datelor actuale, ca să poți anula.",
+  "backupRestoreConfirmPointInTime": "Aceasta înlocuiește înregistrările de pe acest computer și de pe telefonul asociat cu copia din {date}. Înregistrările adăugate între timp sunt eliminate. Mai întâi se salvează o copie „Înainte de restaurare” a datelor actuale, păstrată 30 de zile, ca să poți anula.",
   "@backupRestoreConfirmPointInTime": {
     "placeholders": {
       "date": {
@@ -1114,7 +1114,7 @@
       }
     }
   },
-  "backupRestorePhoneOffline": "Telefonul nu este conectat. Înregistrările adăugate pe el de la ultima sincronizare vor reveni după ce se reconectează.",
+  "backupRestorePhoneOffline": "Telefonul nu este conectat. Înregistrările adăugate pe el de la ultima sincronizare vor reveni după ce se reconectează; modificările făcute la înregistrările existente vor fi înlocuite de copie.",
   "desktopSyncFailed": "Sincronizarea a eșuat. Verifică conexiunea și încearcă din nou.",
   "desktopHandoverTransfer": "Transfer",
   "desktopHandoverNoActive": "Nicio predare activă",
