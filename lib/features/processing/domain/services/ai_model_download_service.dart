@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -286,34 +287,49 @@ class AiModelDownloadService with WidgetsBindingObserver {
     await _repository.deleteModelForVariant(variant);
   }
 
+  /// Stops every running model download; the vision (mmproj) download keeps
+  /// running. Completes once each transfer has ended and its partial file is
+  /// deleted, then reports each variant as cancelled.
   Future<void> cancelDownload() async {
-    for (final sub in _variantSubscriptions.values) {
-      await sub.cancel();
+    // The variants stay listed as downloading until their transfers have
+    // ended, so a restart can't slip in while they are stopping.
+    final variants = _variantSubscriptions.keys.toList();
+    await Future.wait(variants.map(_stopVariantDownload));
+    for (final variant in variants) {
+      _variantSubscriptions.remove(variant);
     }
-    _variantSubscriptions.clear();
-    await _prefs.remove(_downloadInProgressKey);
-    _updateState(
-      _state.copyWith(
-        status: AiModelDownloadStatus.cancelled,
-        errorMessage: _strings.l10n.aiModelDownloadCancelled,
-      ),
-    );
-  }
-
-  Future<void> cancelDownloadForVariant(AiModelVariant variant) async {
-    final sub = _variantSubscriptions.remove(variant);
-    await sub?.cancel();
     if (!isAnyDownloading) {
       await _prefs.remove(_downloadInProgressKey);
     }
-    _updateState(
+    for (final variant in variants) {
+      _updateState(_cancelledState(variant));
+    }
+  }
+
+  Future<void> cancelDownloadForVariant(AiModelVariant variant) async {
+    await _stopVariantDownload(variant);
+    _variantSubscriptions.remove(variant);
+    if (!isAnyDownloading) {
+      await _prefs.remove(_downloadInProgressKey);
+    }
+    _updateState(_cancelledState(variant));
+  }
+
+  /// Cancelling the subscription stops the transfer and waits for it to end.
+  Future<void> _stopVariantDownload(AiModelVariant variant) async {
+    try {
+      await _variantSubscriptions[variant]?.cancel();
+    } catch (e, s) {
+      logger.e('Could not cancel the ${variant.name} model download', e, s);
+    }
+  }
+
+  AiModelDownloadState _cancelledState(AiModelVariant variant) =>
       AiModelDownloadState(
         status: AiModelDownloadStatus.cancelled,
         errorMessage: _strings.l10n.aiModelDownloadCancelled,
         variant: variant,
-      ),
-    );
-  }
+      );
 
   Future<bool> checkMmprojExistsForVariant(AiModelVariant variant) async {
     try {

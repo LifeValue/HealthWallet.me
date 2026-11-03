@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/processing/data/data_source/local/processing_local_data_source.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
 import 'package:health_wallet/features/processing/data/repository/ai_extraction_repository.dart';
@@ -345,28 +346,14 @@ class ProcessingRepositoryImpl extends Object
   }
 
   @override
-  Stream<double> downloadModelForVariant(AiModelVariant variant) {
-    final controller = StreamController<double>();
-
-    _networkDataSource
-        .downloadModelForVariant(
+  Stream<double> downloadModelForVariant(AiModelVariant variant) =>
+      _cancellableDownload(
+        (onProgress) => _networkDataSource.downloadModelForVariant(
           variant,
-          onProgress: (progress) {
-            if (!controller.isClosed) {
-              controller.add(progress.toDouble());
-            }
-          },
-        )
-        .then((_) {
-          controller.close();
-        })
-        .catchError((error) {
-          controller.addError(error);
-          controller.close();
-        });
-
-    return controller.stream;
-  }
+          onProgress: onProgress,
+        ),
+        cancel: () => _networkDataSource.cancelModelDownloadForVariant(variant),
+      );
 
   @override
   Future<bool> checkModelExistenceForVariant(AiModelVariant variant) async {
@@ -379,25 +366,50 @@ class ProcessingRepositoryImpl extends Object
   }
 
   @override
-  Stream<double> downloadMmprojForVariant(AiModelVariant variant) {
-    final controller = StreamController<double>();
-
-    _networkDataSource
-        .downloadMmprojForVariant(
+  Stream<double> downloadMmprojForVariant(AiModelVariant variant) =>
+      _cancellableDownload(
+        (onProgress) => _networkDataSource.downloadMmprojForVariant(
           variant,
-          onProgress: (progress) {
-            if (!controller.isClosed) {
-              controller.add(progress.toDouble());
-            }
-          },
-        )
-        .then((_) {
-          controller.close();
-        })
-        .catchError((error) {
-          controller.addError(error);
-          controller.close();
-        });
+          onProgress: onProgress,
+        ),
+        cancel: () =>
+            _networkDataSource.cancelMmprojDownloadForVariant(variant),
+      );
+
+  /// Progress of the download [start] begins. Cancelling the subscription
+  /// stops that transfer through [cancel], and the cancel completes once the
+  /// transfer has ended and its partial file is gone.
+  Stream<double> _cancellableDownload(
+    Future<void> Function(void Function(int) onProgress) start, {
+    required Future<void> Function() cancel,
+  }) {
+    // Set once the transfer has ended, so a late cancel (onCancel also runs
+    // after the done event) never reaches a newer transfer of the same file.
+    var ended = false;
+    final controller = StreamController<double>(
+      onCancel: () async {
+        if (ended) return;
+        try {
+          await cancel();
+        } catch (e, s) {
+          logger.e('Could not cancel the model download', e, s);
+        }
+      },
+    );
+
+    start((progress) {
+      if (!controller.isClosed) controller.add(progress.toDouble());
+    }).then(
+      (_) {
+        ended = true;
+        controller.close();
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        ended = true;
+        controller.addError(error, stackTrace);
+        controller.close();
+      },
+    );
 
     return controller.stream;
   }

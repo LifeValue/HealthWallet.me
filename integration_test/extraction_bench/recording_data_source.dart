@@ -252,6 +252,14 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
       _inner.deleteModelForVariant(variant);
 
   @override
+  Future<void> cancelModelDownloadForVariant(AiModelVariant variant) =>
+      _inner.cancelModelDownloadForVariant(variant);
+
+  @override
+  Future<void> cancelMmprojDownloadForVariant(AiModelVariant variant) =>
+      _inner.cancelMmprojDownloadForVariant(variant);
+
+  @override
   Future<void> downloadModel({required void Function(int) onProgress}) =>
       _inner.downloadModel(onProgress: onProgress);
 

@@ -31,13 +31,22 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     this._prefs,
     this._strings,
   ) : super(const LoadModelState()) {
-    on<LoadModelInitialized>(_onLoadModelInitialized);
+    on<LoadModelInitialized>(
+      _onLoadModelInitialized,
+      transformer: restartable(),
+    );
     on<LoadModelDownloadInitiated>(
       _onLoadModelDownloadInitiated,
       transformer: concurrent(),
     );
-    on<LoadModelServiceStateChanged>(_onServiceStateChanged);
-    on<LoadModelDownloadCancelled>(_onLoadModelDownloadCancelled);
+    on<LoadModelServiceStateChanged>(
+      _onServiceStateChanged,
+      transformer: sequential(),
+    );
+    on<LoadModelDownloadCancelled>(
+      _onLoadModelDownloadCancelled,
+      transformer: droppable(),
+    );
     on<LoadModelVariantSelected>(_onVariantSelected);
     on<LoadModelDeleteRequested>(_onDeleteRequested);
 
@@ -117,7 +126,6 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     final serviceState = _downloadService.state;
 
     if (serviceState.status == AiModelDownloadStatus.cancelled) {
-      _addCancelledNotification();
       _downloadService.resetState();
     }
 
@@ -419,46 +427,53 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
           ),
         );
         if (variant != null) {
-          final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
           _notificationBloc.add(
-            NotificationTypeUpdated(
-              id: notifId,
-              type: NotificationType.error,
-              text: _strings.l10n.aiModelDownloadCancelledTitle,
-              description: _strings.l10n.aiModelDownloadInterruptedMessage,
-            ),
+            NotificationRemovedById(id: _downloadNotificationId(variant)),
           );
         }
         break;
     }
   }
 
-  void _addCancelledNotification() {
-    _notificationBloc.add(
-      NotificationTypeUpdated(
-        id: kAiModelDownloadNotificationId,
-        type: NotificationType.error,
-        text: _strings.l10n.aiModelDownloadCancelledNotificationTitle,
-        description: _strings.l10n.aiModelDownloadInterruptedMessage,
-      ),
-    );
-  }
+  static String _downloadNotificationId(AiModelVariant variant) =>
+      '${kAiModelDownloadNotificationId}_${variant.name}';
 
   Future<void> _onLoadModelDownloadCancelled(
     LoadModelDownloadCancelled event,
     Emitter<LoadModelState> emit,
   ) async {
+    final cancelled = state.downloadingVariants.entries
+        .where((e) => e.value)
+        .map((e) => e.key)
+        .toList();
+
+    // Returns once every transfer has ended and its partial file is gone.
     await _downloadService.cancelDownload();
+
+    for (final variant in cancelled) {
+      _notificationBloc.add(
+        NotificationRemovedById(id: _downloadNotificationId(variant)),
+      );
+    }
+
+    // A transfer that finished just before the cancel left its file in place.
+    final downloaded = {...state.downloadedVariants};
+    for (final variant in cancelled) {
+      downloaded[variant] = await _downloadService.checkModelExistsForVariant(
+        variant,
+      );
+    }
+
     emit(
       state.copyWith(
         status: LoadModelStatus.modelAbsent,
         isBackgroundDownload: false,
         downloadProgress: null,
+        downloadedVariants: downloaded,
         downloadingVariants: {},
         variantProgress: {},
       ),
     );
-    _addCancelledNotification();
   }
 
   Future<void> _onVariantSelected(
