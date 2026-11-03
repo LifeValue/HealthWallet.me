@@ -135,3 +135,22 @@
   summary: The patient setup dialog overwrites a stored male or female gender with unknown when the user only fills in other fields.
   evidence: patient_setup_dialog.dart starts at unknown and writes it whenever any field changed; same before this change.
 
+- source_spec: `_bmad-output/implementation-artifacts/spec-scan-and-ai-settings.md`
+  summary: The old Preferences Save also pinned aiGpuLayers, aiThreads and aiContextSize; the one-time reset clears only tokens and Deep Scan.
+  evidence: ai_model_section wrote all five values on every Save before the fix; whether to reset the load settings too needs a product decision.
+- source_spec: `_bmad-output/implementation-artifacts/spec-complete-backups.md`
+  summary: Restored Media attachments never reach the phone, because sync file transfer reads DocumentReference rows only.
+  evidence: lww_sync_service.dart missingAttachmentPaths (:681) and fileForRequest use resource_type = 'DocumentReference'; _attachmentsOf skips Media content.
+- source_spec: `_bmad-output/implementation-artifacts/spec-complete-backups.md`
+  summary: A restore overwrites an offline phone's unsynced edits to existing records without saying so; the dialog mentions only added records.
+  evidence: Point-in-time stamp S beats the phone's older stamps; the backupRestorePhoneOffline text promises only that added records come back. Needs a wording decision.
+- source_spec: `_bmad-output/implementation-artifacts/spec-complete-backups.md`
+  summary: The restore confirm text says records are "moved to deleted items for 30 days", but the app has no view of deleted items; the only undo is the "Before restore" copy.
+  evidence: backupRestoreConfirmPointInTime in the four ARBs; it is the approved Decisions text, so changing it needs a human.
+- source_spec: `_bmad-output/implementation-artifacts/spec-complete-backups.md`
+  summary: Restored scan sessions point at imports/ files that backups don't contain.
+  evidence: processing_sessions is restored as before and imports/ is not backed up.
+- source_spec: `_bmad-output/implementation-artifacts/spec-complete-backups.md`
+  summary: For legacy subfolder or absolute attachment URLs, restore treats a same-name top-level file as present while the viewer opens toAbsolute(path) and finds nothing.
+  evidence: backup_service.dart _placeFiles/_attachmentRewrites use the resolveFile basename fallback; this predates the change.
+
