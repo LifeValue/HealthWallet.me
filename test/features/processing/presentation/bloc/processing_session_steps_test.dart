@@ -222,7 +222,10 @@ void main() {
 
       expect(status, isA<SessionCreated>());
       final paths = repository.created.single;
-      expect(paths.single, contains('/Documents/imports/page1_'));
+      expect(
+        paths.single,
+        matches(RegExp(r'/Documents/imports/page1_[0-9a-f]{8}\.jpg$')),
+      );
       expect(File(paths.single).existsSync(), isTrue);
       expect(session('new').origin, ProcessingOrigin.scan);
     });
@@ -267,6 +270,37 @@ void main() {
       final paths = repository.created.single;
       expect(paths[0], contains('/b_'));
       expect(paths[1], contains('/a_'));
+    });
+
+    test('files with the same name are kept apart under unique names, as new '
+        'files', () async {
+      final first = File('${root.path}/one/scan.jpg')
+        ..createSync(recursive: true)
+        ..writeAsBytesSync([1]);
+      final second = File('${root.path}/two/scan.jpg')
+        ..createSync(recursive: true)
+        ..writeAsBytesSync([2]);
+      for (final f in [first, second]) {
+        f.setLastModifiedSync(DateTime(2020));
+      }
+      final before = DateTime.now().subtract(const Duration(seconds: 5));
+
+      bloc.add(DocumentImported(filePaths: [first.path, second.path]));
+      await bloc.stream.firstWhere((s) => s.status is SessionCreated);
+
+      final paths = repository.created.single;
+      expect(paths.toSet(), hasLength(2));
+      for (final path in paths) {
+        expect(
+          path,
+          matches(RegExp(r'/Documents/imports/scan_[0-9a-f]{8}\.jpg$')),
+        );
+        expect(File(path).lastModifiedSync().isAfter(before), isTrue);
+      }
+      expect(paths.map((path) => File(path).readAsBytesSync()), [
+        [1],
+        [2],
+      ]);
     });
 
     test('a patient found on the desktop starts the session at step two', () {

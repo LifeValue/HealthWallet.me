@@ -11,6 +11,7 @@ import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/processing/data/services/pdf_generation_service.dart';
 import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
 import 'package:injectable/injectable.dart';
+import 'package:uuid/uuid.dart';
 
 @injectable
 class DocumentReferenceService {
@@ -139,7 +140,8 @@ class DocumentReferenceService {
     final timestamp = DateTime.now();
     final relativePdfPath = await _pathResolver.toRelative(pdfPath);
 
-    final documentReferenceId = _generateId();
+    // A uuid, so two documents saved in the same millisecond get two rows.
+    final documentReferenceId = const Uuid().v4();
 
     final List<fhir_r4.Reference>? encounterReferences = encounter != null
         ? [
@@ -190,7 +192,7 @@ class DocumentReferenceService {
       identifier: [
         fhir_r4.Identifier(
           system: fhir_r4.FhirUri('http://healthwallet.me/document-id'),
-          value: fhir_r4.FhirString(_generateId()),
+          value: fhir_r4.FhirString(documentReferenceId),
           use: fhir_r4.IdentifierUse.usual,
         ),
         if (sessionId != null)
@@ -350,9 +352,5 @@ class DocumentReferenceService {
     } catch (e) {
       throw Exception('Failed to link DocumentReference to Encounter: $e');
     }
-  }
-
-  String _generateId() {
-    return DateTime.now().millisecondsSinceEpoch.toString();
   }
 }

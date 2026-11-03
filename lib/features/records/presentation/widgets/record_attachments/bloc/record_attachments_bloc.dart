@@ -11,6 +11,7 @@ import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/core/utils/stored_file_name.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
@@ -224,7 +225,7 @@ class RecordAttachmentsBloc
           await uniqueStoredFileName(appDirectory.path, originalFileName),
         );
 
-        await file.copy(newFilePath);
+        await copyAsNewFile(file, newFilePath);
 
         try {
           final documentReference = await _createDocumentReference(
@@ -263,36 +264,6 @@ class RecordAttachmentsBloc
       // Files saved before the failure are attached; list them, so a retry
       // does not add them again.
       add(RecordAttachmentsInitialised(resource: state.resource));
-    }
-  }
-
-  /// A file name for [originalName] in [directory] that no file has yet: the
-  /// sanitised name with an 8-character unique suffix, so two attachments
-  /// with the same name never replace each other. The original name stays
-  /// the attachment's title.
-  @visibleForTesting
-  static Future<String> uniqueStoredFileName(
-    String directory,
-    String originalName,
-  ) async {
-    final base = originalName.replaceAll(RegExp(r'[^\w.\-]'), '_');
-    final dot = base.lastIndexOf('.');
-    final hasExtension =
-        dot >= 0 && dot < base.length - 1 && base.length - dot <= 16;
-    var stem = (hasExtension ? base.substring(0, dot) : base).replaceFirst(
-      RegExp(r'^\.+'),
-      '',
-    );
-    if (!stem.contains(RegExp('[A-Za-z0-9]'))) stem = 'file';
-    if (stem.length > 100) stem = stem.substring(0, 100);
-    final extension = hasExtension ? base.substring(dot) : '';
-    while (true) {
-      final name = '${stem}_${const Uuid().v4().substring(0, 8)}$extension';
-      final type = await FileSystemEntity.type(
-        join(directory, name),
-        followLinks: false,
-      );
-      if (type == FileSystemEntityType.notFound) return name;
     }
   }
 

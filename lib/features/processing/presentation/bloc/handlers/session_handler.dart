@@ -5,6 +5,7 @@ import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/services/temp_file_sweeper.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/core/utils/stored_file_name.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
@@ -708,13 +709,13 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
       await importsDir.create(recursive: true);
     }
 
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final extension = p.extension(sourceFile.path);
-    final baseName = p.basenameWithoutExtension(sourceFile.path);
-    final fileName = '${baseName}_$timestamp$extension';
+    final fileName = await uniqueStoredFileName(
+      importsDir.path,
+      p.basename(sourceFile.path),
+    );
     final destPath = '${importsDir.path}/$fileName';
 
-    await sourceFile.copy(destPath);
+    await copyAsNewFile(sourceFile, destPath);
     return destPath;
   }
 

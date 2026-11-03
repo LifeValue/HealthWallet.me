@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/core/utils/stored_file_name.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
 import 'package:pdf/pdf.dart';
@@ -79,7 +80,7 @@ class PdfGenerationService {
       final docsPath = await _pathResolver.getDocumentsPath();
       final newPdfPath = p.join(docsPath, '$fileName.pdf');
 
-      await sourceFile.copy(newPdfPath);
+      await copyAsNewFile(sourceFile, newPdfPath);
 
       return newPdfPath;
     } catch (e) {
@@ -107,7 +108,7 @@ class PdfGenerationService {
 
     try {
       if (imagePaths.isNotEmpty) {
-        final fileName = await _generateScannedDocumentName();
+        final fileName = await _uniquePdfName('scanned_document');
         final defaultTitle = scannedDocumentsTitle ?? 'Scanned Documents';
         final pdfPath = await createPdfFromImages(
           imagePaths: imagePaths,
@@ -133,7 +134,7 @@ class PdfGenerationService {
 
         final pdfPath = await copyPdfWithNewName(
           sourcePdfPath: originalPdfPath,
-          fileName: 'pdf_${_generateId()}_$fileName',
+          fileName: await _uniquePdfName(fileName),
         );
 
         groups.add(
@@ -152,51 +153,16 @@ class PdfGenerationService {
     }
   }
 
-  String _generateId() {
-    return DateTime.now().millisecondsSinceEpoch.toString();
-  }
-
-  Future<String> _generateScannedDocumentName() async {
-    final now = DateTime.now();
-    final dateStr =
-        '${now.day.toString().padLeft(2, '0')}'
-        '${now.month.toString().padLeft(2, '0')}'
-        '${now.year}';
-
-    final incrementalNumber = await _getIncrementalNumberForDate(dateStr);
-    return 'scanned_document_${dateStr}_$incrementalNumber';
-  }
-
-  Future<int> _getIncrementalNumberForDate(String dateStr) async {
-    try {
-      final docsPath = await _pathResolver.getDocumentsPath();
-      final docsDir = Directory(docsPath);
-      final files = docsDir.listSync();
-
-      final pattern = 'scanned_document_${dateStr}_';
-      int maxNumber = 0;
-
-      for (final file in files) {
-        if (file is File) {
-          final fileName = p.basename(file.path);
-          if (fileName.startsWith(pattern) && fileName.endsWith('.pdf')) {
-            final numberPart = fileName.substring(
-              pattern.length,
-              fileName.length - 4,
-            );
-            final number = int.tryParse(numberPart);
-            if (number != null && number > maxNumber) {
-              maxNumber = number;
-            }
-          }
-        }
-      }
-
-      return maxNumber + 1;
-    } catch (e) {
-      return 1;
-    }
-  }
+  /// A free name, without the extension, for a new PDF in Documents. Its
+  /// random suffix keeps it from being a deleted file's name, which a
+  /// restored or synced record may still point to.
+  Future<String> _uniquePdfName(String stem) async =>
+      p.basenameWithoutExtension(
+        await uniqueStoredFileName(
+          await _pathResolver.getDocumentsPath(),
+          '$stem.pdf',
+        ),
+      );
 }
 
 enum DocumentGroupType {

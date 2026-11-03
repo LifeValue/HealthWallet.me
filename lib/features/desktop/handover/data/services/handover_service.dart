@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/core/utils/stored_file_name.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/message_router.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
@@ -93,10 +94,12 @@ class HandoverService {
 
     try {
       final importsDir = await _getImportsDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final ext = p.extension(fileName);
-      final baseName = p.basenameWithoutExtension(fileName);
-      final persistedName = '${baseName}_$timestamp$ext';
+      // The name comes from the phone: sanitised, so it stays a plain file in
+      // imports/, and unique, so two pages with the same name both arrive.
+      final persistedName = await uniqueStoredFileName(
+        importsDir.path,
+        p.basename(fileName),
+      );
       final filePath = p.join(importsDir.path, persistedName);
       final fileBytes = base64Decode(data);
       await File(filePath).writeAsBytes(fileBytes);

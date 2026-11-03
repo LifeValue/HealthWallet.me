@@ -976,45 +976,6 @@ void main() {
     });
   });
 
-  group('uniqueStoredFileName', () {
-    Future<String> name(String original) =>
-        RecordAttachmentsBloc.uniqueStoredFileName(docs.path, original);
-
-    test('keeps a safe name and adds a suffix before the extension', () async {
-      expect(
-        await name('report.v2.pdf'),
-        matches(r'^report\.v2_[0-9a-f]{8}\.pdf$'),
-      );
-      expect(await name('notes'), matches(r'^notes_[0-9a-f]{8}$'));
-      expect(
-        await name('my-file_1.txt'),
-        matches(r'^my-file_1_[0-9a-f]{8}\.txt$'),
-      );
-    });
-
-    test('two calls give different names', () async {
-      expect(await name('a.pdf'), isNot(await name('a.pdf')));
-    });
-
-    test('never gives a hidden or empty name', () async {
-      expect(await name('.pdf'), matches(r'^file_[0-9a-f]{8}\.pdf$'));
-      expect(await name('..report.pdf'), matches(r'^report_[0-9a-f]{8}\.pdf$'));
-      expect(await name('отчет.pdf'), matches(r'^file_[0-9a-f]{8}\.pdf$'));
-      expect(await name(''), matches(r'^file_[0-9a-f]{8}$'));
-      expect(await name('report.'), matches(r'^report\._[0-9a-f]{8}$'));
-    });
-
-    test('shortens long names and ignores a long extension', () async {
-      final long = await name('${'a' * 300}.pdf');
-      expect(long, matches(RegExp('^a{100}_[0-9a-f]{8}\\.pdf\$')));
-
-      final odd = await name('archive.${'x' * 20}');
-      expect(odd, startsWith('archive.xxxx'));
-      expect(odd, matches(r'_[0-9a-f]{8}$'));
-      expect(odd.length, lessThan(120));
-    });
-  });
-
   group('delete', () {
     test('tombstones the record and removes its file, keeping a same-name '
         'one', () async {

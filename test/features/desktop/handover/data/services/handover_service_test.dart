@@ -187,11 +187,11 @@ void main() {
       }
       expect(
         p.basename(event.filePaths[0]),
-        matches(RegExp(r'^page0_\d+\.jpg$')),
+        matches(RegExp(r'^page0_[0-9a-f]{8}\.jpg$')),
       );
       expect(
         p.basename(event.filePaths[1]),
-        matches(RegExp(r'^scan\.final_\d+\.png$')),
+        matches(RegExp(r'^scan\.final_[0-9a-f]{8}\.png$')),
       );
       expect(updates.last.status, HandoverStatus.processing);
       expect(updates.last.progress, 0.5);
@@ -280,25 +280,34 @@ void main() {
           '(handover_service.dart:94-103).',
     );
 
-    test(
-      'two pages with the same file name are both kept',
-      () async {
-        await offer('s1', 2);
-        final started = imported();
-        deliverFile('s1', 0, 'scan.jpg', [1, 1, 1]);
-        deliverFile('s1', 1, 'scan.jpg', [2, 2]);
+    test('two pages with the same file name are both kept', () async {
+      await offer('s1', 2);
+      final started = imported();
+      deliverFile('s1', 0, 'scan.jpg', [1, 1, 1]);
+      deliverFile('s1', 1, 'scan.jpg', [2, 2]);
 
-        final event = await started;
-        expect(event.filePaths.toSet(), hasLength(2));
-        expect(File(event.filePaths[0]).readAsBytesSync(), [1, 1, 1]);
-        expect(File(event.filePaths[1]).readAsBytesSync(), [2, 2]);
-      },
-      skip:
-          'BUG: the stored name is <base>_<millisecond><ext>; two files with '
-          'the same base name handled in the same millisecond get the same '
-          'path, the second overwrites the first and processing gets one '
-          'page twice (handover_service.dart:95-103).',
-    );
+      final event = await started;
+      expect(event.filePaths.toSet(), hasLength(2));
+      expect(
+        event.filePaths.map((path) => File(path).readAsBytesSync()),
+        unorderedEquals([
+          [1, 1, 1],
+          [2, 2],
+        ]),
+      );
+    });
+
+    test('a file name with a path stays a plain file in imports', () async {
+      await offer('s1', 1);
+      final started = imported();
+      deliverFile('s1', 0, '../../escape.jpg', [7]);
+
+      final event = await started;
+      final path = event.filePaths.single;
+      expect(p.dirname(path), p.join(docs.path, 'imports'));
+      expect(p.basename(path), matches(RegExp(r'^escape_[0-9a-f]{8}\.jpg$')));
+      expect(File(path).readAsBytesSync(), [7]);
+    });
   });
 
   group('phase 1 data', () {
