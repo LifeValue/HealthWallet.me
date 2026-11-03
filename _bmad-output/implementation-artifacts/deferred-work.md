@@ -154,3 +154,13 @@
   summary: For legacy subfolder or absolute attachment URLs, restore treats a same-name top-level file as present while the viewer opens toAbsolute(path) and finds nothing.
   evidence: backup_service.dart _placeFiles/_attachmentRewrites use the resolveFile basename fallback; this predates the change.
 
+- source_spec: `_bmad-output/implementation-artifacts/spec-attachment-ids-and-files.md`
+  summary: Files of purged records stored in Documents subfolders (scanned_documents/, provider_downloads/, shared_files/, imports/) are never deleted.
+  evidence: The approved rule allows only top-level files; before this change the immediate delete removed any file inside Documents.
+- source_spec: `_bmad-output/implementation-artifacts/spec-attachment-ids-and-files.md`
+  summary: The cleaner trusts the OS name to mean the Documents root belongs to the app; an unsandboxed macOS build would sweep ~/Documents.
+  evidence: AttachmentFileCleaner.supportedPlatforms; release builds are sandboxed (Release.entitlements).
+- source_spec: `_bmad-output/implementation-artifacts/spec-attachment-ids-and-files.md`
+  summary: Two Windows PCs sharing a OneDrive-redirected HealthWallet\Documents could sweep each other's files.
+  evidence: Each device sees only its own database's references.
+

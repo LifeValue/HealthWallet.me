@@ -88,7 +88,7 @@ context:
 | Phone asks for a backup during a restore | `backup.request` | Rejected with `backup.error` | N/A |
 | Crash mid-restore | `.restore-*` left behind | Removed at the next start | Logged |
 
-**Decisions (2026-11-03):**
+**Decisions (2026-11-03; two texts revised by the user after the spec 4 review, same day):**
 - Each backup has its own folder of files next to its `.db`.
 - With the phone connected, the desktop syncs with it first, then restores. If the phone is offline, its unsynced records come back to the desktop after it reconnects. Nothing is lost, and the dialog says so.
 - A restore makes the backup the current state on desktop and phone, the way OneDrive, Dropbox and iCloud do. Records added since the backup move to deleted for 30 days instead of being wiped.
@@ -103,7 +103,7 @@ context:
     - de: "Nur Aufzeichnungen"
     - ro: "Doar înregistrări"
   - `backupRestoreConfirmPointInTime`:
-    - en: "This replaces your records on this computer and on your paired phone with the backup from {date}. Records added since then are moved to deleted items for 30 days. A safety copy of your current data is saved first, so you can undo this."
+    - en: "This replaces your records on this computer and on your paired phone with the backup from {date}. Records added since then are removed. A “Before restore” copy of your current data is saved first and kept for 30 days, so you can undo this." (revised: the app has no deleted-items view; es, de and ro follow the same wording)
     - es: "Esto reemplaza tus registros en este ordenador y en tu teléfono vinculado por la copia del {date}. Los registros añadidos desde entonces pasan a eliminados durante 30 días. Antes se guarda una copia de seguridad de tus datos actuales para que puedas deshacerlo."
     - de: "Dadurch werden deine Aufzeichnungen auf diesem Computer und deinem gekoppelten Telefon durch das Backup vom {date} ersetzt. Seitdem hinzugefügte Aufzeichnungen werden für 30 Tage in die gelöschten Elemente verschoben. Vorher wird eine Sicherheitskopie deiner aktuellen Daten gespeichert, damit du das rückgängig machen kannst."
     - ro: "Aceasta înlocuiește înregistrările de pe acest computer și de pe telefonul asociat cu copia din {date}. Înregistrările adăugate între timp sunt mutate la șterse timp de 30 de zile. Mai întâi se salvează o copie de siguranță a datelor actuale, ca să poți anula."
@@ -135,7 +135,7 @@ context:
     - de: `{count, plural, =1{1 Datei konnte nicht wiederhergestellt werden.} other{{count} Dateien konnten nicht wiederhergestellt werden.}}`
     - ro: `{count, plural, one{Un fișier nu a putut fi restaurat.} few{{count} fișiere nu au putut fi restaurate.} other{{count} de fișiere nu au putut fi restaurate.}}`
   - `backupRestorePhoneOffline`:
-    - en: "Your phone isn't connected. Records added on it since its last sync will come back after it reconnects."
+    - en: "Your phone isn't connected. Records added on it since its last sync will come back after it reconnects; changes it made to existing records will be replaced by the backup." (revised to mention edits; es, de and ro follow the same wording)
     - es: "Tu teléfono no está conectado. Los registros añadidos en él desde la última sincronización volverán cuando se conecte."
     - de: "Dein Telefon ist nicht verbunden. Seit der letzten Synchronisierung darauf hinzugefügte Aufzeichnungen kommen zurück, sobald es sich wieder verbindet."
     - ro: "Telefonul nu este conectat. Înregistrările adăugate pe el de la ultima sincronizare vor reveni după ce se reconectează."

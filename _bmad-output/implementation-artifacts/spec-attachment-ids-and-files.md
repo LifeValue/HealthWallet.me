@@ -2,9 +2,10 @@
 title: 'Unique ids and file names for documents; attachment files removed with their records after the 30-day window'
 type: 'bugfix'
 created: '2026-11-03'
-status: 'ready-for-dev'
+status: 'done'
 route: 'dispatch'
 review_loop_iteration: 0
+baseline_commit: '711c4720deee240420aedd2bf0aacbde26609b8c'
 context:
   - '{project-root}/_bmad-output/planning-artifacts/architecture.md'
 ---
@@ -67,7 +68,7 @@ context:
 
 **Decisions (2026-11-03):**
 - A deleted record's files are kept for 30 days, like the record, on phone and desktop, so undo and restore always work with files. Storage is freed at the purge.
-- Leftover files nothing refers to are swept at every start, in the background, on phone and desktop. Every deleted file is logged.
+- Leftover files nothing refers to are swept at every start, in the background, on phone and desktop. Revised by the user after review: the sweep moves them into a hidden `<Documents>/.trash/` folder and deletes them only 30 days later, because earlier bugs left real documents without a row. Files of purged records are still deleted directly. Counts are logged, names only as hashes.
 - Source deletes stay out of this slice (holders owns that code). Their files follow the same 30-day purge and sweep.
 
 </frozen-after-approval>
@@ -104,12 +105,12 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `document_reference_service_test.dart`, new `test/features/processing/data/services/pdf_generation_service_test.dart` -- Un-skip `:173`; test same-name PDFs and names not reused after a delete.
-- [ ] `lib/core/utils/stored_file_name.dart` and `test/core/utils/stored_file_name_test.dart` (moved), `document_reference_service.dart`, `pdf_generation_service.dart`, `session_handler.dart:546`, `handover_service.dart:96`, `record_attachments_bloc.dart:227,270-298` -- Uuid ids and names, plus `setLastModified` after each copy.
-- [ ] `lib/core/services/attachment_file_cleaner.dart`, `test/core/services/attachment_file_cleaner_test.dart` -- Tests for a resurrected row keeping its file, the top-level and exclusion rules, symlinks and a symlinked root, subfolder URLs, the Linux guard, the age rule with an old mtime, a per-file transaction, and a sync write racing the sweep.
-- [ ] `records_repository_impl.dart`, `record_attachments_bloc.dart:471-487` -- Deletes keep files; `_deleteFileIfUnused` does nothing; `clearDemoData` is unchanged. Update the delete tests.
-- [ ] `lww_sync_service.dart` `cleanupTombstones()` -- Purge cleanup and the unawaited sweep. New `test/features/desktop/lww_sync/data/services/lww_sync_file_cleanup_test.dart`: a purged row's file is deleted; a shared file is kept; a tombstone younger than 30 days keeps its file; a received tombstone deletes nothing; a record deleted and brought back within 30 days (re-sync or restore) opens its file.
-- [ ] `_bmad-output/planning-artifacts/architecture.md` -- The 30-day file rule and the sweep.
+- [x] `document_reference_service_test.dart`, new `test/features/processing/data/services/pdf_generation_service_test.dart` -- Un-skip `:173`; test same-name PDFs and names not reused after a delete.
+- [x] `lib/core/utils/stored_file_name.dart` and `test/core/utils/stored_file_name_test.dart` (moved), `document_reference_service.dart`, `pdf_generation_service.dart`, `session_handler.dart:546`, `handover_service.dart:96`, `record_attachments_bloc.dart:227,270-298` -- Uuid ids and names, plus `setLastModified` after each copy.
+- [x] `lib/core/services/attachment_file_cleaner.dart`, `test/core/services/attachment_file_cleaner_test.dart` -- Tests for a resurrected row keeping its file, the top-level and exclusion rules, symlinks and a symlinked root, subfolder URLs, the Linux guard, the age rule with an old mtime, a per-file transaction, and a sync write racing the sweep.
+- [x] `records_repository_impl.dart`, `record_attachments_bloc.dart:471-487` -- Deletes keep files; `_deleteFileIfUnused` does nothing; `clearDemoData` is unchanged. Update the delete tests.
+- [x] `lww_sync_service.dart` `cleanupTombstones()` -- Purge cleanup and the unawaited sweep. New `test/features/desktop/lww_sync/data/services/lww_sync_file_cleanup_test.dart`: a purged row's file is deleted; a shared file is kept; a tombstone younger than 30 days keeps its file; a received tombstone deletes nothing; a record deleted and brought back within 30 days (re-sync or restore) opens its file.
+- [x] `_bmad-output/planning-artifacts/architecture.md` -- The 30-day file rule and the sweep.
 
 **Acceptance Criteria:**
 - Given phone and desktop on this version, when deletes sync both ways, then `delete_sync_round_trip_test.dart` stays green and no live record loses its file.
@@ -118,9 +119,75 @@ context:
 
 ## Implementation Notes
 
+- Choices that don't block the work and aren't settled by this spec may be decided during implementation; record each one here with its reason.
+- Built in parallel worktrees `.claude/worktrees/spec4-{A,B,C}` on a local base `02a6fed3` (develop plus spec 1 plus spec 3's data layer). `baseline_commit` is set when spec 3 is committed.
+- Cross-spec fixes at merge: spec 3's `restore_sync_round_trip_test.dart` and `lww_sync_pause_test.dart` build `LwwSyncService` and now pass the cleaner. The round-trip test's step "deleting the record removes its file" now expects the file to be kept (the 30-day rule) and removes it as the purge would before checking that the safety copy brings it back. `scripts/check.sh` with specs 1–4 passes (2,798 tests, 13 skips).
+- Merge (2026-11-03): packages A, C and B applied on top of spec 3 (`711c4720`) without conflicts. Added backup metadata (`*.db.meta.json`, `*.db.meta.json.tmp`) to `AttachmentFileCleaner.isProtectedName`, because a backup folder can be the Documents root. The new sweep test fails without the fix.
+- Package B, cleaner and sweep (worktree `spec4-B`):
+  - `@lazySingleton AttachmentFileCleaner(AppDatabase, PathResolver, AttachmentReferences)`. `deleteUnreferenced` and `sweep` return a count and never throw. Also `fileUrlsOf`, `isProtectedName`, `supportedPlatforms`, `sweepMinAge` and a `forTesting` constructor.
+  - `LwwSyncService` takes it as its 4th argument; its 4 test sites are updated.
+  - `cleanupTombstones` collects URLs and deletes in one transaction, then calls `deleteUnreferenced`, then an unawaited `sweep()`.
+  - Each file's lstat, age, reference and delete checks run in one transaction.
+  - URLs are matched raw and decoded, case-insensitively. Bare names, absolute paths directly in Documents and iOS container paths all count; other absolute paths fall back to their basename; relative subfolder paths name no file.
+  - Decisions:
+    - Both methods delete nothing off Android, iOS, macOS and Windows.
+    - A symlinked Documents root deletes nothing.
+    - An unreadable purged row adds no candidate; the sweep handles it.
+  - `architecture.md:133,202,206` updated in that worktree.
+  - Tests: cleaner 34, purge cleanup 9; mutation checks fail as expected.
+  - Known noise: in old lww tests the background sweep can log after tearDown closes the database.
+  - Risk: a user-chosen backup folder equal to the Documents root would have its `*.db.meta.json` swept.
+- Package A, ids and names (worktree `spec4-A`):
+  - `lib/core/utils/stored_file_name.dart` holds `uniqueStoredFileName` (moved unchanged, now top-level) and a new `copyAsNewFile` (copy, then `setLastModified(now)`; a failed timestamp is logged with `logger.w`, not thrown, because the change time is already fresh).
+  - Document id and `document-id` use one uuid, as the old double ms call was effectively one value.
+  - Scans are named `scanned_document_<8hex>.pdf`; imports `<sanitised>_<8hex>.pdf`.
+  - `session_handler` and `handover_service` use `uniqueStoredFileName`. Their names are sanitised, so a path in the phone's `file_name` can no longer leave `imports/`.
+  - Handover and `createPdfFromImages` write rather than copy, so they get a fresh mtime with no extra call.
+  - Tests:
+    - New `stored_file_name_test` and `pdf_generation_service_test`.
+    - `document_reference_service_test.dart:173` un-skipped.
+    - The `handover_service_test` same-name skip un-skipped.
+    - `processing_session_steps_test` extended.
+    - The moved group removed from `record_attachments_bloc_test` (expect a small conflict there with package C).
+  - Known limit: names keep an 8-hex suffix plus an existence check, so "never reused" holds in practice, not absolutely.
+- Package C, deletes keep files (worktree `spec4-C`):
+  - `_deleteRecords` only tombstones.
+  - `_deleteFileIfUnused` has an empty body with a comment and stays only for the untouched `clearDemoData`.
+  - The unused `package:path` import is removed.
+  - `_pathResolver` is no longer read but the constructor must stay, so it is kept with `// ignore: unused_field` and a comment.
+  - `record_attachments_bloc.dart`: only the second delete (old `:471-487`) is removed.
+  - Tests: three delete tests now expect the file to be kept; new cases for "brought back finds its file" and "encounter delete keeps files" are in `records_repository_delete_test.dart`. The delete test at `:1019` of the bloc test is updated.
+  - All of them fail on the old code. Full suite: 2,559 passed.
+  - `architecture.md:133,202` is left for package B.
+
 ## Spec Change Log
 
 ## Review Triage Log
+
+All `patch` rows and the quarantine decision are fixed. Building the quarantine also found that `AttachmentSyncService` served files from dot-folders (`.trash/`, `.restore-*`, `.sync-*.part`), so sync and backups now refuse them. `scripts/check.sh` with specs 1–4 passes (2,824 tests, 13 skips).
+
+| # | Source | Finding | Verdict | Evidence | Route |
+|---|---|---|---|---|---|
+| 1 | blind | The first sweep would permanently delete real documents that earlier bugs left without a row | high | For example, a same-millisecond overwrite left its PDF with no row | intent_gap; resolved by the user: quarantine in `.trash/` for 30 days |
+| 2 | blind, verification, edge | Windows: attachments in the user's Documents root are never deleted after their record is purged | medium | The old immediate delete used `toAbsolute`; the cleaner only saw its own root | patch: purge-only handling of `LegacyAttachmentFolders.roots()` |
+| 3 | blind, edge | `isReferenced` decodes every row per file inside a write transaction | medium | Full-table `SELECT` per candidate | patch: SQL `instr` pre-filter with `sqlNeedle` |
+| 4 | blind, edge | The purge path has no age guard; a just-written fixed-name file can be deleted | medium | `checkAge: false` | patch: 1-hour `purgeMinAge` |
+| 5 | blind | File names logged at info level | medium | Names can carry health data | patch: counts at info, hashed names at debug |
+| 6 | blind | Non-ASCII names mangled in stored names and imported PDF titles | medium | ASCII-only `[^\w.\-]` filter | patch: Unicode letters, marks, digits and spaces kept; `originalFileStem` for titles |
+| 7 | verification | The test can't show the purge doesn't await the sweep | medium | The recording cleaner passes through | patch: Completer-gated sweep |
+| 8 | blind | The "by a restore" test can't fail; `sessions.resources`, Media single map and `copyAsNewFile` failure untested | low | Test gaps | patch |
+| 9 | blind, verification | Doc says the cleaner is the only file deleter, but session deletes remove `imports/` files | low | Wording | patch |
+| 10 | blind | Files of purged records in subfolders are never deleted | medium | The frozen rule says "nothing in a subfolder" | defer: accepted limit, documented |
+| 11 | blind | The sweep runs at every start with no throttle | low | Cheap once pre-filtered | reject |
+| 12 | blind | Root ownership is decided by OS name; an unsandboxed macOS build would sweep `~/Documents` | low | Release builds are sandboxed | defer |
+| 13 | blind, edge | Dead `clearDemoData` URL loop and `ignore: unused_field` | low | Kept because holders rewrites `clearDemoData` and the constructor must stay | reject |
+| 14 | blind | `PdfStorageService.savePdfToStorage` copies without `setLastModified` | low | No callers; batch 2 removes it | reject |
+| 15 | edge | The sweep could race a restore that reuses an orphan | low | Sweep runs at start-up for seconds; restores are user-started | reject |
+| 16 | edge | A system clock jump purges early | low | Predates this change | reject |
+| 17 | edge | OneDrive-shared `HealthWallet\Documents` across two PCs | low | Rare setup | defer |
+| 18 | edge | Tests inherit `Platform.operatingSystem` | low | CI runs on macOS | reject |
+| 19 | edge | The unawaited sweep after tearDown logs noise | low | Test-only noise | reject |
+| 20 | edge | `deleteProcessingSession` and the OCR helper delete files without the cleaner | low | Session `imports/` files, not attachments; documented via #9 | reject |
 
 ## Verification
 
