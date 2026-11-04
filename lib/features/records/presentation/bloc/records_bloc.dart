@@ -29,7 +29,16 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   RecordsRepository get recordsRepository => _recordsRepository;
   Timer? _searchDebounceTimer;
   bool _isSearching = false;
+
+  /// Whether [RecordsState.activeFilters] are the defaults the bloc chose,
+  /// not filters the user picked. Defaults that match nothing are dropped.
+  bool _onDefaultFilters = false;
   String? _lastIpsPdfPath;
+
+  static const _defaultFilters = [
+    FhirType.Encounter,
+    FhirType.DiagnosticReport,
+  ];
 
   RecordsBloc(
     this._recordsRepository,
@@ -120,6 +129,19 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         }).toList();
       }
 
+      // The default filters found nothing for this scope, while it may hold
+      // other records: show everything rather than an empty list.
+      if (_onDefaultFilters &&
+          offset == 0 &&
+          !isSearching &&
+          resources.isEmpty &&
+          state.dateFilter == null &&
+          state.activeSpecialties.isEmpty) {
+        _onDefaultFilters = false;
+        emit(state.copyWith(activeFilters: []));
+        return await _loadResources(emit, limit: limit);
+      }
+
       final List<IFhirResource> updatedResources;
       if (offset == 0) {
         updatedResources = List<IFhirResource>.from(filteredResources);
@@ -149,11 +171,8 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     Emitter<RecordsState> emit,
   ) async {
     if (state.activeFilters.isEmpty && !event.isShareContext) {
-      emit(
-        state.copyWith(
-          activeFilters: [FhirType.Encounter, FhirType.DiagnosticReport],
-        ),
-      );
+      _onDefaultFilters = true;
+      emit(state.copyWith(activeFilters: _defaultFilters));
     }
     await _loadResources(emit);
   }
@@ -183,9 +202,8 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     );
 
     if (nextState.activeFilters.isEmpty && !event.isShareContext) {
-      nextState = nextState.copyWith(
-        activeFilters: [FhirType.Encounter, FhirType.DiagnosticReport],
-      );
+      _onDefaultFilters = true;
+      nextState = nextState.copyWith(activeFilters: _defaultFilters);
     }
 
     emit(nextState);
@@ -197,6 +215,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsFiltersApplied event,
     Emitter<RecordsState> emit,
   ) async {
+    _onDefaultFilters = false;
     emit(
       state.copyWith(
         status: const RecordsStatus.loading(),
@@ -213,6 +232,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsFilterRemoved event,
     Emitter<RecordsState> emit,
   ) async {
+    _onDefaultFilters = false;
     final updatedFilters = [...state.activeFilters]..remove(event.filter);
     emit(
       state.copyWith(
@@ -512,6 +532,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsSpecialtyApplied event,
     Emitter<RecordsState> emit,
   ) async {
+    _onDefaultFilters = false;
     emit(
       state.copyWith(
         status: const RecordsStatus.loading(),
@@ -542,6 +563,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsClearAllFilters event,
     Emitter<RecordsState> emit,
   ) async {
+    _onDefaultFilters = false;
     emit(
       state.copyWith(
         status: const RecordsStatus.loading(),

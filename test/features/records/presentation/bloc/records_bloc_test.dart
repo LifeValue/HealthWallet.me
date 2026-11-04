@@ -17,6 +17,9 @@ typedef _Query = ({
 
 class _FakeRecordsRepository extends Fake implements RecordsRepository {
   List<IFhirResource> page = [];
+
+  /// When set, what a query without type filters returns instead of [page].
+  List<IFhirResource>? unfiltered;
   List<IFhirResource> patients = const [Patient(id: 'p')];
   List<IFhirResource> searchResults = [];
   List<IFhirResource> related = [];
@@ -47,6 +50,7 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
       offset: offset,
       dateFilter: dateFilter,
     ));
+    if (resourceTypes.isEmpty && unfiltered != null) return unfiltered!;
     return page;
   }
 
@@ -178,6 +182,7 @@ void main() {
     });
 
     test('no next page is loaded after the last one', () async {
+      repository.page = encounters(1);
       await run(const RecordsInitialised());
 
       await run(const RecordsLoadMore());
@@ -195,6 +200,7 @@ void main() {
     });
 
     test('a source change reloads that source', () async {
+      repository.page = encounters(1);
       final state = await run(const RecordsSourceChanged('s1'));
 
       expect(repository.queries.single.sourceId, 's1');
@@ -203,6 +209,7 @@ void main() {
     });
 
     test('several sources are passed when no single one is chosen', () async {
+      repository.page = encounters(1);
       await run(const RecordsSourceChanged(null, sourceIds: ['a', 'b']));
 
       expect(repository.queries.single.sourceIds, ['a', 'b']);
@@ -222,6 +229,131 @@ void main() {
       await run(const RecordsFiltersApplied([FhirType.Media]));
 
       expect(repository.queries.last.sourceId, 's1');
+    });
+  });
+
+  group('the default filters', () {
+    const defaults = [FhirType.Encounter, FhirType.DiagnosticReport];
+    final others = <IFhirResource>[
+      const Observation(id: 'o1', title: 'Body weight'),
+      const Condition(id: 'c1', title: 'Asthma'),
+    ];
+
+    test('that match nothing are dropped, so the other records show', () async {
+      repository.unfiltered = others;
+
+      final state = await run(const RecordsInitialised());
+
+      expect(repository.queries.map((q) => q.types), [defaults, isEmpty]);
+      expect(state.activeFilters, isEmpty);
+      expect(state.resources, others);
+      expect(state.status, const RecordsStatus.success());
+    });
+
+    test('are dropped the same way when the scope changes', () async {
+      repository.unfiltered = others;
+
+      final state = await run(
+        const RecordsSourceChanged(null, sourceIds: ['demo_data', 'wallet']),
+      );
+
+      expect(repository.queries.last.types, isEmpty);
+      expect(repository.queries.last.sourceIds, ['demo_data', 'wallet']);
+      expect(state.activeFilters, isEmpty);
+      expect(state.resources, others);
+    });
+
+    test(
+      'are tried once: with no records at all the list stays empty',
+      () async {
+        final state = await run(const RecordsInitialised());
+
+        expect(repository.queries, hasLength(2));
+        expect(state.activeFilters, isEmpty);
+        expect(state.resources, isEmpty);
+        expect(state.status, const RecordsStatus.success());
+      },
+    );
+
+    test('that match records are kept', () async {
+      repository
+        ..page = encounters(2)
+        ..unfiltered = others;
+
+      final state = await run(const RecordsInitialised());
+
+      expect(repository.queries, hasLength(1));
+      expect(state.activeFilters, defaults);
+      expect(state.resources, hasLength(2));
+    });
+
+    test('come back for the next scope, which may have encounters', () async {
+      repository.unfiltered = others;
+      await run(const RecordsInitialised());
+      expect(bloc.state.activeFilters, isEmpty);
+
+      repository.page = encounters(1);
+      final state = await run(const RecordsSourceChanged('s2'));
+
+      expect(state.activeFilters, defaults);
+      expect(state.resources, hasLength(1));
+    });
+
+    test('the same types picked by the user are never dropped', () async {
+      repository.page = encounters(1);
+      await run(const RecordsInitialised());
+      repository
+        ..page = []
+        ..unfiltered = others;
+
+      final state = await run(const RecordsFiltersApplied(defaults));
+
+      expect(repository.queries.last.types, defaults);
+      expect(state.activeFilters, defaults);
+      expect(state.resources, isEmpty);
+    });
+
+    test('a removed default leaves a filter the user chose', () async {
+      repository.page = encounters(1);
+      await run(const RecordsInitialised());
+      repository
+        ..page = []
+        ..unfiltered = others;
+
+      final state = await run(
+        const RecordsFilterRemoved(FhirType.Encounter),
+      );
+
+      expect(state.activeFilters, [FhirType.DiagnosticReport]);
+      expect(state.resources, isEmpty);
+    });
+
+    test(
+      'a specialty the user picked that matches nothing shows nothing',
+      () async {
+        repository.page = encounters(1);
+        await run(const RecordsInitialised());
+
+        final state = await run(
+          const RecordsSpecialtyApplied([MedicalSpecialty.cardiology]),
+        );
+
+        expect(state.activeSpecialties, [MedicalSpecialty.cardiology]);
+        expect(state.resources, isEmpty);
+        expect(repository.queries, hasLength(2));
+      },
+    );
+
+    test('a search that finds nothing does not drop them', () async {
+      repository.page = encounters(1);
+      await run(const RecordsInitialised());
+
+      bloc.add(const RecordsSearch('zz'));
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      await pumpEventQueue();
+
+      expect(bloc.state.activeFilters, defaults);
+      expect(repository.queries, hasLength(1));
     });
   });
 
