@@ -51,10 +51,24 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
     setState(() => _isOpen = false);
   }
 
+  /// Height of one menu row; the menu shows at most [_maxVisibleRows].
+  static const double _rowHeight = 52;
+  static const int _maxVisibleRows = 7;
+
+  /// Gap kept between the menu and the safe area's edge.
+  static const double _screenMargin = 8;
+
   void _showMenu() {
     final overlay = Overlay.of(context);
     final renderBox = context.findRenderObject() as RenderBox;
     final size = renderBox.size;
+    final placement = menuPlacement(
+      fieldTop: renderBox.localToGlobal(Offset.zero).dy,
+      fieldHeight: size.height,
+      media: MediaQuery.of(context),
+      itemCount: widget.items.length,
+      preferAbove: widget.openAbove,
+    );
 
     _overlayEntry = OverlayEntry(
       builder: (context) => Stack(
@@ -70,13 +84,13 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
             child: CompositedTransformFollower(
               link: _layerLink,
               showWhenUnlinked: false,
-              targetAnchor: widget.openAbove
+              targetAnchor: placement.above
                   ? Alignment.topLeft
                   : Alignment.bottomLeft,
-              followerAnchor: widget.openAbove
+              followerAnchor: placement.above
                   ? Alignment.bottomLeft
                   : Alignment.topLeft,
-              offset: Offset(0, widget.openAbove ? -4 : 4),
+              offset: Offset(0, placement.above ? -4 : 4),
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
@@ -105,9 +119,7 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
                   color: context.colorScheme.surface,
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxHeight:
-                          52.0 *
-                          (widget.items.length > 7 ? 7 : widget.items.length),
+                      maxHeight: placement.maxHeight,
                     ),
                     child: _MenuList(
                       items: widget.items,
@@ -287,4 +299,46 @@ class _MenuListState<T> extends State<_MenuList<T>> {
       },
     );
   }
+}
+
+/// Where the dropdown menu opens and how tall it may be.
+@visibleForTesting
+typedef MenuPlacement = ({bool above, double maxHeight});
+
+/// Opens the menu on the side the caller prefers when the whole menu fits
+/// there, and otherwise on the side with more room, never past the safe area
+/// or behind the keyboard. The menu scrolls when it is cut shorter.
+@visibleForTesting
+MenuPlacement menuPlacement({
+  required double fieldTop,
+  required double fieldHeight,
+  required MediaQueryData media,
+  required int itemCount,
+  required bool preferAbove,
+}) {
+  const rowHeight = _AppDropdownFieldState._rowHeight;
+  const margin = _AppDropdownFieldState._screenMargin;
+  final rows = itemCount.clamp(1, _AppDropdownFieldState._maxVisibleRows);
+  final wanted = rowHeight * rows;
+
+  final spaceAbove = fieldTop - media.padding.top - margin;
+  final spaceBelow =
+      media.size.height -
+      media.viewInsets.bottom -
+      media.padding.bottom -
+      margin -
+      (fieldTop + fieldHeight);
+
+  final preferred = preferAbove ? spaceAbove : spaceBelow;
+  final other = preferAbove ? spaceBelow : spaceAbove;
+  final above = preferred >= wanted || preferred >= other
+      ? preferAbove
+      : !preferAbove;
+  final room = above ? spaceAbove : spaceBelow;
+
+  return (
+    above: above,
+    // At least one row, even on a tiny screen, so the menu never vanishes.
+    maxHeight: room.clamp(rowHeight, wanted),
+  );
 }
