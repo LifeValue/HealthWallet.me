@@ -13,6 +13,7 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/cancel_download_dialog.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class ModelManagementDialog extends StatefulWidget {
@@ -373,11 +374,22 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                '${context.l10n.aiModelDownloading} ${progress?.toStringAsFixed(0) ?? 0}%',
-                style: AppTextStyle.labelSmall.copyWith(
-                  color: AppColors.primary,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${context.l10n.aiModelDownloading} ${progress?.toStringAsFixed(0) ?? 0}%',
+                      style: AppTextStyle.labelSmall.copyWith(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                  CancelDownloadButton(
+                    onCancelConfirmed: () => _bloc.add(
+                      LoadModelDownloadCancelled(variant: config.variant),
+                    ),
+                  ),
+                ],
               ),
             ] else if (!isDownloaded && !incompatible)
               SizedBox(

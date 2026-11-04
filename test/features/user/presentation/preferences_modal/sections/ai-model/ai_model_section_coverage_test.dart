@@ -14,6 +14,7 @@ import 'package:health_wallet/features/processing/domain/services/ai_model_downl
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/ai_settings/ai_settings_dialog.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/cancel_download_dialog.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/model_management_dialog.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/ai-model/ai_model_section.dart';
@@ -289,6 +290,37 @@ void main() {
         findsOneWidget,
       );
       expect(find.byType(AppButton), findsNothing);
+    });
+
+    testWidgets('Cancel asks first; Continue keeps the download', (
+      tester,
+    ) async {
+      await pumpSection(
+        tester,
+        absent.copyWith(status: LoadModelStatus.loading, downloadProgress: 62),
+      );
+      loadModelBloc.events.clear();
+
+      await tap(tester, find.byType(CancelDownloadButton));
+      expect(find.text(_en.cancelDownloadMessage), findsOneWidget);
+      expect(loadModelBloc.events, isEmpty);
+
+      await tap(tester, find.text(_en.continueButton));
+      expect(find.text(_en.cancelDownloadMessage), findsNothing);
+      expect(loadModelBloc.events, isEmpty);
+    });
+
+    testWidgets('a confirmed Cancel stops the downloads', (tester) async {
+      await pumpSection(
+        tester,
+        absent.copyWith(status: LoadModelStatus.loading, downloadProgress: 62),
+      );
+      loadModelBloc.events.clear();
+
+      await tap(tester, find.byType(CancelDownloadButton));
+      await tap(tester, find.text(_en.cancelDownloadTitle).last);
+
+      expect(loadModelBloc.events, [const LoadModelDownloadCancelled()]);
     });
 
     testWidgets('with no progress yet shows 0%', (tester) async {

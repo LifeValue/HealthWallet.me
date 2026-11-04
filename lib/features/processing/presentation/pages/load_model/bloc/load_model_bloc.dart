@@ -450,12 +450,20 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     Emitter<LoadModelState> emit,
   ) async {
     // Only model downloads are cancelled; a vision-file download keeps going.
+    final only = event.variant;
     final cancelled = AiModelVariant.values
         .where(_downloadService.isVariantDownloading)
+        .where((variant) => only == null || variant == only)
         .toSet();
+    // That model's download already ended: nothing to stop.
+    if (only != null && cancelled.isEmpty) return;
 
-    // Returns once every transfer has ended and its partial file is gone.
-    await _downloadService.cancelDownload();
+    // Returns once the transfers have ended and their partial files are gone.
+    if (only == null) {
+      await _downloadService.cancelDownload();
+    } else {
+      await _downloadService.cancelDownloadForVariant(only);
+    }
 
     for (final variant in cancelled) {
       _notificationBloc.add(

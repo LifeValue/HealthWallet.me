@@ -15,6 +15,7 @@ import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/ai_settings/ai_settings_dialog.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/cancel_download_dialog.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/model_management_dialog.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -281,6 +282,11 @@ class _AiModelSectionState extends State<AiModelSection> {
               color: context.colorScheme.onSurface.withValues(alpha: 0.6),
               fontStyle: FontStyle.italic,
             ),
+          ),
+          const SizedBox(height: Insets.small),
+          CancelDownloadButton(
+            onCancelConfirmed: () =>
+                _bloc.add(const LoadModelDownloadCancelled()),
           ),
         ],
       ],

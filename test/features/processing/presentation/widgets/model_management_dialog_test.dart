@@ -73,7 +73,10 @@ void main() {
     await tapDelete(tester);
 
     expect(find.text(_en.aiModelDeleteTitle(name)), findsOne);
-    expect(find.text(_en.aiModelDeleteMessage(qwen.modelSizeMB)), findsOne);
+    expect(
+      find.text(_en.aiModelDeleteMessage(qwen.modelSizeMB)),
+      findsOne,
+    );
     expect(deletes(), isEmpty, reason: 'nothing is deleted before the answer');
   });
 
@@ -95,5 +98,67 @@ void main() {
 
     expect(deletes(), [const LoadModelDeleteRequested(AiModelVariant.qwen)]);
     expect(find.text(_en.aiModelDeleteTitle(name)), findsNothing);
+  });
+
+  group('a model that is downloading', () {
+    Future<void> openDownloading(WidgetTester tester) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await getIt.reset();
+      bloc = _MockLoadModelBloc();
+      whenListen(
+        bloc,
+        const Stream<LoadModelState>.empty(),
+        initialState: const LoadModelState(
+          status: LoadModelStatus.loading,
+          deviceCapability: DeviceAiCapability.full,
+          downloadingVariants: {AiModelVariant.qwen: true},
+          variantProgress: {AiModelVariant.qwen: 74},
+        ),
+      );
+      getIt.registerSingleton<LoadModelBloc>(bloc);
+      await tester.pumpWidget(testApp(const ModelManagementDialog()));
+      await tester.pump();
+    }
+
+    Iterable<LoadModelEvent> cancels() =>
+        bloc.events.whereType<LoadModelDownloadCancelled>();
+
+    testWidgets('shows its progress and a Cancel', (tester) async {
+      await openDownloading(tester);
+
+      expect(find.text('${_en.aiModelDownloading} 74%'), findsOne);
+      expect(find.text(_en.cancel), findsOne, reason: 'only that model');
+    });
+
+    testWidgets('Cancel asks first; Continue keeps downloading', (
+      tester,
+    ) async {
+      await openDownloading(tester);
+
+      await tester.tap(find.text(_en.cancel));
+      await tester.pumpAndSettle();
+      expect(find.text(_en.cancelDownloadMessage), findsOne);
+      expect(cancels(), isEmpty);
+
+      await tester.tap(find.text(_en.continueButton));
+      await tester.pumpAndSettle();
+      expect(find.text(_en.cancelDownloadMessage), findsNothing);
+      expect(cancels(), isEmpty);
+    });
+
+    testWidgets('confirming stops that model\'s download only', (tester) async {
+      await openDownloading(tester);
+
+      await tester.tap(find.text(_en.cancel));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(_en.cancelDownloadTitle).last);
+      await tester.pumpAndSettle();
+
+      expect(cancels(), [
+        const LoadModelDownloadCancelled(variant: AiModelVariant.qwen),
+      ]);
+    });
   });
 }

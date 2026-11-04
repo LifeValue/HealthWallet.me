@@ -11,10 +11,10 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
-import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/cancel_download_dialog.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class NotificationWidget extends StatefulWidget {
@@ -335,12 +335,8 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                   ? GestureDetector(
                       onTap: () {
                         _hideOverlay();
-                        AppSimpleDialog.showConfirmation(
-                          context: context,
-                          title: context.l10n.cancelDownloadTitle,
-                          message: context.l10n.cancelDownloadMessage,
-                          confirmText: context.l10n.cancelDownloadTitle,
-                          cancelText: context.l10n.continueButton,
+                        confirmCancelDownload(
+                          context,
                           onConfirm: () {
                             GetIt.instance.get<LoadModelBloc>().add(
                               const LoadModelDownloadCancelled(),

@@ -36,7 +36,9 @@ abstract class LoadModelDownloadCancelled extends LoadModelEvent
     with _$LoadModelDownloadCancelled {
   const LoadModelDownloadCancelled._();
 
-  const factory LoadModelDownloadCancelled() = _LoadModelDownloadCancelled;
+  /// Stops the [variant]'s download, or every model download without one.
+  const factory LoadModelDownloadCancelled({AiModelVariant? variant}) =
+      _LoadModelDownloadCancelled;
 }
 
 @freezed
