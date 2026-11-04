@@ -125,7 +125,7 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
       birthDate: dateOfBirth.value.isNotEmpty
           ? fhir_r4.FhirDate.fromString(dateOfBirth.value)
           : null,
-      gender: fhir_r4.AdministrativeGender(gender.value),
+      gender: _toFhirGender(gender.value),
       identifier: [
         if (patientIdentifier.value.isNotEmpty)
           fhir_r4.Identifier(
@@ -264,6 +264,16 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
     gender: gender.calculateGenderConfidence(inputText),
     patientIdentifier: patientIdentifier.calculateConfidence(inputText),
   );
+
+  /// The AI may leave the gender empty (the phase-1 schema allows `''`) or
+  /// write something that is not a FHIR code; both mean "no gender", so the
+  /// field is left out rather than guessed. `AdministrativeGender('')` throws.
+  static fhir_r4.AdministrativeGender? _toFhirGender(String value) {
+    final code = value.trim().toLowerCase();
+    return const {'male', 'female', 'other', 'unknown'}.contains(code)
+        ? fhir_r4.AdministrativeGender(code)
+        : null;
+  }
 
   static String? _mapLabelToFhirCode(String label) {
     switch (label.toUpperCase()) {
