@@ -148,12 +148,13 @@ void main() {
     expect((await sourceRow('wallet-p1'))['platform_type'], 'wallet');
   });
 
-  test('linking at start-up links the default holder and the first provider '
-      'patient, and is a no-op the second time', () async {
+  test('linking at start-up keeps the default holder and asks about the '
+      'first provider patient, and writes nothing the second time', () async {
     await db.customStatement(
       "INSERT INTO sources (id, platform_type) VALUES ('wallet-default_patient', 'wallet')",
     );
-    await record('default_patient', 'wallet-default_patient', 'Patient', {
+    // Each install stores its default patient under a random row id.
+    await record('bf2e982b', 'wallet-default_patient', 'Patient', {
       'resourceType': 'Patient',
       'name': [
         {
@@ -162,20 +163,29 @@ void main() {
           'family': 'Holder',
         },
       ],
-    }, resourceId: 'f3a1');
+      'identifier': [
+        {'value': 'default_patient'},
+      ],
+    });
     await record('p1', 'epic', 'Patient', {'resourceType': 'Patient'});
 
     final service = HolderLinkingService(repository);
-    await service.linkUnassigned();
+    final questions = await service.linkUnassigned();
 
     expect(
       (await sourceRow('wallet-default_patient'))['holder_id'],
-      'default_patient',
+      'bf2e982b',
     );
-    expect((await sourceRow('epic'))['holder_id'], 'default_patient');
+    expect(questions.single.sourceIds, ['epic']);
+    expect(await repository.holderBySource(), {
+      'wallet-default_patient': 'bf2e982b',
+    });
 
-    final stamp = (await sourceRow('epic'))['updated_at'];
-    await service.linkUnassigned();
-    expect((await sourceRow('epic'))['updated_at'], stamp);
+    final stamp = (await sourceRow('wallet-default_patient'))['updated_at'];
+    expect((await service.linkUnassigned()).single.sourceIds, ['epic']);
+    expect(
+      (await sourceRow('wallet-default_patient'))['updated_at'],
+      stamp,
+    );
   });
 }

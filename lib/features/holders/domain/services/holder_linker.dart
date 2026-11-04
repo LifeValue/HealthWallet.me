@@ -9,13 +9,15 @@ import 'package:health_wallet/features/holders/domain/services/holder_matcher.da
 /// A source joins a person through its Patient rows, through the patient a
 /// `wallet-<id>` source was made for, or through the patients its records
 /// refer to. Patients join when [HolderMatcher] says they are the same
-/// person. The unnamed placeholder holder joins the only other person, so
-/// the first sync doesn't leave a second, empty "Health Wallet Holder".
+/// person.
 ///
-/// Once the wallet has holders, a newcomer who matches no one joins the only
-/// holder there is; with several, the user is asked (see [HolderQuestion]).
-/// Before any source has a holder (the first run after the upgrade), each
-/// person found becomes a holder, as the app showed them until then.
+/// Someone who matches no one is never placed by guessing: when the wallet
+/// already has someone, the user is asked (see [HolderQuestion]); when it
+/// has no one (the demo person aside), they become a holder. On the first
+/// run, before any source has a holder, the people found are taken as the
+/// app showed them, each a holder, except next to an untouched default
+/// holder ("Health Wallet Holder"): it is the user, and the others are
+/// asked about.
 ///
 /// A new holder's id comes from its records alone (see [_holderIdOf]), so
 /// two devices that hold the same records give it the same id.
@@ -78,19 +80,12 @@ class HolderLinker {
       }
     }
 
-    _joinPlaceholder(groups, patients, sources);
-
     final asked = <String>{};
-    if (sources.any((s) => s.holderId != null)) {
-      final people = _people(groups, patients, sources);
-      final holders = people.where((r) => groups.holderOf(r) != null).toList();
-      final newcomers = people.where((r) => groups.holderOf(r) == null);
-      if (holders.length == 1 && newcomers.length == 1) {
-        groups.union(holders.single, newcomers.single);
-      } else if (holders.isNotEmpty) {
-        asked.addAll(newcomers);
-      }
-    }
+    final present = _people(groups, patients, sources);
+    final inWallet = sources.any((s) => s.holderId != null)
+        ? present.where((r) => groups.holderOf(r) != null).toSet()
+        : present.where((r) => _onlyPlaceholder(groups, patients, r)).toSet();
+    if (inWallet.isNotEmpty) asked.addAll(present.difference(inWallet));
 
     final people = _people(groups, patients, sources);
     for (final source in sources) {
@@ -169,23 +164,14 @@ class HolderLinker {
     };
   }
 
-  void _joinPlaceholder(
+  /// Whether the group is only the untouched default holder.
+  bool _onlyPlaceholder(
     _Groups groups,
     List<HolderPatient> patients,
-    List<HolderSource> sources,
+    String root,
   ) {
-    final people = _people(groups, patients, sources).toList();
-    if (people.length != 2) return;
-    bool onlyPlaceholder(String root) {
-      final members = patients.where(
-        (p) => groups.find(_patientKey(p)) == root,
-      );
-      return members.isNotEmpty && members.every((p) => p.isPlaceholder);
-    }
-
-    if (people.where(onlyPlaceholder).length == 1) {
-      groups.union(people[0], people[1]);
-    }
+    final members = patients.where((p) => groups.find(_patientKey(p)) == root);
+    return members.isNotEmpty && members.every((p) => p.isPlaceholder);
   }
 
   /// The groups that are someone: with a Patient row or a holder, and

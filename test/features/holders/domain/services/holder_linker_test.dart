@@ -64,24 +64,44 @@ Map<String, String> link(
 ]) => linkAll(sources, patients, references).links;
 
 void main() {
-  test('the unnamed default holder and the first provider patient are one '
-      'person, named after the wallet patient', () {
-    expect(
-      link(
-        const [HolderSource('wallet-default_patient'), HolderSource('epic')],
-        [
-          placeholder,
-          patient(
-            'p1',
-            'epic',
-            identifiers: [mrn('http://hospital-a/mrn', '55501')],
-            family: 'Doe',
-            given: 'Jane',
-          ),
-        ],
-      ),
-      {'wallet-default_patient': 'default_patient', 'epic': 'default_patient'},
+  test('next to the untouched default holder, a provider patient who '
+      'matches no one is asked about', () {
+    final result = linkAll(
+      const [HolderSource('wallet-default_patient'), HolderSource('epic')],
+      [
+        placeholder,
+        patient(
+          'p1',
+          'epic',
+          identifiers: [mrn('http://hospital-a/mrn', '55501')],
+          family: 'Doe',
+          given: 'Jane',
+        ),
+      ],
     );
+    expect(result.links, {'wallet-default_patient': 'default_patient'});
+    expect(result.questions.single.sourceIds, ['epic']);
+  });
+
+  test('the untouched default holder is known by its content, under any '
+      'row id', () {
+    final result = linkAll(
+      const [HolderSource('wallet-default_patient'), HolderSource('epic')],
+      [
+        const HolderPatient(
+          rowId: 'bf2e982b',
+          resourceId: 'bf2e982b',
+          sourceId: 'wallet-default_patient',
+          identifiers: [
+            HolderIdentifier(system: 'x', value: 'default_patient'),
+          ],
+          family: 'Holder',
+          given: 'Health Wallet',
+        ),
+        patient('p1', 'epic'),
+      ],
+    );
+    expect(result.questions.single.sourceIds, ['epic']);
   });
 
   test('two providers with the same national number and different record '
@@ -254,8 +274,8 @@ void main() {
     );
   });
 
-  test('the demo patient is someone else: the default holder stays itself '
-      'next to it, and still joins a provider patient', () {
+  test('the demo patient is never asked about, and a provider patient next '
+      'to the default holder still is', () {
     final demo = patient(
       'demo-patient',
       'demo_data',
@@ -276,20 +296,20 @@ void main() {
       },
     );
     expect(
-      link(
+      linkAll(
         const [
           HolderSource('wallet-default_patient'),
           HolderSource('demo_data'),
           HolderSource('epic'),
         ],
         [placeholder, demo, patient('p1', 'epic', family: 'Doe')],
-      )['epic'],
-      'default_patient',
+      ).questions.single.sourceIds,
+      ['epic'],
     );
   });
 
-  test('with two other people the default holder stays on its own', () {
-    final links = link(
+  test('next to the default holder every other person is asked about', () {
+    final result = linkAll(
       const [
         HolderSource('wallet-default_patient'),
         HolderSource('a'),
@@ -297,7 +317,8 @@ void main() {
       ],
       [placeholder, patient('pa', 'a'), patient('pb', 'b')],
     );
-    expect(links.values.toSet(), {'default_patient', 'pa', 'pb'});
+    expect(result.links.values.toSet(), {'default_patient'});
+    expect(result.questions.map((q) => q.newHolderId), ['pa', 'pb']);
   });
 
   test('a renamed default holder joins only a match', () {
@@ -357,20 +378,32 @@ void main() {
   });
 
   group('once the wallet has holders', () {
-    test('a newcomer who matches no one joins the only holder', () {
-      expect(
-        link(
-          const [
-            HolderSource('wallet-jane', holderId: 'jane'),
-            HolderSource('epic'),
-          ],
-          [
-            patient('jane', 'wallet-jane', family: 'Doe', given: 'Jane'),
-            patient('p1', 'epic', family: 'Doe', given: 'J.'),
-          ],
-        ),
-        {'epic': 'jane'},
+    test('a newcomer who matches no one is asked about, even next to a '
+        'single holder', () {
+      final result = linkAll(
+        const [
+          HolderSource('wallet-jane', holderId: 'jane'),
+          HolderSource('epic'),
+        ],
+        [
+          patient('jane', 'wallet-jane', family: 'Doe', given: 'Jane'),
+          patient('p1', 'epic', family: 'Doe', given: 'J.'),
+        ],
       );
+      expect(result.links, isEmpty);
+      expect(result.questions.single.sourceIds, ['epic']);
+    });
+
+    test('with only the demo person, a newcomer becomes a holder', () {
+      final result = linkAll(
+        const [
+          HolderSource('demo_data', holderId: 'demo-patient'),
+          HolderSource('epic'),
+        ],
+        [patient('demo-patient', 'demo_data'), patient('p1', 'epic')],
+      );
+      expect(result.links, {'epic': 'p1'});
+      expect(result.questions, isEmpty);
     });
 
     test('the demo person is not a holder to join', () {
@@ -386,8 +419,8 @@ void main() {
           patient('p1', 'epic'),
         ],
       );
-      expect(result.links, {'epic': 'jane'});
-      expect(result.questions, isEmpty);
+      expect(result.links, isEmpty);
+      expect(result.questions.single.sourceIds, ['epic']);
     });
 
     test('with several holders a newcomer is asked about, with the sources '

@@ -116,23 +116,16 @@ void main() {
     );
   }
 
-  test('the default holder and the first provider patient are read as one '
-      'person, shown by the row with details', () async {
+  test('next to the default holder, a provider patient who matches no one '
+      'is asked about and stays out until answered', () async {
     await placeholder();
     await patient('p1', 'epic', given: 'Jane', family: 'Doe');
 
     final directory = await service.load();
 
-    final holder = directory.holders.single;
-    expect(holder.id, 'default_patient');
-    expect(holder.sourceIds, ['epic', 'wallet-default_patient']);
-    expect(holder.representativePatient.id, 'p1');
-    expect(
-      holder.allPatientInstances.map((p) => p.id),
-      contains('default_patient'),
-    );
-    expect(directory.ofPatientId('p1'), same(holder));
-    expect(directory.questions, isEmpty);
+    expect(directory.holders.single.id, 'default_patient');
+    expect(directory.questions.single.patient.id, 'p1');
+    expect(directory.ofSource('epic'), isNull);
   });
 
   test('of two copies of the default patient, the one with details is '
@@ -210,8 +203,8 @@ void main() {
     test("a provider patient's records go to their holder's wallet source, "
         'not one named after the provider row', () async {
       await placeholder();
+      await source('epic', holderId: 'default_patient');
       await patient('p1', 'epic');
-      await service.load();
 
       final wallet = await service.walletSourceForPatient('p1');
       expect(wallet.id, 'wallet-default_patient');
