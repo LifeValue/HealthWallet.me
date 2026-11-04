@@ -89,14 +89,29 @@ void main() {
     expect(processingBloc.events, isEmpty);
   });
 
+  for (final MapEntry(key: name, value: key) in aiSettingsDiscardKeys.entries) {
+    testWidgets('$name after changes writes nothing', (tester) async {
+      await openSettings(tester);
+
+      await moveAiSlider(tester, 0, 0);
+      await tapTokenPreset(tester, _en.tokenPresetHigh);
+      await toggleDeepScan(tester);
+      await tapAiSettingsControl(tester, key);
+
+      expect(find.byType(AiTokenSettingsDialog), findsNothing);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getKeys(), isEmpty);
+      expect(processingBloc.events, isEmpty);
+    });
+  }
+
   testWidgets('a changed context size is the only value saved', (
     tester,
   ) async {
     await openSettings(tester);
 
     // The first slider is the context size; its first step is 512.
-    tester.widget<Slider>(find.byType(Slider).first).onChanged!(0);
-    await tester.pump();
+    await moveAiSlider(tester, 0, 0);
     await tapSave(tester);
 
     final prefs = await SharedPreferences.getInstance();

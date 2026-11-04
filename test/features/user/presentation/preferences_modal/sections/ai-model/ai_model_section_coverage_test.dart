@@ -169,8 +169,7 @@ void main() {
       await openAiSettings(tester, find.text(_en.aiSettings));
 
       // The second slider is the GPU layers (0 to 99).
-      tester.widget<Slider>(find.byType(Slider).at(1)).onChanged!(7);
-      await tester.pump();
+      await moveAiSlider(tester, 1, 7);
       await tapSave(tester);
 
       final prefs = await SharedPreferences.getInstance();

@@ -145,27 +145,24 @@ void main() {
   }
 
   group('closing', () {
-    testWidgets('the back arrow returns the changes like Save', (tester) async {
+    testWidgets('the back arrow drops the changes', (tester) async {
       await open(tester);
 
       await tap(tester, find.text(_en.tokenPresetHigh));
       await tap(tester, find.byIcon(Icons.arrow_back_ios_new));
 
       expect(closed, isTrue);
-      expect(result!.maxTokens, TokenPreset.high.tokens);
+      expect(result, isNull);
     });
 
-    testWidgets('the close icon returns no change when nothing changed', (
-      tester,
-    ) async {
+    testWidgets('the close icon drops the changes', (tester) async {
       await open(tester);
 
+      await tap(tester, find.text(_en.tokenPresetHigh));
       await tap(tester, find.byIcon(Icons.close));
 
       expect(closed, isTrue);
-      expect(result, isNotNull);
-      expect(result!.changesModel, isFalse);
-      expect(result!.useVision, isNull);
+      expect(result, isNull);
     });
 
     testWidgets('closing stops listening to the download service', (
@@ -252,8 +249,7 @@ void main() {
     testWidgets('a moved context slider returns that step', (tester) async {
       await open(tester);
 
-      slider(tester, 0).onChanged!(3);
-      await tester.pump();
+      await moveAiSlider(tester, 0, 3);
       await save(tester);
 
       expect(result!.contextSize, 4096);
@@ -266,9 +262,8 @@ void main() {
       final maxThreads = Platform.numberOfProcessors.clamp(1, 8);
       expect(slider(tester, 1).max, 99);
       expect(slider(tester, 2).max, maxThreads);
-      slider(tester, 1).onChanged!(33);
-      slider(tester, 2).onChanged!(maxThreads.toDouble());
-      await tester.pump();
+      await moveAiSlider(tester, 1, 33);
+      await moveAiSlider(tester, 2, maxThreads.toDouble());
       await save(tester);
 
       expect(result!.gpuLayers, 33);
@@ -349,8 +344,7 @@ void main() {
       );
       expect(find.text(chip(2048, withVision: false)), findsOneWidget);
 
-      slider(tester, 0).onChanged!(0);
-      await tester.pump();
+      await moveAiSlider(tester, 0, 0);
       expect(find.text(chip(512, withVision: false)), findsOneWidget);
     });
   });
@@ -411,7 +405,8 @@ void main() {
       await open(tester);
 
       await toggle(tester);
-      await tap(tester, find.text(_en.cancel));
+      // The prompt's Cancel, drawn over the settings dialog's own Cancel.
+      await tap(tester, find.text(_en.cancel).last);
 
       expect(service.mmprojStarted, isEmpty);
       expect(find.text(_en.deepScanDownloadTitle), findsNothing);

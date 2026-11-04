@@ -84,3 +84,31 @@ Future<void> toggleDeepScan(WidgetTester tester) => _tapVisible(
     matching: find.text(_en.off),
   ),
 );
+
+/// Moves the dialog's slider at [index] to [value] and lets go, reporting it
+/// the way a drag does: onChanged while it moves, onChangeEnd on release.
+Future<void> moveAiSlider(WidgetTester tester, int index, double value) async {
+  Slider slider() => tester.widget<Slider>(find.byType(Slider).at(index));
+  slider().onChangeStart?.call(slider().value);
+  slider().onChanged!(value);
+  await tester.pump();
+  slider().onChangeEnd!(value);
+  await tester.pump();
+}
+
+/// The dialog's controls that close it without applying anything.
+const aiSettingsDiscardKeys = {
+  'Cancel': AiTokenSettingsDialog.cancelKey,
+  'the close icon': AiTokenSettingsDialog.closeKey,
+  'the back arrow': AiTokenSettingsDialog.backKey,
+};
+
+/// Taps the dialog control under [key] and lets the screen that opened it
+/// react to the dialog closing.
+Future<void> tapAiSettingsControl(WidgetTester tester, Key key) async {
+  await _tapVisible(tester, find.byKey(key));
+  for (var i = 0; i < 5; i++) {
+    await _runReal(tester);
+    await tester.pump();
+  }
+}

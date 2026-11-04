@@ -16,6 +16,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/processing/domain/deep_scan_defaults.dart';
 import 'package:health_wallet/features/processing/domain/services/ai_model_download_service.dart';
@@ -184,6 +185,11 @@ class AiTokenSettingsDialog extends StatefulWidget {
     return 4096;
   }
 
+  static const backKey = Key('ai_settings_back');
+  static const closeKey = Key('ai_settings_close');
+  static const cancelKey = Key('ai_settings_cancel');
+  static const setKey = Key('ai_settings_set');
+
   @override
   State<AiTokenSettingsDialog> createState() => _AiTokenSettingsDialogState();
 }
@@ -298,6 +304,9 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
     );
   }
 
+  /// Closes the dialog without applying anything: the caller gets null.
+  void _cancel() => Navigator.of(context).pop();
+
   void _apply() {
     T? changed<T>(T value, T opening) => value == opening ? null : value;
 
@@ -329,107 +338,112 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
       child: Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: Insets.medium),
-        child: SizedBox(
-          width: context.wideDialogWidth,
-          child: Container(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.85,
-            ),
-            decoration: BoxDecoration(
-              color: context.isDarkMode
-                  ? context.colorScheme.surface
-                  : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: borderColor, width: 1),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildHeader(textColor),
-                Divider(height: 1, thickness: 1, color: borderColor),
-                Flexible(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(Insets.normal),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          context.l10n.aiSettingsDescription,
-                          style: AppTextStyle.labelLarge.copyWith(
-                            color: secondaryTextColor,
+        // A redraw of the dialog's content (a moving slider, download
+        // progress) stays in its own layer instead of repainting the blur.
+        child: RepaintBoundary(
+          child: SizedBox(
+            width: context.wideDialogWidth,
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.85,
+              ),
+              decoration: BoxDecoration(
+                color: context.isDarkMode
+                    ? context.colorScheme.surface
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: borderColor, width: 1),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildHeader(textColor),
+                  Divider(height: 1, thickness: 1, color: borderColor),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(Insets.normal),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            context.l10n.aiSettingsDescription,
+                            style: AppTextStyle.labelLarge.copyWith(
+                              color: secondaryTextColor,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: Insets.small),
-                        _buildDeviceInfoChip(textColor, estimatedMB),
-                        const SizedBox(height: Insets.normal),
-                        AiVisionToggleSection(
-                          useVision: _useVision,
-                          isMmprojDownloading: _isMmprojDownloading,
-                          mmprojProgress: _mmprojProgress,
-                          onToggleOn: _handleVisionToggleOn,
-                          onToggleOff: () => setState(() => _useVision = false),
-                          textColor: textColor,
-                          secondaryTextColor: secondaryTextColor,
-                          borderColor: borderColor,
-                        ),
-                        const SizedBox(height: Insets.normal),
-                        _buildSliderSection(
-                          context.l10n.contextSizeLabel,
-                          context.l10n.contextSizeDescription,
-                          _contextStepIndex(),
-                          0,
-                          _contextSizeSteps.length - 1,
-                          _contextSizeSteps
-                              .indexOf(widget.recommendedContextSize)
-                              .clamp(0, _contextSizeSteps.length - 1),
-                          (v) => setState(
-                            () => _contextSize = _contextSizeSteps[v],
+                          const SizedBox(height: Insets.small),
+                          _buildDeviceInfoChip(textColor, estimatedMB),
+                          const SizedBox(height: Insets.normal),
+                          AiVisionToggleSection(
+                            useVision: _useVision,
+                            isMmprojDownloading: _isMmprojDownloading,
+                            mmprojProgress: _mmprojProgress,
+                            onToggleOn: _handleVisionToggleOn,
+                            onToggleOff: () =>
+                                setState(() => _useVision = false),
+                            textColor: textColor,
+                            secondaryTextColor: secondaryTextColor,
+                            borderColor: borderColor,
                           ),
-                          textColor,
-                          secondaryTextColor,
-                          borderColor,
-                          label: '$_contextSize',
-                          stepValues: _contextSizeSteps,
-                        ),
-                        const SizedBox(height: Insets.normal),
-                        _buildSliderSection(
-                          context.l10n.gpuLayersLabel,
-                          context.l10n.gpuLayersDescription,
-                          _gpuLayers.clamp(0, 99),
-                          0,
-                          99,
-                          widget.recommendedGpuLayers.clamp(0, 99),
-                          (v) => setState(() => _gpuLayers = v),
-                          textColor,
-                          secondaryTextColor,
-                          borderColor,
-                        ),
-                        const SizedBox(height: Insets.normal),
-                        _buildSliderSection(
-                          context.l10n.threadsLabel,
-                          context.l10n.threadsDescription,
-                          _threads,
-                          1,
-                          Platform.numberOfProcessors.clamp(1, 8),
-                          widget.recommendedThreads,
-                          (v) => setState(() => _threads = v),
-                          textColor,
-                          secondaryTextColor,
-                          borderColor,
-                        ),
-                        const SizedBox(height: Insets.normal),
-                        _buildTokenSection(
-                          textColor,
-                          secondaryTextColor,
-                          borderColor,
-                        ),
-                        const SizedBox(height: Insets.normal),
-                        _buildApplyButton(),
-                      ],
+                          const SizedBox(height: Insets.normal),
+                          _buildSliderSection(
+                            context.l10n.contextSizeLabel,
+                            context.l10n.contextSizeDescription,
+                            _contextStepIndex(),
+                            0,
+                            _contextSizeSteps.length - 1,
+                            _contextSizeSteps
+                                .indexOf(widget.recommendedContextSize)
+                                .clamp(0, _contextSizeSteps.length - 1),
+                            (v) => setState(
+                              () => _contextSize = _contextSizeSteps[v],
+                            ),
+                            textColor,
+                            secondaryTextColor,
+                            borderColor,
+                            label: '$_contextSize',
+                            stepValues: _contextSizeSteps,
+                          ),
+                          const SizedBox(height: Insets.normal),
+                          _buildSliderSection(
+                            context.l10n.gpuLayersLabel,
+                            context.l10n.gpuLayersDescription,
+                            _gpuLayers.clamp(0, 99),
+                            0,
+                            99,
+                            widget.recommendedGpuLayers.clamp(0, 99),
+                            (v) => setState(() => _gpuLayers = v),
+                            textColor,
+                            secondaryTextColor,
+                            borderColor,
+                          ),
+                          const SizedBox(height: Insets.normal),
+                          _buildSliderSection(
+                            context.l10n.threadsLabel,
+                            context.l10n.threadsDescription,
+                            _threads,
+                            1,
+                            Platform.numberOfProcessors.clamp(1, 8),
+                            widget.recommendedThreads,
+                            (v) => setState(() => _threads = v),
+                            textColor,
+                            secondaryTextColor,
+                            borderColor,
+                          ),
+                          const SizedBox(height: Insets.normal),
+                          _buildTokenSection(
+                            textColor,
+                            secondaryTextColor,
+                            borderColor,
+                          ),
+                          const SizedBox(height: Insets.normal),
+                          _buildActions(),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -446,7 +460,8 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
       child: Row(
         children: [
           GestureDetector(
-            onTap: _apply,
+            key: AiTokenSettingsDialog.backKey,
+            onTap: _cancel,
             child: Icon(Icons.arrow_back_ios_new, size: 16, color: textColor),
           ),
           const SizedBox(width: Insets.small),
@@ -460,7 +475,8 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
             ),
           ),
           GestureDetector(
-            onTap: _apply,
+            key: AiTokenSettingsDialog.closeKey,
+            onTap: _cancel,
             child: Padding(
               padding: const EdgeInsets.all(9),
               child: Icon(Icons.close, size: 24, color: textColor),
@@ -579,28 +595,28 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
     );
   }
 
-  Widget _buildApplyButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 44,
-      child: ElevatedButton(
-        onPressed: _apply,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          elevation: 0,
-        ),
-        child: Text(
-          context.l10n.setTokens,
-          style: AppTextStyle.bodyMedium.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
+  Widget _buildActions() {
+    return Row(
+      children: [
+        Expanded(
+          child: AppButton(
+            key: AiTokenSettingsDialog.cancelKey,
+            label: context.l10n.cancel,
+            onPressed: _cancel,
+            variant: AppButtonVariant.outlined,
+            padding: const EdgeInsets.symmetric(vertical: Insets.smallNormal),
           ),
         ),
-      ),
+        const SizedBox(width: Insets.small),
+        Expanded(
+          child: AppButton(
+            key: AiTokenSettingsDialog.setKey,
+            label: context.l10n.setTokens,
+            onPressed: _apply,
+            padding: const EdgeInsets.symmetric(vertical: Insets.smallNormal),
+          ),
+        ),
+      ],
     );
   }
 }
