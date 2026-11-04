@@ -742,7 +742,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tokenUsageDescription =>
-      'Qué tan larga puede ser la respuesta de la IA en un paso. Demasiado baja corta la respuesta y se pierden registros; más alta tarda más.';
+      'Lo máximo que la IA puede escribir en cada paso mientras enumera los registros que encontró en tu documento. Demasiado corta y se cortan algunos registros; más larga tarda más. Siempre cabe dentro de la memoria de trabajo.';
 
   @override
   String get gpuLayersLabel => 'Capas GPU';
@@ -771,20 +771,26 @@ class AppLocalizationsEs extends AppLocalizations {
   String get tokenPresetHigh => 'Larga';
 
   @override
+  String get tokenPresetLowHint => 'unos pocos valores';
+
+  @override
+  String get tokenPresetMediumHint => 'un informe breve';
+
+  @override
+  String get tokenPresetHighHint => 'un informe completo';
+
+  @override
   String get tokenPresetCustom => 'Personalizado';
 
   @override
   String get setTokens => 'Establecer';
 
   @override
-  String get tokens => 'tokens';
-
-  @override
   String get contextSizeLabel => 'Memoria de trabajo';
 
   @override
   String get contextSizeDescription =>
-      'Cuánto texto e imágenes puede manejar la IA en un paso: el documento más su respuesta. Más permite documentos más largos, pero usa más memoria.';
+      'El espacio de trabajo de la IA para un paso: sitio para leer tu documento y anotar lo que encuentra. Más grande admite documentos más largos, pero usa más memoria del dispositivo. Si el escaneo falla por «memoria insuficiente», redúcelo.';
 
   @override
   String get useVisionLabel => 'Escaneo profundo';

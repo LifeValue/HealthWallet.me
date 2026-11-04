@@ -1437,7 +1437,7 @@ abstract class AppLocalizations {
   /// No description provided for @tokenUsageDescription.
   ///
   /// In en, this message translates to:
-  /// **'How long the AI\'s answer for one step can be. Too low cuts answers short and records go missing; higher takes longer.'**
+  /// **'The most the AI may write per step, while it lists the records it found in your document. Too short and some records get cut off; longer takes more time. It always fits inside the working memory.'**
   String get tokenUsageDescription;
 
   /// No description provided for @gpuLayersLabel.
@@ -1488,6 +1488,24 @@ abstract class AppLocalizations {
   /// **'Long'**
   String get tokenPresetHigh;
 
+  /// No description provided for @tokenPresetLowHint.
+  ///
+  /// In en, this message translates to:
+  /// **'a few values'**
+  String get tokenPresetLowHint;
+
+  /// No description provided for @tokenPresetMediumHint.
+  ///
+  /// In en, this message translates to:
+  /// **'a short report'**
+  String get tokenPresetMediumHint;
+
+  /// No description provided for @tokenPresetHighHint.
+  ///
+  /// In en, this message translates to:
+  /// **'a full report'**
+  String get tokenPresetHighHint;
+
   /// No description provided for @tokenPresetCustom.
   ///
   /// In en, this message translates to:
@@ -1500,12 +1518,6 @@ abstract class AppLocalizations {
   /// **'Set'**
   String get setTokens;
 
-  /// No description provided for @tokens.
-  ///
-  /// In en, this message translates to:
-  /// **'tokens'**
-  String get tokens;
-
   /// No description provided for @contextSizeLabel.
   ///
   /// In en, this message translates to:
@@ -1515,7 +1527,7 @@ abstract class AppLocalizations {
   /// No description provided for @contextSizeDescription.
   ///
   /// In en, this message translates to:
-  /// **'How much text and images the AI can hold for one step: the document plus its answer. More handles longer documents but uses more memory.'**
+  /// **'The AI\'s workspace for one step: space to read your document and write down what it finds. Bigger fits longer documents, but uses more of your device\'s memory. If scanning fails with \"not enough memory\", lower it.'**
   String get contextSizeDescription;
 
   /// No description provided for @useVisionLabel.

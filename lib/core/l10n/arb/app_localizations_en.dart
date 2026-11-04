@@ -731,7 +731,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tokenUsageDescription =>
-      'How long the AI\'s answer for one step can be. Too low cuts answers short and records go missing; higher takes longer.';
+      'The most the AI may write per step, while it lists the records it found in your document. Too short and some records get cut off; longer takes more time. It always fits inside the working memory.';
 
   @override
   String get gpuLayersLabel => 'GPU Layers';
@@ -760,20 +760,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tokenPresetHigh => 'Long';
 
   @override
+  String get tokenPresetLowHint => 'a few values';
+
+  @override
+  String get tokenPresetMediumHint => 'a short report';
+
+  @override
+  String get tokenPresetHighHint => 'a full report';
+
+  @override
   String get tokenPresetCustom => 'Custom';
 
   @override
   String get setTokens => 'Set';
 
   @override
-  String get tokens => 'tokens';
-
-  @override
   String get contextSizeLabel => 'Working memory';
 
   @override
   String get contextSizeDescription =>
-      'How much text and images the AI can hold for one step: the document plus its answer. More handles longer documents but uses more memory.';
+      'The AI\'s workspace for one step: space to read your document and write down what it finds. Bigger fits longer documents, but uses more of your device\'s memory. If scanning fails with \"not enough memory\", lower it.';
 
   @override
   String get useVisionLabel => 'Deep Scan';

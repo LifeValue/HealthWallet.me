@@ -742,7 +742,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get tokenUsageDescription =>
-      'Cât de lung poate fi răspunsul AI-ului într-un pas. Prea mic taie răspunsul și se pierd înregistrări; mai mare durează mai mult.';
+      'Cât poate scrie AI-ul cel mult la fiecare pas, în timp ce enumeră înregistrările găsite în document. Prea scurt și unele înregistrări sunt tăiate; mai lung durează mai mult. Încape mereu în memoria de lucru.';
 
   @override
   String get gpuLayersLabel => 'Straturi GPU';
@@ -771,20 +771,26 @@ class AppLocalizationsRo extends AppLocalizations {
   String get tokenPresetHigh => 'Lung';
 
   @override
+  String get tokenPresetLowHint => 'câteva valori';
+
+  @override
+  String get tokenPresetMediumHint => 'un raport scurt';
+
+  @override
+  String get tokenPresetHighHint => 'un raport complet';
+
+  @override
   String get tokenPresetCustom => 'Personalizat';
 
   @override
   String get setTokens => 'Setează';
 
   @override
-  String get tokens => 'token-uri';
-
-  @override
   String get contextSizeLabel => 'Memorie de lucru';
 
   @override
   String get contextSizeDescription =>
-      'Cât text și câte imagini poate ține AI-ul într-un pas: documentul plus răspunsul. Mai mult permite documente mai lungi, dar folosește mai multă memorie.';
+      'Spațiul de lucru al AI-ului pentru un pas: loc pentru a citi documentul și a nota ce găsește. Mai mare încape documente mai lungi, dar folosește mai multă memorie a dispozitivului. Dacă scanarea eșuează cu „memorie insuficientă”, micșorează-l.';
 
   @override
   String get useVisionLabel => 'Scanare Profundă';

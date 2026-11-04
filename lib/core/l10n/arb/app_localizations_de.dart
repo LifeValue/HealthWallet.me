@@ -745,7 +745,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get tokenUsageDescription =>
-      'Wie lang die Antwort der KI in einem Schritt sein darf. Zu niedrig schneidet Antworten ab und Einträge fehlen; höher dauert länger.';
+      'Wie viel die KI pro Schritt höchstens schreiben darf, während sie die gefundenen Einträge deines Dokuments auflistet. Zu kurz, und manche Einträge werden abgeschnitten; länger dauert mehr Zeit. Es passt immer in den KI-Arbeitsspeicher.';
 
   @override
   String get gpuLayersLabel => 'GPU-Schichten';
@@ -774,20 +774,26 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tokenPresetHigh => 'Lang';
 
   @override
+  String get tokenPresetLowHint => 'ein paar Werte';
+
+  @override
+  String get tokenPresetMediumHint => 'ein kurzer Bericht';
+
+  @override
+  String get tokenPresetHighHint => 'ein vollständiger Bericht';
+
+  @override
   String get tokenPresetCustom => 'Benutzerdefiniert';
 
   @override
   String get setTokens => 'Festlegen';
 
   @override
-  String get tokens => 'Tokens';
-
-  @override
   String get contextSizeLabel => 'KI-Arbeitsspeicher';
 
   @override
   String get contextSizeDescription =>
-      'Wie viel Text und Bilder die KI in einem Schritt verarbeiten kann: das Dokument plus ihre Antwort. Mehr erlaubt längere Dokumente, braucht aber mehr Speicher.';
+      'Der Arbeitsbereich der KI für einen Schritt: Platz, um dein Dokument zu lesen und aufzuschreiben, was sie findet. Größer passt für längere Dokumente, braucht aber mehr Speicher deines Geräts. Wenn das Scannen mit „nicht genügend Speicher“ fehlschlägt, verringere ihn.';
 
   @override
   String get useVisionLabel => 'Tiefenscan';

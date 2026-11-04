@@ -163,6 +163,17 @@ void main() {
     });
   });
 
+  group('answer length options', () {
+    testWidgets('each preset shows its size with a plain hint', (tester) async {
+      await open(tester);
+
+      expect(find.text('~100 · a few values'), findsOneWidget);
+      expect(find.text('~500 · a short report'), findsOneWidget);
+      expect(find.text('~2,000 · a full report'), findsOneWidget);
+      expect(find.textContaining('tokens'), findsNothing);
+    });
+  });
+
   group('value bubble', () {
     testWidgets('every slider shows its value bubble while dragged', (
       tester,
