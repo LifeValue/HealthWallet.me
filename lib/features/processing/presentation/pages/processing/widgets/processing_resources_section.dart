@@ -236,7 +236,9 @@ class _ScannedBasicButtons extends StatelessWidget {
             if (!session.isDocumentAttached) ...[
               Expanded(
                 child: AppButton(
-                  label: context.l10n.attachToEncounter,
+                  label: session.isDiagnosticReportContainer
+                      ? context.l10n.attachToPatient
+                      : context.l10n.attachToEncounter,
                   variant: AppButtonVariant.transparent,
                   onPressed: () => _attachToEncounter(context),
                   fullWidth: false,
@@ -333,7 +335,10 @@ class _ScannedBasicButtons extends StatelessWidget {
       builder: (context) => AttachToEncounterWidget(
         patient: session.patient,
         encounter: session.encounter,
-        confirmText: context.l10n.attachToEncounter,
+        confirmText: session.isDiagnosticReportContainer
+            ? context.l10n.attachToPatient
+            : context.l10n.attachToEncounter,
+        patientOnly: session.isDiagnosticReportContainer,
       ),
     );
 

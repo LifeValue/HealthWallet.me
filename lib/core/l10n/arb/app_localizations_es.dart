@@ -427,6 +427,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get attachToEncounter => 'Adjuntar a encuentro';
 
   @override
+  String get attachToPatient => 'Adjuntar a paciente';
+
+  @override
   String get continueProcessing => 'Continuar procesamiento';
 
   @override

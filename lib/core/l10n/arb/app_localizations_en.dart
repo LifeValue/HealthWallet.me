@@ -421,6 +421,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get attachToEncounter => 'Attach to Encounter';
 
   @override
+  String get attachToPatient => 'Attach to Patient';
+
+  @override
   String get continueProcessing => 'Continue Processing';
 
   @override

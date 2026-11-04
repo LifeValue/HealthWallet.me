@@ -870,6 +870,12 @@ abstract class AppLocalizations {
   /// **'Attach to Encounter'**
   String get attachToEncounter;
 
+  /// No description provided for @attachToPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach to Patient'**
+  String get attachToPatient;
+
   /// No description provided for @continueProcessing.
   ///
   /// In en, this message translates to:

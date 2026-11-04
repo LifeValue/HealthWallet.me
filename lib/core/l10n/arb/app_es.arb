@@ -123,6 +123,7 @@
   "fieldCannotBeEmpty": "Este campo no puede estar vacío",
   "selectDate": "Seleccionar fecha",
   "attachToEncounter": "Adjuntar a encuentro",
+  "attachToPatient": "Adjuntar a paciente",
   "continueProcessing": "Continuar procesamiento",
   "recordsSavedTitle": "Guardado exitosamente",
   "whatNextQuestion": "¿Qué te gustaría hacer a continuación?",

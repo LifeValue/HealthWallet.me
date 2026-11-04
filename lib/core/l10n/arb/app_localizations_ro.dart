@@ -427,6 +427,9 @@ class AppLocalizationsRo extends AppLocalizations {
   String get attachToEncounter => 'Atașează la Consultație';
 
   @override
+  String get attachToPatient => 'Atașează la Pacient';
+
+  @override
   String get continueProcessing => 'Continuă Procesarea';
 
   @override

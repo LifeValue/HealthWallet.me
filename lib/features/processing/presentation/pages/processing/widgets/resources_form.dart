@@ -689,6 +689,7 @@ class _ResourcesFormState extends State<ResourcesForm> {
         patient: widget.patient,
         encounter: widget.encounter,
         confirmText: context.l10n.save,
+        patientOnly: widget.diagnosticReport?.hasSelection ?? false,
       ),
     );
     if (result == null || !context.mounted) return;

@@ -429,6 +429,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get attachToEncounter => 'An Termin anhängen';
 
   @override
+  String get attachToPatient => 'An Patient anhängen';
+
+  @override
   String get continueProcessing => 'Verarbeitung fortsetzen';
 
   @override

@@ -134,6 +134,7 @@
   "fieldCannotBeEmpty": "This field cannot be empty",
   "selectDate": "Select date",
   "attachToEncounter": "Attach to Encounter",
+  "attachToPatient": "Attach to Patient",
   "continueProcessing": "Continue Processing",
   "recordsSavedTitle": "Successfully Saved",
   "whatNextQuestion": "What would you like to do next?",

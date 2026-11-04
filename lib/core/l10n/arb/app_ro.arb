@@ -124,6 +124,7 @@
   "fieldCannotBeEmpty": "Acest câmp nu poate fi gol",
   "selectDate": "Selectează data",
   "attachToEncounter": "Atașează la Consultație",
+  "attachToPatient": "Atașează la Pacient",
   "continueProcessing": "Continuă Procesarea",
   "recordsSavedTitle": "Salvat cu succes",
   "whatNextQuestion": "Ce ai dori să faci în continuare?",
