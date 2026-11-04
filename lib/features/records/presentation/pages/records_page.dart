@@ -20,6 +20,7 @@ import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
+import 'package:health_wallet/features/dashboard/presentation/helpers/dashboard_tab.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
@@ -258,6 +259,10 @@ class _RecordsViewState extends State<RecordsView> {
     super.dispose();
   }
 
+  /// The Import page: the desktop has no Scan page, so it sits earlier.
+  int get _importTab =>
+      DashboardTab.import(isDesktop: getIt<AppPlatform>().isDesktop);
+
   Future<void> _handleImportDocument() async {
     try {
       await Future.delayed(const Duration(milliseconds: 100));
@@ -286,7 +291,9 @@ class _RecordsViewState extends State<RecordsView> {
           context.read<ProcessingBloc>().add(
             DocumentImported(filePaths: validPaths),
           );
-          unawaited(getIt<PageViewNavigationController>().navigateToPage(3));
+          unawaited(
+            getIt<PageViewNavigationController>().navigateToPage(_importTab),
+          );
         }
       }
     } catch (e) {
@@ -311,7 +318,9 @@ class _RecordsViewState extends State<RecordsView> {
         context.read<ProcessingBloc>().add(
           DocumentImported(filePaths: validPaths),
         );
-        unawaited(getIt<PageViewNavigationController>().navigateToPage(3));
+        unawaited(
+          getIt<PageViewNavigationController>().navigateToPage(_importTab),
+        );
       }
     } catch (e) {
       logger.e('Could not import the picked images', e);
@@ -330,7 +339,7 @@ class _RecordsViewState extends State<RecordsView> {
 
   void _handleScanDocument() {
     final navController = getIt<PageViewNavigationController>();
-    navController.navigateToPage(2);
+    navController.navigateToPage(DashboardTab.scan);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(milliseconds: 100), () async {
         final cameraStatus = await Permission.camera.request();
@@ -676,7 +685,10 @@ class _RecordsViewState extends State<RecordsView> {
                   pageController: widget.pageController,
                   onImportDocument: _handleImportDocument,
                   onPickImage: _handlePickImage,
-                  onScanDocument: _handleScanDocument,
+                  // The desktop has no scanner.
+                  onScanDocument: getIt<AppPlatform>().isDesktop
+                      ? null
+                      : _handleScanDocument,
                 );
               },
             ),

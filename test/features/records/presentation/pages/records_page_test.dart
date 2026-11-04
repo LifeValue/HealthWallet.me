@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:file_picker/file_picker.dart';
@@ -12,6 +13,7 @@ import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart'
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/dashboard/presentation/helpers/dashboard_tab.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
@@ -25,6 +27,7 @@ import 'package:health_wallet/features/records/presentation/widgets/records_view
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
+import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -103,6 +106,57 @@ class _FailingFilePicker extends FilePickerPlatform {
   }
 }
 
+/// A file picker that hands back the given file, as if the user chose it.
+class _PickingFilePicker extends _FailingFilePicker {
+  _PickingFilePicker(this.path);
+
+  final String path;
+
+  @override
+  Future<List<PlatformFile>> pickFiles({
+    String? dialogTitle,
+    String? initialDirectory,
+    FileType type = FileType.any,
+    List<String>? allowedExtensions,
+    Function(FilePickerStatus)? onFileLoading,
+    int compressionQuality = 0,
+    AndroidOptions androidOptions = const AndroidOptions(),
+    DarwinOptions darwinOptions = const DarwinOptions(),
+    WindowsOptions windowsOptions = const WindowsOptions(),
+    LinuxOptions linuxOptions = const LinuxOptions(),
+    WebOptions webOptions = const WebOptions(),
+  }) async {
+    calls++;
+    return [_PickedFile('report.pdf', Uri.file(path))];
+  }
+}
+
+/// A picked file at [uri].
+final class _PickedFile extends PlatformFile {
+  _PickedFile(this.name, this.uri);
+
+  @override
+  final String name;
+
+  @override
+  final Uri uri;
+
+  @override
+  XFile get xFile => XFile(uri.toString());
+
+  @override
+  int? lengthSync() => null;
+
+  @override
+  Future<int?> length() async => null;
+
+  @override
+  Future<Uint8List> readAsBytes() async => Uint8List(0);
+
+  @override
+  Stream<Uint8List> readAsByteStream() => const Stream.empty();
+}
+
 const _imagePickerChannel = MethodChannel('plugins.flutter.io/image_picker');
 
 void main() {
@@ -149,6 +203,7 @@ void main() {
     AttachmentBrowseState browseState = const AttachmentBrowseState(),
     RecordsRepository? repository,
     RegionPreset region = RegionPreset.europe,
+    AppPlatform platform = AppPlatform.mobile,
   }) async {
     tester.view.physicalSize = screen;
     tester.view.devicePixelRatio = 1;
@@ -175,7 +230,7 @@ void main() {
     nav = PageViewNavigationController();
     getIt
       ..registerSingleton<SharedPreferences>(prefs)
-      ..registerSingleton<AppPlatform>(AppPlatform.mobile)
+      ..registerSingleton<AppPlatform>(platform)
       ..registerSingleton<PageViewNavigationController>(nav)
       ..registerSingleton<LwwSyncBloc>(lwwSyncBloc)
       ..registerFactory<AttachmentBrowseBloc>(() => browseBloc)
@@ -234,7 +289,18 @@ void main() {
             BlocProvider<UserBloc>.value(value: userBloc),
             BlocProvider<PatientBloc>.value(value: patientBloc),
           ],
-          child: const RecordsPage(),
+          child: Stack(
+            children: [
+              // The dashboard's pages, so the page can move between them.
+              Offstage(
+                child: PageView(
+                  controller: nav.pageController,
+                  children: List.filled(4, const SizedBox()),
+                ),
+              ),
+              const RecordsPage(),
+            ],
+          ),
         ),
       ),
     );
@@ -314,6 +380,80 @@ void main() {
         ),
       );
       expect(processingBloc.added, isEmpty);
+    });
+  });
+
+  group('the empty records list on each platform', () {
+    late String picked;
+
+    setUp(() {
+      final dir = Directory.systemTemp.createTempSync('records_import');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      picked = (File('${dir.path}/report.pdf')..writeAsStringSync('%PDF')).path;
+    });
+
+    Future<void> openList(WidgetTester tester, AppPlatform platform) =>
+        pumpPage(
+          tester,
+          screen: platform.isDesktop
+              ? const Size(1440, 900)
+              : const Size(390, 844),
+          viewMode: RecordsViewMode.recordsList,
+          platform: platform,
+        );
+
+    /// Picks [picked] through Import Document; the file check is real I/O.
+    Future<void> importDocument(WidgetTester tester) async {
+      FilePickerPlatform.instance = _PickingFilePicker(picked);
+      await tester.runAsync(() async {
+        await tester.tap(find.text(l10n.importDocument));
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+      });
+      await tester.pump();
+      await settle(tester);
+      expect(find.text(l10n.importFilesFailed), findsNothing);
+    }
+
+    testWidgets('the phone offers import, gallery and scan', (tester) async {
+      await openList(tester, AppPlatform.mobile);
+
+      expect(find.text(l10n.importDocument), findsOne);
+      expect(find.text(l10n.pickImageFromGallery), findsOne);
+      expect(find.text(l10n.scanDocument), findsOne);
+    });
+
+    testWidgets('the desktop has no scanner, so Scan is not offered', (
+      tester,
+    ) async {
+      await openList(tester, AppPlatform.desktop);
+
+      expect(find.text(l10n.importDocument), findsOne);
+      expect(find.text(l10n.pickImageFromGallery), findsOne);
+      expect(find.text(l10n.scanDocument), findsNothing);
+    });
+
+    testWidgets('on the phone, an imported document opens the Import page', (
+      tester,
+    ) async {
+      await openList(tester, AppPlatform.mobile);
+      await importDocument(tester);
+
+      expect(
+        processingBloc.added.single,
+        isA<DocumentImported>().having((e) => e.filePaths, 'paths', [picked]),
+      );
+      expect(nav.currentPage, DashboardTab.import(isDesktop: false));
+      expect(nav.currentPage, 3);
+    });
+
+    testWidgets('on the desktop, an imported document opens the Import page, '
+        'not the handover page after it', (tester) async {
+      await openList(tester, AppPlatform.desktop);
+      await importDocument(tester);
+
+      expect(processingBloc.added.single, isA<DocumentImported>());
+      expect(nav.currentPage, DashboardTab.import(isDesktop: true));
+      expect(nav.currentPage, 2);
     });
   });
 
