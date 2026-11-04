@@ -1371,7 +1371,7 @@ abstract class AppLocalizations {
   /// No description provided for @processingFailedCapacity.
   ///
   /// In en, this message translates to:
-  /// **'The document is too large for the current AI context size.'**
+  /// **'The document is too large for the current AI working memory.'**
   String get processingFailedCapacity;
 
   /// No description provided for @processingFailedMemory.
@@ -1383,7 +1383,7 @@ abstract class AppLocalizations {
   /// No description provided for @processingFailedCapacitySuggestion.
   ///
   /// In en, this message translates to:
-  /// **'Tap the settings icon above and increase the Context Size to 2048 or higher, then retry.'**
+  /// **'Tap the settings icon above and increase the Working memory to 2048 or higher, then retry.'**
   String get processingFailedCapacitySuggestion;
 
   /// No description provided for @increaseAiModelCapacity.
@@ -1431,13 +1431,13 @@ abstract class AppLocalizations {
   /// No description provided for @setAiTokensUsage.
   ///
   /// In en, this message translates to:
-  /// **'Set AI Tokens Usage'**
+  /// **'Maximum answer length'**
   String get setAiTokensUsage;
 
   /// No description provided for @tokenUsageDescription.
   ///
   /// In en, this message translates to:
-  /// **'Control how much processing power the AI can use. Higher capacity allows larger files and more complex tasks, but uses more resources and takes longer.'**
+  /// **'How long the AI\'s answer for one step can be. Too low cuts answers short and records go missing; higher takes longer.'**
   String get tokenUsageDescription;
 
   /// No description provided for @gpuLayersLabel.
@@ -1473,7 +1473,7 @@ abstract class AppLocalizations {
   /// No description provided for @tokenPresetLow.
   ///
   /// In en, this message translates to:
-  /// **'Low'**
+  /// **'Short'**
   String get tokenPresetLow;
 
   /// No description provided for @tokenPresetMedium.
@@ -1485,7 +1485,7 @@ abstract class AppLocalizations {
   /// No description provided for @tokenPresetHigh.
   ///
   /// In en, this message translates to:
-  /// **'High'**
+  /// **'Long'**
   String get tokenPresetHigh;
 
   /// No description provided for @tokenPresetCustom.
@@ -1509,13 +1509,13 @@ abstract class AppLocalizations {
   /// No description provided for @contextSizeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Context Size'**
+  /// **'Working memory'**
   String get contextSizeLabel;
 
   /// No description provided for @contextSizeDescription.
   ///
   /// In en, this message translates to:
-  /// **'Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory.'**
+  /// **'How much text and images the AI can hold for one step: the document plus its answer. More handles longer documents but uses more memory.'**
   String get contextSizeDescription;
 
   /// No description provided for @useVisionLabel.

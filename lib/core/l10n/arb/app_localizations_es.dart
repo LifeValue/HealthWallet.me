@@ -705,7 +705,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get processingFailedCapacity =>
-      'El documento es demasiado grande para el tamaño de contexto actual de IA.';
+      'El documento es demasiado grande para la memoria de trabajo actual de IA.';
 
   @override
   String get processingFailedMemory =>
@@ -713,7 +713,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get processingFailedCapacitySuggestion =>
-      'Toca el icono de ajustes arriba y aumenta el tamaño de contexto a 2048 o más, luego reintenta.';
+      'Toca el icono de ajustes arriba y aumenta la memoria de trabajo a 2048 o más, luego reintenta.';
 
   @override
   String get increaseAiModelCapacity => 'Aumentar capacidad de IA';
@@ -738,11 +738,11 @@ class AppLocalizationsEs extends AppLocalizations {
       'Ajusta el rendimiento de IA para tu dispositivo. Los valores recomendados están preseleccionados.';
 
   @override
-  String get setAiTokensUsage => 'Configurar uso de tokens IA';
+  String get setAiTokensUsage => 'Longitud máxima de la respuesta';
 
   @override
   String get tokenUsageDescription =>
-      'Controla cuánta capacidad de procesamiento puede usar la IA. Mayor capacidad permite archivos más grandes y tareas más complejas, pero usa más recursos y tarda más.';
+      'Qué tan larga puede ser la respuesta de la IA en un paso. Demasiado baja corta la respuesta y se pierden registros; más alta tarda más.';
 
   @override
   String get gpuLayersLabel => 'Capas GPU';
@@ -762,13 +762,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get recommended => 'Recomendado';
 
   @override
-  String get tokenPresetLow => 'Bajo';
+  String get tokenPresetLow => 'Corta';
 
   @override
-  String get tokenPresetMedium => 'Medio';
+  String get tokenPresetMedium => 'Media';
 
   @override
-  String get tokenPresetHigh => 'Alto';
+  String get tokenPresetHigh => 'Larga';
 
   @override
   String get tokenPresetCustom => 'Personalizado';
@@ -780,11 +780,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get tokens => 'tokens';
 
   @override
-  String get contextSizeLabel => 'Tamaño de contexto';
+  String get contextSizeLabel => 'Memoria de trabajo';
 
   @override
   String get contextSizeDescription =>
-      'Cantidad de texto que la IA puede procesar a la vez. Un contexto mayor maneja documentos más grandes pero usa más memoria.';
+      'Cuánto texto e imágenes puede manejar la IA en un paso: el documento más su respuesta. Más permite documentos más largos, pero usa más memoria.';
 
   @override
   String get useVisionLabel => 'Escaneo profundo';

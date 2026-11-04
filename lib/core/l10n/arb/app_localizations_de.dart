@@ -708,7 +708,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get processingFailedCapacity =>
-      'Das Dokument ist zu groß für die aktuelle KI-Kontextgröße.';
+      'Das Dokument ist zu groß für den aktuellen KI-Arbeitsspeicher.';
 
   @override
   String get processingFailedMemory =>
@@ -716,7 +716,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get processingFailedCapacitySuggestion =>
-      'Tippe oben auf das Einstellungssymbol und erhöhe die Kontextgröße auf 2048 oder höher, dann erneut versuchen.';
+      'Tippe oben auf das Einstellungssymbol und erhöhe den KI-Arbeitsspeicher auf 2048 oder höher, dann erneut versuchen.';
 
   @override
   String get increaseAiModelCapacity => 'KI-Kapazität erhöhen';
@@ -741,11 +741,11 @@ class AppLocalizationsDe extends AppLocalizations {
       'KI-Leistung für dein Gerät anpassen. Empfohlene Werte sind vorausgewählt.';
 
   @override
-  String get setAiTokensUsage => 'KI-Token-Nutzung einstellen';
+  String get setAiTokensUsage => 'Maximale Antwortlänge';
 
   @override
   String get tokenUsageDescription =>
-      'Steuere, wie viel Rechenleistung die KI nutzen kann. Höhere Kapazität ermöglicht größere Dateien und komplexere Aufgaben, verbraucht aber mehr Ressourcen und dauert länger.';
+      'Wie lang die Antwort der KI in einem Schritt sein darf. Zu niedrig schneidet Antworten ab und Einträge fehlen; höher dauert länger.';
 
   @override
   String get gpuLayersLabel => 'GPU-Schichten';
@@ -765,13 +765,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get recommended => 'Empfohlen';
 
   @override
-  String get tokenPresetLow => 'Niedrig';
+  String get tokenPresetLow => 'Kurz';
 
   @override
   String get tokenPresetMedium => 'Mittel';
 
   @override
-  String get tokenPresetHigh => 'Hoch';
+  String get tokenPresetHigh => 'Lang';
 
   @override
   String get tokenPresetCustom => 'Benutzerdefiniert';
@@ -783,11 +783,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tokens => 'Tokens';
 
   @override
-  String get contextSizeLabel => 'Kontextgröße';
+  String get contextSizeLabel => 'KI-Arbeitsspeicher';
 
   @override
   String get contextSizeDescription =>
-      'Textmenge, die die KI auf einmal verarbeiten kann. Größerer Kontext verarbeitet größere Dokumente, benötigt aber mehr Speicher.';
+      'Wie viel Text und Bilder die KI in einem Schritt verarbeiten kann: das Dokument plus ihre Antwort. Mehr erlaubt längere Dokumente, braucht aber mehr Speicher.';
 
   @override
   String get useVisionLabel => 'Tiefenscan';

@@ -694,7 +694,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get processingFailedCapacity =>
-      'The document is too large for the current AI context size.';
+      'The document is too large for the current AI working memory.';
 
   @override
   String get processingFailedMemory =>
@@ -702,7 +702,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get processingFailedCapacitySuggestion =>
-      'Tap the settings icon above and increase the Context Size to 2048 or higher, then retry.';
+      'Tap the settings icon above and increase the Working memory to 2048 or higher, then retry.';
 
   @override
   String get increaseAiModelCapacity => 'Increase AI Capacity';
@@ -727,11 +727,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Adjust AI performance for your device. Recommended values are pre-selected.';
 
   @override
-  String get setAiTokensUsage => 'Set AI Tokens Usage';
+  String get setAiTokensUsage => 'Maximum answer length';
 
   @override
   String get tokenUsageDescription =>
-      'Control how much processing power the AI can use. Higher capacity allows larger files and more complex tasks, but uses more resources and takes longer.';
+      'How long the AI\'s answer for one step can be. Too low cuts answers short and records go missing; higher takes longer.';
 
   @override
   String get gpuLayersLabel => 'GPU Layers';
@@ -751,13 +751,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recommended => 'Recommended';
 
   @override
-  String get tokenPresetLow => 'Low';
+  String get tokenPresetLow => 'Short';
 
   @override
   String get tokenPresetMedium => 'Medium';
 
   @override
-  String get tokenPresetHigh => 'High';
+  String get tokenPresetHigh => 'Long';
 
   @override
   String get tokenPresetCustom => 'Custom';
@@ -769,11 +769,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tokens => 'tokens';
 
   @override
-  String get contextSizeLabel => 'Context Size';
+  String get contextSizeLabel => 'Working memory';
 
   @override
   String get contextSizeDescription =>
-      'Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory.';
+      'How much text and images the AI can hold for one step: the document plus its answer. More handles longer documents but uses more memory.';
 
   @override
   String get useVisionLabel => 'Deep Scan';

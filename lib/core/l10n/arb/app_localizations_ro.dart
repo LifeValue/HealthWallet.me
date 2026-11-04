@@ -705,7 +705,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get processingFailedCapacity =>
-      'Documentul este prea mare pentru dimensiunea curentă a contextului AI.';
+      'Documentul este prea mare pentru memoria de lucru curentă a AI-ului.';
 
   @override
   String get processingFailedMemory =>
@@ -713,7 +713,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get processingFailedCapacitySuggestion =>
-      'Apasă pe pictograma de setări de mai sus și crește Dimensiunea Contextului la 2048 sau mai mare, apoi reîncearcă.';
+      'Apasă pe pictograma de setări de mai sus și crește Memoria de lucru la 2048 sau mai mare, apoi reîncearcă.';
 
   @override
   String get increaseAiModelCapacity => 'Crește Capacitatea AI';
@@ -738,11 +738,11 @@ class AppLocalizationsRo extends AppLocalizations {
       'Ajustează performanța AI pentru dispozitivul tău. Valorile recomandate sunt preselectate.';
 
   @override
-  String get setAiTokensUsage => 'Setează Utilizarea Token-urilor AI';
+  String get setAiTokensUsage => 'Lungimea maximă a răspunsului';
 
   @override
   String get tokenUsageDescription =>
-      'Controlează cât de multă putere de procesare poate folosi AI-ul. Capacitate mai mare permite fișiere mai mari și sarcini mai complexe, dar folosește mai multe resurse și durează mai mult.';
+      'Cât de lung poate fi răspunsul AI-ului într-un pas. Prea mic taie răspunsul și se pierd înregistrări; mai mare durează mai mult.';
 
   @override
   String get gpuLayersLabel => 'Straturi GPU';
@@ -762,13 +762,13 @@ class AppLocalizationsRo extends AppLocalizations {
   String get recommended => 'Recomandat';
 
   @override
-  String get tokenPresetLow => 'Scăzut';
+  String get tokenPresetLow => 'Scurt';
 
   @override
   String get tokenPresetMedium => 'Mediu';
 
   @override
-  String get tokenPresetHigh => 'Ridicat';
+  String get tokenPresetHigh => 'Lung';
 
   @override
   String get tokenPresetCustom => 'Personalizat';
@@ -780,11 +780,11 @@ class AppLocalizationsRo extends AppLocalizations {
   String get tokens => 'token-uri';
 
   @override
-  String get contextSizeLabel => 'Dimensiune Context';
+  String get contextSizeLabel => 'Memorie de lucru';
 
   @override
   String get contextSizeDescription =>
-      'Cantitatea de text pe care AI-ul o poate procesa deodată. Un context mai mare gestionează documente mai mari, dar folosește mai multă memorie.';
+      'Cât text și câte imagini poate ține AI-ul într-un pas: documentul plus răspunsul. Mai mult permite documente mai lungi, dar folosește mai multă memorie.';
 
   @override
   String get useVisionLabel => 'Scanare Profundă';

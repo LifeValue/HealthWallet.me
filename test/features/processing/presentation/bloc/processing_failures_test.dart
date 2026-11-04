@@ -215,9 +215,9 @@ void main() {
       expect(text, isNot(_en.processingFailedCapacity));
       expect(text, contains('Close other apps'));
       expect(text, contains('Deep Scan'));
-      // The desktop ignores the Context Size, so the message must not send
-      // the user there.
-      expect(text, isNot(contains('Context Size')));
+      // The desktop ignores the working memory setting, so the message must
+      // not send the user there.
+      expect(text, isNot(contains(_en.contextSizeLabel)));
     });
   });
 
