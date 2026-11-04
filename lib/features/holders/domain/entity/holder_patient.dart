@@ -59,11 +59,14 @@ class HolderPatient {
   final String birthDate;
 
   /// The "Health Wallet Holder" created before the first sync or scan, still
-  /// unnamed (see `DefaultPatientService`).
+  /// unnamed (see `DefaultPatientService`). Known by its content: each
+  /// install stores it under its own random row id, with the identifier
+  /// `default_patient`.
   bool get isPlaceholder =>
-      rowId == placeholderRowId &&
       given == 'Health Wallet' &&
-      family == 'Holder';
+      family == 'Holder' &&
+      (rowId == placeholderRowId ||
+          identifiers.any((id) => id.value == placeholderRowId));
 
   static const placeholderRowId = 'default_patient';
 }

@@ -96,16 +96,21 @@ class HolderService {
   Future<void> answer(HolderQuestion question, {String? holderId}) =>
       _linking.answer(question, holderId: holderId);
 
-  /// The holder's own wallet Patient row, else a row in one of their wallet
-  /// sources, else their first row.
-  Patient _representative(String holderId, List<Patient> rows) =>
-      rows.where((p) => p.id == holderId).firstOrNull ??
-      (rows
-              .where((p) => p.sourceId.startsWith(HolderSource.walletPrefix))
-              .toList()
-            ..sort((a, b) => a.id.compareTo(b.id)))
-          .firstOrNull ??
-      rows.first;
+  /// The one row shown for a person, everywhere: the holder's own wallet
+  /// Patient row, else a row in one of their wallet sources, else their
+  /// first row. A row with details comes before an untouched default
+  /// patient, of which each device makes its own copy.
+  Patient _representative(String holderId, List<Patient> rows) {
+    final filled = rows.where((p) => !_holderPatient(p).isPlaceholder).toList();
+    final candidates = filled.isEmpty ? rows : filled;
+    return candidates.where((p) => p.id == holderId).firstOrNull ??
+        (candidates
+                .where((p) => p.sourceId.startsWith(HolderSource.walletPrefix))
+                .toList()
+              ..sort((a, b) => a.id.compareTo(b.id)))
+            .firstOrNull ??
+        candidates.first;
+  }
 
   /// The source where the app writes for [holderId]: the wallet source
   /// linked to them, made as `wallet-<holderId>` if they have none.
@@ -160,9 +165,7 @@ class HolderService {
     final holderId = holder?.id ?? patientId;
     final shown = holder?.representativePatient;
     final source = await walletSourceOf(holderId);
-    final own = holder?.allPatientInstances
-        .where((p) => p.sourceId == source.id)
-        .firstOrNull;
+    final own = holder?.getPatientForSource(source.id);
 
     final id = own?.id ?? const Uuid().v4();
     final raw = <String, dynamic>{

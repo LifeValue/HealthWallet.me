@@ -164,9 +164,7 @@ class PatientEditService {
     );
 
     // The person's copy from an earlier edit, whatever its identifiers say.
-    final existingWalletPatient = holder?.allPatientInstances
-        .where((p) => p.sourceId == walletSource.id)
-        .firstOrNull;
+    final existingWalletPatient = holder?.getPatientForSource(walletSource.id);
 
     if (existingWalletPatient != null) {
       return await _updatePatientInPlace(

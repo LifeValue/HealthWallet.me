@@ -117,7 +117,7 @@ void main() {
   }
 
   test('the default holder and the first provider patient are read as one '
-      'person, shown by the wallet patient', () async {
+      'person, shown by the row with details', () async {
     await placeholder();
     await patient('p1', 'epic', given: 'Jane', family: 'Doe');
 
@@ -126,10 +126,47 @@ void main() {
     final holder = directory.holders.single;
     expect(holder.id, 'default_patient');
     expect(holder.sourceIds, ['epic', 'wallet-default_patient']);
-    expect(holder.representativePatient.id, 'default_patient');
-    expect(holder.allPatientInstances.map((p) => p.id), contains('p1'));
+    expect(holder.representativePatient.id, 'p1');
+    expect(
+      holder.allPatientInstances.map((p) => p.id),
+      contains('default_patient'),
+    );
     expect(directory.ofPatientId('p1'), same(holder));
     expect(directory.questions, isEmpty);
+  });
+
+  test('of two copies of the default patient, the one with details is '
+      'shown, edited and written', () async {
+    await placeholder();
+    // Another device's copy, under its own random id, already filled in.
+    await insertResource(
+      db,
+      id: '0a1b2c',
+      type: 'Patient',
+      sourceId: 'wallet-default_patient',
+      title: 'Pop, Mihai',
+      raw: {
+        'name': [
+          {
+            'use': 'official',
+            'given': ['Mihai'],
+            'family': 'Pop',
+          },
+        ],
+        'identifier': [
+          {'value': '1990824313713'},
+        ],
+      },
+    );
+
+    final holder = (await service.load()).holders.single;
+    expect(holder.representativePatient.id, '0a1b2c');
+    expect(holder.getPatientForSource('wallet-default_patient')!.id, '0a1b2c');
+    expect(service.isUnnamed(holder), isFalse);
+    expect(
+      (await service.walletPatientOf('default_patient')).patient.id,
+      '0a1b2c',
+    );
   });
 
   test('with several people a newcomer is asked about, stays out of every '

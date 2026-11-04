@@ -27,8 +27,13 @@ class Holder {
 
   bool existsInSource(String sourceId) => sourceIds.contains(sourceId);
 
+  /// The person's row in [sourceId]: the one shown for them when it is
+  /// there, since a source can hold more than one (each device's copy of
+  /// the default patient).
   Patient? getPatientForSource(String sourceId) =>
-      allPatientInstances.where((p) => p.sourceId == sourceId).firstOrNull;
+      representativePatient.sourceId == sourceId
+      ? representativePatient
+      : allPatientInstances.where((p) => p.sourceId == sourceId).firstOrNull;
 
   /// Whether [patient] is one of this person's rows.
   bool hasPatient(Patient patient) =>

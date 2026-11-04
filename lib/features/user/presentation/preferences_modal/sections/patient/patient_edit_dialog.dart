@@ -215,15 +215,9 @@ class _PatientEditDialogState extends State<PatientEditDialog>
       final blocState = context.read<PatientBloc>().state;
       final patientGroup = blocState.patientGroups[widget.patient.id];
 
-      final walletPatient = patientGroup?.allPatientInstances
-          .where((p) => p.sourceId.startsWith('wallet'))
-          .firstOrNull;
-
-      if (walletPatient != null) {
-        _currentPatient = walletPatient;
-      } else {
-        _currentPatient = patientGroup?.representativePatient ?? widget.patient;
-      }
+      // The row the patient card shows (see HolderService), so the form
+      // edits what the user sees.
+      _currentPatient = patientGroup?.representativePatient ?? widget.patient;
 
       _selectedGiven = _extractGiven(_currentPatient!);
       _selectedFamily = _extractFamily(_currentPatient!);
