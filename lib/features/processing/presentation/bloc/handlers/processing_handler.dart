@@ -423,6 +423,15 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           updateDb: true,
         );
       }
+      // A cancel (or clear) ends the stream too: the session stays as the
+      // cancel left it, neither a draft nor announced.
+      if (emit.isDone ||
+          state.sessions
+                  .firstWhereOrNull((s) => s.id == event.sessionId)
+                  ?.status !=
+              ProcessingStatus.processing) {
+        return;
+      }
       updateSession(
         emit,
         sessionId: event.sessionId,
@@ -501,10 +510,19 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     ResourceCreationInitiated event,
     Emitter<ProcessingState> emit,
   ) async {
-    emit(state.copyWith(status: const PipelineStatus.savingResources()));
-    final activeSession = state.sessions.firstWhere(
+    final activeSession = state.sessions.firstWhereOrNull(
       (s) => s.id == event.sessionId,
     );
+    if (activeSession == null) {
+      // Cleared before Done: nothing to save, and the status stays as it was
+      // so Done is not left disabled by savingResources.
+      logger.w(
+        '[ProcessingBloc] resource creation skipped: session '
+        '${event.sessionId} no longer exists',
+      );
+      return;
+    }
+    emit(state.copyWith(status: const PipelineStatus.savingResources()));
     try {
       final (subjectId, sourceId, finalContainer, _) =
           await _persistPrimaryResources(activeSession);

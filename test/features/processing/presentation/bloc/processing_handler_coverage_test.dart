@@ -803,13 +803,16 @@ void main() {
         await repository.remaining.close();
         await settle();
 
-        expect(session('s').status, ProcessingStatus.patientExtracted);
+        final cancelled = session('s');
+        expect(cancelled.status, ProcessingStatus.patientExtracted);
+        expect(cancelled.resources, isEmpty);
+        expect(cancelled.progress, 0.0);
+        expect(
+          repository.edited.map((s) => s.status),
+          isNot(contains(ProcessingStatus.draft)),
+        );
         expect(bloc.state.notification, isNull);
       },
-      skip:
-          'BUG: when the step-two stream ends after MappingCancelled without '
-          'another snapshot, onProcessRemainingResources still marks the '
-          'session draft and announces "processing finished"',
     );
 
     test('a failure keeps the resources read so far and goes back to step '
@@ -998,26 +1001,19 @@ void main() {
       expect(ocr.discarded, ['s']);
     });
 
-    test(
-      'a new patient without a gender is saved',
-      () async {
-        await save(
-          const ProcessingSession(
-            id: 's',
-            status: ProcessingStatus.draft,
-            patient: StagedPatient(draft: MappingPatient(id: 'p-new')),
-            encounter: StagedEncounter(draft: MappingEncounter(id: 'enc')),
-          ),
-        );
+    test('a new patient without a gender is saved', () async {
+      await save(
+        const ProcessingSession(
+          id: 's',
+          status: ProcessingStatus.draft,
+          patient: StagedPatient(draft: MappingPatient(id: 'p-new')),
+          encounter: StagedEncounter(draft: MappingEncounter(id: 'enc')),
+        ),
+      );
 
-        expect(bloc.state.status, const PipelineStatus.success());
-        expect(sync.saved.single.first.id, 'p-new');
-      },
-      skip:
-          'BUG: MappingPatient.toFhirResource builds AdministrativeGender(\'\'), '
-          'which throws "Invalid FHIR code", so a patient whose gender is '
-          'empty (allowed by the phase-1 schema) cannot be saved',
-    );
+      expect(bloc.state.status, const PipelineStatus.success());
+      expect(sync.saved.single.first.id, 'p-new');
+    });
 
     test('a specialty the app does not know is tagged as general '
         'care', () async {
@@ -1180,18 +1176,36 @@ void main() {
       expect(logs, loggedWarning('resource creation failed'));
     });
 
-    test(
-      'saving a session that is gone fails instead of staying in saving',
-      () async {
-        bloc.add(const ResourceCreationInitiated(sessionId: 'gone'));
-        await settle();
+    test('saving a session that is gone leaves the status as it was before '
+        'saving', () async {
+      const before = PipelineStatus.failure(error: 'Exception: earlier');
+      const other = ProcessingSession(
+        id: 'other',
+        status: ProcessingStatus.draft,
+        patient: newPatient,
+      );
+      seed(const ProcessingState(status: before, sessions: [other]));
 
-        expect(bloc.state.status, isA<Failure>());
-      },
-      skip:
-          'BUG: onResourceCreationInitiated looks the session up with '
-          'firstWhere outside its try, so an unknown session throws and the '
-          'status stays savingResources (Done stays disabled)',
-    );
+      bloc.add(const ResourceCreationInitiated(sessionId: 'gone'));
+      await settle();
+
+      expect(bloc.state.status, before);
+      expect(bloc.state.sessions, [other]);
+      expect(sync.saved, isEmpty);
+      expect(documents.calls, isEmpty);
+      expect(logs, loggedWarning('session gone no longer exists'));
+    });
+
+    test('saving a session that is gone with nothing before goes back to '
+        'the initial status, not success', () async {
+      bloc.add(const ResourceCreationInitiated(sessionId: 'gone'));
+      await settle();
+
+      expect(bloc.state.status, const PipelineStatus.initial());
+      expect(
+        states.map((s) => s.status),
+        isNot(contains(const PipelineStatus.success())),
+      );
+    });
   });
 }
