@@ -745,18 +745,18 @@ class AppLocalizationsEs extends AppLocalizations {
       'Lo máximo que la IA puede escribir en cada paso mientras enumera los registros que encontró en tu documento. Demasiado corta y se cortan algunos registros; más larga tarda más. Siempre cabe dentro de la memoria de trabajo.';
 
   @override
-  String get gpuLayersLabel => 'Capas GPU';
+  String get gpuLayersLabel => 'Chip gráfico (GPU)';
 
   @override
   String get gpuLayersDescription =>
-      'Descargar capas del modelo a la GPU para un procesamiento de imágenes más rápido. Más capas = más rápido pero más memoria. Pon 0 si la app se cierra.';
+      'Qué parte de la IA se ejecuta en el chip gráfico del dispositivo, que es más rápido que el procesador principal. Más alto es más rápido, pero usa más memoria. Si la app se cierra o falla durante un escaneo, bájalo o ponlo en 0.';
 
   @override
-  String get threadsLabel => 'Hilos CPU';
+  String get threadsLabel => 'Núcleos del procesador (CPU)';
 
   @override
   String get threadsDescription =>
-      'Número de hilos de CPU para inferencia. Más hilos = más rápido pero más batería.';
+      'Cuántos núcleos del procesador usa la IA a la vez. Más es más rápido, pero gasta la batería antes y puede calentar el dispositivo.';
 
   @override
   String get recommended => 'Recomendado';

@@ -734,18 +734,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'The most the AI may write per step, while it lists the records it found in your document. Too short and some records get cut off; longer takes more time. It always fits inside the working memory.';
 
   @override
-  String get gpuLayersLabel => 'GPU Layers';
+  String get gpuLayersLabel => 'Graphics chip (GPU)';
 
   @override
   String get gpuLayersDescription =>
-      'Offload model layers to GPU for faster image processing. More layers = faster but uses more memory. Set to 0 if the app crashes.';
+      'How much of the AI runs on your device\'s graphics chip, which is faster than the main processor. Higher is faster but uses more memory. If the app closes or crashes during a scan, lower it, or set it to 0.';
 
   @override
-  String get threadsLabel => 'CPU Threads';
+  String get threadsLabel => 'Processor cores (CPU)';
 
   @override
   String get threadsDescription =>
-      'Number of CPU threads for inference. More threads = faster but uses more battery.';
+      'How many processor cores the AI uses at the same time. More is faster, but uses the battery quicker and can make the device warm.';
 
   @override
   String get recommended => 'Recommended';

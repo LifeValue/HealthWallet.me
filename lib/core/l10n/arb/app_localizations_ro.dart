@@ -745,18 +745,18 @@ class AppLocalizationsRo extends AppLocalizations {
       'Cât poate scrie AI-ul cel mult la fiecare pas, în timp ce enumeră înregistrările găsite în document. Prea scurt și unele înregistrări sunt tăiate; mai lung durează mai mult. Încape mereu în memoria de lucru.';
 
   @override
-  String get gpuLayersLabel => 'Straturi GPU';
+  String get gpuLayersLabel => 'Cip grafic (GPU)';
 
   @override
   String get gpuLayersDescription =>
-      'Transferă straturile modelului pe GPU pentru procesare mai rapidă a imaginilor. Mai multe straturi = mai rapid, dar folosește mai multă memorie. Setează la 0 dacă aplicația se blochează.';
+      'Cât din AI rulează pe cipul grafic al dispozitivului, care este mai rapid decât procesorul principal. Mai mare este mai rapid, dar folosește mai multă memorie. Dacă aplicația se închide sau se blochează în timpul scanării, micșorează-l sau setează-l la 0.';
 
   @override
-  String get threadsLabel => 'Fire CPU';
+  String get threadsLabel => 'Nuclee procesor (CPU)';
 
   @override
   String get threadsDescription =>
-      'Numărul de fire CPU pentru inferență. Mai multe fire = mai rapid, dar consumă mai multă baterie.';
+      'Câte nuclee ale procesorului folosește AI-ul în același timp. Mai multe înseamnă mai rapid, dar consumă bateria mai repede și pot încălzi dispozitivul.';
 
   @override
   String get recommended => 'Recomandat';

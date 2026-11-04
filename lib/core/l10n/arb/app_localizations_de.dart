@@ -748,18 +748,18 @@ class AppLocalizationsDe extends AppLocalizations {
       'Wie viel die KI pro Schritt höchstens schreiben darf, während sie die gefundenen Einträge deines Dokuments auflistet. Zu kurz, und manche Einträge werden abgeschnitten; länger dauert mehr Zeit. Es passt immer in den KI-Arbeitsspeicher.';
 
   @override
-  String get gpuLayersLabel => 'GPU-Schichten';
+  String get gpuLayersLabel => 'Grafikchip (GPU)';
 
   @override
   String get gpuLayersDescription =>
-      'Modell-Schichten auf GPU auslagern für schnellere Bildverarbeitung. Mehr Schichten = schneller, aber mehr Speicherverbrauch. Auf 0 setzen bei Abstürzen.';
+      'Wie viel der KI auf dem Grafikchip deines Geräts läuft, der schneller ist als der Hauptprozessor. Höher ist schneller, braucht aber mehr Speicher. Wenn die App beim Scannen schließt oder abstürzt, verringere den Wert oder setze ihn auf 0.';
 
   @override
-  String get threadsLabel => 'CPU-Threads';
+  String get threadsLabel => 'Prozessorkerne (CPU)';
 
   @override
   String get threadsDescription =>
-      'Anzahl der CPU-Threads für Inferenz. Mehr Threads = schneller, aber höherer Akkuverbrauch.';
+      'Wie viele Prozessorkerne die KI gleichzeitig nutzt. Mehr ist schneller, verbraucht aber den Akku schneller und kann das Gerät warm machen.';
 
   @override
   String get recommended => 'Empfohlen';

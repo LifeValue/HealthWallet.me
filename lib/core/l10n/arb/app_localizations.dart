@@ -1443,25 +1443,25 @@ abstract class AppLocalizations {
   /// No description provided for @gpuLayersLabel.
   ///
   /// In en, this message translates to:
-  /// **'GPU Layers'**
+  /// **'Graphics chip (GPU)'**
   String get gpuLayersLabel;
 
   /// No description provided for @gpuLayersDescription.
   ///
   /// In en, this message translates to:
-  /// **'Offload model layers to GPU for faster image processing. More layers = faster but uses more memory. Set to 0 if the app crashes.'**
+  /// **'How much of the AI runs on your device\'s graphics chip, which is faster than the main processor. Higher is faster but uses more memory. If the app closes or crashes during a scan, lower it, or set it to 0.'**
   String get gpuLayersDescription;
 
   /// No description provided for @threadsLabel.
   ///
   /// In en, this message translates to:
-  /// **'CPU Threads'**
+  /// **'Processor cores (CPU)'**
   String get threadsLabel;
 
   /// No description provided for @threadsDescription.
   ///
   /// In en, this message translates to:
-  /// **'Number of CPU threads for inference. More threads = faster but uses more battery.'**
+  /// **'How many processor cores the AI uses at the same time. More is faster, but uses the battery quicker and can make the device warm.'**
   String get threadsDescription;
 
   /// No description provided for @recommended.
