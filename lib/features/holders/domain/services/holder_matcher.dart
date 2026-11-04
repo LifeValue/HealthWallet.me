@@ -15,15 +15,29 @@ class HolderMatcher {
   /// Shorter values (a bed number, a two-digit test id) match by chance.
   static const _minIdentifierLength = 5;
 
-  bool samePerson(HolderPatient a, HolderPatient b) {
+  bool samePerson(HolderPatient a, HolderPatient b) =>
+      sameIdentity(a, b) ||
+      (!_differentNationalNumbers(a, b) && _sameNameAndBirthDate(a, b));
+
+  /// Whether [a] and [b] share an identifier that names one person: strong
+  /// enough to join two people already in the wallet, which a name and
+  /// birth date alone are not.
+  bool sameIdentity(HolderPatient a, HolderPatient b) {
     if (_differentNationalNumbers(a, b)) return false;
+    // An ID typed in the app takes its system from the device's region, so
+    // the same CNP can be stored under two systems; its value is what counts.
+    final typed =
+        a.sourceId.startsWith(_walletPrefix) &&
+        b.sourceId.startsWith(_walletPrefix);
     for (final x in a.identifiers) {
       for (final y in b.identifiers) {
-        if (_sameIdentifier(x, y)) return true;
+        if (_sameIdentifier(x, y, typed: typed)) return true;
       }
     }
-    return _sameNameAndBirthDate(a, b);
+    return false;
   }
+
+  static const _walletPrefix = 'wallet-';
 
   /// Whether a patient read from a scanned document is [stored]. A scan's
   /// identifier has no system, so its value is compared with every stored
@@ -43,13 +57,20 @@ class HolderMatcher {
     return _sameNameAndBirthDate(scanned, stored);
   }
 
-  bool _sameIdentifier(HolderIdentifier x, HolderIdentifier y) {
+  /// The same value, and either the same system, or a national number on
+  /// either side (a number that long and unique doesn't recur by chance), or
+  /// both [typed] in the app.
+  bool _sameIdentifier(
+    HolderIdentifier x,
+    HolderIdentifier y, {
+    bool typed = false,
+  }) {
     final value = normalize(x.value);
     if (value.length < _minIdentifierLength || value != normalize(y.value)) {
       return false;
     }
     if (x.value == HolderPatient.placeholderRowId) return false;
-    if (_isNational(x) && _isNational(y)) return true;
+    if (typed || _isNational(x) || _isNational(y)) return true;
     final system = normalize(x.system);
     return system.isNotEmpty && system == normalize(y.system);
   }

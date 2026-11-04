@@ -122,6 +122,18 @@ class HolderRepositoryImpl implements HolderRepository {
   };
 
   @override
+  Future<void> mergeHolders(Map<String, String> into) async {
+    await _db.transaction(() async {
+      for (final MapEntry(key: from, value: to) in into.entries) {
+        await _db.customStatement(
+          'UPDATE sources SET holder_id = ? WHERE holder_id = ?',
+          [to, from],
+        );
+      }
+    });
+  }
+
+  @override
   Future<void> assignHolders(Map<String, String> holderBySource) async {
     await _db.transaction(() async {
       for (final MapEntry(key: sourceId, value: holderId)

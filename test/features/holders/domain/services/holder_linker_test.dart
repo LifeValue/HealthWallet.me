@@ -445,4 +445,82 @@ void main() {
       expect(result.questions.map((q) => q.newHolderId), ['pa', 'pb']);
     });
   });
+
+  group('holders that are one person', () {
+    Map<String, String> merges(
+      List<HolderPatient> patients,
+      Map<String, String> holderBySource,
+    ) => const HolderLinker().merges(
+      patients: patients,
+      holderBySource: holderBySource,
+    );
+
+    test('join the smallest holder id when they share a national number, '
+        'however their names are written', () {
+      expect(
+        merges(
+          [
+            patient(
+              'c',
+              'wallet-c',
+              identifiers: [ssn],
+              given: 'Ion',
+              family: 'Pop',
+            ),
+            patient(
+              'b',
+              'wallet-b',
+              identifiers: [ssn],
+              given: 'Pop',
+              family: 'Ion',
+            ),
+            patient('a', 'epic', identifiers: [ssn]),
+          ],
+          {'wallet-c': 'c', 'wallet-b': 'b', 'epic': 'a'},
+        ),
+        {'b': 'a', 'c': 'a'},
+      );
+    });
+
+    test('stay apart with the same name and birth date only, or the same '
+        'record number at two hospitals', () {
+      expect(
+        merges(
+          [
+            patient(
+              'a',
+              'epic',
+              identifiers: [mrn('http://a/mrn', '55501')],
+              given: 'Jane',
+              family: 'Doe',
+              birthDate: '1980-04-02',
+            ),
+            patient(
+              'b',
+              'kaiser',
+              identifiers: [mrn('http://b/mrn', '55501')],
+              given: 'Jane',
+              family: 'Doe',
+              birthDate: '1980-04-02',
+            ),
+          ],
+          {'epic': 'a', 'kaiser': 'b'},
+        ),
+        isEmpty,
+      );
+    });
+
+    test('never take in the demo person', () {
+      expect(
+        merges(
+          [
+            patient('a', 'wallet-a', identifiers: [ssn]),
+            patient('demo', 'demo_data', identifiers: [ssn]),
+          ],
+          {'wallet-a': 'a', 'demo_data': 'demo'},
+        ),
+        isEmpty,
+      );
+    });
+  });
 }

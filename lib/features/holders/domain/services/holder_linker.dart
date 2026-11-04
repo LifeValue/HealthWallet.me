@@ -3,8 +3,8 @@ import 'package:health_wallet/features/holders/domain/entity/holder_snapshot.dar
 import 'package:health_wallet/features/holders/domain/services/holder_matcher.dart';
 
 /// Works out which holder each source without one belongs to. A source
-/// already linked keeps its holder, and two holders are never merged: a link
-/// is a decision, and linking only adds to it.
+/// already linked keeps its holder here; holders that turn out to be one
+/// person are joined by [merges].
 ///
 /// A source joins a person through its Patient rows, through the patient a
 /// `wallet-<id>` source was made for, or through the patients its records
@@ -123,6 +123,50 @@ class HolderLinker {
           ),
       ]..sort((a, b) => a.newHolderId.compareTo(b.newHolderId)),
     );
+  }
+
+  /// Holders that are one person: their patients share an identifier (see
+  /// [HolderMatcher.sameIdentity]). This happens when two devices each
+  /// linked their own copy of someone before they synced. Each holder maps
+  /// to the one it joins, the smallest id of its group, so every device
+  /// merges the same way. The demo person is never merged.
+  Map<String, String> merges({
+    required List<HolderPatient> patients,
+    required Map<String, String> holderBySource,
+  }) {
+    final demo = holderBySource[HolderSource.demoId];
+    final linked = [
+      for (final p in patients)
+        if (holderBySource[p.sourceId] case final holderId?
+            when holderId != demo)
+          (holderId: holderId, patient: p),
+    ];
+    final parent = <String, String>{};
+    String find(String id) {
+      var root = id;
+      while (parent[root] != null && parent[root] != root) {
+        root = parent[root]!;
+      }
+      return root;
+    }
+
+    for (var i = 0; i < linked.length; i++) {
+      for (var j = i + 1; j < linked.length; j++) {
+        final a = find(linked[i].holderId);
+        final b = find(linked[j].holderId);
+        if (a == b ||
+            !_matcher.sameIdentity(linked[i].patient, linked[j].patient)) {
+          continue;
+        }
+        final (keep, drop) = a.compareTo(b) <= 0 ? (a, b) : (b, a);
+        parent[drop] = keep;
+        parent[keep] ??= keep;
+      }
+    }
+    return {
+      for (final id in parent.keys)
+        if (find(id) != id) id: find(id),
+    };
   }
 
   void _joinPlaceholder(

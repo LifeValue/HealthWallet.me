@@ -352,4 +352,87 @@ void main() {
       expect((raw['identifier'] as List).single['value'], '1800402123456');
     });
   });
+
+  group('the same person linked on two devices', () {
+    Future<void> person(
+      String id, {
+      required String given,
+      required String family,
+      required String system,
+      required String code,
+    }) async {
+      await source('wallet-$id', holderId: id);
+      await insertResource(
+        db,
+        id: id,
+        type: 'Patient',
+        sourceId: 'wallet-$id',
+        raw: {
+          'name': [
+            {
+              'use': 'official',
+              'given': [given],
+              'family': family,
+            },
+          ],
+          'birthDate': '1980-04-02',
+          'identifier': [
+            {
+              'system': system,
+              'value': '1800402123456',
+              'type': {
+                'coding': [
+                  {'code': code},
+                ],
+              },
+            },
+          ],
+        },
+      );
+    }
+
+    test('is one person once both are here, under the same holder on both '
+        'devices', () async {
+      // Each device linked its own copy before they synced; the names were
+      // typed the other way round on one of them.
+      await person(
+        'phone-1',
+        given: 'Ion',
+        family: 'Popescu',
+        system: 'urn:oid:2.16.840.1.113883.4.40',
+        code: 'SS',
+      );
+      await person(
+        'desktop-1',
+        given: 'Popescu',
+        family: 'Ion',
+        system: 'urn:oid:2.16.840.1.113883.4.40',
+        code: 'SS',
+      );
+
+      final holder = (await service.load()).holders.single;
+      expect(holder.id, 'desktop-1', reason: 'the smaller id, on any device');
+      expect(holder.sourceIds, ['wallet-desktop-1', 'wallet-phone-1']);
+      expect(await holderOf('wallet-phone-1'), 'desktop-1');
+    });
+
+    test('is one person when the ID was typed under two regions', () async {
+      await person(
+        'phone-1',
+        given: 'Ion',
+        family: 'Popescu',
+        system: 'urn:oid:2.16.840.1.113883.4.40',
+        code: 'SS',
+      );
+      await person(
+        'desktop-1',
+        given: 'Ion',
+        family: 'Popescu',
+        system: 'http://healthwallet.me/id',
+        code: 'MR',
+      );
+
+      expect((await service.load()).holders, hasLength(1));
+    });
+  });
 }

@@ -1,4 +1,5 @@
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/holders/domain/entity/holder_patient.dart';
 import 'package:health_wallet/features/holders/domain/repository/holder_repository.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_linker.dart';
 import 'package:injectable/injectable.dart';
@@ -42,6 +43,22 @@ class HolderLinkingService {
       logger.e('Linking sources to holders failed', e, s);
       return const [];
     }
+  }
+
+  /// Joins holders that turn out to be one person (see
+  /// [HolderLinker.merges]); whether any were.
+  Future<bool> mergeSamePeople({
+    required List<HolderPatient> patients,
+    required Map<String, String> holderBySource,
+  }) async {
+    final into = const HolderLinker().merges(
+      patients: patients,
+      holderBySource: holderBySource,
+    );
+    if (into.isEmpty) return false;
+    await _repository.mergeHolders(into);
+    logger.i('Merged holders that are one person: $into');
+    return true;
   }
 
   /// The user's answer: [holderId] is the person they picked, or null for

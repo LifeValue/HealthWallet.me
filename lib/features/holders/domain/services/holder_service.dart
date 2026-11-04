@@ -40,11 +40,17 @@ class HolderService {
   /// Links what arrived since the last read, then reads everyone.
   Future<HolderDirectory> load() async {
     final questions = await _linking.linkUnassigned();
-    final holderBySource = await _repository.holderBySource();
+    var holderBySource = await _repository.holderBySource();
     final patients = (await _recordsRepository.getResources(
       resourceTypes: [FhirType.Patient],
       limit: _allPatients,
     )).whereType<Patient>().toList();
+    if (await _linking.mergeSamePeople(
+      patients: patients.map(_holderPatient).toList(),
+      holderBySource: holderBySource,
+    )) {
+      holderBySource = await _repository.holderBySource();
+    }
 
     final sourcesOf = <String, List<String>>{};
     for (final MapEntry(key: sourceId, value: holderId)
