@@ -93,6 +93,11 @@ class SpecialtyClassifierImpl implements SpecialtyClassifier {
       }
     }
 
+    // Glasses prescriptions are eye care whoever wrote them.
+    if (resource.fhirType == FhirType.VisionPrescription) {
+      result.add(MedicalSpecialty.ophthalmology);
+    }
+
     if (resource.fhirType == FhirType.PractitionerRole) {
       final specialtyList = raw['specialty'] as List?;
       if (specialtyList != null) {

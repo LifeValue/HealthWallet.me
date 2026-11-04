@@ -2349,5 +2349,55 @@
       }
     }
   },
-  "holderQuestionSomeoneElse": "Someone else"
+  "holderQuestionSomeoneElse": "Someone else",
+  "fhirTypeVisionPrescription": "Vision Prescription",
+  "categoryVisionPrescriptions": "Vision Prescriptions",
+  "lensTypeMultifocal": "Multifocal glasses",
+  "lensTypeDistance": "Distance glasses",
+  "lensTypeReading": "Reading glasses",
+  "lensTypeOther": "Glasses",
+  "fieldLensType": "Lens Type",
+  "fieldDateWritten": "Date Written",
+  "fieldRecommendedFollowUp": "Recommended Follow-up",
+  "labelSerialNumber": "Serial number",
+  "visionEyeRight": "Right eye",
+  "visionEyeLeft": "Left eye",
+  "visionEyeRightShort": "OD",
+  "@visionEyeRightShort": {
+    "description": "Abbreviation of oculus dexter, the right eye, as printed on glasses prescriptions."
+  },
+  "visionEyeLeftShort": "OS",
+  "@visionEyeLeftShort": {
+    "description": "Abbreviation of oculus sinister, the left eye, as printed on glasses prescriptions."
+  },
+  "visionSphere": "Sph",
+  "@visionSphere": {
+    "description": "Column header of a glasses prescription: sphere, in dioptres."
+  },
+  "visionCylinder": "Cyl",
+  "@visionCylinder": {
+    "description": "Column header of a glasses prescription: cylinder, in dioptres."
+  },
+  "visionAxis": "Axis",
+  "@visionAxis": {
+    "description": "Column header of a glasses prescription: cylinder axis, in degrees."
+  },
+  "visionAdd": "Add",
+  "@visionAdd": {
+    "description": "Column header of a glasses prescription: near addition, in dioptres."
+  },
+  "visionPrism": "Prism",
+  "visionBase": "Base",
+  "stagedAlreadyInWallet": "Already in your wallet",
+  "@stagedAlreadyInWallet": {
+    "description": "Shown on a record read from a document when the wallet already holds it."
+  },
+  "stagedWillBeCompleted": "Already in your wallet, will be completed",
+  "@stagedWillBeCompleted": {
+    "description": "Shown on a record read from a document when the wallet holds it with empty fields the document fills."
+  },
+  "documentAlreadyInWallet": "Everything in this document is already in your wallet",
+  "@documentAlreadyInWallet": {
+    "description": "Shown above Done when saving a document would add nothing to the wallet."
+  }
 }

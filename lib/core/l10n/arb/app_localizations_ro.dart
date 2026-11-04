@@ -4634,4 +4634,74 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get holderQuestionSomeoneElse => 'Altcineva';
+
+  @override
+  String get fhirTypeVisionPrescription => 'Rețetă de ochelari';
+
+  @override
+  String get categoryVisionPrescriptions => 'Rețete de ochelari';
+
+  @override
+  String get lensTypeMultifocal => 'Ochelari multifocali';
+
+  @override
+  String get lensTypeDistance => 'Ochelari pentru distanță';
+
+  @override
+  String get lensTypeReading => 'Ochelari pentru citit';
+
+  @override
+  String get lensTypeOther => 'Ochelari';
+
+  @override
+  String get fieldLensType => 'Tip de lentile';
+
+  @override
+  String get fieldDateWritten => 'Data emiterii';
+
+  @override
+  String get fieldRecommendedFollowUp => 'Control recomandat';
+
+  @override
+  String get labelSerialNumber => 'Număr de serie';
+
+  @override
+  String get visionEyeRight => 'Ochi drept';
+
+  @override
+  String get visionEyeLeft => 'Ochi stâng';
+
+  @override
+  String get visionEyeRightShort => 'OD';
+
+  @override
+  String get visionEyeLeftShort => 'OS';
+
+  @override
+  String get visionSphere => 'Sf';
+
+  @override
+  String get visionCylinder => 'Cil';
+
+  @override
+  String get visionAxis => 'Ax';
+
+  @override
+  String get visionAdd => 'Adiție';
+
+  @override
+  String get visionPrism => 'Prismă';
+
+  @override
+  String get visionBase => 'Bază';
+
+  @override
+  String get stagedAlreadyInWallet => 'Deja în portofelul tău';
+
+  @override
+  String get stagedWillBeCompleted => 'Deja în portofelul tău, va fi completat';
+
+  @override
+  String get documentAlreadyInWallet =>
+      'Tot ce conține acest document este deja în portofelul tău';
 }

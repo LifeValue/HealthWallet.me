@@ -12,6 +12,7 @@ import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
+import 'package:health_wallet/features/records/presentation/widgets/vision_prescription_table.dart';
 
 class EphemeralDesktopDetailsPanel extends StatefulWidget {
   final AttachmentBrowseBloc? attachmentBrowseBloc;
@@ -307,6 +308,8 @@ class _PanelContentState extends State<_PanelContent> {
             record.displayTitle,
             style: AppTextStyle.bodyMedium.copyWith(color: onSurface),
           ),
+          if (record case final VisionPrescription prescription)
+            VisionPrescriptionTable(prescription: prescription),
           if (record.fhirType == FhirType.DocumentReference ||
               record.fhirType == FhirType.Media)
             Padding(

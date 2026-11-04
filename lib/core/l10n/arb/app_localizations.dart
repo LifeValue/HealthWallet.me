@@ -8158,6 +8158,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Someone else'**
   String get holderQuestionSomeoneElse;
+
+  /// No description provided for @fhirTypeVisionPrescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Vision Prescription'**
+  String get fhirTypeVisionPrescription;
+
+  /// No description provided for @categoryVisionPrescriptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Vision Prescriptions'**
+  String get categoryVisionPrescriptions;
+
+  /// No description provided for @lensTypeMultifocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Multifocal glasses'**
+  String get lensTypeMultifocal;
+
+  /// No description provided for @lensTypeDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance glasses'**
+  String get lensTypeDistance;
+
+  /// No description provided for @lensTypeReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading glasses'**
+  String get lensTypeReading;
+
+  /// No description provided for @lensTypeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Glasses'**
+  String get lensTypeOther;
+
+  /// No description provided for @fieldLensType.
+  ///
+  /// In en, this message translates to:
+  /// **'Lens Type'**
+  String get fieldLensType;
+
+  /// No description provided for @fieldDateWritten.
+  ///
+  /// In en, this message translates to:
+  /// **'Date Written'**
+  String get fieldDateWritten;
+
+  /// No description provided for @fieldRecommendedFollowUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended Follow-up'**
+  String get fieldRecommendedFollowUp;
+
+  /// No description provided for @labelSerialNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Serial number'**
+  String get labelSerialNumber;
+
+  /// No description provided for @visionEyeRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Right eye'**
+  String get visionEyeRight;
+
+  /// No description provided for @visionEyeLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left eye'**
+  String get visionEyeLeft;
+
+  /// Abbreviation of oculus dexter, the right eye, as printed on glasses prescriptions.
+  ///
+  /// In en, this message translates to:
+  /// **'OD'**
+  String get visionEyeRightShort;
+
+  /// Abbreviation of oculus sinister, the left eye, as printed on glasses prescriptions.
+  ///
+  /// In en, this message translates to:
+  /// **'OS'**
+  String get visionEyeLeftShort;
+
+  /// Column header of a glasses prescription: sphere, in dioptres.
+  ///
+  /// In en, this message translates to:
+  /// **'Sph'**
+  String get visionSphere;
+
+  /// Column header of a glasses prescription: cylinder, in dioptres.
+  ///
+  /// In en, this message translates to:
+  /// **'Cyl'**
+  String get visionCylinder;
+
+  /// Column header of a glasses prescription: cylinder axis, in degrees.
+  ///
+  /// In en, this message translates to:
+  /// **'Axis'**
+  String get visionAxis;
+
+  /// Column header of a glasses prescription: near addition, in dioptres.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get visionAdd;
+
+  /// No description provided for @visionPrism.
+  ///
+  /// In en, this message translates to:
+  /// **'Prism'**
+  String get visionPrism;
+
+  /// No description provided for @visionBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Base'**
+  String get visionBase;
+
+  /// Shown on a record read from a document when the wallet already holds it.
+  ///
+  /// In en, this message translates to:
+  /// **'Already in your wallet'**
+  String get stagedAlreadyInWallet;
+
+  /// Shown on a record read from a document when the wallet holds it with empty fields the document fills.
+  ///
+  /// In en, this message translates to:
+  /// **'Already in your wallet, will be completed'**
+  String get stagedWillBeCompleted;
+
+  /// Shown above Done when saving a document would add nothing to the wallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything in this document is already in your wallet'**
+  String get documentAlreadyInWallet;
 }
 
 class _AppLocalizationsDelegate

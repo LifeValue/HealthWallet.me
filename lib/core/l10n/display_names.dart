@@ -83,6 +83,7 @@ extension HomeRecordsCategoryL10n on HomeRecordsCategory {
     HomeRecordsCategory.demographics => l10n.categoryDemographics,
     HomeRecordsCategory.procedures => l10n.categoryProcedures,
     HomeRecordsCategory.healthInsurance => l10n.categoryHealthInsurance,
+    HomeRecordsCategory.visionPrescriptions => l10n.categoryVisionPrescriptions,
   };
 }
 
@@ -117,6 +118,7 @@ extension FhirTypeL10n on FhirType {
     FhirType.RelatedPerson => l10n.fhirTypeRelatedPerson,
     FhirType.ServiceRequest => l10n.fhirTypeServiceRequest,
     FhirType.Specimen => l10n.fhirTypeSpecimen,
+    FhirType.VisionPrescription => l10n.fhirTypeVisionPrescription,
     FhirType.GeneralResource => l10n.fhirTypeGeneralResource,
   };
 }

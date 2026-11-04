@@ -29,6 +29,7 @@ abstract class HomeState with _$HomeState {
       HomeRecordsCategory.facilities: true,
       HomeRecordsCategory.demographics: true,
       HomeRecordsCategory.healthInsurance: true,
+      HomeRecordsCategory.visionPrescriptions: true,
     })
     Map<HomeRecordsCategory, bool> selectedRecordTypes,
     @Default({

@@ -4562,4 +4562,75 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get holderQuestionSomeoneElse => 'Someone else';
+
+  @override
+  String get fhirTypeVisionPrescription => 'Vision Prescription';
+
+  @override
+  String get categoryVisionPrescriptions => 'Vision Prescriptions';
+
+  @override
+  String get lensTypeMultifocal => 'Multifocal glasses';
+
+  @override
+  String get lensTypeDistance => 'Distance glasses';
+
+  @override
+  String get lensTypeReading => 'Reading glasses';
+
+  @override
+  String get lensTypeOther => 'Glasses';
+
+  @override
+  String get fieldLensType => 'Lens Type';
+
+  @override
+  String get fieldDateWritten => 'Date Written';
+
+  @override
+  String get fieldRecommendedFollowUp => 'Recommended Follow-up';
+
+  @override
+  String get labelSerialNumber => 'Serial number';
+
+  @override
+  String get visionEyeRight => 'Right eye';
+
+  @override
+  String get visionEyeLeft => 'Left eye';
+
+  @override
+  String get visionEyeRightShort => 'OD';
+
+  @override
+  String get visionEyeLeftShort => 'OS';
+
+  @override
+  String get visionSphere => 'Sph';
+
+  @override
+  String get visionCylinder => 'Cyl';
+
+  @override
+  String get visionAxis => 'Axis';
+
+  @override
+  String get visionAdd => 'Add';
+
+  @override
+  String get visionPrism => 'Prism';
+
+  @override
+  String get visionBase => 'Base';
+
+  @override
+  String get stagedAlreadyInWallet => 'Already in your wallet';
+
+  @override
+  String get stagedWillBeCompleted =>
+      'Already in your wallet, will be completed';
+
+  @override
+  String get documentAlreadyInWallet =>
+      'Everything in this document is already in your wallet';
 }

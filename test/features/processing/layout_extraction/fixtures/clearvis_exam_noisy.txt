@@ -1,0 +1,52 @@
+REZULTAT EXAMINARE OFTALMOLOGICA
+*EE:0000054321-
+ATI
+@ www.optica-exemplu.ro
+Nume pacient:
+Ioana Maria Popescu
+Strada Teilor 7, Cluj-Napoca | 0700 000 111 | ioana.popescu@example.com
+Rezultate masuratori
+Pagina
+Drept р
+Stang
+Retete
+Pagina
+Reteta ochelari monofocali la distanta
+Drept
++0,75D
+Stang
++0,75D cyl:+0,25D/160°
+pdl:
+pdl:
+Pagina
+Reteta ochelari multifocali
+Drept
++0,75D
+add:1,75D
+Stang
++0,75D cyl:+0,25D/160° add:1,75D
+pdl:
+pd:
+Locul examinarii:
+Optica Exemplu 1
+• Strada Exemplu, nr. 1, 400000 Cluj-Napoca
+6 0700000000
+=contact@optica-exemplu.ro
+Identificator pacient
+PA-01234
+Data examinarii
+14.03.2024
+Data nastere
+11.07.1983
+Reteta de ochelari monofocali pentru citit
++2,50D
++2,50D cyl:+0,25D/160°
+pd:
+pd:
+Semnatura
+L.S.
+Data examinarii: 14.03.2024
+Examinarea a fost efectuat in magazinul de specialitate Optica Exemplu 1 cu programul
+http://clearvis.io.
+Data imprimare: 2 aprilie 2026
+1/1

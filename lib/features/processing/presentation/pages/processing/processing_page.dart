@@ -18,7 +18,7 @@ import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_
 import 'package:health_wallet/features/desktop/handover/presentation/utils/handover_utils.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/processing_mapping_section.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/processing_resources_section.dart';
@@ -357,8 +357,13 @@ class _ProcessingPageState extends State<ProcessingPage> {
                                         ),
                                       ),
                                   checkModelExistence: () =>
-                                      getIt<ProcessingRepository>()
-                                          .checkModelExistence(),
+                                      getIt<LayoutExtractionService>()
+                                          .canProcess(
+                                            widget.sessionId,
+                                            filePaths:
+                                                displayedSession.filePaths,
+                                            imagePaths: sessionImages,
+                                          ),
                                   onProcessOnDesktop: () {
                                     HandoverUtils.initiateHandover(
                                       context,

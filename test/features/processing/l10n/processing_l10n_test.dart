@@ -16,6 +16,8 @@ import 'package:health_wallet/features/processing/domain/entity/processing_sessi
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extractor_registry.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/processing_mapping_section.dart';
@@ -76,9 +78,10 @@ Future<ProcessingBloc> _bloc({
   Exception? prepareError,
 }) async {
   SharedPreferences.setMockInitialValues({});
+  final ocr = _FakeOcrProcessingHelper(error: prepareError);
   return ProcessingBloc(
     _FakeProcessingRepository(modelExists: modelExists),
-    _FakeOcrProcessingHelper(error: prepareError),
+    ocr,
     _FakeSyncRepository(),
     _FakeDocumentReferenceService(),
     _FakeHolderService(),
@@ -86,6 +89,13 @@ Future<ProcessingBloc> _bloc({
     _FakeRecordsRepository(),
     await SharedPreferences.getInstance(),
     AppStringsProvider(),
+    LayoutExtractionService(
+      _FakeProcessingRepository(modelExists: modelExists),
+      ocr,
+      LayoutExtractorRegistry(const []),
+      _FakeHolderService(),
+      _FakeRecordsRepository(),
+    ),
   );
 }
 

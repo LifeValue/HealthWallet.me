@@ -17,6 +17,7 @@ import 'package:health_wallet/features/records/domain/repository/records_reposit
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/pages/record_detail_page.dart';
 import 'package:health_wallet/features/records/presentation/widgets/delete_record_dialog.dart';
+import 'package:health_wallet/features/records/presentation/widgets/vision_prescription_table.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -220,6 +221,21 @@ void main() {
       expect(find.text('Value: 90.72 kg'), findsNWidgets(2));
       expect(find.textContaining('lbs'), findsNothing);
     });
+  });
+
+  testWidgets('a glasses prescription shows its per-eye table', (
+    tester,
+  ) async {
+    await pumpPage(
+      tester,
+      resource: entityFromJson(visionPrescriptionJson()),
+    );
+
+    expect(find.byType(VisionPrescriptionTable), findsOne);
+    expect(find.text(l10n.visionEyeRightShort), findsOne);
+    expect(find.text(l10n.visionEyeLeftShort), findsOne);
+    expect(find.text('160°'), findsOne);
+    expect(find.text('Lens Type: Multifocal glasses'), findsOne);
   });
 
   group('delete', () {

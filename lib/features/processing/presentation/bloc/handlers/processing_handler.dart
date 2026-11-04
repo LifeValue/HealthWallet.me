@@ -18,10 +18,13 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_vision_prescription.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/record_completion.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
@@ -40,6 +43,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
   HolderSelection get holderSelection;
   SharedPreferences get prefs;
   AppStringsProvider get strings;
+  LayoutExtractionService get layoutExtraction;
 
   void updateSession(
     Emitter<ProcessingState> emit, {
@@ -103,7 +107,8 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         );
         return;
       }
-      final medicalText = await ocrProcessingHelper.processOcrForImages(
+      final medicalText = await layoutExtraction.ocrText(
+        event.sessionId,
         sessionImages,
       );
       if (medicalText.isEmpty || medicalText.trim().isEmpty) {
@@ -112,6 +117,44 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           sessionId: event.sessionId,
           status: ProcessingStatus.draft,
         );
+        return;
+      }
+      // A document of a known layout is read by its extractor, without the
+      // AI, and goes straight to the review.
+      final layout = layoutExtraction.extract(medicalText);
+      if (layout != null) {
+        final stagedPatient = await _matchOrCreatePatient(layout.patient);
+        final staging = await layoutExtraction.stage(
+          layout,
+          holderPatient: stagedPatient.existing,
+        );
+        // Cancelled while reading: nothing is staged.
+        final current = state.sessions.firstWhereOrNull(
+          (s) => s.id == event.sessionId,
+        );
+        if (processingRepository.shouldCancelGeneration ||
+            current?.status != ProcessingStatus.processingPatient) {
+          return;
+        }
+        updateSession(
+          emit,
+          sessionId: event.sessionId,
+          status: ProcessingStatus.draft,
+          patient: stagedPatient,
+          encounter: staging.encounter,
+          resources: staging.resources,
+          updateDb: true,
+        );
+        emit(
+          state.copyWith(
+            notification: Notification(
+              text: strings.l10n.processingFinished(_originName(session)),
+              route: ProcessingRoute(sessionId: event.sessionId),
+              time: DateTime.now(),
+            ),
+          ),
+        );
+        startNextPendingSession();
         return;
       }
       final ocrPreMatch = await _tryMatchPatientFromOcr(medicalText);
@@ -282,6 +325,13 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           for (final id in patient.identifier ?? const <fhir_r4.Identifier>[]) {
             final value = id.value?.valueString;
             if (value == null || value.length < 6) continue;
+            // A clinic's own patient number says nothing outside it.
+            if (id.system?.valueString?.startsWith(
+                  HolderMatcher.clinicSystemPrefix,
+                ) ??
+                false) {
+              continue;
+            }
             if (HolderMatcher.appearsIn(value, ocrText)) {
               ProcessingLogBuffer.instance.log(
                 '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: found identifier $value',
@@ -482,16 +532,6 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       (s) => s.id == event.sessionId,
     );
     try {
-      final (subjectId, sourceId, finalContainer, holderId) =
-          await _persistPrimaryResources(activeSession);
-      final otherResources = activeSession.resources
-          .where(
-            (r) =>
-                r is! MappingPatient &&
-                r is! MappingEncounter &&
-                r is! MappingDiagnosticReport,
-          )
-          .toList();
       final encounterDraft = activeSession.encounter.draft;
       final specialtyValue = encounterDraft?.specialty.value ?? '';
       String specialtyEnumName = '';
@@ -512,16 +552,59 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
               ],
             )
           : null;
-      final List<IFhirResource> fhirResources = otherResources
-          .map(
-            (resource) => resource.toFhirResource(
-              sourceId: sourceId,
-              subjectId: subjectId,
-              encounterId: finalContainer.id,
-              meta: specialtyMeta,
-            ),
+
+      // Records a layout document found already in the wallet are completed
+      // (empty fields only), never saved again.
+      final otherResources = activeSession.resources
+          .where(
+            (r) =>
+                r is! MappingPatient &&
+                r is! MappingEncounter &&
+                r is! MappingDiagnosticReport &&
+                !(r is MappingVisionPrescription && r.existingId.isNotEmpty),
           )
           .toList();
+      final completions = await _completedPrescriptions(
+        activeSession,
+        meta: specialtyMeta,
+      );
+      final visitFill = _completedVisit(activeSession);
+      // The review's own test, with what saving would really complete.
+      final completed = {for (final c in completions) c.id};
+      final checked = activeSession.copyWith(
+        resources: [
+          for (final r in activeSession.resources)
+            r is MappingVisionPrescription && r.existingId.isNotEmpty
+                ? r.copyWith(
+                    completesExisting: completed.contains(r.existingId),
+                  )
+                : r,
+        ],
+      );
+      if (checked.isAlreadyInWallet) {
+        // Everything the document holds is in the wallet: nothing to write,
+        // not even the document.
+        final holder = (await holderService.load()).ofPatientId(
+          activeSession.patient.existing!.id,
+        );
+        if (holder != null) await holderSelection.select(holder.id);
+        emit(state.copyWith(status: const PipelineStatus.success()));
+        return;
+      }
+
+      final (subjectId, sourceId, finalContainer, holderId) =
+          await _persistPrimaryResources(activeSession, visitFill: visitFill);
+      final List<IFhirResource> fhirResources = [
+        ...otherResources.map(
+          (resource) => resource.toFhirResource(
+            sourceId: sourceId,
+            subjectId: subjectId,
+            encounterId: finalContainer.id,
+            meta: specialtyMeta,
+          ),
+        ),
+        ...completions,
+      ];
       if (fhirResources.isNotEmpty) {
         await syncRepository.saveResources(fhirResources);
       }
@@ -552,6 +635,73 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     }
   }
 
+  /// The stored prescriptions the session's twins complete, with only the
+  /// fields they leave empty filled; a twin that adds nothing is left out.
+  Future<List<IFhirResource>> _completedPrescriptions(
+    ProcessingSession session, {
+    fhir_r4.FhirMeta? meta,
+  }) async {
+    final twins = session.resources
+        .whereType<MappingVisionPrescription>()
+        .where((r) => r.existingId.isNotEmpty)
+        .toList();
+    if (twins.isEmpty) return const [];
+    final stored = {
+      for (final r in await recordsRepository.getResources(
+        resourceTypes: const [FhirType.VisionPrescription],
+        limit: LayoutExtractionService.allRecords,
+      ))
+        if (r is VisionPrescription) r.id: r,
+    };
+    final encounterId =
+        session.encounter.existing?.id ?? session.encounter.draft?.id;
+    return [
+      for (final twin in twins)
+        if (stored[twin.existingId] case final row?)
+          if (RecordCompletion.visionPrescription(
+                row.rawResource,
+                twin
+                    .toFhirResource(
+                      sourceId: row.sourceId,
+                      subjectId: row.subjectId,
+                      encounterId: encounterId,
+                      meta: meta,
+                    )
+                    .rawResource,
+                provenance: twin.provenance,
+              )
+              case final completed?)
+            row.copyWith(
+              rawResource: completed,
+              encounterId: row.encounterId.isNotEmpty
+                  ? row.encounterId
+                  : _referenceId(completed['encounter']),
+            ),
+    ];
+  }
+
+  static String _referenceId(Object? reference) =>
+      reference is Map && reference['reference'] is String
+      ? (reference['reference'] as String).split('/').last
+      : '';
+
+  /// The existing visit with the identifiers the document adds (its serial),
+  /// or null when it has them all or the visit is new.
+  Encounter? _completedVisit(ProcessingSession session) {
+    final existing = session.encounter.existing;
+    final draft = session.encounter.draft;
+    if (session.encounter.mode != ImportMode.linkExisting ||
+        existing == null ||
+        draft == null) {
+      return null;
+    }
+    final completed = RecordCompletion.addIdentifiers(
+      existing.rawResource,
+      draft,
+    );
+    return completed == null ? null : existing.copyWith(rawResource: completed);
+  }
+
   void onDocumentAttached(
     DocumentAttached event,
     Emitter<ProcessingState> emit,
@@ -571,8 +721,9 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
 
   /// The patient, source, container and holder the scan is filed under.
   Future<(String, String, IFhirResource, String)> _persistPrimaryResources(
-    ProcessingSession activeSession,
-  ) async {
+    ProcessingSession activeSession, {
+    Encounter? visitFill,
+  }) async {
     String subjectId;
     String sourceId;
     String holderId;
@@ -615,7 +766,8 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       );
       resourcesToSave.add(finalContainer);
     } else if (activeSession.encounter.existing != null) {
-      finalContainer = activeSession.encounter.existing!;
+      finalContainer = visitFill ?? activeSession.encounter.existing!;
+      if (visitFill != null) resourcesToSave.add(visitFill);
     } else {
       final MappingEncounter draftEncounter = activeSession.encounter.draft!;
       finalContainer = draftEncounter.toFhirResource(

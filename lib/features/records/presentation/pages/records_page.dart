@@ -33,6 +33,7 @@ import 'package:health_wallet/features/records/presentation/widgets/records_acti
 import 'package:health_wallet/features/records/presentation/widgets/records_filter_bottom_sheet.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_toolbar.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_view_toggle.dart';
+import 'package:health_wallet/features/records/presentation/widgets/vision_prescription_table.dart';
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
@@ -989,6 +990,8 @@ class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
                 record.displayTitle,
                 style: AppTextStyle.bodyMedium.copyWith(color: onSurface),
               ),
+              if (record case final VisionPrescription prescription)
+                VisionPrescriptionTable(prescription: prescription),
               ...record
                   .additionalInfoIn(
                     context.read<UserBloc>().state.regionPreset,

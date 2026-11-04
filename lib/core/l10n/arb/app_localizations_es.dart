@@ -4621,4 +4621,74 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get holderQuestionSomeoneElse => 'Otra persona';
+
+  @override
+  String get fhirTypeVisionPrescription => 'Receta óptica';
+
+  @override
+  String get categoryVisionPrescriptions => 'Recetas ópticas';
+
+  @override
+  String get lensTypeMultifocal => 'Gafas multifocales';
+
+  @override
+  String get lensTypeDistance => 'Gafas para ver de lejos';
+
+  @override
+  String get lensTypeReading => 'Gafas de lectura';
+
+  @override
+  String get lensTypeOther => 'Gafas';
+
+  @override
+  String get fieldLensType => 'Tipo de lentes';
+
+  @override
+  String get fieldDateWritten => 'Fecha de emisión';
+
+  @override
+  String get fieldRecommendedFollowUp => 'Control recomendado';
+
+  @override
+  String get labelSerialNumber => 'Número de serie';
+
+  @override
+  String get visionEyeRight => 'Ojo derecho';
+
+  @override
+  String get visionEyeLeft => 'Ojo izquierdo';
+
+  @override
+  String get visionEyeRightShort => 'OD';
+
+  @override
+  String get visionEyeLeftShort => 'OS';
+
+  @override
+  String get visionSphere => 'Esf';
+
+  @override
+  String get visionCylinder => 'Cil';
+
+  @override
+  String get visionAxis => 'Eje';
+
+  @override
+  String get visionAdd => 'Adic';
+
+  @override
+  String get visionPrism => 'Prisma';
+
+  @override
+  String get visionBase => 'Base';
+
+  @override
+  String get stagedAlreadyInWallet => 'Ya está en tu cartera';
+
+  @override
+  String get stagedWillBeCompleted => 'Ya está en tu cartera, se completará';
+
+  @override
+  String get documentAlreadyInWallet =>
+      'Todo lo de este documento ya está en tu cartera';
 }

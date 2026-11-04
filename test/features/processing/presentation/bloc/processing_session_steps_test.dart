@@ -17,6 +17,8 @@ import 'package:health_wallet/features/processing/domain/entity/processing_sessi
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extractor_registry.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
@@ -125,6 +127,13 @@ void main() {
       _FakeRecordsRepository(),
       prefs,
       AppStringsProvider.forLocale(const Locale('en')),
+      LayoutExtractionService(
+        repository,
+        ocr,
+        LayoutExtractorRegistry(const []),
+        _FakeHolderService(),
+        _FakeRecordsRepository(),
+      ),
     );
   });
 

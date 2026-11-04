@@ -10,6 +10,7 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_practitioner.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_procedure.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_vision_prescription.dart';
 import 'package:health_wallet/features/processing/domain/entity/text_field_descriptor.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 
@@ -40,6 +41,8 @@ abstract class MappingResource {
         return MappingPractitioner.fromJson(json);
       case 'Procedure':
         return MappingProcedure.fromJson(json);
+      case 'VisionPrescription':
+        return MappingVisionPrescription.fromJson(json);
       default:
         throw Exception();
     }
@@ -67,6 +70,8 @@ abstract class MappingResource {
         return MappingPractitioner.empty();
       case 'Procedure':
         return MappingProcedure.empty();
+      case 'VisionPrescription':
+        return MappingVisionPrescription.empty();
       default:
         throw Exception();
     }

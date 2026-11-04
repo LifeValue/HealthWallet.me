@@ -7,6 +7,7 @@ import 'package:health_wallet/features/holders/domain/repository/holder_reposito
 import 'package:health_wallet/features/holders/domain/services/holder_linker.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_linking_service.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_matcher.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/extractor_provenance.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
@@ -173,7 +174,13 @@ class HolderService {
       'resourceType': 'Patient',
       'id': own?.resourceId ?? id,
     };
-    final filled = scanned == null ? raw : _fillEmpty(id, raw, scanned);
+    var filled = scanned == null ? raw : _fillEmpty(id, raw, scanned);
+    // A layout extractor's scan says so on what it fills.
+    if (scanned != null &&
+        scanned.provenance.isNotEmpty &&
+        !const DeepCollectionEquality().equals(filled, raw)) {
+      filled = ExtractorProvenance.mergeIntoJson(filled, scanned.provenance);
+    }
     if (own != null && const DeepCollectionEquality().equals(filled, raw)) {
       return (patient: own, holderId: holderId);
     }
@@ -244,7 +251,10 @@ class HolderService {
       sourceId: '',
       identifiers: [
         if (scanned.patientIdentifier.value.isNotEmpty)
-          HolderIdentifier(system: '', value: scanned.patientIdentifier.value),
+          HolderIdentifier(
+            system: scanned.identifierSystem,
+            value: scanned.patientIdentifier.value,
+          ),
       ],
       family: scanned.familyName.value,
       given: scanned.givenName.value,

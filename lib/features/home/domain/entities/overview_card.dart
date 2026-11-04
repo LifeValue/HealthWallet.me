@@ -79,6 +79,10 @@ enum HomeRecordsCategory {
       FhirType.ExplanationOfBenefit,
       FhirType.Coverage,
     ],
+  ),
+  visionPrescriptions(
+    display: 'Vision Prescriptions',
+    resourceTypes: [FhirType.VisionPrescription],
   );
 
   const HomeRecordsCategory({
@@ -117,6 +121,8 @@ enum HomeRecordsCategory {
         return Assets.icons.identification;
       case HomeRecordsCategory.healthInsurance:
         return Assets.icons.hospital;
+      case HomeRecordsCategory.visionPrescriptions:
+        return Assets.specialities.ophthalmology;
     }
   }
 }

@@ -22,6 +22,7 @@ import 'package:health_wallet/features/processing/domain/entity/processing_sessi
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/handlers/processing_handler.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/handlers/session_handler.dart';
@@ -47,6 +48,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   final RecordsRepository _recordsRepository;
   final SharedPreferences _prefs;
   final AppStringsProvider _strings;
+  final LayoutExtractionService _layoutExtraction;
 
   @override
   ProcessingRepository get processingRepository => _repository;
@@ -76,6 +78,9 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   @override
   AppStringsProvider get strings => _strings;
 
+  @override
+  LayoutExtractionService get layoutExtraction => _layoutExtraction;
+
   ProcessingBloc(
     this._repository,
     this._ocrProcessingHelper,
@@ -86,6 +91,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     this._recordsRepository,
     this._prefs,
     this._strings,
+    this._layoutExtraction,
   ) : super(const ProcessingState()) {
     on<ProcessingInitialised>(onProcessingInitialised);
     on<CaptureButtonPressed>(onCaptureButtonPressed);
