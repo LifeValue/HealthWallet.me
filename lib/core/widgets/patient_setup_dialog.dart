@@ -195,6 +195,9 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
       final genderChanged = _selectedGenderCode != 'unknown';
       final bloodTypeChanged = _selectedBloodType != 'N/A';
       final identifierChanged = currentIdentifierValue.isNotEmpty;
+      // The phone field reports the number with its dial code, or '' when
+      // it is empty.
+      final contactPhoneChanged = _selectedContactPhone.isNotEmpty;
 
       if (mounted) {
         final patientFieldsChanged =
@@ -202,6 +205,7 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
             birthDateChanged ||
             genderChanged ||
             identifierChanged ||
+            contactPhoneChanged ||
             bloodTypeChanged;
 
         if (patientFieldsChanged) {

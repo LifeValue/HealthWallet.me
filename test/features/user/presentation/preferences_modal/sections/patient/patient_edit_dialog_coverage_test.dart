@@ -507,6 +507,30 @@ void main() {
       expect(savedEdit().identifierValue, isNull);
     });
 
+    testWidgets('an emergency phone changed on its own is saved, keeping the '
+        'blood type', (tester) async {
+      SharedPreferences.setMockInitialValues({
+        SharedPrefsConstants.countryCode: 'RO',
+      });
+      editService.hasChanges = false;
+      await openDialog(tester, _patient());
+
+      await tester.enterText(phoneField(), '712345678');
+      await tester.pumpAndSettle();
+      await save(tester);
+
+      final edit = savedEdit();
+      expect(edit.contactPhone, '+40712345678');
+      expect(edit.given, isNull);
+      expect(edit.family, isNull);
+      expect(edit.birthDate, isNull);
+      expect(edit.gender, isNull);
+      expect(edit.identifierValue, isNull);
+      expect(edit.bloodType, 'A+');
+      expect(editService.bloodTypeWrites, isEmpty);
+      expect(dismissals, 1);
+    });
+
     testWidgets('an untouched emergency phone is not written', (tester) async {
       await openDialog(tester, _patient(phone: '+40712345678'));
 

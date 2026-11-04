@@ -348,30 +348,51 @@ void main() {
       expect(savedEdit().given, isNull);
     });
 
-    testWidgets(
-      'with only an emergency phone saves the phone',
-      skip: true, // BUG: setup drops an emergency phone entered on its own; the phone is not one of the fields that trigger a save
-      (tester) async {
-        await openDialog(tester, deviceLocale: const Locale('ro', 'RO'));
-
-        await tester.enterText(phoneField(), '712345678');
-        await tester.pumpAndSettle();
-        await save(tester);
-
-        expect(savedEdit().contactPhone, '+40712345678');
-      },
-    );
-
-    testWidgets('with only an emergency phone currently closes without '
-        'saving', (tester) async {
+    testWidgets('with only an emergency phone saves the phone', (
+      tester,
+    ) async {
       await openDialog(tester, deviceLocale: const Locale('ro', 'RO'));
 
       await tester.enterText(phoneField(), '712345678');
       await tester.pumpAndSettle();
       await save(tester);
 
+      final edit = savedEdit();
+      expect(edit.contactPhone, '+40712345678');
+      expect(edit.given, isNull);
+      expect(edit.family, isNull);
+      expect(edit.identifierValue, isNull);
+      expect(edit.birthDate, isNull);
+      expect(edit.gender, 'unknown');
+      expect(edit.bloodType, 'N/A');
+      expect(find.byType(PatientSetupDialog), findsNothing);
+      expect(dismissals, 1);
+    });
+
+    testWidgets('with nothing filled in closes without saving', (
+      tester,
+    ) async {
+      await openDialog(tester);
+
+      await save(tester);
+
       expect(patientBloc.events.whereType<PatientEditSaved>(), isEmpty);
       expect(find.byType(PatientSetupDialog), findsNothing);
+      expect(dismissals, 1);
+    });
+
+    testWidgets('with a phone typed and then cleared closes without saving', (
+      tester,
+    ) async {
+      await openDialog(tester, deviceLocale: const Locale('ro', 'RO'));
+
+      await tester.enterText(phoneField(), '712345678');
+      await tester.pumpAndSettle();
+      await tester.enterText(phoneField(), '');
+      await tester.pumpAndSettle();
+      await save(tester);
+
+      expect(patientBloc.events.whereType<PatientEditSaved>(), isEmpty);
       expect(dismissals, 1);
     });
 
