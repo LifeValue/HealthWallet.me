@@ -236,6 +236,26 @@ void main() {
       expect(raw, isNot(contains('secret')));
     });
 
+    test("a source's holder arrives, and a newer row from a peer without the "
+        'column keeps it', () async {
+      Map<String, dynamic> sourceRow(int updatedAt, [String? holder]) => {
+        'id': 'src-1',
+        'platform_type': 'fasten',
+        'label_source': 'Clinic $updatedAt',
+        'updated_at': updatedAt,
+        'holder_id': ?holder,
+      };
+      await service.applyBatch(
+        incoming('sources', [sourceRow(ms(at(1)), 'jane')]),
+      );
+      await service.applyBatch(
+        incoming('sources', [sourceRow(ms(at(2)))], id: 2),
+      );
+      final row = (await fetchRow(db, 'sources', 'src-1'))!;
+      expect(row['label_source'], 'Clinic ${ms(at(2))}');
+      expect(row['holder_id'], 'jane');
+    });
+
     test('rows of tables outside the synced set are ignored', () async {
       final applied = await service.applyBatch(
         SyncBatch(

@@ -174,12 +174,6 @@ void main() {
     });
   });
 
-  test('deleteAllFhirResources empties the table', () async {
-    await dataSource.cacheFhirResources([resource('a'), resource('b')]);
-    await dataSource.deleteAllFhirResources();
-    expect(await resourceRows(), isEmpty);
-  });
-
   test('markResourcesAsDeleted does not touch stored rows', () async {
     await dataSource.cacheFhirResources([resource('a'), resource('b')]);
     await dataSource.markResourcesAsDeleted([
@@ -227,13 +221,100 @@ void main() {
       // Stamped by the trigger for the desktop sync, not the provider's date.
       expect(row.updatedAt, isNotNull);
     });
+
+    test('keeps the holder of a source fetched again', () async {
+      const source = Source(id: 'src-1', platformType: 'fasten');
+      await dataSource.cacheSources([source.copyWith(holderId: 'jane')]);
+      await dataSource.cacheSources([source]);
+      expect((await sourceRows()).single.holderId, 'jane');
+
+      await dataSource.cacheSources([source.copyWith(holderId: 'john')]);
+      expect((await sourceRows()).single.holderId, 'john');
+    });
+
+    test('brings back a deleted source', () async {
+      const source = Source(id: 'wallet-p1');
+      await dataSource.cacheSources([source]);
+      await dataSource.deleteSource('wallet-p1');
+      await dataSource.cacheSources([source]);
+      expect((await sourceRows()).single.deletedAt, isNull);
+    });
   });
 
-  test('deleteAllSources empties the sources table', () async {
-    await dataSource.cacheSources(const [Source(id: 'a'), Source(id: 'b')]);
-    await dataSource.deleteAllSources();
-    expect(await sourceRows(), isEmpty);
+  group('cacheProviderSources', () {
+    const fetched = Source(
+      id: 'src-1',
+      platformName: 'Epic',
+      labelSource: 'City Hospital',
+      platformType: 'fasten',
+    );
+
+    test("adds a new source with the provider's name", () async {
+      await dataSource.cacheProviderSources([fetched]);
+      expect((await sourceRows()).single.labelSource, 'City Hospital');
+    });
+
+    test("keeps the user's name for it, its holder and its delete", () async {
+      await dataSource.cacheProviderSources([fetched]);
+      await dataSource.updateSourceLabel('src-1', 'My GP');
+      await database.customStatement(
+        "UPDATE sources SET holder_id = 'jane' WHERE id = 'src-1'",
+      );
+      await dataSource.deleteSource('src-1');
+      final before = (await sourceRows()).single;
+
+      await dataSource.cacheProviderSources([
+        fetched.copyWith(logo: 'https://logo'),
+      ]);
+
+      final row = (await sourceRows()).single;
+      expect(row.labelSource, 'My GP');
+      expect(row.holderId, 'jane');
+      expect(row.deletedAt, before.deletedAt);
+      expect(row.logo, 'https://logo');
+    });
+
+    test('writes nothing for a source that did not change', () async {
+      await dataSource.cacheProviderSources([fetched]);
+      final stamp = (await sourceRows()).single.updatedAt;
+      await database.customStatement('DELETE FROM sync_outbox');
+
+      await dataSource.cacheProviderSources([fetched]);
+
+      expect((await sourceRows()).single.updatedAt, stamp);
+      expect(
+        await database.customSelect('SELECT * FROM sync_outbox').get(),
+        isEmpty,
+      );
+    });
   });
+
+  test('records of a source the user deleted are not stored again', () async {
+    await dataSource.cacheSources(const [Source(id: 'src-1')]);
+    await dataSource.cacheFhirResources([resource('o1', sourceId: 'src-1')]);
+    await dataSource.deleteSource('src-1');
+
+    await dataSource.cacheFhirResources([
+      resource('o1', sourceId: 'src-1'),
+      resource('o2', sourceId: 'src-1'),
+      resource('o3', sourceId: 'src-2'),
+    ]);
+
+    final live = [
+      for (final r in await resourceRows())
+        if (r.deletedAt == null) r.id,
+    ];
+    expect(live, ['o3']);
+  });
+
+  test(
+    'records of the wallet source of versions before 9 are the wallet',
+    () async {
+      await dataSource.cacheFhirResources([resource('o1', sourceId: 'wallet')]);
+      final source = (await dataSource.getSources()).single;
+      expect(source.platformType, 'wallet');
+    },
+  );
 
   group('getSources', () {
     test('is empty for an empty database', () async {
@@ -334,20 +415,6 @@ void main() {
       expect(source.logo, isNull);
       expect(source.platformType, 'wallet');
     });
-
-    test(
-      'patientId narrows resource-derived ids, not stored sources',
-      () async {
-        await dataSource.cacheSources(const [Source(id: 'stored')]);
-        await dataSource.cacheFhirResources([
-          resource('r1', sourceId: 'match'),
-          resource('r2', sourceId: 'other'),
-        ]);
-        final ids = (await dataSource.getSources(patientId: 'match'))
-            .map((s) => s.id);
-        expect(ids, unorderedEquals(['match', 'stored']));
-      },
-    );
   });
 
   group('updateSourceLabel', () {
@@ -391,35 +458,6 @@ void main() {
       await database.customStatement('DROP TABLE sources');
       await expectLater(
         dataSource.updateSourceLabel('src', 'x'),
-        throwsA(isA<SqliteException>()),
-      );
-    });
-  });
-
-  group('createWalletSource', () {
-    test('creates the wallet source', () async {
-      await dataSource.createWalletSource();
-      final row = (await sourceRows()).single;
-      expect(row.id, 'wallet');
-      expect(row.platformName, 'wallet');
-      expect(row.labelSource, 'Wallet');
-      expect(row.platformType, 'wallet');
-      expect(row.createdAt, isNotNull);
-      expect(row.updatedAt, isNotNull);
-    });
-
-    test('keeps an existing wallet source untouched', () async {
-      await dataSource.cacheSources(const [
-        Source(id: 'wallet', labelSource: 'Renamed by user'),
-      ]);
-      await dataSource.createWalletSource();
-      expect((await sourceRows()).single.labelSource, 'Renamed by user');
-    });
-
-    test('rethrows database errors', () async {
-      await database.customStatement('DROP TABLE sources');
-      await expectLater(
-        dataSource.createWalletSource(),
         throwsA(isA<SqliteException>()),
       );
     });
@@ -612,26 +650,6 @@ void main() {
               as int;
       expect(updatedAt, greaterThan(1e12));
       expect((await dataSource.getSources()).single.labelSource, 'Demo Data');
-    });
-
-    test('createWalletSource brings a deleted wallet source back with an ms '
-        'stamp', () async {
-      await dataSource.createWalletSource();
-      await tombstone('sources', 'wallet');
-
-      await dataSource.createWalletSource();
-
-      expect(await deletedAt('sources', 'wallet'), isNull);
-      final updatedAt =
-          (await database
-                      .customSelect(
-                        "SELECT updated_at FROM sources WHERE id = 'wallet'",
-                      )
-                      .getSingle())
-                  .data['updated_at']
-              as int;
-      expect(updatedAt, greaterThan(1e12));
-      expect((await dataSource.getSources()).single.labelSource, 'Wallet');
     });
   });
 }

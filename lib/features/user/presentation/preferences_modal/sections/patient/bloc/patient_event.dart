@@ -17,10 +17,27 @@ abstract class PatientPatientsLoaded extends PatientEvent
     with _$PatientPatientsLoaded {
   const PatientPatientsLoaded._();
 
-  const factory PatientPatientsLoaded({
-    @Default(false) bool preserveOrder,
-    String? preservePatientId,
-  }) = _PatientPatientsLoaded;
+  /// [preserveOrder] keeps the list as it is, as after an edit.
+  const factory PatientPatientsLoaded({@Default(false) bool preserveOrder}) =
+      _PatientPatientsLoaded;
+}
+
+/// Reads the listed patients' blood types again, after one was saved.
+@freezed
+abstract class PatientBloodTypesRequested extends PatientEvent
+    with _$PatientBloodTypesRequested {
+  const PatientBloodTypesRequested._();
+
+  const factory PatientBloodTypesRequested() = _PatientBloodTypesRequested;
+}
+
+/// The selection changed (see `HolderSelection`).
+@freezed
+abstract class PatientScopeChanged extends PatientEvent
+    with _$PatientScopeChanged {
+  const PatientScopeChanged._();
+
+  const factory PatientScopeChanged(HolderScope scope) = _PatientScopeChanged;
 }
 
 @freezed
@@ -28,14 +45,6 @@ abstract class PatientReorder extends PatientEvent with _$PatientReorder {
   const PatientReorder._();
 
   const factory PatientReorder(String patientId) = _PatientReorder;
-}
-
-@freezed
-abstract class PatientDataUpdatedFromSync extends PatientEvent
-    with _$PatientDataUpdatedFromSync {
-  const PatientDataUpdatedFromSync._();
-
-  const factory PatientDataUpdatedFromSync() = _PatientDataUpdatedFromSync;
 }
 
 @freezed
@@ -60,7 +69,6 @@ abstract class PatientEditSaved extends PatientEvent with _$PatientEditSaved {
 
   const factory PatientEditSaved({
     required String patientId,
-    required String sourceId,
     List<String>? given,
     String? family,
     DateTime? birthDate,
@@ -80,4 +88,17 @@ abstract class PatientSelectionChanged extends PatientEvent
   const factory PatientSelectionChanged({
     required String patientId,
   }) = _PatientSelectionChanged;
+}
+
+/// The user's answer to [HolderAsk]: [holderId] is the person picked, or
+/// null for someone else.
+@freezed
+abstract class PatientHolderAnswered extends PatientEvent
+    with _$PatientHolderAnswered {
+  const PatientHolderAnswered._();
+
+  const factory PatientHolderAnswered({
+    required HolderAsk ask,
+    String? holderId,
+  }) = _PatientHolderAnswered;
 }

@@ -10,6 +10,11 @@ class Sources extends Table {
   DateTimeColumn get updatedAt => dateTime().nullable()();
   DateTimeColumn get deletedAt => dateTime().nullable()();
 
+  /// The person whose records this source holds. Sources with the same
+  /// holder are one person in the wallet. Synced, so both devices agree on
+  /// who is who.
+  TextColumn get holderId => text().nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
 }

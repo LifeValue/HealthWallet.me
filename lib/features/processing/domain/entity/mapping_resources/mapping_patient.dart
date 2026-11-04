@@ -69,10 +69,13 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
         value: FhirFieldExtractor.extractPatientGiven(patient),
         confidenceLevel: 1,
       ),
+      // Empty when unknown, never today: the review form would offer it,
+      // and saving would store it as the birth date.
       dateOfBirth: MappedProperty(
-        value: DateFormatUtils.isoCompact(
-          FhirFieldExtractor.extractPatientBirthDate(patient) ?? DateTime.now(),
-        ),
+        value: switch (FhirFieldExtractor.extractPatientBirthDate(patient)) {
+          final date? => DateFormatUtils.isoCompact(date),
+          null => '',
+        },
         confidenceLevel: 1,
       ),
       gender: MappedProperty(
@@ -125,7 +128,10 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
       birthDate: dateOfBirth.value.isNotEmpty
           ? fhir_r4.FhirDate.fromString(dateOfBirth.value)
           : null,
-      gender: fhir_r4.AdministrativeGender(gender.value),
+      // An empty code is not valid FHIR and would fail the save.
+      gender: gender.value.isEmpty
+          ? null
+          : fhir_r4.AdministrativeGender(gender.value),
       identifier: [
         if (patientIdentifier.value.isNotEmpty)
           fhir_r4.Identifier(

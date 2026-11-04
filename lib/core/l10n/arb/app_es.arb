@@ -123,6 +123,7 @@
   "fieldCannotBeEmpty": "Este campo no puede estar vacío",
   "selectDate": "Seleccionar fecha",
   "attachToEncounter": "Adjuntar a encuentro",
+  "attachToPatient": "Adjuntar a paciente",
   "continueProcessing": "Continuar procesamiento",
   "recordsSavedTitle": "Guardado exitosamente",
   "whatNextQuestion": "¿Qué te gustaría hacer a continuación?",
@@ -1670,5 +1671,8 @@
   "desktopPairedPhone": "Teléfono emparejado",
   "desktopNewQrUnpairsHint": "Un nuevo código QR desempareja este teléfono; úsalo para emparejar otro.",
   "desktopNotFound": "No se encontró el escritorio. Comprueba que HealthWallet está abierto en él y que ambos dispositivos están en la misma red.",
-  "desktopBackupSucceededMessage": "Se guardó \"{name}\". Contiene {count} registros."
+  "desktopBackupSucceededMessage": "Se guardó \"{name}\". Contiene {count} registros.",
+  "holderQuestionTitle": "¿De quién son estos registros?",
+  "holderQuestionMessage": "Han llegado registros de {name}, que no coincide con nadie de tu cartera. ¿Quién es?",
+  "holderQuestionSomeoneElse": "Otra persona"
 }

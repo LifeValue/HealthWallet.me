@@ -129,7 +129,10 @@ class _ProcessingPageState extends State<ProcessingPage> {
       builder: (context) => AttachToEncounterWidget(
         patient: activeSession.patient,
         encounter: activeSession.encounter,
-        confirmText: context.l10n.attachToEncounter,
+        confirmText: activeSession.isDiagnosticReportContainer
+            ? context.l10n.attachToPatient
+            : context.l10n.attachToEncounter,
+        patientOnly: activeSession.isDiagnosticReportContainer,
       ),
     );
 

@@ -77,4 +77,32 @@ void main() {
     expect(card.conditions, ['Asthma']);
     expect(card.allergies, ['Penicillin']);
   });
+
+  test(
+    "the person's wallet row gets the records of all their sources",
+    () async {
+      await insertResource(
+        db,
+        id: 'tom-wallet',
+        type: 'Patient',
+        sourceId: 'wallet-tom',
+        raw: {
+          'name': [
+            {
+              'family': 'Doe',
+              'given': ['Tom'],
+            },
+          ],
+        },
+      );
+
+      final card = await builder.build(
+        patientId: 'tom-wallet',
+        sourceIds: ['s2', 'wallet-tom'],
+      );
+
+      expect(card.conditions, ['Asthma']);
+      expect(card.allergies, ['Penicillin']);
+    },
+  );
 }

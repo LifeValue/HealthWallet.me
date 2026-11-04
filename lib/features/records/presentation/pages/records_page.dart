@@ -15,7 +15,6 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/logger.dart';
-import 'package:health_wallet/core/utils/patient_source_utils.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
@@ -37,7 +36,6 @@ import 'package:health_wallet/features/records/presentation/widgets/records_view
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -165,11 +163,12 @@ class _RecordsViewState extends State<RecordsView> {
     );
   }
 
-  ({String? sourceId, List<String>? sourceIds}) _scope(BuildContext context) =>
-      PatientSourceUtils.recordsScope(
-        context.read<HomeBloc>().state.selectedSource,
-        context.read<PatientBloc>().state,
-      );
+  /// Whose records to show: the selection's source filter, or the selected
+  /// person's sources (see `HolderScope.sourceIds`).
+  ({String? sourceId, List<String>? sourceIds}) _scope(BuildContext context) {
+    final scope = context.read<HomeBloc>().state.scope;
+    return (sourceId: scope.sourceFilter, sourceIds: scope.sourceIds);
+  }
 
   /// Shows the records of the current scope again, in both views: after the
   /// scope changed, or after records arrived or were deleted.
@@ -352,16 +351,7 @@ class _RecordsViewState extends State<RecordsView> {
           // A new scope reaches the Attachments view through the
           // RecordsBloc listener below, so these only reload the list.
           BlocListener<HomeBloc, HomeState>(
-            listenWhen: (previous, current) =>
-                previous.selectedSource != current.selectedSource,
-            listener: (context, _) =>
-                _reloadRecords(context, attachments: false),
-          ),
-          BlocListener<PatientBloc, PatientState>(
-            listenWhen: (previous, current) =>
-                previous.status != current.status ||
-                previous.selectedPatientId != current.selectedPatientId ||
-                previous.patientGroups != current.patientGroups,
+            listenWhen: (previous, current) => previous.scope != current.scope,
             listener: (context, _) =>
                 _reloadRecords(context, attachments: false),
           ),
@@ -385,8 +375,8 @@ class _RecordsViewState extends State<RecordsView> {
           BlocListener<RecordsBloc, RecordsState>(
             listenWhen: (previous, current) =>
                 current.status == const RecordsStatus.deleted(),
+            // The people are read again app-wide (see App).
             listener: (context, state) {
-              context.read<PatientBloc>().add(const PatientPatientsLoaded());
               _reloadAttachmentBrowse(
                 context,
                 resourceTypes: state.activeFilters,

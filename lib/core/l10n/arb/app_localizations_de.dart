@@ -429,6 +429,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get attachToEncounter => 'An Termin anhängen';
 
   @override
+  String get attachToPatient => 'An Patient anhängen';
+
+  @override
   String get continueProcessing => 'Verarbeitung fortsetzen';
 
   @override
@@ -4621,4 +4624,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String desktopBackupSucceededMessage(String name, int count) {
     return '\"$name\" wurde gespeichert. Sie enthält $count Aufzeichnungen.';
   }
+
+  @override
+  String get holderQuestionTitle => 'Wem gehören diese Aufzeichnungen?';
+
+  @override
+  String holderQuestionMessage(String name) {
+    return 'Es sind Aufzeichnungen für $name eingegangen. Diese Person passt zu niemandem in deiner Wallet. Wer ist das?';
+  }
+
+  @override
+  String get holderQuestionSomeoneElse => 'Jemand anderes';
 }

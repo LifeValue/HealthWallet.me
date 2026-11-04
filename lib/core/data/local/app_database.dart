@@ -27,7 +27,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -104,6 +104,10 @@ class AppDatabase extends _$AppDatabase {
 
       if (from <= 12 && to >= 13) {
         await _migrateToV13();
+      }
+
+      if (from <= 13 && to >= 14) {
+        await _migrateToV14();
       }
     },
   );
@@ -290,6 +294,12 @@ class AppDatabase extends _$AppDatabase {
     await _createSyncTriggers();
   }
 
+  /// Which holder each source belongs to. Filled in at start-up by
+  /// `HolderLinker`, which needs the records, not by the migration.
+  Future<void> _migrateToV14() async {
+    await customStatement('ALTER TABLE sources ADD COLUMN holder_id TEXT NULL');
+  }
+
   Future<void> _createOptimizationIndexes() async {
     await customStatement('PRAGMA journal_mode=WAL');
     await customStatement('PRAGMA synchronous=NORMAL');
@@ -403,9 +413,6 @@ class AppDatabase extends _$AppDatabase {
       );
     }
   }
-
-  Stream<List<Source>> watchSources() => select(sources).watch();
-  Future<void> addSource(SourcesCompanion entry) => into(sources).insert(entry);
 
   Future<List<FhirResourceLocalDto>> getEncounterWithReferences(
     String encounterId,

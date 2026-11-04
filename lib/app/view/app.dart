@@ -11,13 +11,13 @@ import 'package:health_wallet/core/navigation/observers/order_route_observer.dar
 import 'package:health_wallet/core/services/bluetooth_state_service.dart';
 import 'package:health_wallet/core/theme/theme.dart';
 import 'package:health_wallet/core/utils/logger.dart';
-import 'package:health_wallet/core/utils/patient_source_utils.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/app_lock/presentation/bloc/app_lock_bloc.dart';
 import 'package:health_wallet/features/app_lock/presentation/widgets/app_lock_overlay.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/phone_approval_listener.dart';
 import 'package:health_wallet/features/desktop/tray/presentation/bloc/tray_bloc.dart';
+import 'package:health_wallet/features/holders/presentation/widgets/holder_question_listener.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
@@ -185,10 +185,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
             listener: (context, state) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (!context.mounted) return;
+                // Home follows when the people are read again.
                 context.read<PatientBloc>().add(const PatientPatientsLoaded());
-                context.read<HomeBloc>().add(
-                  const HomeRefreshPreservingOrder(),
-                );
               });
             },
           ),
@@ -226,7 +224,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                     child: IpsExportErrorListener(
                       child: WalletPassErrorListener(
                         child: CaptureErrorListener(
-                          child: SyncErrorListener(child: child!),
+                          child: SyncErrorListener(
+                            child: HolderQuestionListener(child: child!),
+                          ),
                         ),
                       ),
                     ),
@@ -268,15 +268,7 @@ void _handleSyncBlocStateChange(BuildContext context, SyncState state) {
         message: context.l10n.syncDataLoadedSuccessfully,
       );
     });
-
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (context.mounted) {
-        final homeState = context.read<HomeBloc>().state;
-        final currentSource = homeState.selectedSource.isEmpty
-            ? 'All'
-            : homeState.selectedSource;
-        PatientSourceUtils.reloadHomeWithPatientFilter(context, currentSource);
-      }
-    });
+    // Reading the people again (PatientPatientsLoaded) moves Home to the
+    // new records through the selection.
   }
 }

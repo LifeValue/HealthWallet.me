@@ -15,10 +15,17 @@ abstract class HomeInitialised extends HomeEvent with _$HomeInitialised {
 abstract class HomeSourceChanged extends HomeEvent with _$HomeSourceChanged {
   const HomeSourceChanged._();
 
-  const factory HomeSourceChanged(
-    String source, {
-    List<String>? patientSourceIds,
-  }) = _HomeSourceChanged;
+  /// [source] is one of the selected person's sources, or 'All'.
+  const factory HomeSourceChanged(String source) = _HomeSourceChanged;
+}
+
+/// The selection changed (see `HolderSelection`): another person, another
+/// source filter, or the people were read again.
+@freezed
+abstract class HomeScopeChanged extends HomeEvent with _$HomeScopeChanged {
+  const HomeScopeChanged._();
+
+  const factory HomeScopeChanged() = _HomeScopeChanged;
 }
 
 @freezed
@@ -102,10 +109,7 @@ abstract class HomeScanCompleted extends HomeEvent with _$HomeScanCompleted {
 abstract class HomeSourceDeleted extends HomeEvent with _$HomeSourceDeleted {
   const HomeSourceDeleted._();
 
-  const factory HomeSourceDeleted(
-    String sourceId, {
-    List<String>? patientSourceIds,
-  }) = _HomeSourceDeleted;
+  const factory HomeSourceDeleted(String sourceId) = _HomeSourceDeleted;
 }
 
 @freezed

@@ -870,6 +870,12 @@ abstract class AppLocalizations {
   /// **'Attach to Encounter'**
   String get attachToEncounter;
 
+  /// No description provided for @attachToPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach to Patient'**
+  String get attachToPatient;
+
   /// No description provided for @continueProcessing.
   ///
   /// In en, this message translates to:
@@ -8134,6 +8140,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'\"{name}\" has been saved. It holds {count} records.'**
   String desktopBackupSucceededMessage(String name, int count);
+
+  /// No description provided for @holderQuestionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Whose records are these?'**
+  String get holderQuestionTitle;
+
+  /// Asked when records arrive for someone who matches no one in the wallet, which has several people.
+  ///
+  /// In en, this message translates to:
+  /// **'Records arrived for {name}, who doesn\'t match anyone in your wallet. Who is this?'**
+  String holderQuestionMessage(String name);
+
+  /// No description provided for @holderQuestionSomeoneElse.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone else'**
+  String get holderQuestionSomeoneElse;
 }
 
 class _AppLocalizationsDelegate

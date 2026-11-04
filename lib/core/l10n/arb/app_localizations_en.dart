@@ -421,6 +421,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get attachToEncounter => 'Attach to Encounter';
 
   @override
+  String get attachToPatient => 'Attach to Patient';
+
+  @override
   String get continueProcessing => 'Continue Processing';
 
   @override
@@ -4548,4 +4551,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String desktopBackupSucceededMessage(String name, int count) {
     return '\"$name\" has been saved. It holds $count records.';
   }
+
+  @override
+  String get holderQuestionTitle => 'Whose records are these?';
+
+  @override
+  String holderQuestionMessage(String name) {
+    return 'Records arrived for $name, who doesn\'t match anyone in your wallet. Who is this?';
+  }
+
+  @override
+  String get holderQuestionSomeoneElse => 'Someone else';
 }

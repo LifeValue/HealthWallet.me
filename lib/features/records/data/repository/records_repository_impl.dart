@@ -4,7 +4,6 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:fhir_ips_export/fhir_ips_export.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
@@ -565,7 +564,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
           )
           .toList();
 
-      unawaited(_syncLocalDataSource.cacheFhirResources(processedResources));
+      await _syncLocalDataSource.cacheFhirResources(processedResources);
 
       await _attachDemoPdf();
     } catch (e, stackTrace) {
@@ -632,9 +631,9 @@ class RecordsRepositoryImpl implements RecordsRepository {
         'change_type': 'created',
       }).populateEncounterIdFromRaw().populateSubjectIdFromRaw();
 
-      unawaited(_syncLocalDataSource.cacheFhirResources([dto]));
+      await _syncLocalDataSource.cacheFhirResources([dto]);
     } catch (e) {
-      debugPrint('[DEMO] Failed to attach demo PDF: $e');
+      logger.w('Failed to attach the demo PDF', e);
     }
   }
 
@@ -709,17 +708,33 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
   @override
   Future<void> clearDemoData() async {
+    // The demo person's sources: the demo data and what was scanned or
+    // attached for them, which would otherwise outlive their patient.
+    final sourceIds = [
+      'demo_data',
+      for (final row
+          in await _database
+              .customSelect(
+                'SELECT id FROM sources WHERE deleted_at IS NULL '
+                "AND id != 'demo_data' AND holder_id = "
+                "(SELECT holder_id FROM sources WHERE id = 'demo_data')",
+              )
+              .get())
+        row.read<String>('id'),
+    ];
     final demoRows = await _datasource.getResources(
       resourceTypes: [],
-      sourceId: 'demo_data',
+      sourceIds: sourceIds,
     );
     final fileUrls = {
       for (final row in demoRows) ..._attachmentFileUrls(row.resourceRaw),
     };
 
-    // Tombstones the source, its records and their notes in one
+    // Each tombstones the source, its records and their notes in one
     // transaction.
-    await _syncLocalDataSource.deleteSource('demo_data');
+    for (final sourceId in sourceIds) {
+      await _syncLocalDataSource.deleteSource(sourceId);
+    }
 
     for (final url in fileUrls) {
       await _deleteFileIfUnused(url);
@@ -885,10 +900,11 @@ class RecordsRepositoryImpl implements RecordsRepository {
   @override
   Future<({Uint8List bytes, String patientName})> buildIpsExport({
     String? sourceId,
+    List<String>? sourceIds,
     String? patientId,
   }) async {
-    List<String>? patientSourceIds;
-    if (patientId != null) {
+    List<String>? patientSourceIds = sourceIds;
+    if (patientSourceIds == null && patientId != null) {
       final allPatients = await _datasource.getResources(
         resourceTypes: [FhirType.Patient.name],
       );

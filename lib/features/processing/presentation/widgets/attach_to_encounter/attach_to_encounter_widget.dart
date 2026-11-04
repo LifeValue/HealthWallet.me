@@ -19,12 +19,17 @@ class AttachToEncounterWidget extends StatelessWidget {
     this.patient,
     this.encounter,
     this.confirmText,
+    this.patientOnly = false,
     super.key,
   });
 
   final StagedPatient? patient;
   final StagedEncounter? encounter;
   final String? confirmText;
+
+  /// Only the patient is chosen: the scan is filed under a diagnostic
+  /// report, which takes no encounter, so the session's stays as it is.
+  final bool patientOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -36,14 +41,18 @@ class AttachToEncounterWidget extends StatelessWidget {
             encounter: encounter ?? const StagedEncounter(),
           ),
         ),
-      child: _AttachToEncounterView(confirmText: confirmText),
+      child: _AttachToEncounterView(
+        confirmText: confirmText,
+        patientOnly: patientOnly,
+      ),
     );
   }
 }
 
 class _AttachToEncounterView extends StatefulWidget {
   final String? confirmText;
-  const _AttachToEncounterView({this.confirmText});
+  final bool patientOnly;
+  const _AttachToEncounterView({this.confirmText, this.patientOnly = false});
 
   @override
   State<_AttachToEncounterView> createState() => _AttachToEncounterViewState();
@@ -85,8 +94,23 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
           }
         },
         builder: (context, state) {
+          final patientOnly = widget.patientOnly;
           final canProceed =
-              state.patient.hasSelection && state.encounter.hasSelection;
+              state.patient.hasSelection &&
+              (patientOnly || state.encounter.hasSelection);
+          final selectors = Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: patientOnly ? MainAxisSize.min : MainAxisSize.max,
+              children: [
+                PatientSelector(title: context.l10n.currentPatientAndSource),
+                if (!patientOnly) ...[
+                  const SizedBox(height: 24),
+                  const Expanded(child: EncounterSelector()),
+                ],
+              ],
+            ),
+          );
           return Container(
             constraints: const BoxConstraints(maxHeight: 600, maxWidth: 500),
             decoration: BoxDecoration(
@@ -103,7 +127,9 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
                     children: [
                       Expanded(
                         child: Text(
-                          context.l10n.attachToEncounter,
+                          patientOnly
+                              ? context.l10n.attachToPatient
+                              : context.l10n.attachToEncounter,
                           style: AppTextStyle.bodyMedium,
                         ),
                       ),
@@ -121,21 +147,7 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
                 ),
                 Container(height: 1, color: borderColor),
 
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        PatientSelector(
-                          title: context.l10n.currentPatientAndSource,
-                        ),
-                        const SizedBox(height: 24),
-                        const Expanded(child: EncounterSelector()),
-                      ],
-                    ),
-                  ),
-                ),
+                if (patientOnly) selectors else Expanded(child: selectors),
 
                 Container(height: 1, color: borderColor),
 

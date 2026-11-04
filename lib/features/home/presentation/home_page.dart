@@ -12,7 +12,6 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
-import 'package:health_wallet/core/utils/patient_source_utils.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
@@ -49,33 +48,6 @@ class HomePage extends StatelessWidget {
       value: getIt<LwwSyncBloc>(),
       child: MultiBlocListener(
         listeners: [
-          BlocListener<PatientBloc, PatientState>(
-            listenWhen: (previous, current) {
-              final selectionChanged =
-                  previous.selectedPatientId != current.selectedPatientId;
-
-              final selectedId = current.selectedPatientId;
-              if (selectedId != null) {
-                final previousPatient = previous.patients
-                    .where((p) => p.id == selectedId)
-                    .firstOrNull;
-                final currentPatient = current.patients
-                    .where((p) => p.id == selectedId)
-                    .firstOrNull;
-                final dataChanged =
-                    previousPatient?.displayTitle !=
-                    currentPatient?.displayTitle;
-
-                return selectionChanged || dataChanged;
-              }
-
-              return selectionChanged;
-            },
-            listener: (context, patientState) {
-              PatientSourceUtils.handlePatientChange(context, patientState);
-              context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
-            },
-          ),
           BlocListener<SyncBloc, SyncState>(
             listenWhen: (previous, current) =>
                 (previous.hasDemoData != current.hasDemoData) ||
@@ -92,6 +64,8 @@ class HomePage extends StatelessWidget {
             listenWhen: (previous, current) =>
                 previous.recordsVersion != current.recordsVersion,
             listener: (context, state) {
+              // Sources from the desktop may bring someone new to place.
+              context.read<PatientBloc>().add(const PatientPatientsLoaded());
               context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
             },
           ),

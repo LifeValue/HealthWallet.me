@@ -32,7 +32,12 @@ class EmergencyCardBuilder {
   /// MedicationRequest statuses of a prescription that may be in use.
   static const _currentRequestStatuses = {'active', 'on-hold', 'unknown'};
 
-  Future<EmergencyCardData> build({required String patientId}) async {
+  /// The card of [patientId] from [sourceIds], the person's sources; from
+  /// the sources of that Patient row when null.
+  Future<EmergencyCardData> build({
+    required String patientId,
+    List<String>? sourceIds,
+  }) async {
     final allPatients = await _recordsRepository.getResources(
       resourceTypes: [FhirType.Patient],
       limit: 100,
@@ -47,12 +52,14 @@ class EmergencyCardBuilder {
       throw Exception('Patient not found');
     }
 
-    final patientSourceIds = allPatients
-        .whereType<Patient>()
-        .where((p) => p.id == patientId && p.sourceId.isNotEmpty)
-        .map((p) => p.sourceId)
-        .toSet()
-        .toList();
+    final patientSourceIds =
+        sourceIds ??
+        allPatients
+            .whereType<Patient>()
+            .where((p) => p.id == patientId && p.sourceId.isNotEmpty)
+            .map((p) => p.sourceId)
+            .toSet()
+            .toList();
 
     final patientName =
         FhirFieldExtractor.extractHumanNameFamilyFirst(patient.name?.first) ??

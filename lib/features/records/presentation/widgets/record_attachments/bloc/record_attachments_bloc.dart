@@ -11,6 +11,7 @@ import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
@@ -31,6 +32,7 @@ class RecordAttachmentsBloc
   RecordAttachmentsBloc(
     this._recordsRepository,
     this._sourceTypeService,
+    this._holderService,
     this._syncRepository,
     this._database,
     this._pathResolver,
@@ -43,6 +45,7 @@ class RecordAttachmentsBloc
 
   final RecordsRepository _recordsRepository;
   final SourceTypeService _sourceTypeService;
+  final HolderService _holderService;
   final SyncRepository _syncRepository;
   final AppDatabase _database;
   final PathResolver _pathResolver;
@@ -553,10 +556,8 @@ class RecordAttachmentsBloc
 
     if (resourceSource == null ||
         !_sourceTypeService.isSourceWritable(resourceSource.platformType)) {
-      final walletSource = await _sourceTypeService.getWritableSourceForPatient(
-        patientId: patientId,
-        patientName: null,
-        availableSources: allSources,
+      final walletSource = await _holderService.walletSourceForPatient(
+        patientId,
       );
       return walletSource.id;
     }

@@ -17,6 +17,10 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/app_lock/presentation/bloc/app_lock_bloc.dart';
 import 'package:health_wallet/features/app_lock/presentation/widgets/app_lock_overlay.dart';
+import 'package:health_wallet/features/holders/domain/repository/holder_repository.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_linking_service.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/home/data/services/specialty_classifier_impl.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
@@ -29,16 +33,13 @@ import 'package:health_wallet/features/share_records/domain/services/receive_mod
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/wallet_patient_service.dart';
 import 'package:health_wallet/features/sync/domain/use_case/get_sources_use_case.dart';
 import 'package:health_wallet/features/sync/ehrs/fasten/domain/entities/sync_qr_data.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/user/domain/entity/user.dart';
 import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
 import 'package:health_wallet/features/user/domain/services/default_patient_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
@@ -161,6 +162,7 @@ class FakeRecordsRepository extends Fake implements RecordsRepository {
   @override
   Future<({Uint8List bytes, String patientName})> buildIpsExport({
     String? sourceId,
+    List<String>? sourceIds,
     String? patientId,
   }) async => (bytes: Uint8List(0), patientName: 'Unknown');
 }
@@ -191,9 +193,6 @@ class FakeSyncRepository extends Fake implements SyncRepository {
   Future<void> updateSourceLabel(String sourceId, String newLabel) async {}
 
   @override
-  Future<void> createWalletSource() async {}
-
-  @override
   Future<void> createDemoDataSource() async {}
 
   @override
@@ -207,6 +206,14 @@ class FakeSyncRepository extends Fake implements SyncRepository {
 }
 
 class FakeSyncLocalDataSource extends Fake implements SyncLocalDataSource {}
+
+class FakeHolderRepository extends Fake implements HolderRepository {
+  @override
+  Future<bool> hasUnassigned() async => false;
+
+  @override
+  Future<Map<String, String>> holderBySource() async => {};
+}
 
 class FakeBluetoothStateService extends Fake implements BluetoothStateService {
   @override
@@ -268,13 +275,18 @@ Future<void> _registerAppDependencies({
   final fakeRecordsRepo = FakeRecordsRepository();
   final fakeSyncRepo = FakeSyncRepository();
 
-  final deduplicationService = PatientDeduplicationService(
+  final holderRepo = FakeHolderRepository();
+  final holderService = HolderService(
+    HolderLinkingService(holderRepo),
+    holderRepo,
     fakeRecordsRepo,
     fakeSyncRepo,
   );
-  final selectionService = PatientSelectionService(deduplicationService);
+  final selection = HolderSelection(
+    holderService,
+    await SharedPreferences.getInstance(),
+  );
   final getSourcesUseCase = GetSourcesUseCase(fakeSyncRepo);
-  final walletPatientService = WalletPatientService(fakeSyncRepo);
 
   // --- Blocs (constructed with fake dependencies) ---
   final userBloc = UserBloc(fakeUserRepo, fakeBiometricAuth);
@@ -284,7 +296,7 @@ Future<void> _registerAppDependencies({
     DefaultPatientService(
       fakeRecordsRepo,
       FakeSyncLocalDataSource(),
-      walletPatientService,
+      holderService,
     ),
     AppStringsProvider(),
   );
@@ -292,8 +304,8 @@ Future<void> _registerAppDependencies({
   final prefs = await SharedPreferences.getInstance();
   final notificationBloc = NotificationBloc(prefs);
   final patientBloc = PatientBloc(
-    fakeRecordsRepo,
-    deduplicationService,
+    holderService,
+    selection,
     MockPatientEditService(),
   );
 
@@ -344,10 +356,8 @@ Future<void> _registerAppDependencies({
   getIt.registerFactory<GetSourcesUseCase>(() => getSourcesUseCase);
   getIt.registerFactory<RecordsRepository>(() => fakeRecordsRepo);
   getIt.registerFactory<SyncRepository>(() => fakeSyncRepo);
-  getIt.registerFactory<PatientDeduplicationService>(
-    () => deduplicationService,
-  );
-  getIt.registerFactory<PatientSelectionService>(() => selectionService);
+  getIt.registerFactory<HolderService>(() => holderService);
+  getIt.registerSingleton<HolderSelection>(selection);
   getIt.registerFactory<PatientBloc>(() => patientBloc);
   getIt.registerSingleton<NotificationBloc>(notificationBloc);
 }

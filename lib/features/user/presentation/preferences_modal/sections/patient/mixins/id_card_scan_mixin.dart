@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
 import 'package:health_wallet/features/processing/presentation/helpers/processing_path_helper.dart';
 import 'package:health_wallet/features/user/domain/services/id_card_extractor.dart';
@@ -55,7 +56,9 @@ mixin IdCardScanMixin<T extends StatefulWidget> on State<T> {
       final imagePath = sanitizedPaths.first;
       lastScannedImagePath = imagePath;
       await extractFromImage(imagePath);
-    } catch (_) {
+    } catch (e, s) {
+      // The form stays as it was; the user can scan again or type.
+      logger.w('Reading the ID card failed', e, s);
       if (mounted) setState(() => isScanning = false);
     }
   }
@@ -65,7 +68,9 @@ mixin IdCardScanMixin<T extends StatefulWidget> on State<T> {
     setState(() => isScanning = true);
     try {
       await extractFromImage(lastScannedImagePath!);
-    } catch (_) {
+    } catch (e, s) {
+      // The form stays as it was; the user can scan again or type.
+      logger.w('Reading the ID card failed', e, s);
       if (mounted) setState(() => isScanning = false);
     }
   }
@@ -84,7 +89,9 @@ mixin IdCardScanMixin<T extends StatefulWidget> on State<T> {
 
       lastScannedImagePath = image.path;
       await extractFromImage(image.path);
-    } catch (_) {
+    } catch (e, s) {
+      // The form stays as it was; the user can scan again or type.
+      logger.w('Reading the ID card failed', e, s);
       if (mounted) setState(() => isScanning = false);
     }
   }

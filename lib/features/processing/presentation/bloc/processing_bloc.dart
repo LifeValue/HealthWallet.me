@@ -9,6 +9,8 @@ import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart'
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
@@ -26,8 +28,6 @@ import 'package:health_wallet/features/processing/presentation/bloc/handlers/ses
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -42,8 +42,8 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   final OcrProcessingHelper _ocrProcessingHelper;
   final SyncRepository _syncRepository;
   final DocumentReferenceService _documentReferenceService;
-  final PatientDeduplicationService _deduplicationService;
-  final SourceTypeService _sourceTypeService;
+  final HolderService _holderService;
+  final HolderSelection _holderSelection;
   final RecordsRepository _recordsRepository;
   final SharedPreferences _prefs;
   final AppStringsProvider _strings;
@@ -65,10 +65,10 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
       _documentReferenceService;
 
   @override
-  PatientDeduplicationService get deduplicationService => _deduplicationService;
+  HolderService get holderService => _holderService;
 
   @override
-  SourceTypeService get sourceTypeService => _sourceTypeService;
+  HolderSelection get holderSelection => _holderSelection;
 
   @override
   SharedPreferences get prefs => _prefs;
@@ -81,8 +81,8 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     this._ocrProcessingHelper,
     this._syncRepository,
     this._documentReferenceService,
-    this._deduplicationService,
-    this._sourceTypeService,
+    this._holderService,
+    this._holderSelection,
     this._recordsRepository,
     this._prefs,
     this._strings,

@@ -124,6 +124,7 @@
   "fieldCannotBeEmpty": "Acest câmp nu poate fi gol",
   "selectDate": "Selectează data",
   "attachToEncounter": "Atașează la Consultație",
+  "attachToPatient": "Atașează la Pacient",
   "continueProcessing": "Continuă Procesarea",
   "recordsSavedTitle": "Salvat cu succes",
   "whatNextQuestion": "Ce ai dori să faci în continuare?",
@@ -1665,5 +1666,8 @@
   "desktopPairedPhone": "Telefon asociat",
   "desktopNewQrUnpairsHint": "Un cod QR nou dezasociază acest telefon; folosește-l pentru a asocia altul.",
   "desktopNotFound": "Desktopul nu a fost găsit. Verifică dacă HealthWallet este deschis pe el și dacă ambele dispozitive sunt în aceeași rețea.",
-  "desktopBackupSucceededMessage": "\"{name}\" a fost salvată. Conține {count} înregistrări."
+  "desktopBackupSucceededMessage": "\"{name}\" a fost salvată. Conține {count} înregistrări.",
+  "holderQuestionTitle": "Ale cui sunt aceste înregistrări?",
+  "holderQuestionMessage": "Au sosit înregistrări pentru {name}, care nu corespunde nimănui din portofelul tău. Cine este?",
+  "holderQuestionSomeoneElse": "Altcineva"
 }

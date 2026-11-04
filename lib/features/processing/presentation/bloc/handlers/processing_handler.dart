@@ -8,6 +8,9 @@ import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_matcher.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
@@ -25,8 +28,6 @@ import 'package:health_wallet/features/processing/presentation/bloc/processing_b
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
@@ -35,8 +36,8 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
   RecordsRepository get recordsRepository;
   SyncRepository get syncRepository;
   DocumentReferenceService get documentReferenceService;
-  PatientDeduplicationService get deduplicationService;
-  SourceTypeService get sourceTypeService;
+  HolderService get holderService;
+  HolderSelection get holderSelection;
   SharedPreferences get prefs;
   AppStringsProvider get strings;
 
@@ -270,27 +271,23 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       session?.origin.localizedName(strings.l10n) ??
       strings.l10n.fhirTypeDocumentReference;
 
+  /// The person whose identifier appears in the scanned text, before the AI
+  /// reads the patient.
   Future<Patient?> _tryMatchPatientFromOcr(String ocrText) async {
     if (ocrText.isEmpty) return null;
     try {
-      final allPatientsResources = await recordsRepository.getResources(
-        resourceTypes: [FhirType.Patient],
-        limit: 1000,
-      );
-      final allPatients = allPatientsResources.whereType<Patient>().toList();
-      if (allPatients.isEmpty) return null;
-
-      for (final patient in allPatients) {
-        if (patient.identifier == null) continue;
-        for (final id in patient.identifier!) {
-          final value = id.value?.valueString;
-          if (value == null || value.length < 5) continue;
-          if (ocrText.contains(value) ||
-              _fuzzyIdentifierMatch(value, ocrText)) {
-            ProcessingLogBuffer.instance.log(
-              '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: found identifier $value',
-            );
-            return patient;
+      final directory = await holderService.load();
+      for (final holder in directory.holders) {
+        for (final patient in holder.allPatientInstances) {
+          for (final id in patient.identifier ?? const <fhir_r4.Identifier>[]) {
+            final value = id.value?.valueString;
+            if (value == null || value.length < 6) continue;
+            if (HolderMatcher.appearsIn(value, ocrText)) {
+              ProcessingLogBuffer.instance.log(
+                '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: found identifier $value',
+              );
+              return holder.representativePatient;
+            }
           }
         }
       }
@@ -301,34 +298,16 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     return null;
   }
 
-  bool _fuzzyIdentifierMatch(String identifier, String ocrText) {
-    final digitsOnly = identifier.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digitsOnly.length < 5) return false;
-
-    if (ocrText.contains(digitsOnly)) return true;
-
-    if (digitsOnly.length > 10) {
-      final trimmed = digitsOnly.substring(0, digitsOnly.length - 1);
-      if (ocrText.contains(trimmed)) return true;
-    }
-
-    return false;
-  }
-
   Future<StagedPatient> _matchOrCreatePatient(MappingPatient patient) async {
     try {
-      final allPatientsResources = await recordsRepository.getResources(
-        resourceTypes: [FhirType.Patient],
-        limit: 1000,
-      );
-      final allPatients = allPatientsResources.whereType<Patient>().toList();
-      final matchedPatient = deduplicationService.findMatchingPatient(
-        patient,
-        allPatients,
-      );
-      if (matchedPatient != null) {
+      final directory = await holderService.load();
+      final holder = holderService.matchScanned(patient, directory);
+      if (holder != null) {
+        // The unnamed default holder is proposed, not matched: the scan's
+        // details are kept to name them.
         return StagedPatient(
-          existing: matchedPatient,
+          existing: holder.representativePatient,
+          draft: holderService.isUnnamed(holder) ? patient : null,
           mode: ImportMode.linkExisting,
         );
       }
@@ -503,9 +482,8 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       (s) => s.id == event.sessionId,
     );
     try {
-      final (subjectId, sourceId, finalContainer, _) =
+      final (subjectId, sourceId, finalContainer, holderId) =
           await _persistPrimaryResources(activeSession);
-      await prefs.setString('selected_patient_id', subjectId);
       final otherResources = activeSession.resources
           .where(
             (r) =>
@@ -558,6 +536,8 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         sourceId: sourceId,
         title: finalContainer.displayTitle,
       );
+      // Shows the person the scan was filed under, once it is all saved.
+      await holderSelection.select(holderId);
       emit(state.copyWith(status: const PipelineStatus.success()));
     } catch (e, s) {
       logger.e('[ProcessingBloc] resource creation failed', e, s);
@@ -589,46 +569,33 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     );
   }
 
-  Future<(String, String, IFhirResource, Patient)> _persistPrimaryResources(
+  /// The patient, source, container and holder the scan is filed under.
+  Future<(String, String, IFhirResource, String)> _persistPrimaryResources(
     ProcessingSession activeSession,
   ) async {
     String subjectId;
     String sourceId;
+    String holderId;
     final List<IFhirResource> resourcesToSave = [];
-    final availableSources = await syncRepository.getSources();
     if (activeSession.patient.mode == ImportMode.linkExisting &&
         activeSession.patient.existing != null) {
-      final Patient existingPatient = activeSession.patient.existing!;
-      final walletSource = await sourceTypeService.ensureWalletSourceForPatient(
-        patientId: existingPatient.id,
-        patientName: existingPatient.displayTitle,
-        availableSources: availableSources,
+      // The person's own wallet Patient, never the row the match found
+      // (it may be a provider's); the scanned fields fill only what it
+      // leaves empty.
+      final written = await holderService.walletPatientOf(
+        activeSession.patient.existing!.id,
+        scanned: activeSession.patient.draft,
       );
-      subjectId = existingPatient.id;
-      sourceId = walletSource.id;
-
-      if (activeSession.patient.draft != null) {
-        final draftWithExistingId = activeSession.patient.draft!.copyWith(
-          id: existingPatient.id,
-        );
-        resourcesToSave.add(
-          draftWithExistingId.toFhirResource(
-            sourceId: existingPatient.sourceId,
-            subjectId: '',
-            encounterId: '',
-          ),
-        );
-      }
+      subjectId = written.patient.id;
+      sourceId = written.patient.sourceId;
+      holderId = written.holderId;
     } else {
+      // Someone new: a holder of their own, named after their Patient row.
       final MappingPatient draftPatient = activeSession.patient.draft!;
-      final walletSource = await sourceTypeService.ensureWalletSourceForPatient(
-        patientId: draftPatient.id,
-        patientName:
-            '${draftPatient.givenName.value} ${draftPatient.familyName.value}',
-        availableSources: availableSources,
-      );
+      final walletSource = await holderService.walletSourceOf(draftPatient.id);
       subjectId = draftPatient.id;
       sourceId = walletSource.id;
+      holderId = walletSource.holderId ?? draftPatient.id;
       resourcesToSave.add(
         draftPatient.toFhirResource(
           sourceId: sourceId,
@@ -662,16 +629,6 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       await syncRepository.saveResources(resourcesToSave);
     }
 
-    final Patient finalPatient;
-    final savedPatient = resourcesToSave.whereType<Patient>().firstOrNull;
-    if (savedPatient != null) {
-      finalPatient = savedPatient;
-    } else if (activeSession.patient.existing != null) {
-      finalPatient = activeSession.patient.existing!;
-    } else {
-      finalPatient = resourcesToSave.firstWhere((r) => r is Patient) as Patient;
-    }
-
-    return (subjectId, sourceId, finalContainer, finalPatient);
+    return (subjectId, sourceId, finalContainer, holderId);
   }
 }
