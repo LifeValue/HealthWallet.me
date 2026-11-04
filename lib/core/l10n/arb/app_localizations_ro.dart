@@ -4657,4 +4657,14 @@ class AppLocalizationsRo extends AppLocalizations {
   String desktopBackupSucceededMessage(String name, int count) {
     return '\"$name\" a fost salvată. Conține $count înregistrări.';
   }
+
+  @override
+  String aiModelDeleteTitle(String name) {
+    return 'Ștergi $name?';
+  }
+
+  @override
+  String aiModelDeleteMessage(int size) {
+    return 'Modelul și fișierele pentru Scanarea Profundă sunt șterse de pe acest dispozitiv. Ca să scanezi din nou cu el, va trebui să-l descarci din nou (~$size MB).';
+  }
 }

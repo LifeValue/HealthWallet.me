@@ -1683,5 +1683,7 @@
   "desktopPairedPhone": "Telefon asociat",
   "desktopNewQrUnpairsHint": "Un cod QR nou dezasociază acest telefon; folosește-l pentru a asocia altul.",
   "desktopNotFound": "Desktopul nu a fost găsit. Verifică dacă HealthWallet este deschis pe el și dacă ambele dispozitive sunt în aceeași rețea.",
-  "desktopBackupSucceededMessage": "\"{name}\" a fost salvată. Conține {count} înregistrări."
+  "desktopBackupSucceededMessage": "\"{name}\" a fost salvată. Conține {count} înregistrări.",
+  "aiModelDeleteTitle": "Ștergi {name}?",
+  "aiModelDeleteMessage": "Modelul și fișierele pentru Scanarea Profundă sunt șterse de pe acest dispozitiv. Ca să scanezi din nou cu el, va trebui să-l descarci din nou (~{size} MB)."
 }

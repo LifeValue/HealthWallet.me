@@ -1688,5 +1688,7 @@
   "desktopPairedPhone": "Teléfono emparejado",
   "desktopNewQrUnpairsHint": "Un nuevo código QR desempareja este teléfono; úsalo para emparejar otro.",
   "desktopNotFound": "No se encontró el escritorio. Comprueba que HealthWallet está abierto en él y que ambos dispositivos están en la misma red.",
-  "desktopBackupSucceededMessage": "Se guardó \"{name}\". Contiene {count} registros."
+  "desktopBackupSucceededMessage": "Se guardó \"{name}\". Contiene {count} registros.",
+  "aiModelDeleteTitle": "¿Eliminar {name}?",
+  "aiModelDeleteMessage": "El modelo y sus archivos de escaneo profundo se eliminarán de este dispositivo. Para volver a escanear con él, tendrás que descargarlo de nuevo (~{size} MB)."
 }

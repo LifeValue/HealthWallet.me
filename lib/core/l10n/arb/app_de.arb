@@ -1684,5 +1684,7 @@
   "desktopPairedPhone": "Gekoppeltes Telefon",
   "desktopNewQrUnpairsHint": "Ein neuer QR-Code entkoppelt dieses Telefon; damit koppelst du ein anderes.",
   "desktopNotFound": "Desktop nicht gefunden. Prüfe, ob HealthWallet dort geöffnet ist und beide Geräte im selben Netzwerk sind.",
-  "desktopBackupSucceededMessage": "\"{name}\" wurde gespeichert. Sie enthält {count} Aufzeichnungen."
+  "desktopBackupSucceededMessage": "\"{name}\" wurde gespeichert. Sie enthält {count} Aufzeichnungen.",
+  "aiModelDeleteTitle": "{name} löschen?",
+  "aiModelDeleteMessage": "Das Modell und seine Tiefenscan-Dateien werden von diesem Gerät entfernt. Um wieder damit zu scannen, musst du es erneut herunterladen (~{size} MB)."
 }

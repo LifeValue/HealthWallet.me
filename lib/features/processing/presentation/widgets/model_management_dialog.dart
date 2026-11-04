@@ -11,6 +11,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
@@ -38,6 +39,20 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
     _bloc = getIt.get<LoadModelBloc>();
     _bloc.add(const LoadModelInitialized());
   }
+
+  /// Deletes the model only once the user confirms: it is a large download.
+  Future<void> _confirmDelete(BuildContext context, AiModelConfig config) =>
+      AppSimpleDialog.showConfirmation(
+        context: context,
+        title: context.l10n.aiModelDeleteTitle(
+          config.localizedName(context.l10n),
+        ),
+        message: context.l10n.aiModelDeleteMessage(config.modelSizeMB),
+        confirmText: context.l10n.delete,
+        cancelText: context.l10n.cancel,
+        confirmColor: AppColors.error,
+        onConfirm: () => _bloc.add(LoadModelDeleteRequested(config.variant)),
+      );
 
   static const _advancedVariants = {
     AiModelVariant.qwen35x4b,
@@ -293,8 +308,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                 ),
                 if (isDownloaded && !isDownloading)
                   GestureDetector(
-                    onTap: () =>
-                        _bloc.add(LoadModelDeleteRequested(config.variant)),
+                    onTap: () => _confirmDelete(context, config),
                     child: Assets.icons.trashCan.svg(
                       width: 18,
                       height: 18,

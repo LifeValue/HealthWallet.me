@@ -8176,6 +8176,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'\"{name}\" has been saved. It holds {count} records.'**
   String desktopBackupSucceededMessage(String name, int count);
+
+  /// Asks before deleting a downloaded AI model.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}?'**
+  String aiModelDeleteTitle(String name);
+
+  /// No description provided for @aiModelDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The model and its Deep Scan files are removed from this device. To scan with it again, you\'ll need to download it again (~{size} MB).'**
+  String aiModelDeleteMessage(int size);
 }
 
 class _AppLocalizationsDelegate

@@ -4642,4 +4642,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String desktopBackupSucceededMessage(String name, int count) {
     return 'Se guardó \"$name\". Contiene $count registros.';
   }
+
+  @override
+  String aiModelDeleteTitle(String name) {
+    return '¿Eliminar $name?';
+  }
+
+  @override
+  String aiModelDeleteMessage(int size) {
+    return 'El modelo y sus archivos de escaneo profundo se eliminarán de este dispositivo. Para volver a escanear con él, tendrás que descargarlo de nuevo (~$size MB).';
+  }
 }

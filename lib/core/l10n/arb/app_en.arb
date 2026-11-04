@@ -2362,5 +2362,22 @@
         "type": "int"
       }
     }
+  },
+  "aiModelDeleteTitle": "Delete {name}?",
+  "aiModelDeleteMessage": "The model and its Deep Scan files are removed from this device. To scan with it again, you'll need to download it again (~{size} MB).",
+  "@aiModelDeleteTitle": {
+    "description": "Asks before deleting a downloaded AI model.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@aiModelDeleteMessage": {
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
   }
 }

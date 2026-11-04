@@ -4584,4 +4584,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String desktopBackupSucceededMessage(String name, int count) {
     return '\"$name\" has been saved. It holds $count records.';
   }
+
+  @override
+  String aiModelDeleteTitle(String name) {
+    return 'Delete $name?';
+  }
+
+  @override
+  String aiModelDeleteMessage(int size) {
+    return 'The model and its Deep Scan files are removed from this device. To scan with it again, you\'ll need to download it again (~$size MB).';
+  }
 }
