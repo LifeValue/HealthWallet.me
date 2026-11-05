@@ -320,9 +320,7 @@ class _ResourcesFormState extends State<ResourcesForm> {
               final propertyKey = entry.key;
               final descriptor = entry.value;
 
-              final confidenceLevel = ConfidenceLevel.fromDouble(
-                descriptor.confidenceLevel,
-              );
+              final confidenceLevel = descriptor.confidence;
 
               return IgnorePointer(
                 ignoring: readOnly,
@@ -339,7 +337,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
                               style: AppTextStyle.bodySmall,
                             ),
                             if (descriptor.fieldType == FieldType.date &&
-                                descriptor.value.isEmpty)
+                                descriptor.value.isEmpty &&
+                                descriptor.isRequired)
                               const Padding(
                                 padding: EdgeInsets.only(left: 4),
                                 child: Icon(
@@ -684,7 +683,7 @@ class _ResourcesFormState extends State<ResourcesForm> {
         onChanged: (value) => onPropertyChanged?.call(key, value),
         decoration: _fieldDecoration(
           context,
-          ConfidenceLevel.fromDouble(descriptor.confidenceLevel),
+          descriptor.confidence,
           hintText: '-',
           contentPadding: const EdgeInsets.symmetric(
             horizontal: Insets.small,

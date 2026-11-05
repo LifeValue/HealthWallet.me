@@ -181,6 +181,28 @@ void main() {
     expect(find.text(l10n.visionInvalidAxis), findsOne);
   });
 
+  testWidgets('an empty field shows no low-confidence hint, a doubtful '
+      'value does', (tester) async {
+    Future<void> show(MappedProperty prescriber) => pump(
+      tester,
+      ResourcesForm(
+        resources: [
+          _twin.copyWith(existingId: '', prescriberName: prescriber),
+        ],
+        sessionId: 's',
+        formKey: GlobalKey<FormState>(),
+      ),
+    );
+
+    await show(const MappedProperty());
+    expect(find.textContaining(l10n.confidenceLow), findsNothing);
+
+    await show(
+      const MappedProperty(value: 'Dr. Exemplu', confidenceLevel: 0.2),
+    );
+    expect(find.textContaining(l10n.confidenceLow), findsOne);
+  });
+
   testWidgets('a document already in the wallet says so above Done', (
     tester,
   ) async {
