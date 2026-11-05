@@ -22,12 +22,15 @@ class ClearvisText {
   ).replaceAll(RegExp(r'\s*/\s*'), ' / ').replaceAll(RegExp(r'\s+'), ' ');
 
   // The labels the forms print, Romanian then (on the prescriptions) " / "
-  // and English; a label ends its line or is followed by its value.
+  // and English; a label ends its line or is followed by its value. OCR
+  // reads the "ci" of "pacient" as "cl" or "c1".
   static final store = RegExp(r'^magazin( / [a-z -]*)?$');
   static final address = RegExp(r'^adres[ae]( / [a-z -]*)?$');
-  static final patient = RegExp(r'^pacient( / [a-z -]*)?$');
+  static final patient = RegExp(r'^pac[il1]ent( / [a-z -]*)?$');
   static final birthDate = RegExp(r'^dat[ae] nastere( / [a-z -]*)?$');
-  static final patientId = RegExp(r'^identificator pacient( / [a-z -]*)?$');
+  static final patientId = RegExp(
+    r'^identificator pac[il1]ent( / [a-z -]*)?$',
+  );
   static final phone = RegExp(r'^telefon( / [a-z -]*)?$');
   static final email = RegExp(r'^e-?mail( / [a-z -]*)?$');
   static final date = RegExp(r'^data / date$');
@@ -180,6 +183,18 @@ class ClearvisText {
   }
 
   static bool hasDate(String line) => _date.hasMatch(line);
+
+  static final _patientNumber = RegExp(r'\bPA-\d{4,}\b');
+
+  /// The first patient number ("PA-01234") from line [from] to [to],
+  /// wherever OCR put it, for when its label came out unreadable.
+  String? patientNumberIn({int from = 0, int? to}) {
+    for (var i = from; i < (to ?? lines.length); i++) {
+      final m = _patientNumber.firstMatch(lines[i]);
+      if (m != null) return m.group(0);
+    }
+    return null;
+  }
 
   /// Whether [line] reads as a person's name: words of letters, no digits.
   static bool isName(String line) =>

@@ -8,6 +8,7 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_practitioner.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_vision_prescription.dart';
 import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extractor.dart';
+import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/records/domain/entity/vision_prescription/vision_prescription.dart';
 import 'package:uuid/uuid.dart';
 
@@ -34,6 +35,10 @@ class ClearvisIoExtractor implements LayoutExtractor {
     caseSensitive: false,
   );
 
+  /// The platform's name in the footer, as OCR reads it ("clearvis.io",
+  /// "clearvis.lo", "clearis. lo").
+  static final _platform = RegExp(r'\bclearv?is ?[.,] ?[il1]?[o0]\b');
+
   static final _formLabels = [
     'magazin / store',
     'pacient / patient',
@@ -50,7 +55,7 @@ class ClearvisIoExtractor implements LayoutExtractor {
   double score(String ocrText) {
     final folded = ClearvisText.fold(ocrText);
     var score = 0.0;
-    if (folded.contains('clearvis.io')) score += 0.5;
+    if (_platform.hasMatch(folded)) score += 0.5;
     if (_prSerial.hasMatch(ocrText) || _eeSerial.hasMatch(ocrText)) {
       score += 0.2;
     }
@@ -68,7 +73,7 @@ class ClearvisIoExtractor implements LayoutExtractor {
         _eeSerial.hasMatch(ocrText)) {
       return _exam(text);
     }
-    return null;
+    return _reject('neither prescriptions nor an exam result');
   }
 
   // ---------------------------------------------------------------------
@@ -104,34 +109,46 @@ class ClearvisIoExtractor implements LayoutExtractor {
   }
 
   LayoutExtraction? _prescriptions(ClearvisText text, List<(int, int)> blocks) {
-    final (first, firstEnd) = blocks.first;
-    String? value(RegExp label, {bool Function(String)? accept}) =>
-        text.valueAfter(label, from: first, to: firstEnd, accept: accept);
+    // Every form prints the patient and the store, and OCR loses a label or
+    // a value now and then: each is read from every form, and the reading
+    // most of them agree on is kept.
+    String? value(RegExp label, {bool Function(String)? accept}) => _common([
+      for (final (start, end) in blocks)
+        text.valueAfter(label, from: start, to: end, accept: accept),
+    ]);
 
     final name = value(ClearvisText.patient, accept: ClearvisText.isName);
-    final date = ClearvisText.isoDate(
-      value(ClearvisText.date, accept: ClearvisText.hasDate),
-    );
-    if (name == null || date == null) return null;
+    if (name == null) return _reject('no patient name');
+    final date = _common([
+      for (final (start, end) in blocks)
+        ClearvisText.isoDate(
+          text.valueAfter(
+            ClearvisText.date,
+            from: start,
+            to: end,
+            accept: ClearvisText.hasDate,
+          ),
+        ),
+    ]);
+    if (date == null) return _reject('no prescription date');
 
     final store = value(ClearvisText.store) ?? '';
-    final patientNumber = value(ClearvisText.patientId) ?? '';
+    final patientNumber =
+        value(ClearvisText.patientId) ??
+        _common([
+          for (final (start, end) in blocks)
+            text.patientNumberIn(from: start, to: end),
+        ]) ??
+        '';
     // The store and the patient number key the visit and the clinic.
-    if (LayoutKeys.slug(store).isEmpty || patientNumber.isEmpty) return null;
-    final storeAt = text.indexOf(ClearvisText.store, from: first, to: firstEnd);
-    final patientAt = text.indexOf(
-      ClearvisText.patient,
-      from: first,
-      to: firstEnd,
-    );
+    if (LayoutKeys.slug(store).isEmpty) return _reject('no store');
+    if (patientNumber.isEmpty) return _reject('no patient number');
     final clinic = _Clinic(
       name: store,
       address:
-          text.valueAfter(
-            ClearvisText.address,
-            from: storeAt < 0 ? first : storeAt,
-            to: patientAt < 0 ? firstEnd : patientAt,
-          ) ??
+          _common([
+            for (final (start, end) in blocks) _storeAddress(text, start, end),
+          ]) ??
           '',
       phone: value(ClearvisText.phone) ?? '',
     );
@@ -160,7 +177,7 @@ class ClearvisIoExtractor implements LayoutExtractor {
     final prescriptions = <MappingVisionPrescription>[];
     for (final (start, end) in blocks) {
       final eyes = _formEyes(text, start, end);
-      if (eyes == null) return null;
+      if (eyes == null) return _reject('no lens values on a prescription');
       final serial = _prSerial.firstMatch(
         text.lines.sublist(start, end).join('\n'),
       );
@@ -197,9 +214,17 @@ class ClearvisIoExtractor implements LayoutExtractor {
       encounterType: prescriptions.first.title,
       patient: _patient(
         name,
-        ClearvisText.isoDate(
-          value(ClearvisText.birthDate, accept: ClearvisText.hasDate),
-        ),
+        _common([
+          for (final (start, end) in blocks)
+            ClearvisText.isoDate(
+              text.valueAfter(
+                ClearvisText.birthDate,
+                from: start,
+                to: end,
+                accept: ClearvisText.hasDate,
+              ),
+            ),
+        ]),
         context,
       ),
       practitioner: practitioner,
@@ -207,10 +232,38 @@ class ClearvisIoExtractor implements LayoutExtractor {
     );
   }
 
-  /// A sphere, add or cylinder value with its dioptre sign: "+0.75 D",
-  /// "1,75D". Not one followed by a slash (that is a cylinder).
+  /// The store's address on the form from [start] to [end]: the one
+  /// between the store and the patient, not the patient's.
+  String? _storeAddress(ClearvisText text, int start, int end) {
+    final storeAt = text.indexOf(ClearvisText.store, from: start, to: end);
+    final patientAt = text.indexOf(ClearvisText.patient, from: start, to: end);
+    return text.valueAfter(
+      ClearvisText.address,
+      from: storeAt < 0 ? start : storeAt,
+      to: patientAt < 0 ? end : patientAt,
+    );
+  }
+
+  /// The reading most forms agree on, the first form's on a tie; null when
+  /// none printed one.
+  static String? _common(List<String?> readings) {
+    final counts = <String, int>{};
+    for (final reading in readings.whereType<String>()) {
+      counts[reading] = (counts[reading] ?? 0) + 1;
+    }
+    String? best;
+    for (final MapEntry(:key, :value) in counts.entries) {
+      if (best == null || value > counts[best]!) best = key;
+    }
+    return best;
+  }
+
+  /// A sphere or add value and its dioptre sign: "+0.75 D", "1,75D", or a
+  /// signed one whose "D" OCR dropped ("+2.50 •"). Not one followed by a
+  /// slash (that is a cylinder). Group 2 is the "D".
   static final _formValue = RegExp(
-    r'(?<![\w.,:+\-])([+\-]?\d{1,2}[.,]\d{2})[ \t]?D(?![A-Za-z])(?![ \t]*/)',
+    r'(?<![\w.,:+\-])([+\-]?\d{1,2}[.,]\d{2})(?!\d)(?![ \t]*D?[ \t]*/)'
+    r'([ \t]?D(?![A-Za-z]))?',
   );
 
   /// The "Cyl / Axis" cell: "+0.25 D / 160", or "D /" when empty.
@@ -233,6 +286,8 @@ class ClearvisIoExtractor implements LayoutExtractor {
     for (final m in _formValue.allMatches(body)) {
       final printed = m.group(1)!;
       final signed = printed.startsWith('+') || printed.startsWith('-');
+      // Without its "D", only a signed value is surely a lens value.
+      if (m.group(2) == null && !signed) continue;
       if (hasAdd && !signed) {
         adds.add(ClearvisText.decimal(printed, signed: false));
       } else {
@@ -301,7 +356,8 @@ class ClearvisIoExtractor implements LayoutExtractor {
     final date = ClearvisText.isoDate(
       text.valueAfter(ClearvisText.examDate, accept: ClearvisText.hasDate),
     );
-    if (name == null || date == null) return null;
+    if (name == null) return _reject('no patient name');
+    if (date == null) return _reject('no exam date');
 
     final placeAt = text.indexOf(ClearvisText.examPlace);
     final place = <String>[];
@@ -321,8 +377,10 @@ class ClearvisIoExtractor implements LayoutExtractor {
                 ClearvisText.fold(footerStore));
     if (!storeLine) place.insert(0, footerStore);
     final store = _clean(place.first);
-    final patientNumber = text.valueAfter(ClearvisText.patientId) ?? '';
-    if (LayoutKeys.slug(store).isEmpty || patientNumber.isEmpty) return null;
+    final patientNumber =
+        text.valueAfter(ClearvisText.patientId) ?? text.patientNumberIn() ?? '';
+    if (LayoutKeys.slug(store).isEmpty) return _reject('no store');
+    if (patientNumber.isEmpty) return _reject('no patient number');
     final clinic = _Clinic(
       name: store,
       address: place.length > 1 ? _clean(place[1]) : '',
@@ -345,7 +403,7 @@ class ClearvisIoExtractor implements LayoutExtractor {
         end++;
       }
       final eyes = _listEyes(text.lines.sublist(i + 1, end).join('\n'));
-      if (eyes == null) return null;
+      if (eyes == null) return _reject('no lens values on a prescription');
       prescriptions.add(
         context.prescription(
           title: text.lines[i],
@@ -460,6 +518,16 @@ class ClearvisIoExtractor implements LayoutExtractor {
           : LayoutKeys.clinicPatientSystem(context.clinicKey),
       provenance: context.provenance,
     );
+  }
+
+  /// No extraction, saying why in the processing log (what is missing,
+  /// never a value read).
+  static LayoutExtraction? _reject(String reason) {
+    ProcessingLogBuffer.instance.log(
+      '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] '
+      'layout clearvis.io: $reason',
+    );
+    return null;
   }
 
   static MappedProperty _read(String value) =>

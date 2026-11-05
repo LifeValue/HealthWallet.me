@@ -112,6 +112,44 @@ void main() {
       });
     }
 
+    test('a 72 dpi capture: what OCR lost on one form comes from the '
+        'others', () {
+      // The desktop app's own capture: the first form's patient number and
+      // the third form's store came out unreadable, a "D" was dropped and
+      // the footer reads "clearvis.lo".
+      final text = fixture('clearvis_prescriptions_low_resolution');
+      expect(
+        extractor.score(text),
+        greaterThanOrEqualTo(LayoutExtractorRegistry.threshold),
+      );
+      final x = extractor.extract(text)!;
+
+      expect(x.clinicKey, 'optica-exemplu-1');
+      expect(x.patient.givenName.value, 'Ioana Maria');
+      expect(x.patient.familyName.value, 'Popescu');
+      expect(x.patient.dateOfBirth.value, '1983-07-11');
+      expect(x.patient.patientIdentifier.value, 'PA-01234');
+      expect(x.visitKey!.value, 'optica-exemplu-1|PA-01234|2024-03-14');
+      final prescriptions = _prescriptions(x);
+      expect(prescriptions.map((p) => p.lensType), [
+        VisionLensType.multifocal,
+        VisionLensType.distance,
+        VisionLensType.reading,
+      ]);
+      expect(_eyes(prescriptions[0]), (
+        ('+0.75', '', '', '1.75'),
+        ('+0.75', '+0.25', '160', '1.75'),
+      ));
+      expect(_eyes(prescriptions[1]), (
+        ('+0.75', '', '', ''),
+        ('+0.75', '+0.25', '160', ''),
+      ));
+      expect(_eyes(prescriptions[2]), (
+        ('+2.50', '', '', ''),
+        ('+2.50', '+0.25', '160', ''),
+      ));
+    });
+
     test('the clinic and examiner get the same ids every time', () {
       final a = extractor.extract(fixture('clearvis_prescriptions'))!;
       final b = extractor.extract(fixture('clearvis_prescriptions_noisy'))!;
