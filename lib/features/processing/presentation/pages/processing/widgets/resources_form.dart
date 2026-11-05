@@ -305,6 +305,16 @@ class _ResourcesFormState extends State<ResourcesForm> {
                 color: context.colorScheme.primary,
                 text: walletNote,
               ),
+            if (resource is MappingVisionPrescription)
+              IgnorePointer(
+                ignoring: readOnly,
+                child: _buildLensGrid(
+                  context,
+                  resource,
+                  readOnly: readOnly,
+                  onPropertyChanged: onPropertyChanged,
+                ),
+              ),
             const SizedBox(height: Insets.normal),
             ...textFields.entries.map((entry) {
               final propertyKey = entry.key;
@@ -600,43 +610,9 @@ class _ResourcesFormState extends State<ResourcesForm> {
                         style: AppTextStyle.labelLarge,
                         onChanged: (value) =>
                             onPropertyChanged?.call(propertyKey, value),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          helperText: ' ',
-                          helperStyle: const TextStyle(height: 0, fontSize: 0),
-                          disabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: confidenceLevel.getColor(context),
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: confidenceLevel.getColor(context),
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: confidenceLevel.getColor(context),
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(color: Colors.red),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                              width: 1.5,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
+                        decoration: _fieldDecoration(
+                          context,
+                          confidenceLevel,
                         ),
                       ),
                     if (entry.key != textFields.entries.last.key)
@@ -647,6 +623,103 @@ class _ResourcesFormState extends State<ResourcesForm> {
             }),
           ],
         ),
+      ),
+    );
+  }
+
+  InputDecoration _fieldDecoration(
+    BuildContext context,
+    ConfidenceLevel confidenceLevel, {
+    String? hintText,
+    EdgeInsetsGeometry contentPadding = const EdgeInsets.symmetric(
+      horizontal: 12,
+      vertical: 10,
+    ),
+  }) {
+    OutlineInputBorder border(Color color, {double width = 1}) =>
+        OutlineInputBorder(
+          borderSide: BorderSide(color: color, width: width),
+          borderRadius: BorderRadius.circular(8),
+        );
+    final color = confidenceLevel.getColor(context);
+    return InputDecoration(
+      isDense: true,
+      hintText: hintText,
+      helperText: ' ',
+      helperStyle: const TextStyle(height: 0, fontSize: 0),
+      errorMaxLines: 4,
+      disabledBorder: border(color),
+      enabledBorder: border(color),
+      focusedBorder: border(color),
+      errorBorder: border(Colors.red),
+      focusedErrorBorder: border(Colors.red, width: 1.5),
+      contentPadding: contentPadding,
+    );
+  }
+
+  /// A glasses prescription's lens values as on paper, but turned so it
+  /// fits a phone: one row per value, a field per eye.
+  Widget _buildLensGrid(
+    BuildContext context,
+    MappingVisionPrescription resource, {
+    required bool readOnly,
+    Function(String, String)? onPropertyChanged,
+  }) {
+    final l10n = context.l10n;
+    Widget header(String text) => Padding(
+      padding: const EdgeInsets.symmetric(horizontal: Insets.extraSmall),
+      child: Text(text, style: AppTextStyle.bodySmall),
+    );
+    Widget cell(String key, TextFieldDescriptor descriptor) => Padding(
+      padding: const EdgeInsets.all(Insets.extraSmall),
+      child: TextFormField(
+        key: ValueKey('${resource.id}_$key'),
+        initialValue: descriptor.value,
+        readOnly: readOnly,
+        validator: (value) => descriptor.validate(value)?.message(l10n),
+        keyboardType: descriptor.keyboardType,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        textAlign: TextAlign.center,
+        style: AppTextStyle.labelLarge,
+        onChanged: (value) => onPropertyChanged?.call(key, value),
+        decoration: _fieldDecoration(
+          context,
+          ConfidenceLevel.fromDouble(descriptor.confidenceLevel),
+          hintText: '-',
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: Insets.small,
+            vertical: Insets.small,
+          ),
+        ),
+      ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(top: Insets.normal),
+      child: Table(
+        columnWidths: const {
+          0: FlexColumnWidth(1.3),
+          1: FlexColumnWidth(),
+          2: FlexColumnWidth(),
+        },
+        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+        children: [
+          TableRow(
+            children: [
+              const SizedBox.shrink(),
+              header(l10n.visionEyeRight),
+              header(l10n.visionEyeLeft),
+            ],
+          ),
+          for (final row in resource.lensRows(l10n))
+            TableRow(
+              children: [
+                Text(row.right.label, style: AppTextStyle.bodySmall),
+                cell(row.rightKey, row.right),
+                cell(row.leftKey, row.left),
+              ],
+            ),
+        ],
       ),
     );
   }

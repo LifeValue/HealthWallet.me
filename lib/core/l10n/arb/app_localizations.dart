@@ -8204,13 +8204,13 @@ abstract class AppLocalizations {
   /// No description provided for @fieldDateWritten.
   ///
   /// In en, this message translates to:
-  /// **'Date Written'**
+  /// **'Issued on'**
   String get fieldDateWritten;
 
   /// No description provided for @fieldRecommendedFollowUp.
   ///
   /// In en, this message translates to:
-  /// **'Recommended Follow-up'**
+  /// **'Next check-up'**
   String get fieldRecommendedFollowUp;
 
   /// No description provided for @labelSerialNumber.
@@ -8231,40 +8231,28 @@ abstract class AppLocalizations {
   /// **'Left eye'**
   String get visionEyeLeft;
 
-  /// Abbreviation of oculus dexter, the right eye, as printed on glasses prescriptions.
+  /// Column header of a glasses prescription, in plain words: the lens strength (sphere), in dioptres.
   ///
   /// In en, this message translates to:
-  /// **'OD'**
-  String get visionEyeRightShort;
-
-  /// Abbreviation of oculus sinister, the left eye, as printed on glasses prescriptions.
-  ///
-  /// In en, this message translates to:
-  /// **'OS'**
-  String get visionEyeLeftShort;
-
-  /// Column header of a glasses prescription: sphere, in dioptres.
-  ///
-  /// In en, this message translates to:
-  /// **'Sph'**
+  /// **'Strength'**
   String get visionSphere;
 
-  /// Column header of a glasses prescription: cylinder, in dioptres.
+  /// Column header of a glasses prescription, in plain words: the astigmatism correction (cylinder), in dioptres.
   ///
   /// In en, this message translates to:
-  /// **'Cyl'**
+  /// **'Astigmatism'**
   String get visionCylinder;
 
-  /// Column header of a glasses prescription: cylinder axis, in degrees.
+  /// Column header of a glasses prescription, in plain words: the angle of the astigmatism correction (axis), in degrees.
   ///
   /// In en, this message translates to:
-  /// **'Axis'**
+  /// **'Angle'**
   String get visionAxis;
 
-  /// Column header of a glasses prescription: near addition, in dioptres.
+  /// Column header of a glasses prescription, in plain words: the extra strength for reading (near addition), in dioptres.
   ///
   /// In en, this message translates to:
-  /// **'Add'**
+  /// **'Reading add'**
   String get visionAdd;
 
   /// No description provided for @visionPrism.
@@ -8276,8 +8264,20 @@ abstract class AppLocalizations {
   /// No description provided for @visionBase.
   ///
   /// In en, this message translates to:
-  /// **'Base'**
+  /// **'Prism base'**
   String get visionBase;
+
+  /// Error under a lens strength field of a glasses prescription that is not a dioptre value in quarter steps.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a value like +1.25, in steps of 0.25'**
+  String get visionInvalidDioptre;
+
+  /// Error under the astigmatism angle field of a glasses prescription that is not a whole number of degrees from 0 to 180.
+  ///
+  /// In en, this message translates to:
+  /// **'Use an angle from 0 to 180'**
+  String get visionInvalidAxis;
 
   /// Shown on a record read from a document when the wallet already holds it.
   ///

@@ -4661,7 +4661,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get fieldDateWritten => 'Ausgestellt am';
 
   @override
-  String get fieldRecommendedFollowUp => 'Empfohlene Kontrolle';
+  String get fieldRecommendedFollowUp => 'Nächste Kontrolle';
 
   @override
   String get labelSerialNumber => 'Seriennummer';
@@ -4673,28 +4673,29 @@ class AppLocalizationsDe extends AppLocalizations {
   String get visionEyeLeft => 'Linkes Auge';
 
   @override
-  String get visionEyeRightShort => 'OD';
+  String get visionSphere => 'Stärke';
 
   @override
-  String get visionEyeLeftShort => 'OS';
+  String get visionCylinder => 'Astigmatismus';
 
   @override
-  String get visionSphere => 'Sph';
+  String get visionAxis => 'Winkel';
 
   @override
-  String get visionCylinder => 'Cyl';
-
-  @override
-  String get visionAxis => 'Achse';
-
-  @override
-  String get visionAdd => 'Add';
+  String get visionAdd => 'Lesezusatz';
 
   @override
   String get visionPrism => 'Prisma';
 
   @override
-  String get visionBase => 'Basis';
+  String get visionBase => 'Prismenbasis';
+
+  @override
+  String get visionInvalidDioptre =>
+      'Einen Wert wie +1.25 eingeben, in Schritten von 0.25';
+
+  @override
+  String get visionInvalidAxis => 'Einen Winkel von 0 bis 180 eingeben';
 
   @override
   String get stagedAlreadyInWallet => 'Bereits in deiner Wallet';

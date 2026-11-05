@@ -4585,10 +4585,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fieldLensType => 'Lens Type';
 
   @override
-  String get fieldDateWritten => 'Date Written';
+  String get fieldDateWritten => 'Issued on';
 
   @override
-  String get fieldRecommendedFollowUp => 'Recommended Follow-up';
+  String get fieldRecommendedFollowUp => 'Next check-up';
 
   @override
   String get labelSerialNumber => 'Serial number';
@@ -4600,28 +4600,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get visionEyeLeft => 'Left eye';
 
   @override
-  String get visionEyeRightShort => 'OD';
+  String get visionSphere => 'Strength';
 
   @override
-  String get visionEyeLeftShort => 'OS';
+  String get visionCylinder => 'Astigmatism';
 
   @override
-  String get visionSphere => 'Sph';
+  String get visionAxis => 'Angle';
 
   @override
-  String get visionCylinder => 'Cyl';
-
-  @override
-  String get visionAxis => 'Axis';
-
-  @override
-  String get visionAdd => 'Add';
+  String get visionAdd => 'Reading add';
 
   @override
   String get visionPrism => 'Prism';
 
   @override
-  String get visionBase => 'Base';
+  String get visionBase => 'Prism base';
+
+  @override
+  String get visionInvalidDioptre => 'Use a value like +1.25, in steps of 0.25';
+
+  @override
+  String get visionInvalidAxis => 'Use an angle from 0 to 180';
 
   @override
   String get stagedAlreadyInWallet => 'Already in your wallet';

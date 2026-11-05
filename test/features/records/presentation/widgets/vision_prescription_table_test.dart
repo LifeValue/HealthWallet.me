@@ -16,7 +16,7 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: VisionPrescriptionTable(
-              prescription: entityFromJson(json) as VisionPrescription,
+              rows: (entityFromJson(json) as VisionPrescription).eyeRows,
             ),
           ),
         ),
@@ -52,8 +52,8 @@ void main() {
         l10n.visionAxis,
         l10n.visionAdd,
       ],
-      [l10n.visionEyeRightShort, '+0.75', '-', '-', '+1.75'],
-      [l10n.visionEyeLeftShort, '+0.75', '+0.25', '160°', '+1.75'],
+      [l10n.visionEyeRight, '+0.75', '-', '-', '+1.75'],
+      [l10n.visionEyeLeft, '+0.75', '+0.25', '160°', '+1.75'],
     ]);
   });
 

@@ -5,16 +5,17 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/domain/entity/vision_prescription/vision_prescription.dart';
 
-/// A glasses prescription as printed: one row per eye (OD, OS), one column
-/// per value. The Add and Prism columns are shown only when an eye has one.
+/// A glasses prescription as printed: one row per eye, one column per
+/// value, in plain words. The Add and Prism columns are shown only when an
+/// eye has one.
 class VisionPrescriptionTable extends StatelessWidget {
-  const VisionPrescriptionTable({required this.prescription, super.key});
+  const VisionPrescriptionTable({required this.rows, super.key});
 
-  final VisionPrescription prescription;
+  /// The right eye, then the left ([VisionPrescription.eyeRows]).
+  final List<VisionEyeRow> rows;
 
   @override
   Widget build(BuildContext context) {
-    final rows = prescription.eyeRows;
     if (rows.isEmpty) return const SizedBox.shrink();
     final l10n = context.l10n;
     final onSurface = context.colorScheme.onSurface;
@@ -59,14 +60,9 @@ class VisionPrescriptionTable extends StatelessWidget {
           for (final row in rows)
             TableRow(
               children: [
-                Tooltip(
-                  message: row.right ? l10n.visionEyeRight : l10n.visionEyeLeft,
-                  child: cell(
-                    row.right
-                        ? l10n.visionEyeRightShort
-                        : l10n.visionEyeLeftShort,
-                    header: true,
-                  ),
+                cell(
+                  row.right ? l10n.visionEyeRight : l10n.visionEyeLeft,
+                  header: true,
                 ),
                 cell(row.sphere ?? '-'),
                 cell(row.cylinder ?? '-'),

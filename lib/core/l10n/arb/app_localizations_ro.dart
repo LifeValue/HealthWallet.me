@@ -4660,7 +4660,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get fieldDateWritten => 'Data emiterii';
 
   @override
-  String get fieldRecommendedFollowUp => 'Control recomandat';
+  String get fieldRecommendedFollowUp => 'Următorul control';
 
   @override
   String get labelSerialNumber => 'Număr de serie';
@@ -4672,28 +4672,29 @@ class AppLocalizationsRo extends AppLocalizations {
   String get visionEyeLeft => 'Ochi stâng';
 
   @override
-  String get visionEyeRightShort => 'OD';
+  String get visionSphere => 'Dioptrii';
 
   @override
-  String get visionEyeLeftShort => 'OS';
+  String get visionCylinder => 'Astigmatism';
 
   @override
-  String get visionSphere => 'Sf';
+  String get visionAxis => 'Unghi';
 
   @override
-  String get visionCylinder => 'Cil';
-
-  @override
-  String get visionAxis => 'Ax';
-
-  @override
-  String get visionAdd => 'Adiție';
+  String get visionAdd => 'Adiție citit';
 
   @override
   String get visionPrism => 'Prismă';
 
   @override
-  String get visionBase => 'Bază';
+  String get visionBase => 'Baza prismei';
+
+  @override
+  String get visionInvalidDioptre =>
+      'Folosește o valoare ca +1.25, din 0.25 în 0.25';
+
+  @override
+  String get visionInvalidAxis => 'Folosește un unghi între 0 și 180';
 
   @override
   String get stagedAlreadyInWallet => 'Deja în portofelul tău';

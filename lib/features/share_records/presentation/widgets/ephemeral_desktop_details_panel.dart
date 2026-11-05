@@ -309,7 +309,7 @@ class _PanelContentState extends State<_PanelContent> {
             style: AppTextStyle.bodyMedium.copyWith(color: onSurface),
           ),
           if (record case final VisionPrescription prescription)
-            VisionPrescriptionTable(prescription: prescription),
+            VisionPrescriptionTable(rows: prescription.eyeRows),
           if (record.fhirType == FhirType.DocumentReference ||
               record.fhirType == FhirType.Media)
             Padding(

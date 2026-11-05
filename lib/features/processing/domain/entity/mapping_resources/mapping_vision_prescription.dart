@@ -1,4 +1,5 @@
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
+import 'package:flutter/services.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/validator.dart';
@@ -285,38 +286,101 @@ abstract class MappingVisionPrescription
 
   static const _bases = {'up', 'down', 'in', 'out'};
 
-  String _label(String key, AppLocalizations l10n) {
-    final eye = key.startsWith('right')
-        ? l10n.visionEyeRightShort
-        : l10n.visionEyeLeftShort;
-    return switch (key) {
-      'serial' => l10n.labelSerialNumber,
-      'dateWritten' => l10n.fieldDateWritten,
-      'followUpDate' => l10n.fieldRecommendedFollowUp,
-      'prescriberName' => l10n.fieldPrescribedBy,
-      _ when key.endsWith('Sphere') => '$eye ${l10n.visionSphere}',
-      _ when key.endsWith('Cylinder') => '$eye ${l10n.visionCylinder}',
-      _ when key.endsWith('Axis') => '$eye ${l10n.visionAxis}',
-      _ when key.endsWith('Add') => '$eye ${l10n.visionAdd}',
-      _ when key.endsWith('Prism') => '$eye ${l10n.visionPrism}',
-      _ => '$eye ${l10n.visionBase}',
-    };
-  }
-
-  // Text fields only: the review form renders any other dropdown as gender.
+  /// The prescription's own fields; the lens values are edited in the
+  /// per-eye grid of [lensRows].
   @override
   Map<String, TextFieldDescriptor> getFieldDescriptors(AppLocalizations l10n) =>
       {
-        for (final MapEntry(:key, :value) in _fields.entries)
-          key: TextFieldDescriptor(
-            label: _label(key, l10n),
-            value: value.value,
-            confidenceLevel: value.confidenceLevel,
-            validators: key == 'dateWritten' || key == 'followUpDate'
-                ? [dateValidator]
-                : null,
-          ),
+        'dateWritten': TextFieldDescriptor(
+          label: l10n.fieldDateWritten,
+          value: dateWritten.value,
+          confidenceLevel: dateWritten.confidenceLevel,
+          fieldType: FieldType.date,
+          validators: [dateValidator],
+        ),
+        'followUpDate': TextFieldDescriptor(
+          label: l10n.fieldRecommendedFollowUp,
+          value: followUpDate.value,
+          confidenceLevel: followUpDate.confidenceLevel,
+          fieldType: FieldType.date,
+          validators: [dateValidator],
+        ),
+        'prescriberName': TextFieldDescriptor(
+          label: l10n.fieldPrescribedBy,
+          value: prescriberName.value,
+          confidenceLevel: prescriberName.confidenceLevel,
+        ),
       };
+
+  /// The review's lens grid: one row per value, the right eye's field then
+  /// the left's. The reading add is offered on multifocal lenses or when
+  /// printed, the prism only when printed.
+  List<VisionLensRow> lensRows(AppLocalizations l10n) {
+    VisionLensRow row(
+      String value,
+      String label, {
+      required FieldValidationError? Function(String?)? validator,
+      TextInputType? keyboardType,
+    }) {
+      TextFieldDescriptor field(String key) => TextFieldDescriptor(
+        label: label,
+        value: _fields[key]!.value,
+        confidenceLevel: _fields[key]!.confidenceLevel,
+        validators: validator == null ? null : [validator],
+        keyboardType: keyboardType,
+      );
+      return (
+        rightKey: 'right$value',
+        right: field('right$value'),
+        leftKey: 'left$value',
+        left: field('left$value'),
+      );
+    }
+
+    bool printed(String value) =>
+        _fields['right$value']!.value.isNotEmpty ||
+        _fields['left$value']!.value.isNotEmpty;
+    const dioptres = TextInputType.numberWithOptions(
+      signed: true,
+      decimal: true,
+    );
+    return [
+      row(
+        'Sphere',
+        l10n.visionSphere,
+        validator: dioptreValidator,
+        keyboardType: dioptres,
+      ),
+      row(
+        'Cylinder',
+        l10n.visionCylinder,
+        validator: dioptreValidator,
+        keyboardType: dioptres,
+      ),
+      row(
+        'Axis',
+        l10n.visionAxis,
+        validator: axisValidator,
+        keyboardType: TextInputType.number,
+      ),
+      if (lensType == VisionLensType.multifocal || printed('Add'))
+        row(
+          'Add',
+          l10n.visionAdd,
+          validator: dioptreValidator,
+          keyboardType: dioptres,
+        ),
+      if (printed('Prism') || printed('Base')) ...[
+        row(
+          'Prism',
+          l10n.visionPrism,
+          validator: dioptreValidator,
+          keyboardType: dioptres,
+        ),
+        row('Base', l10n.visionBase, validator: null),
+      ],
+    ];
+  }
 
   @override
   MappingResource copyWithMap(Map<String, dynamic> newValues) {
@@ -325,7 +389,6 @@ abstract class MappingVisionPrescription
         ? current
         : MappedProperty(value: newValues[key] as String, confidenceLevel: 1);
     return copyWith(
-      serial: edit('serial', serial),
       dateWritten: edit('dateWritten', dateWritten),
       followUpDate: edit('followUpDate', followUpDate),
       prescriberName: edit('prescriberName', prescriberName),
@@ -359,3 +422,12 @@ abstract class MappingVisionPrescription
   @override
   bool get isValid => _fieldKeys.any((key) => _fields[key]!.value.isNotEmpty);
 }
+
+/// One value of a prescription's lens grid: the field of each eye, under
+/// the property key the review edits it by.
+typedef VisionLensRow = ({
+  String rightKey,
+  TextFieldDescriptor right,
+  String leftKey,
+  TextFieldDescriptor left,
+});

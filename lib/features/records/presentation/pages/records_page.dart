@@ -991,7 +991,7 @@ class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
                 style: AppTextStyle.bodyMedium.copyWith(color: onSurface),
               ),
               if (record case final VisionPrescription prescription)
-                VisionPrescriptionTable(prescription: prescription),
+                VisionPrescriptionTable(rows: prescription.eyeRows),
               ...record
                   .additionalInfoIn(
                     context.read<UserBloc>().state.regionPreset,

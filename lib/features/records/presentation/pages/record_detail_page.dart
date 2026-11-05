@@ -212,7 +212,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
             ),
           ),
           if (widget.resource case final VisionPrescription prescription)
-            VisionPrescriptionTable(prescription: prescription),
+            VisionPrescriptionTable(rows: prescription.eyeRows),
           if (widget.resource.fhirType == FhirType.DocumentReference ||
               widget.resource.fhirType == FhirType.Media)
             Padding(

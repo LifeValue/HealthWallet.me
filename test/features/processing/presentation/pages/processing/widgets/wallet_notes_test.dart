@@ -21,7 +21,12 @@ class _MockUserBloc extends MockBloc<UserEvent, UserState>
     implements UserBloc {}
 
 class _MockProcessingBloc extends MockBloc<ProcessingEvent, ProcessingState>
-    implements ProcessingBloc {}
+    implements ProcessingBloc {
+  final added = <ProcessingEvent>[];
+
+  @override
+  void add(ProcessingEvent event) => added.add(event);
+}
 
 const _visitKey = MappingIdentifier(
   system: 'http://healthwallet.me/visit/clearvis.io',
@@ -61,7 +66,7 @@ void main() {
   setUpAll(initializeDateFormatting);
   final l10n = lookupAppLocalizations(const Locale('en'));
 
-  Future<void> pump(WidgetTester tester, Widget child) async {
+  Future<_MockProcessingBloc> pump(WidgetTester tester, Widget child) async {
     final userBloc = _MockUserBloc();
     whenListen(
       userBloc,
@@ -87,6 +92,7 @@ void main() {
         ),
       ),
     );
+    return processingBloc;
   }
 
   testWidgets('a record already in the wallet is noted and locked', (
@@ -128,6 +134,51 @@ void main() {
           .any((f) => f.readOnly),
       isFalse,
     );
+  });
+
+  testWidgets('a glasses prescription edits its lens values in a per-eye '
+      'grid, with plain labels', (tester) async {
+    final bloc = await pump(
+      tester,
+      ResourcesForm(
+        resources: [_twin.copyWith(existingId: '')],
+        sessionId: 's',
+        formKey: GlobalKey<FormState>(),
+      ),
+    );
+
+    expect(find.text(l10n.visionEyeRight), findsOne);
+    expect(find.text(l10n.visionEyeLeft), findsOne);
+    expect(find.text(l10n.visionSphere), findsOne);
+    expect(find.text(l10n.visionCylinder), findsOne);
+    expect(find.text(l10n.visionAxis), findsOne);
+    // A reading lens prints no add.
+    expect(find.text(l10n.visionAdd), findsNothing);
+    expect(find.text(l10n.fieldDateWritten), findsOne);
+    expect(find.text(l10n.fieldRecommendedFollowUp), findsOne);
+    expect(find.text(l10n.fieldPrescribedBy), findsOne);
+    // Three values for two eyes, and the prescriber.
+    expect(find.byType(TextField), findsNWidgets(7));
+
+    await tester.enterText(
+      find.byKey(const ValueKey('vp-1_leftSphere')),
+      '+2.25',
+    );
+    expect(bloc.added, [
+      const ResourceChanged(
+        sessionId: 's',
+        index: 0,
+        propertyKey: 'leftSphere',
+        newValue: '+2.25',
+      ),
+    ]);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('vp-1_rightAxis')),
+      '200',
+    );
+    await tester.pump();
+    expect(find.text(l10n.visionInvalidAxis), findsOne);
   });
 
   testWidgets('a document already in the wallet says so above Done', (

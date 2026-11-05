@@ -67,9 +67,9 @@ void main() {
         'Serial number: PR-0000012340',
       ]),
     );
-    expect(infos(en).any((i) => i.startsWith('Date Written: ')), isTrue);
+    expect(infos(en).any((i) => i.startsWith('Issued on: ')), isTrue);
     expect(
-      infos(en).any((i) => i.startsWith('Recommended Follow-up: ')),
+      infos(en).any((i) => i.startsWith('Next check-up: ')),
       isTrue,
     );
     expect(

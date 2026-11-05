@@ -232,8 +232,8 @@ void main() {
     );
 
     expect(find.byType(VisionPrescriptionTable), findsOne);
-    expect(find.text(l10n.visionEyeRightShort), findsOne);
-    expect(find.text(l10n.visionEyeLeftShort), findsOne);
+    expect(find.text(l10n.visionEyeRight), findsOne);
+    expect(find.text(l10n.visionEyeLeft), findsOne);
     expect(find.text('160°'), findsOne);
     expect(find.text('Lens Type: Multifocal glasses'), findsOne);
   });

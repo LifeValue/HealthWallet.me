@@ -226,7 +226,8 @@ void main() {
   test('every field the review shows edits exactly that field', () {
     final en = lookupAppLocalizations(const Locale('en'));
     final keys = prescription.getFieldDescriptors(en).keys.toList();
-    expect(keys, hasLength(16));
+    // The lens values are shown as the table, not as fields.
+    expect(keys, ['dateWritten', 'followUpDate', 'prescriberName']);
     for (final key in keys) {
       final edited = prescription.copyWithMap({
         key: 'edited',
@@ -243,6 +244,59 @@ void main() {
       expect(edited.existingId, prescription.existingId);
       expect(edited.provenance, prescription.provenance);
     }
+  });
+
+  group('lens grid', () {
+    final en = lookupAppLocalizations(const Locale('en'));
+    List<String> keys(MappingVisionPrescription p) => [
+      for (final row in p.lensRows(en)) row.rightKey,
+    ];
+
+    test('a multifocal lens offers the reading add', () {
+      expect(keys(prescription), [
+        'rightSphere',
+        'rightCylinder',
+        'rightAxis',
+        'rightAdd',
+      ]);
+    });
+
+    test('a single-vision lens offers it only when printed', () {
+      final single = prescription.copyWith(
+        lensType: VisionLensType.distance,
+        rightAdd: _v(''),
+        leftAdd: _v(''),
+      );
+      expect(keys(single), ['rightSphere', 'rightCylinder', 'rightAxis']);
+      expect(
+        keys(single.copyWith(leftAdd: _v('1.00'))),
+        contains('rightAdd'),
+      );
+    });
+
+    test('the prism is offered only when printed', () {
+      expect(
+        keys(prescription.copyWith(leftPrism: _v('0.5'))),
+        containsAllInOrder(['rightPrism', 'rightBase']),
+      );
+    });
+
+    test('each row holds both eyes\' values', () {
+      final strength = prescription.lensRows(en).first;
+      expect(strength.right.label, en.visionSphere);
+      expect(strength.right.value, '+0.75');
+      expect(strength.leftKey, 'leftSphere');
+      expect(strength.left.value, '+0.75');
+      expect(strength.right.validate('+0.30'), isNotNull);
+    });
+
+    test('an edited eye value is saved', () {
+      final edited = prescription.copyWithMap({
+        'leftAxis': '170',
+      }) as MappingVisionPrescription;
+      expect(edited.leftAxis.value, '170');
+      expect(edited.rightAxis.value, prescription.rightAxis.value);
+    });
   });
 
   test('prism and base round-trip through toFhirResource', () {
