@@ -94,7 +94,33 @@ abstract class MappingEncounter
         value: DateFormatUtils.isoCompact(encounter.date ?? DateTime.now()),
         confidenceLevel: 1,
       ),
+      specialty: MappedProperty(
+        value: storedSpecialty(encounter),
+        confidenceLevel: 1,
+      ),
     );
+  }
+
+  /// The specialty of a stored visit, as the review's dropdown holds it:
+  /// the one the user chose, else the one it was saved with.
+  @visibleForTesting
+  static String storedSpecialty(Encounter encounter) {
+    final chosen = MedicalSpecialty.values
+        .where((s) => s.name == encounter.specialtyOverride)
+        .firstOrNull;
+    if (chosen != null) return chosen.displayName;
+    final service = encounter.serviceType;
+    for (final coding in service?.coding ?? const <fhir_r4.Coding>[]) {
+      final match = MedicalSpecialty.values
+          .where(
+            (s) =>
+                s.snomedSpecialtyCode == coding.code?.valueString ||
+                s.displayName == coding.display?.valueString,
+          )
+          .firstOrNull;
+      if (match != null) return match.displayName;
+    }
+    return service?.text?.valueString ?? '';
   }
 
   @override
@@ -186,6 +212,7 @@ abstract class MappingEncounter
       subjectId: subjectId ?? '',
       rawResource: rawResource,
       type: encounter.type,
+      serviceType: encounter.serviceType,
       period: encounter.period,
     );
   }

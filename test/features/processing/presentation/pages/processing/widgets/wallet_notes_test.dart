@@ -207,13 +207,14 @@ void main() {
     tester,
   ) async {
     expect(_session.isAlreadyInWallet, isTrue);
+    final formKey = GlobalKey<FormState>();
     await pump(
       tester,
       ProcessingResourcesSection(
         state: ProcessingState(sessions: [_session]),
         displayedSession: _session,
         sessionId: 's',
-        formKey: GlobalKey<FormState>(),
+        formKey: formKey,
         encounterSectionKey: GlobalKey(),
         deviceCapability: DeviceAiCapability.full,
         onScrollToFormErrors: () {},
@@ -225,5 +226,8 @@ void main() {
     // The visit and the prescription each say they are already there.
     expect(find.text(l10n.stagedAlreadyInWallet), findsNWidgets(2));
     expect(find.byType(ReviewBanner), findsAtLeast(3));
+    // The visit in the wallet has no specialty, which a new visit requires:
+    // a locked card can't be corrected, so it never blocks saving.
+    expect(formKey.currentState!.validate(), isTrue);
   });
 }

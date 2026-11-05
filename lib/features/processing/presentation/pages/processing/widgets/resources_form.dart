@@ -209,7 +209,7 @@ class _ResourcesFormState extends State<ResourcesForm> {
     final Map<String, TextFieldDescriptor> textFields = resource
         .getFieldDescriptors(context.l10n);
     // A record already in the wallet is only completed, never changed, so
-    // its fields can't be edited here.
+    // its fields can't be edited here, nor hold up saving the rest.
     final readOnly = walletNote != null;
     final locked = isLocked || readOnly;
 
@@ -366,8 +366,9 @@ class _ResourcesFormState extends State<ResourcesForm> {
                           '${resource.id}_${propertyKey}_form_${descriptor.value}',
                         ),
                         initialValue: descriptor.value,
-                        validator: (value) =>
-                            descriptor.validate(value)?.message(context.l10n),
+                        validator: (value) => readOnly
+                            ? null
+                            : descriptor.validate(value)?.message(context.l10n),
                         onSaved: (value) {
                           if (value != null &&
                               value != descriptor.value &&
@@ -473,7 +474,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
                         ),
                         initialValue: descriptor.value,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
-                        validator: (value) => (value == null || value.isEmpty)
+                        validator: (value) =>
+                            !readOnly && (value == null || value.isEmpty)
                             ? context.l10n.fieldCannotBeEmpty
                             : null,
                         builder: (field) => Column(
@@ -601,8 +603,9 @@ class _ResourcesFormState extends State<ResourcesForm> {
                         key: ValueKey('${resource.id}_$propertyKey'),
                         initialValue: descriptor.value,
                         readOnly: readOnly,
-                        validator: (value) =>
-                            descriptor.validate(value)?.message(context.l10n),
+                        validator: (value) => readOnly
+                            ? null
+                            : descriptor.validate(value)?.message(context.l10n),
                         inputFormatters: descriptor.inputFormatters,
                         keyboardType: descriptor.keyboardType,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -675,7 +678,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
         key: ValueKey('${resource.id}_$key'),
         initialValue: descriptor.value,
         readOnly: readOnly,
-        validator: (value) => descriptor.validate(value)?.message(l10n),
+        validator: (value) =>
+            readOnly ? null : descriptor.validate(value)?.message(l10n),
         keyboardType: descriptor.keyboardType,
         autovalidateMode: AutovalidateMode.onUserInteraction,
         textAlign: TextAlign.center,
