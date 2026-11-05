@@ -12,18 +12,11 @@ context:
 warnings: ['multiple-goals', 'oversized']
 deferred:
   - summary: >-
-      Extractor fixtures exist only for Apple Vision OCR of the PDFs; Android ML Kit, Windows OCR and camera-photo OCR were never captured.
+      Extractor fixtures exist only for Apple Vision OCR of the PDFs; Android ML Kit, Windows OCR and camera-photo OCR were never captured (iPhone camera photos are recognised, checked on a device on 2026-11-05, but have no fixture).
     evidence: |-
       All fixtures are macOS Vision .accurate output at 200 dpi; the noisy ones are derived from them. The implementer found that column-wise OCR (likely ML Kit or Windows) reads the prescriptions but finds none in the exam, which prints two prescriptions on one line. Settle by capturing de-identified OCR of both documents with ML Kit on an Android device and Windows OCR, plus camera photos of the printouts on iOS and Android, and adding them as fixtures.
     location: >-
       test/features/processing/layout_extraction/fixtures/
-    severity: medium
-  - summary: >-
-      The real reference PDFs were never run through the app on a device: the real serials, dates, the under-1-s extractor step and the no-AI processing log are unverified end to end.
-    evidence: |-
-      The tests use de-identified fixtures with fake values and a fake AI counter; the real PDFs cannot be committed. Settle by importing both PDFs from the scratchpad on a device with no model, in both orders and once more, checking the review, the saved records and the processing log timing.
-    location: >-
-      lib/features/processing/presentation/bloc/handlers/processing_handler.dart (layout branch)
     severity: medium
   - summary: >-
       A plano (0.00) or one-decimal sphere may be read as an add on multifocal forms, sending the whole document to the AI.
@@ -150,6 +143,16 @@ deferred:
 - Given a paired desktop, when the records sync, then they display on both ends, and a `VisionPrescription` row on an app version without the type is shown as a generic resource without errors.
 
 ## Spec Change Log
+
+### 2026-11-05 — Device check
+
+Imported on the macOS desktop app and a physical iPhone, the real Retete.pdf went to the model download, and on the iPhone the exam did too. Cause: the pipeline OCRs PDF pages rendered at the previews' 72 dpi, not the 200 dpi the fixtures were captured at (the Code Map's "as the app does" was wrong), so the first form's patient number came out unreadable and a "D" was dropped. Changes, as follow-up commits:
+- PDF pages are rendered for OCR at 200 dpi (also used by the AI path).
+- The extractor reads the fields every form prints from all forms and keeps the most common reading; it accepts "paclent" for "pacient", finds a `PA-` number whose label is garbled, a signed value without its "D" and the footer read as "clearvis.lo"; a declined document logs which field was missing. Fixture `clearvis_prescriptions_low_resolution.txt` is the desktop's own 72 dpi capture, de-identified.
+- The review shows a prescription's lens values as an editable per-eye grid with plain labels and value checks (the per-eye fields were 16 jargon-labelled fields per prescription; read-only was rejected because the wallet has no editing for a saved prescription). This settles the rejected low finding on unvalidated per-eye fields.
+- Across the review, an empty field shows no low-confidence hint, and the empty-date mark shows only on required dates.
+
+After the changes the user confirmed both PDFs and iPhone photos of them reach the extractor, not the AI. The deferred item on running the real PDFs on a device is settled.
 
 ## Review Triage Log
 
