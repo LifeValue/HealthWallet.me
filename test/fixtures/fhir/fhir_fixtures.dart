@@ -435,6 +435,57 @@ Map<String, dynamic> documentReferenceJson({
   'context': ?context,
 };
 
+/// A multifocal glasses prescription as the app writes it: per-eye lens
+/// specifications, a serial and a recommended follow-up date.
+Map<String, dynamic> visionPrescriptionJson({String id = 'vp-1'}) => {
+  'resourceType': 'VisionPrescription',
+  'id': id,
+  'identifier': [
+    {
+      'system': 'http://healthwallet.me/clinic/optica-exemplu-1/document',
+      'value': 'PR-0000012340',
+    },
+  ],
+  'extension': [
+    {
+      'url': 'http://healthwallet.me/fhir/StructureDefinition/recommended-follow-up',
+      'valueDate': '2025-03-14',
+    },
+  ],
+  'status': 'active',
+  'created': '2024-03-14',
+  'patient': {'reference': 'Patient/pat-1'},
+  'encounter': {'reference': 'Encounter/enc-1'},
+  'dateWritten': '2024-03-14',
+  'prescriber': {
+    'reference': 'Practitioner/pr-1',
+    'display': 'Marinescu Elena',
+  },
+  'lensSpecification': [
+    for (final (eye, cyl, axis) in [('right', null, null), ('left', 0.25, 160)])
+      {
+        'product': codeableConcept(
+          codings: [
+            coding(
+              'http://terminology.hl7.org/CodeSystem/ex-visionprescriptionproduct',
+              'lens',
+            ),
+            coding(
+              'http://healthwallet.me/lens-type',
+              'multifocal',
+              'Multifocal glasses',
+            ),
+          ],
+        ),
+        'eye': eye,
+        'sphere': 0.75,
+        'cylinder': ?cyl,
+        'axis': ?axis,
+        'add': 1.75,
+      },
+  ],
+};
+
 /// Minimal valid JSON for the less common resource types handled by the
 /// entity factories.
 Map<String, Map<String, dynamic>> minimalResources() => {
@@ -498,6 +549,7 @@ Map<String, Map<String, dynamic>> minimalResources() => {
     'id': 'bin-1',
     'contentType': 'text/plain',
   },
+  'VisionPrescription': visionPrescriptionJson(),
   'Media': {
     'resourceType': 'Media',
     'id': 'media-1',

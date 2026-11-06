@@ -7,6 +7,8 @@ import 'package:health_wallet/features/holders/domain/services/holder_selection.
 import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extractor_registry.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/capture_error_listener.dart';
@@ -35,9 +37,10 @@ void main() {
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
+    final ocr = _FakeOcrProcessingHelper();
     bloc = ProcessingBloc(
       _FakeProcessingRepository(),
-      _FakeOcrProcessingHelper(),
+      ocr,
       _FakeSyncRepository(),
       _FakeDocumentReferenceService(),
       _FakeHolderService(),
@@ -45,6 +48,13 @@ void main() {
       _FakeRecordsRepository(),
       await SharedPreferences.getInstance(),
       AppStringsProvider.forLocale(const Locale('ro')),
+      LayoutExtractionService(
+        _FakeProcessingRepository(),
+        ocr,
+        LayoutExtractorRegistry(const []),
+        _FakeHolderService(),
+        _FakeRecordsRepository(),
+      ),
     );
   });
 

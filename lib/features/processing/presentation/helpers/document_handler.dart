@@ -9,8 +9,8 @@ import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/attach_documents_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/dialog_helper.dart';
@@ -22,13 +22,16 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
     ProcessingSession session,
   ) async {
     try {
-      final processingRepository = getIt<ProcessingRepository>();
-
-      final isModelLoaded = await processingRepository.checkModelExistence();
+      // A document of a known layout is read without the model, so it opens
+      // the review instead of the model download.
+      final canProcess = await getIt<LayoutExtractionService>().canProcess(
+        session.id,
+        filePaths: session.filePaths,
+      );
 
       if (!context.mounted) return;
 
-      if (isModelLoaded) {
+      if (canProcess) {
         unawaited(context.router.push(ProcessingRoute(sessionId: session.id)));
         return;
       }

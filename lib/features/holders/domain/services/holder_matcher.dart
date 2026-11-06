@@ -40,16 +40,23 @@ class HolderMatcher {
   static const _walletPrefix = 'wallet-';
 
   /// Whether a patient read from a scanned document is [stored]. A scan's
-  /// identifier has no system, so its value is compared with every stored
-  /// identifier; a name counts only with the full birth date on both.
+  /// identifier usually has no system, so its value is compared with every
+  /// stored identifier but a clinic's own number, which means nothing
+  /// without its clinic; one with a system (a clinic's patient number, which
+  /// a layout extractor scopes to its clinic) matches only an identifier of
+  /// that system. A name counts only with the full birth date on both.
   bool sameScannedPerson(HolderPatient scanned, HolderPatient stored) {
     for (final x in scanned.identifiers) {
       final value = normalize(x.value);
       if (value.length < _minIdentifierLength) continue;
+      final system = normalize(x.system);
       if (stored.identifiers.any(
         (y) =>
             y.value != HolderPatient.placeholderRowId &&
-            normalize(y.value) == value,
+            normalize(y.value) == value &&
+            (system.isEmpty
+                ? !_isClinicScoped(y)
+                : normalize(y.system) == system),
       )) {
         return true;
       }
@@ -57,9 +64,18 @@ class HolderMatcher {
     return _sameNameAndBirthDate(scanned, stored);
   }
 
+  /// Systems of numbers a clinic gives its own patients
+  /// (`http://healthwallet.me/clinic/<clinicKey>/patient`): two clinics'
+  /// `PA-00001` are two people, so such a number counts only within its
+  /// system, even when both rows were saved in the app.
+  static const clinicSystemPrefix = 'http://healthwallet.me/clinic/';
+
+  static bool _isClinicScoped(HolderIdentifier id) =>
+      id.system.startsWith(clinicSystemPrefix);
+
   /// The same value, and either the same system, or a national number on
   /// either side (a number that long and unique doesn't recur by chance), or
-  /// both [typed] in the app.
+  /// both [typed] in the app. A clinic's number needs the same system.
   bool _sameIdentifier(
     HolderIdentifier x,
     HolderIdentifier y, {
@@ -70,8 +86,11 @@ class HolderMatcher {
       return false;
     }
     if (x.value == HolderPatient.placeholderRowId) return false;
-    if (typed || _isNational(x) || _isNational(y)) return true;
     final system = normalize(x.system);
+    if (_isClinicScoped(x) || _isClinicScoped(y)) {
+      return system == normalize(y.system);
+    }
+    if (typed || _isNational(x) || _isNational(y)) return true;
     return system.isNotEmpty && system == normalize(y.system);
   }
 

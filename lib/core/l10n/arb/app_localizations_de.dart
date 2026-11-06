@@ -4635,4 +4635,75 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get holderQuestionSomeoneElse => 'Jemand anderes';
+
+  @override
+  String get fhirTypeVisionPrescription => 'Brillenrezept';
+
+  @override
+  String get categoryVisionPrescriptions => 'Brillenrezepte';
+
+  @override
+  String get lensTypeMultifocal => 'Gleitsichtbrille';
+
+  @override
+  String get lensTypeDistance => 'Fernbrille';
+
+  @override
+  String get lensTypeReading => 'Lesebrille';
+
+  @override
+  String get lensTypeOther => 'Brille';
+
+  @override
+  String get fieldLensType => 'Glasart';
+
+  @override
+  String get fieldDateWritten => 'Ausgestellt am';
+
+  @override
+  String get fieldRecommendedFollowUp => 'Nächste Kontrolle';
+
+  @override
+  String get labelSerialNumber => 'Seriennummer';
+
+  @override
+  String get visionEyeRight => 'Rechtes Auge';
+
+  @override
+  String get visionEyeLeft => 'Linkes Auge';
+
+  @override
+  String get visionSphere => 'Stärke';
+
+  @override
+  String get visionCylinder => 'Astigmatismus';
+
+  @override
+  String get visionAxis => 'Winkel';
+
+  @override
+  String get visionAdd => 'Lesezusatz';
+
+  @override
+  String get visionPrism => 'Prisma';
+
+  @override
+  String get visionBase => 'Prismenbasis';
+
+  @override
+  String get visionInvalidDioptre =>
+      'Einen Wert wie +1.25 eingeben, in Schritten von 0.25';
+
+  @override
+  String get visionInvalidAxis => 'Einen Winkel von 0 bis 180 eingeben';
+
+  @override
+  String get stagedAlreadyInWallet => 'Bereits in deiner Wallet';
+
+  @override
+  String get stagedWillBeCompleted => 'Bereits in deiner Wallet, wird ergänzt';
+
+  @override
+  String get documentAlreadyInWallet =>
+      'Alles aus diesem Dokument ist bereits in deiner Wallet';
 }

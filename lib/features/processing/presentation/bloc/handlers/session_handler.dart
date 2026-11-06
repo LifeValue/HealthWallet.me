@@ -12,6 +12,7 @@ import 'package:health_wallet/features/processing/domain/entity/model_not_found_
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
@@ -22,6 +23,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
   OcrProcessingHelper get ocrProcessingHelper;
   ProcessingRepository get processingRepository;
   AppStringsProvider get strings;
+  LayoutExtractionService get layoutExtraction;
 
   void updateSession(
     Emitter<ProcessingState> emit, {
@@ -214,6 +216,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
 
       final newSessions = [...state.sessions]
         ..removeWhere((session) => session.id == event.session.id);
+      layoutExtraction.forget(event.session.id);
 
       final updatedImageMap = Map<String, List<String>>.from(
         state.sessionImagePaths,
@@ -304,10 +307,14 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
 
       if (session.status == ProcessingStatus.pending) {
         try {
-          final isModelLoaded = await processingRepository
-              .checkModelExistence();
+          // A document of a known layout is read without the model.
+          final canProcess = await layoutExtraction.canProcess(
+            event.sessionId,
+            filePaths: session.filePaths,
+            imagePaths: allImages,
+          );
 
-          if (isModelLoaded) {
+          if (canProcess) {
             add(MappingInitiated(sessionId: event.sessionId));
           } else {
             emit(
@@ -352,6 +359,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     final updatedSession = state.sessions[sessionIndex].copyWith(
       filePaths: event.reorderedPaths,
     );
+    layoutExtraction.forget(event.sessionId);
     final updatedSessions = [...state.sessions];
     updatedSessions[sessionIndex] = updatedSession;
 

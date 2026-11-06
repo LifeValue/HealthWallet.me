@@ -50,6 +50,20 @@ typedef StagedPatient = StagedResource<MappingPatient, Patient>;
 typedef StagedEncounter = StagedResource<MappingEncounter, Encounter>;
 typedef StagedDiagnosticReport = StagedResource<MappingDiagnosticReport, Never>;
 
+extension StagedVisit on StagedEncounter {
+  /// Whether this is the visit of a layout document linked to a visit the
+  /// wallet already holds.
+  bool get isExistingVisit =>
+      mode == ImportMode.linkExisting &&
+      existing != null &&
+      draft?.visitKey != null;
+
+  /// Whether saving adds identifiers (a document serial) to that visit.
+  bool get completesExistingVisit =>
+      isExistingVisit &&
+      draft!.identifiersMissingFrom(existing!.rawResource).isNotEmpty;
+}
+
 Map<String, dynamic> stagedPatientToJson(StagedPatient patient) => {
   'draft': patient.draft?.toJson(),
   'existing': patient.existing?.toDto().toJson(),

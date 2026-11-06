@@ -11,6 +11,11 @@ class OcrProcessingHelper {
 
   OcrProcessingHelper(this._textRecognitionService);
 
+  /// The resolution PDF pages are rendered at for OCR. At the 72 dpi of the
+  /// previews, small print loses characters (a "D" read as "0", digits
+  /// dropped from dates).
+  static const pdfDpi = 200.0;
+
   Future<String> processOcrForImages(List<String> imagePaths) async {
     final pageTexts = <String>[];
 
@@ -46,7 +51,7 @@ class OcrProcessingHelper {
       } else {
         try {
           final convertedImages = await _textRecognitionService
-              .convertPdfToImagesForPreview(path);
+              .convertPdfToImagesForPreview(path, dpi: pdfDpi);
           allImages.addAll(convertedImages);
         } catch (e, stackTrace) {
           logger.e(

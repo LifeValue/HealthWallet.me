@@ -73,6 +73,15 @@ class ProcessingResourcesSection extends StatelessWidget {
         ] else ...[
           _AddResourceButton(sessionId: sessionId),
           const SizedBox(height: Insets.normal),
+          // Saving adds nothing: the document was imported before.
+          if (displayedSession.isAlreadyInWallet) ...[
+            ReviewBanner(
+              icon: Icons.inventory_2_outlined,
+              color: context.colorScheme.primary,
+              text: context.l10n.documentAlreadyInWallet,
+            ),
+            const SizedBox(height: Insets.normal),
+          ],
           _SaveButton(
             state: state,
             onSaveResources: onSaveResources,

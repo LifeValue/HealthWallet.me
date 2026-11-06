@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/wallet_source_identifier.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
@@ -85,18 +86,29 @@ abstract class IFhirResource {
         return ExplanationOfBenefit.fromLocalData(dto);
       case 'Coverage':
         return Coverage.fromLocalData(dto);
+      case 'VisionPrescription':
+        try {
+          return VisionPrescription.fromLocalData(dto);
+        } catch (e) {
+          // A row without the fields FHIR requires (an older or foreign
+          // writer) is still listed, as a generic resource.
+          logger.w('Unreadable VisionPrescription ${dto.id}: $e');
+          return _general(dto);
+        }
       default:
-        return GeneralResource(
-          id: dto.id,
-          sourceId: dto.sourceId ?? '',
-          resourceId: dto.resourceId ?? '',
-          title: dto.title ?? '',
-          date: dto.date,
-          rawResource: jsonDecode(dto.resourceRaw),
-          specialtyOverride: dto.specialtyOverride,
-        );
+        return _general(dto);
     }
   }
+
+  static GeneralResource _general(FhirResourceLocalDto dto) => GeneralResource(
+    id: dto.id,
+    sourceId: dto.sourceId ?? '',
+    resourceId: dto.resourceId ?? '',
+    title: dto.title ?? '',
+    date: dto.date,
+    rawResource: jsonDecode(dto.resourceRaw),
+    specialtyOverride: dto.specialtyOverride,
+  );
 
   FhirResourceDto toDto();
 
@@ -155,6 +167,7 @@ enum FhirType {
   RelatedPerson('Related Person'),
   ServiceRequest('Service Request'),
   Specimen('Specimen'),
+  VisionPrescription('Vision Prescription'),
   GeneralResource('Resource');
 
   const FhirType(this.display);
@@ -180,6 +193,7 @@ enum FhirType {
     FhirType.Claim,
     FhirType.ExplanationOfBenefit,
     FhirType.Coverage,
+    FhirType.VisionPrescription,
   };
 
   static const Set<FhirType> supportingTypes = {

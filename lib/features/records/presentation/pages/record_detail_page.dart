@@ -22,6 +22,7 @@ import 'package:health_wallet/features/records/domain/services/fhir_resource_rel
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/records/presentation/widgets/delete_record_dialog.dart';
+import 'package:health_wallet/features/records/presentation/widgets/vision_prescription_table.dart';
 import 'package:health_wallet/features/share_records/core/ephemeral_session_manager.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -210,6 +211,8 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
               color: context.colorScheme.onSurface,
             ),
           ),
+          if (widget.resource case final VisionPrescription prescription)
+            VisionPrescriptionTable(rows: prescription.eyeRows),
           if (widget.resource.fhirType == FhirType.DocumentReference ||
               widget.resource.fhirType == FhirType.Media)
             Padding(

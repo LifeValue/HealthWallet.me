@@ -2349,5 +2349,55 @@
       }
     }
   },
-  "holderQuestionSomeoneElse": "Someone else"
+  "holderQuestionSomeoneElse": "Someone else",
+  "fhirTypeVisionPrescription": "Vision Prescription",
+  "categoryVisionPrescriptions": "Vision Prescriptions",
+  "lensTypeMultifocal": "Multifocal glasses",
+  "lensTypeDistance": "Distance glasses",
+  "lensTypeReading": "Reading glasses",
+  "lensTypeOther": "Glasses",
+  "fieldLensType": "Lens Type",
+  "fieldDateWritten": "Issued on",
+  "fieldRecommendedFollowUp": "Next check-up",
+  "labelSerialNumber": "Serial number",
+  "visionEyeRight": "Right eye",
+  "visionEyeLeft": "Left eye",
+  "visionSphere": "Strength",
+  "@visionSphere": {
+    "description": "Column header of a glasses prescription, in plain words: the lens strength (sphere), in dioptres."
+  },
+  "visionCylinder": "Astigmatism",
+  "@visionCylinder": {
+    "description": "Column header of a glasses prescription, in plain words: the astigmatism correction (cylinder), in dioptres."
+  },
+  "visionAxis": "Angle",
+  "@visionAxis": {
+    "description": "Column header of a glasses prescription, in plain words: the angle of the astigmatism correction (axis), in degrees."
+  },
+  "visionAdd": "Reading add",
+  "@visionAdd": {
+    "description": "Column header of a glasses prescription, in plain words: the extra strength for reading (near addition), in dioptres."
+  },
+  "visionPrism": "Prism",
+  "visionBase": "Prism base",
+  "visionInvalidDioptre": "Use a value like +1.25, in steps of 0.25",
+  "@visionInvalidDioptre": {
+    "description": "Error under a lens strength field of a glasses prescription that is not a dioptre value in quarter steps."
+  },
+  "visionInvalidAxis": "Use an angle from 0 to 180",
+  "@visionInvalidAxis": {
+    "description": "Error under the astigmatism angle field of a glasses prescription that is not a whole number of degrees from 0 to 180."
+  },
+  "stagedAlreadyInWallet": "Already in your wallet",
+  "@stagedAlreadyInWallet": {
+    "description": "Shown on a record read from a document when the wallet already holds it."
+  },
+  "stagedWillBeCompleted": "Already in your wallet, will be completed",
+  "@stagedWillBeCompleted": {
+    "description": "Shown on a record read from a document when the wallet holds it with empty fields the document fills."
+  },
+  "documentAlreadyInWallet": "Everything in this document is already in your wallet",
+  "@documentAlreadyInWallet": {
+    "description": "Shown above Done when saving a document would add nothing to the wallet."
+  }
 }

@@ -9,6 +9,7 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_vision_prescription.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
@@ -37,6 +38,30 @@ abstract class ProcessingSession
 
   bool get isDiagnosticReportContainer =>
       diagnosticReport != null && diagnosticReport!.hasSelection;
+
+  /// Whether a layout extractor read this document ([MappingEncounter]
+  /// carries its visit key).
+  bool get isLayoutDocument => encounter.draft?.visitKey != null;
+
+  /// Whether everything a layout document holds is already in the wallet,
+  /// complete: the person, the visit with every identifier, each record.
+  /// Saving then writes nothing. Always false for a document the AI read.
+  bool get isAlreadyInWallet {
+    final existing = encounter.existing;
+    if (!isLayoutDocument || isDiagnosticReportContainer) return false;
+    return patient.mode == ImportMode.linkExisting &&
+        patient.existing != null &&
+        patient.draft == null &&
+        encounter.mode == ImportMode.linkExisting &&
+        existing != null &&
+        encounter.draft!.identifiersMissingFrom(existing.rawResource).isEmpty &&
+        resources.every(
+          (r) =>
+              r is MappingVisionPrescription &&
+              r.existingId.isNotEmpty &&
+              !r.completesExisting,
+        );
+  }
 
   factory ProcessingSession.fromDto(ProcessingSessionDto dto) {
     final filePaths = (jsonDecode(dto.filePaths ?? '') as List<dynamic>)

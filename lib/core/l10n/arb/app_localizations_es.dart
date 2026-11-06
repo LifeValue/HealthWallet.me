@@ -4621,4 +4621,75 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get holderQuestionSomeoneElse => 'Otra persona';
+
+  @override
+  String get fhirTypeVisionPrescription => 'Receta óptica';
+
+  @override
+  String get categoryVisionPrescriptions => 'Recetas ópticas';
+
+  @override
+  String get lensTypeMultifocal => 'Gafas multifocales';
+
+  @override
+  String get lensTypeDistance => 'Gafas para ver de lejos';
+
+  @override
+  String get lensTypeReading => 'Gafas de lectura';
+
+  @override
+  String get lensTypeOther => 'Gafas';
+
+  @override
+  String get fieldLensType => 'Tipo de lentes';
+
+  @override
+  String get fieldDateWritten => 'Fecha de emisión';
+
+  @override
+  String get fieldRecommendedFollowUp => 'Próximo control';
+
+  @override
+  String get labelSerialNumber => 'Número de serie';
+
+  @override
+  String get visionEyeRight => 'Ojo derecho';
+
+  @override
+  String get visionEyeLeft => 'Ojo izquierdo';
+
+  @override
+  String get visionSphere => 'Graduación';
+
+  @override
+  String get visionCylinder => 'Astigmatismo';
+
+  @override
+  String get visionAxis => 'Ángulo';
+
+  @override
+  String get visionAdd => 'Adición lectura';
+
+  @override
+  String get visionPrism => 'Prisma';
+
+  @override
+  String get visionBase => 'Base del prisma';
+
+  @override
+  String get visionInvalidDioptre =>
+      'Usa un valor como +1.25, en pasos de 0.25';
+
+  @override
+  String get visionInvalidAxis => 'Usa un ángulo de 0 a 180';
+
+  @override
+  String get stagedAlreadyInWallet => 'Ya está en tu cartera';
+
+  @override
+  String get stagedWillBeCompleted => 'Ya está en tu cartera, se completará';
+
+  @override
+  String get documentAlreadyInWallet =>
+      'Todo lo de este documento ya está en tu cartera';
 }

@@ -4634,4 +4634,75 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get holderQuestionSomeoneElse => 'Altcineva';
+
+  @override
+  String get fhirTypeVisionPrescription => 'Rețetă de ochelari';
+
+  @override
+  String get categoryVisionPrescriptions => 'Rețete de ochelari';
+
+  @override
+  String get lensTypeMultifocal => 'Ochelari multifocali';
+
+  @override
+  String get lensTypeDistance => 'Ochelari pentru distanță';
+
+  @override
+  String get lensTypeReading => 'Ochelari pentru citit';
+
+  @override
+  String get lensTypeOther => 'Ochelari';
+
+  @override
+  String get fieldLensType => 'Tip de lentile';
+
+  @override
+  String get fieldDateWritten => 'Data emiterii';
+
+  @override
+  String get fieldRecommendedFollowUp => 'Următorul control';
+
+  @override
+  String get labelSerialNumber => 'Număr de serie';
+
+  @override
+  String get visionEyeRight => 'Ochi drept';
+
+  @override
+  String get visionEyeLeft => 'Ochi stâng';
+
+  @override
+  String get visionSphere => 'Dioptrii';
+
+  @override
+  String get visionCylinder => 'Astigmatism';
+
+  @override
+  String get visionAxis => 'Unghi';
+
+  @override
+  String get visionAdd => 'Adiție citit';
+
+  @override
+  String get visionPrism => 'Prismă';
+
+  @override
+  String get visionBase => 'Baza prismei';
+
+  @override
+  String get visionInvalidDioptre =>
+      'Folosește o valoare ca +1.25, din 0.25 în 0.25';
+
+  @override
+  String get visionInvalidAxis => 'Folosește un unghi între 0 și 180';
+
+  @override
+  String get stagedAlreadyInWallet => 'Deja în portofelul tău';
+
+  @override
+  String get stagedWillBeCompleted => 'Deja în portofelul tău, va fi completat';
+
+  @override
+  String get documentAlreadyInWallet =>
+      'Tot ce conține acest document este deja în portofelul tău';
 }

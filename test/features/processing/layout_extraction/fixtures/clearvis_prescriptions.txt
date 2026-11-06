@@ -1,0 +1,126 @@
+Retetă Ochelari multifocali
+Multifocal glasses prescription
+Magazin / Store
+Optica Exemplu 1
+Adresă / Address
+Strada Exemplu, nr. 1, 400000 Cluj-Napoca
+Pacient / Patient
+Ioana Maria Popescu
+Adresa / Address
+Strada Teilor 7, Cluj-Napoca
+Valoarea corecției / Correction Parameters
+OD Righi deet /
+Right eye
+OS Let stäng /
+Left eye
+Data / Date
+14.03.2024
+Data control recomandat / Date of recommended follow-up
+14.03.2025
+*PR-0000012340*
+Telefon / Phone
+0700000000
+Email / Email
+contact@optica-exemplu.ro
+Dată naştere / Date of Birth
+11.07.1983
+Identificator pacient / Patient Id
+PA-01234
+Sph
++0.75 D
++0.75 D
+Cyl
+Axis
+Add
+PD
+D /
+1.75D
++0.25D/ 160
+1.75D
+Examinarea a fost înregistrată de / Examination recorded by
+Marinescu Elena
+Semnătură / Signature
+Rețetă Ochelari monofocali pentru
+vedere la distanță
+Single vision distance glasses prescription
+Magazin / Store
+Optica Exemplu 1
+Adresă / Address
+Strada Exemplu, nr. 1, 400000 Cluj-Napoca
+Pacient / Patient
+Ioana Maria Popescu
+Adresă / Address
+Strada Teilor 7, Cluj-Napoca
+Valoarea corecției / Correction Parameters
+OD Right eee
+Ochi drept
+•S Ochi stâng /
+Left eye
+Data / Date
+14.03.2024
+Data control recomandat / Date of recommended follow-up
+14.03.2025
+*PR-0000012341*
+Telefon / Phone
+0700000000
+Email / Email
+contact@optica-exemplu.ro
+Dată naștere / Date of Birth
+11.07.1983
+Identificator pacient / Patient Id
+PA-01234
+Sph
+Cyl
+Axis
+PD
++0.75 D
+D /
++0.75 D
++0.25D / 160
+Examinarea a fost înregistrată de / Examination recorded by
+Marinescu Elena
+Semnătură / Signature
+This prescription was created with http://clearvis.io. Dată imprimare: 2 aprilie 2026
+112
+Rețetă Ochelari monofocali pentru
+citit
+Single vision reading glasses prescription
+Magazin / Store
+Optica Exemplu 1
+Adresa / Address
+Strada Exemplu, nr. 1, 400000 Cluj-Napoca
+Pacient / Patient
+Ioana Maria Popescu
+Adresă / Address
+Strada Teilor 7, Cluj-Napoca
+Valoarea corecției / Correction Parameters
+OD Oci drept/
+Right eye
+OS Let ste
+Ochi stâng /
+Data / Date
+14.03.2024
+Data control recomandat / Date of recommended follow-up
+14.03.2025
+*PR-0000012342*
+Telefon / Phone
+0700000000
+Email / Email
+contact@optica-exemplu.ro
+Dată naștere / Date of Birth
+11.07.1983
+Identificator pacient / Patient Id
+PA-01234
+Sph
+Cyl
+Axis
+PD
++2.50 D
+D /
++2.50 D
++0.25D/ 160
+Examinarea a fost înregistrată de / Examination recorded by
+Marinescu Elena
+Semnătură / Signature
+This prescription was created with http://clearvis.io. Dată imprimare: 2 aprilie 2026
+2/2

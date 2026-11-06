@@ -1,6 +1,7 @@
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/extractor_provenance.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/text_field_descriptor.dart';
@@ -21,6 +22,9 @@ abstract class MappingOrganization
     @Default(MappedProperty()) MappedProperty organizationName,
     @Default(MappedProperty()) MappedProperty address,
     @Default(MappedProperty()) MappedProperty phone,
+
+    /// The extractor tag code (`<id>@<version>`), empty otherwise.
+    @Default('') String provenance,
   }) = _MappingOrganization;
 
   factory MappingOrganization.fromJson(Map<String, dynamic> json) {
@@ -29,6 +33,7 @@ abstract class MappingOrganization
       organizationName: MappedProperty.fromJson(json['organizationName']),
       address: MappedProperty.fromJson(json['address']),
       phone: MappedProperty.fromJson(json['phone']),
+      provenance: json['provenance'] as String? ?? '',
     );
   }
 
@@ -48,6 +53,7 @@ abstract class MappingOrganization
     'organizationName': organizationName.toJson(),
     'address': address.toJson(),
     'phone': phone.toJson(),
+    if (provenance.isNotEmpty) 'provenance': provenance,
   };
 
   @override
@@ -58,7 +64,7 @@ abstract class MappingOrganization
     fhir_r4.FhirMeta? meta,
   }) {
     final fhir_r4.Organization organization = fhir_r4.Organization(
-      meta: meta,
+      meta: ExtractorProvenance.merge(meta, provenance),
       name: fhir_r4.FhirString(organizationName.value),
       address: [fhir_r4.Address(text: fhir_r4.FhirString(address.value))],
       telecom: [fhir_r4.ContactPoint(value: fhir_r4.FhirString(phone.value))],
@@ -128,6 +134,7 @@ abstract class MappingOrganization
               ? 1
               : phone.confidenceLevel,
         ),
+        provenance: provenance,
       );
 
   @override
