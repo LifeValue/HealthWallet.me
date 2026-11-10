@@ -88,14 +88,12 @@ void main() {
     expect(initialised(), isNot(acknowledged()));
   });
 
-  test('defaults: an image scan of up to 5 pages, an import, and one '
+  test('defaults: a scan of up to 5 pages, an import, and one '
       'quarter turn', () {
     final CaptureButtonPressed Function() pressCapture =
         CaptureButtonPressed.new;
     final capture = pressCapture();
-    expect(capture.mode, CaptureMode.images);
     expect(capture.maxPages, 5);
-    expect(capture.copyWith(mode: CaptureMode.pdf).mode, CaptureMode.pdf);
 
     final imported = DocumentImported(filePaths: [id]);
     expect(imported.origin, ProcessingOrigin.import);
