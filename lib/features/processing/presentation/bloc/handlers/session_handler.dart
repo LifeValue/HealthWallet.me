@@ -287,12 +287,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         state.sessionImagePaths,
       )..[event.sessionId] = allImages;
 
-      emit(
-        state.copyWith(
-          allImagePathsForOCR: allImages,
-          sessionImagePaths: updatedImageMap,
-        ),
-      );
+      emit(state.copyWith(sessionImagePaths: updatedImageMap));
 
       if (anotherSessionProcessing &&
           session.status != ProcessingStatus.draft) {

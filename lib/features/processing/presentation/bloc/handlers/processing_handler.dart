@@ -61,6 +61,30 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
   bool isCapacityError(String errorString);
   void startNextPendingSession();
 
+  /// The pages of [sessionId] itself, prepared when no step has prepared them
+  /// yet. Never another session's pages: a step that starts before the
+  /// session was opened (a handover's phase 2) would read the wrong document.
+  Future<List<String>> sessionImagesFor(
+    String sessionId,
+    Emitter<ProcessingState> emit,
+  ) async {
+    final cached = state.sessionImagePaths[sessionId];
+    if (cached != null && cached.isNotEmpty) return cached;
+    final session = state.sessions.firstWhereOrNull((s) => s.id == sessionId);
+    if (session == null) return const [];
+    final images = await ocrProcessingHelper.prepareAllImages(
+      filePaths: session.filePaths,
+    );
+    if (!emit.isDone) {
+      emit(
+        state.copyWith(
+          sessionImagePaths: {...state.sessionImagePaths, sessionId: images},
+        ),
+      );
+    }
+    return images;
+  }
+
   void onMappingInitiated(
     MappingInitiated event,
     Emitter<ProcessingState> emit,
@@ -88,8 +112,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       );
       final isDesktop =
           Platform.isMacOS || Platform.isLinux || Platform.isWindows;
-      final sessionImages =
-          state.sessionImagePaths[event.sessionId] ?? state.allImagePathsForOCR;
+      final sessionImages = await sessionImagesFor(event.sessionId, emit);
       if (sessionImages.isEmpty) {
         updateSession(
           emit,
@@ -388,8 +411,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         sessionId: event.sessionId,
         status: ProcessingStatus.processing,
       );
-      final sessionImages =
-          state.sessionImagePaths[event.sessionId] ?? state.allImagePathsForOCR;
+      final sessionImages = await sessionImagesFor(event.sessionId, emit);
       final activeSession = state.sessions.firstWhereOrNull(
         (s) => s.id == event.sessionId,
       );

@@ -8,6 +8,7 @@ import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
+import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
@@ -68,6 +69,32 @@ class _FakeProcessingRepository extends Fake implements ProcessingRepository {
 
   @override
   Future<bool> checkModelExistence() async => false;
+
+  /// The pages each records step read.
+  final remainingReads = <List<String>>[];
+
+  @override
+  Stream<MappingResourcesWithProgress> mapRemainingResources(
+    List<String> imagePaths, {
+    String? documentCategory,
+    bool useVision = false,
+    int? maxTokens,
+    int? gpuLayers,
+    int? threads,
+    int? contextSize,
+    ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
+  }) {
+    remainingReads.add(imagePaths);
+    return Stream.value((
+      [
+        MappingObservation(
+          id: 'obs-${remainingReads.length}',
+          observationName: const MappedProperty(value: 'Glucose'),
+        ),
+      ],
+      1.0,
+    ));
+  }
 }
 
 /// Reads "page N of M" from the OCR text of each path.
@@ -670,4 +697,37 @@ void main() {
       expect(bloc.isCapacityError('Not enough memory'), isFalse);
     });
   });
+
+  test(
+    'the records step reads its own session\'s pages, not the pages of the '
+    'session opened last',
+    () async {
+      // Another document was opened and its pages prepared.
+      seed(
+        ProcessingState(
+          sessions: [
+            const ProcessingSession(
+              id: 's',
+              filePaths: ['s-page.jpg'],
+              status: ProcessingStatus.patientExtracted,
+            ),
+            const ProcessingSession(
+              id: 'other',
+              filePaths: ['other-page.jpg'],
+              status: ProcessingStatus.draft,
+            ),
+          ],
+          sessionImagePaths: {
+            'other': [file('other-page.jpg').path],
+          },
+        ),
+      );
+
+      bloc.add(const ProcessRemainingResources(sessionId: 's'));
+      await settle();
+
+      expect(repository.remainingReads.single, ['s-page.jpg']);
+      expect(session('s').status, ProcessingStatus.draft);
+    },
+  );
 }

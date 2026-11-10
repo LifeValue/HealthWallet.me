@@ -284,7 +284,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
                     final sessionImages =
                         state.sessionImagePaths[widget.sessionId] ??
-                        state.allImagePathsForOCR;
+                        const <String>[];
 
                     final isConverting =
                         state.status == const PipelineStatus.convertingPdfs() &&

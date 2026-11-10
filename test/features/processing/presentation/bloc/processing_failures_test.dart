@@ -91,6 +91,12 @@ class _FakeProcessingRepository extends Fake implements ProcessingRepository {
 class _FakeOcrProcessingHelper extends Fake implements OcrProcessingHelper {
   Exception? ocrError;
 
+  /// A document whose pages produced no images.
+  @override
+  Future<List<String>> prepareAllImages({
+    required List<String> filePaths,
+  }) async => const [];
+
   @override
   Future<String> processOcrForImages(List<String> imagePaths) async {
     throw ocrError!;

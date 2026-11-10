@@ -82,7 +82,6 @@ abstract class ProcessingState with _$ProcessingState {
     @Default([]) List<ProcessingSession> sessions,
     String? displayedSessionId,
     String? deletingSessionId,
-    @Default([]) List<String> allImagePathsForOCR,
     @Default({}) Map<String, List<String>> sessionImagePaths,
     Notification? notification,
     @Default(false) bool useVision,
