@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:injectable/injectable.dart';
 
 part 'focus_mode_event.dart';
@@ -13,10 +14,12 @@ part 'focus_mode_bloc.freezed.dart';
 class FocusModeBloc extends Bloc<FocusModeEvent, FocusModeState> {
   Timer? _countdownTimer;
   StreamSubscription<BatteryState>? _batterySubscription;
-  final Battery _battery = Battery();
+  final Battery _battery;
   static const int _initialCountdownSeconds = 10;
 
-  FocusModeBloc() : super(const FocusModeState()) {
+  FocusModeBloc({@ignoreParam Battery? battery})
+    : _battery = battery ?? Battery(),
+      super(const FocusModeState()) {
     on<FocusModeStarted>(_onFocusModeStarted);
     on<FocusModeCountdownTicked>(_onFocusModeCountdownTicked);
     on<FocusModeScreenRestored>(_onFocusModeScreenRestored);
@@ -26,7 +29,7 @@ class FocusModeBloc extends Bloc<FocusModeEvent, FocusModeState> {
     on<FocusModeDisposed>(_onFocusModeDisposed);
   }
 
-  void _onFocusModeStarted(
+  Future<void> _onFocusModeStarted(
     FocusModeStarted event,
     Emitter<FocusModeState> emit,
   ) async {
@@ -43,7 +46,9 @@ class FocusModeBloc extends Bloc<FocusModeEvent, FocusModeState> {
       _batterySubscription = _battery.onBatteryStateChanged.listen((state) {
         add(FocusModeBatteryStateChanged(batteryState: state));
       });
-    } catch (e) {
+    } catch (e, s) {
+      // The screen then shows no charging hint.
+      logger.w('Reading the battery state failed', e, s);
       emit(state.copyWith(batteryState: BatteryState.unknown));
     }
   }
