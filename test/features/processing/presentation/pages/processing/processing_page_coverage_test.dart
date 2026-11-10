@@ -473,6 +473,34 @@ void main() {
       ]);
     });
 
+    testPage('a report with nothing picked asks only whose it is', (
+      tester,
+    ) async {
+      await pumpPage(
+        tester,
+        stateWith(
+          const ProcessingSession(
+            id: 's1',
+            status: ProcessingStatus.draft,
+            diagnosticReport: StagedDiagnosticReport(
+              draft: MappingDiagnosticReport(
+                id: 'r1',
+                reportName: MappedProperty(value: 'CBC'),
+                issuedDate: MappedProperty(value: '2024-03-01'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tapText(tester, _en.done);
+      final dialog = tester.widget<AttachToEncounterWidget>(
+        find.byType(AttachToEncounterWidget),
+      );
+      expect(dialog.patientOnly, isTrue);
+      expect(dialog.confirmText, _en.attachToPatient);
+    });
+
     testPage('closing the attach dialog saves nothing', (tester) async {
       await pumpPage(
         tester,
