@@ -41,7 +41,9 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
             .toList();
         add(NotificationsLoaded(notifications: notifications));
       }
-    } catch (e) {
+    } catch (e, s) {
+      // Unreadable: start with no notifications rather than fail each start.
+      logger.w('Reading the saved notifications failed', e, s);
       _prefs.remove(_storageKey);
     }
   }
