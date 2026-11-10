@@ -184,6 +184,25 @@ void main() {
       debugDefaultTargetPlatformOverride = null;
     });
 
+    testWidgets('a stored name with unencoded accents opens its file', (
+      tester,
+    ) async {
+      store('Scrisoare medicală_1a2b3c4d.pdf', utf8.encode('%PDF-1.7'));
+
+      await preview(
+        tester,
+        _document(
+          storedName: 'Scrisoare medicală_1a2b3c4d.pdf',
+          attachmentTitle: 'PDF: Scrisoare medicală',
+        ),
+      );
+
+      final view = tester.widget<PDFView>(find.byType(PDFView));
+      expect(view.filePath, endsWith('/Scrisoare medicală_1a2b3c4d.pdf'));
+      expect(find.widgetWithText(AppBar, 'PDF: Scrisoare medicală'), findsOne);
+      debugDefaultTargetPlatformOverride = null;
+    });
+
     testWidgets('falls back to the record title', (tester) async {
       await preview(
         tester,

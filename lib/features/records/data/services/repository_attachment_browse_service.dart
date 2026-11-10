@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/core/utils/file_url.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
@@ -120,9 +121,7 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
                   contentType == 'application/pdf')) {
             final url = attachment['url'] as String?;
             if (url != null && url.isNotEmpty) {
-              final rawPath = Uri.decodeComponent(
-                url.startsWith('file://') ? url.substring(7) : url,
-              );
+              final rawPath = filePathOfUrl(url);
               try {
                 final resolved = await _pathResolver.toAbsolute(rawPath);
                 if (await File(resolved).exists()) {
@@ -407,9 +406,7 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
       String? resolvedPath;
 
       if (url != null && url.isNotEmpty) {
-        final rawPath = Uri.decodeComponent(
-          url.startsWith('file://') ? url.substring(7) : url,
-        );
+        final rawPath = filePathOfUrl(url);
         try {
           final absolute = await _pathResolver.toAbsolute(rawPath);
           if (await File(absolute).exists()) {

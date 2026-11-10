@@ -10,6 +10,7 @@ import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
+import 'package:health_wallet/core/utils/file_url.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/stored_file_name.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
@@ -158,7 +159,7 @@ class RecordAttachmentsBloc
 
       String? filePath;
       if (url?.startsWith('file://') == true) {
-        final rawPath = Uri.decodeComponent(url!.substring(7));
+        final rawPath = filePathOfUrl(url!);
         final resolved = await _pathResolver.toAbsolute(rawPath);
         if (await File(resolved).exists()) {
           filePath = resolved;

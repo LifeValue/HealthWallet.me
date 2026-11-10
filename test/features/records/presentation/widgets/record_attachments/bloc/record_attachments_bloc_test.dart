@@ -390,6 +390,25 @@ void main() {
       expect(repository.documentReads, 0);
     });
 
+    test('a saved scan keeps the accents of its file name unencoded and still '
+        'shows its file', () async {
+      File(
+        '${docs.path}/Scrisoare medicală_1a2b3c4d.pdf',
+      ).writeAsStringSync('pdf');
+      final document = _record(
+        _documentJson(
+          id: 'doc-1',
+          url: 'file://Scrisoare medicală_1a2b3c4d.pdf',
+          title: 'PDF: Scrisoare medicală',
+        ),
+      );
+
+      final info = (await open(document)).attachments.single;
+
+      expect(info.filePath, '${docs.path}/Scrisoare medicală_1a2b3c4d.pdf');
+      expect(info.title, 'PDF: Scrisoare medicală');
+    });
+
     test('an absolute URL inside the documents directory resolves', () async {
       File('${docs.path}/scan.png').writeAsStringSync('png');
       final document = _record(

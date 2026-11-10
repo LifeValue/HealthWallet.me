@@ -240,6 +240,31 @@ void main() {
       },
     );
 
+    test('a file name with unencoded accents still gives the thumbnail and '
+        'the detail', () async {
+      File('${root.path}/docs/Scrisoare medicală_1a2b3c4d.pdf')
+          .writeAsStringSync('%PDF');
+      const url = 'file://docs/Scrisoare medicală_1a2b3c4d.pdf';
+      final encounter = _resource({'resourceType': 'Encounter', 'id': 'enc-1'});
+      repository.records = [encounter];
+      repository.documents = [
+        _document('doc-1', url: url, encounterId: 'enc-1'),
+        _document('doc-2', encounterId: 'enc-1'),
+      ];
+
+      final entries = await service.loadEntries();
+      final detail = await service.loadDetail(encounter);
+
+      const path = 'docs/Scrisoare medicală_1a2b3c4d.pdf';
+      expect(entries.single.attachmentCount, 2);
+      expect(entries.single.thumbnailPath, '${root.path}/$path');
+      expect(detail.attachments.map((a) => a.filePath), [
+        '${root.path}/$path',
+        '${root.path}/docs/report.pdf',
+      ]);
+      expect(logs, isEmpty);
+    });
+
     test('a thumbnail path that cannot be resolved is logged', () async {
       pathResolver.failing.add('docs/report.pdf');
       repository.records = [

@@ -156,6 +156,19 @@ void main() {
         expect(attachment['data'], base64Encode(utf8.encode('pdf')));
       });
 
+      test('embeds a file whose stored name has unencoded accents', () async {
+        File('${root.path}/Documents/Scrisoare medicală_1a2b3c4d.pdf')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('pdf');
+
+        final attachment = await share(
+          'file://Scrisoare medicală_1a2b3c4d.pdf',
+        );
+
+        expect(attachment['data'], base64Encode(utf8.encode('pdf')));
+        expect(attachment.containsKey('url'), isFalse);
+      });
+
       test('keeps the url of a missing relative file', () async {
         final attachment = await share('file://scans/missing.pdf');
 
