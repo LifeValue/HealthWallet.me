@@ -124,10 +124,6 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
   }
 
   @override
-  Future<void> deleteResourceWithRelated(String resourceId) async =>
-      deletes.add('related:$resourceId');
-
-  @override
   Future<void> deleteResourcesByIds(List<String> ids) async =>
       deletes.add('ids:${ids.join(',')}');
 }
@@ -539,20 +535,10 @@ void main() {
       expect(repository.queries, hasLength(1));
     });
 
-    test('clearing marks it absent and reloads', () async {
-      await run(const LoadDemoData());
-
-      final state = await run(const ClearDemoData());
-
-      expect(state.hasDemoData, isFalse);
-      expect(repository.queries, hasLength(2));
-    });
-
-    test('a failed load or clear keeps the error', () async {
+    test('a failed load keeps the error', () async {
       repository.error = Exception('asset');
 
       expect((await run(const LoadDemoData())).demoDataError, isNotNull);
-      expect((await run(const ClearDemoData())).demoDataError, isNotNull);
     });
   });
 
@@ -593,14 +579,6 @@ void main() {
       expect(repository.deletes, ['one:r']);
       expect(statuses, contains(const RecordsStatus.deleted()));
       expect(repository.queries, hasLength(1));
-    });
-
-    test('a record with its related records', () async {
-      await run(
-        const RecordsResourceDeleted(resourceId: 'r', deleteRelated: true),
-      );
-
-      expect(repository.deletes, ['related:r']);
     });
 
     test('a record with the chosen related records', () async {

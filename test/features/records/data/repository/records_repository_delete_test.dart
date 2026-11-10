@@ -193,7 +193,7 @@ void main() {
     await addNote('enc');
     await addNote('obs');
 
-    await repository.deleteResourceWithRelated('enc');
+    await repository.deleteResourcesByIds(['enc', 'obs']);
 
     expect(await rowIds(), isEmpty);
     expect(await noteResourceIds(), isEmpty);
@@ -217,7 +217,7 @@ void main() {
       },
     );
 
-    await repository.deleteResourceWithRelated('enc');
+    await repository.deleteResourcesByIds(['enc', 'doc']);
 
     expect(await rowIds(), isEmpty);
     expect(scan.existsSync(), isTrue);

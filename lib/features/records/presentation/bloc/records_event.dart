@@ -71,13 +71,6 @@ abstract class LoadDemoData extends RecordsEvent with _$LoadDemoData {
 }
 
 @freezed
-abstract class ClearDemoData extends RecordsEvent with _$ClearDemoData {
-  const ClearDemoData._();
-
-  const factory ClearDemoData() = _ClearDemoData;
-}
-
-@freezed
 abstract class RecordsSearch extends RecordsEvent with _$RecordsSearch {
   const RecordsSearch._();
 
@@ -147,7 +140,6 @@ abstract class RecordsResourceDeleted extends RecordsEvent
 
   const factory RecordsResourceDeleted({
     required String resourceId,
-    @Default(false) bool deleteRelated,
     @Default([]) List<String> selectedRelatedIds,
   }) = _RecordsResourceDeleted;
 }

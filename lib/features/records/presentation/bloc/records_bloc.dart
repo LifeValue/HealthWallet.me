@@ -70,7 +70,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     on<RecordsFilterRemoved>(_onFilterRemoved);
     on<RecordDetailLoaded>(_onRecordDetailLoaded);
     on<LoadDemoData>(_onLoadDemoData);
-    on<ClearDemoData>(_onClearDemoData);
     on<RecordsSearch>(_onSearch);
     on<RecordsSearchExecuted>(_onSearchExecuted);
     on<RecordsSharePressed>(_onRecordsSharePressed, transformer: droppable());
@@ -359,30 +358,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     }
   }
 
-  Future<void> _onClearDemoData(
-    ClearDemoData event,
-    Emitter<RecordsState> emit,
-  ) async {
-    try {
-      await _recordsRepository.clearDemoData();
-
-      emit(
-        state.copyWith(
-          hasDemoData: false,
-          demoDataError: null,
-        ),
-      );
-
-      await _loadResources(emit);
-    } catch (e) {
-      emit(
-        state.copyWith(
-          demoDataError: e.toString(),
-        ),
-      );
-    }
-  }
-
   Future<void> _onSearch(
     RecordsSearch event,
     Emitter<RecordsState> emit,
@@ -546,8 +521,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       if (event.selectedRelatedIds.isNotEmpty) {
         final allIds = <String>[event.resourceId, ...event.selectedRelatedIds];
         await _recordsRepository.deleteResourcesByIds(allIds);
-      } else if (event.deleteRelated) {
-        await _recordsRepository.deleteResourceWithRelated(event.resourceId);
       } else {
         await _recordsRepository.deleteResource(event.resourceId);
       }

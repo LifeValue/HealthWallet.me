@@ -548,75 +548,6 @@ void main() {
     });
   });
 
-  group('deleteResourceWithRelated', () {
-    Future<void> seedVisit() => seed([
-      dto('enc-row', type: 'Encounter', raw: rawOf('Encounter', 'enc-row')),
-      dto('obs-1', encounterId: 'enc-row'),
-      dto('obs-2', encounterId: 'enc-row'),
-      dto('obs-3', encounterId: 'other'),
-      dto('lone'),
-    ]);
-
-    test('deleting an encounter tombstones its records', () async {
-      await seedVisit();
-
-      await repository.deleteResourceWithRelated('enc-row');
-
-      expect(
-        await ids(repository.getResources()),
-        unorderedEquals([
-          'obs-3',
-          'lone',
-        ]),
-      );
-      expect(await countRows(db, 'fhir_resource'), 5);
-    });
-
-    test('deleting a record of a visit tombstones the encounter and its '
-        'siblings', () async {
-      await seedVisit();
-
-      await repository.deleteResourceWithRelated('obs-1');
-
-      expect(
-        await ids(repository.getResources()),
-        unorderedEquals([
-          'obs-3',
-          'lone',
-        ]),
-      );
-    });
-
-    test('a record without a visit is deleted on its own', () async {
-      await seedVisit();
-
-      await repository.deleteResourceWithRelated('lone');
-
-      expect(await ids(repository.getResources()), hasLength(4));
-      expect((await rowOf('fhir_resource', 'lone'))['deleted_at'], isNotNull);
-    });
-
-    test('an unknown or already deleted record is a no-op', () async {
-      await seedVisit();
-      await tombstone('fhir_resource', 'obs-1');
-
-      await repository.deleteResourceWithRelated('missing');
-      await repository.deleteResourceWithRelated('obs-1');
-
-      expect(await ids(repository.getResources()), hasLength(4));
-      expect((await rowOf('fhir_resource', 'obs-1'))['updated_at'], ms(at(0)));
-    });
-
-    test('an already deleted sibling keeps its tombstone', () async {
-      await seedVisit();
-      await tombstone('fhir_resource', 'obs-2');
-
-      await repository.deleteResourceWithRelated('enc-row');
-
-      expect((await rowOf('fhir_resource', 'obs-2'))['updated_at'], ms(at(0)));
-    });
-  });
-
   group('getRelatedResourceCount and getRelatedResourcesForDeletion', () {
     Future<void> seedVisit() => seed([
       dto('enc-1', type: 'Encounter', raw: rawOf('Encounter', 'enc-1')),
@@ -728,6 +659,12 @@ void main() {
         content: 'n',
       );
       final before = DateTime.now().millisecondsSinceEpoch;
+      // A tombstone is stamped at least one past the row's last write, so a
+      // delete in the same millisecond as that write would get a second
+      // stamp; let the clock move on first.
+      while (DateTime.now().millisecondsSinceEpoch <= before) {
+        await Future<void>.delayed(const Duration(milliseconds: 1));
+      }
 
       await repository.clearDemoData();
 

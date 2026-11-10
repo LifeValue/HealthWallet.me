@@ -394,68 +394,6 @@ class RecordsRepositoryImpl implements RecordsRepository {
     }
   }
 
-  /// The `file://` URLs of a DocumentReference's or Media's attachments.
-  static List<String> _attachmentFileUrls(String rawJson) {
-    try {
-      final json = jsonDecode(rawJson);
-      if (json is! Map<String, dynamic>) return const [];
-      final content = json['content'];
-      final attachments = switch (content) {
-        final List list => [
-          for (final item in list)
-            if (item is Map) item['attachment'],
-        ],
-        final Map attachment => [attachment],
-        _ => const [],
-      };
-      return [
-        for (final a in attachments)
-          if (a is Map && a['url'] is String)
-            if ((a['url'] as String).startsWith('file://')) a['url'] as String,
-      ];
-    } catch (e) {
-      logger.w('Unreadable attachment content', e);
-      return const [];
-    }
-  }
-
-  /// Deletes no file: a deleted record keeps its attachment files for the 30
-  /// days its tombstone lives, so undo and restore still find them. The
-  /// tombstone purge (`LwwSyncService.cleanupTombstones`) and the start-up
-  /// sweep delete the files no row refers to. Kept only because
-  /// [clearDemoData] calls it.
-  Future<void> _deleteFileIfUnused(String url) async {}
-
-  @override
-  Future<void> deleteResourceWithRelated(String resourceId) async {
-    final targetResource = await _liveResource(resourceId);
-
-    if (targetResource == null) return;
-
-    final idsToDelete = <String>{resourceId};
-
-    if (targetResource.resourceType == 'Encounter' ||
-        targetResource.resourceType == 'DiagnosticReport') {
-      final related = await _datasource.getResourcesByEncounterId(
-        encounterId: targetResource.resourceId ?? '',
-      );
-      idsToDelete.addAll(related.map((r) => r.id));
-    }
-
-    final encId = targetResource.encounterId;
-    if (encId != null && encId.isNotEmpty) {
-      final encounterRows = await _liveResourcesWithResourceId(encId);
-      idsToDelete.addAll(encounterRows.map((r) => r.id));
-
-      final siblings = await _datasource.getResourcesByEncounterId(
-        encounterId: encId,
-      );
-      idsToDelete.addAll(siblings.map((r) => r.id));
-    }
-
-    await _deleteRecords(idsToDelete);
-  }
-
   Future<FhirResourceLocalDto?> _liveResource(String id) => (_database.select(
     _database.fhirResource,
   )..where((f) => f.id.equals(id) & f.deletedAt.isNull())).getSingleOrNull();
@@ -751,22 +689,11 @@ class RecordsRepositoryImpl implements RecordsRepository {
               .get())
         row.read<String>('id'),
     ];
-    final demoRows = await _datasource.getResources(
-      resourceTypes: [],
-      sourceIds: sourceIds,
-    );
-    final fileUrls = {
-      for (final row in demoRows) ..._attachmentFileUrls(row.resourceRaw),
-    };
 
     // Each tombstones the source, its records and their notes in one
     // transaction.
     for (final sourceId in sourceIds) {
       await _syncLocalDataSource.deleteSource(sourceId);
-    }
-
-    for (final url in fileUrls) {
-      await _deleteFileIfUnused(url);
     }
   }
 
