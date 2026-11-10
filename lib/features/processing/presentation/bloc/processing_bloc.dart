@@ -361,6 +361,15 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     if (next != null) add(SessionActivated(sessionId: next.id));
   }
 
+  /// The status, unless it is a failure of [sessionId].
+  PipelineStatus _withoutFailureOf(String sessionId) => switch (state.status) {
+    Failure(sessionId: final id) when id == sessionId =>
+      const PipelineStatus.initial(),
+    CapacityFailure(sessionId: final id) when id == sessionId =>
+      const PipelineStatus.initial(),
+    final other => other,
+  };
+
   void _replaceSession(Emitter<ProcessingState> emit, ProcessingSession next) {
     emit(
       state.copyWith(
@@ -394,6 +403,9 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
       emit,
       session.copyWith(status: ProcessingStatus.handedOver, progress: 0),
     );
+    // The desktop processes it: a failure of this phone's attempt (no model)
+    // no longer applies.
+    emit(state.copyWith(status: _withoutFailureOf(session.id)));
     await _stopLocalProcessing(session);
     _layoutExtraction.forget(session.id);
   }
@@ -425,6 +437,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     );
     emit(
       state.copyWith(
+        status: _withoutFailureOf(session.id),
         notification: Notification(
           text: _strings.l10n.handoverReadyToReview(
             session.origin.localizedName(_strings.l10n),
@@ -496,6 +509,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
             if (s.id != session.id) s,
         ],
         sessionImagePaths: {...state.sessionImagePaths}..remove(session.id),
+        status: _withoutFailureOf(session.id),
         notification: Notification(
           text: event.byDesktop
               ? _strings.l10n.handoverSavedOnDesktop(

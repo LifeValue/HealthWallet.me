@@ -46,13 +46,19 @@ class ProcessingMappingSection extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget content;
 
+    final isDraft = displayedSession.status == ProcessingStatus.draft;
     if (displayedSession.status == ProcessingStatus.handedOver) {
-      // The desktop has it; a failure shown here would be another session's.
       content = _HandedOverMessage(sessionId: displayedSession.id);
-    } else if (state.status is CapacityFailure) {
+    } else if (state.status case CapacityFailure(:final sessionId)
+        when sessionId == displayedSession.id && !isDraft) {
       content = _buildCapacityFailure(context);
-    } else if (state.status is Failure) {
-      content = _buildFailure(context, state.status as Failure);
+    } else if (state.status case final Failure failure
+        when failure.sessionId == displayedSession.id ||
+            (failure.sessionId == null && !isDraft)) {
+      // Never another session's failure. Over a draft's records only its own
+      // (a failed save): the processing failures before it are cleared when
+      // the draft is made.
+      content = _buildFailure(context, failure);
     } else if (displayedSession.status == ProcessingStatus.cancelled) {
       content = _buildCancelled(context);
     } else if (displayedSession.isProcessing) {

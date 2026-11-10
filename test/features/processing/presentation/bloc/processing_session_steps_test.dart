@@ -803,9 +803,20 @@ void main() {
         ),
       );
 
+      seed(
+        bloc.state.copyWith(
+          status: const PipelineStatus.failure(
+            error: 'x',
+            reason: PipelineFailureReason.modelNotFound,
+            sessionId: 's',
+          ),
+        ),
+      );
       bloc.add(const SessionHandedOver(sessionId: 's'));
       await settle();
       expect(session('s').status, ProcessingStatus.handedOver);
+      // This phone's failure doesn't apply to what the desktop does.
+      expect(bloc.state.status, const PipelineStatus.initial());
 
       bloc
         ..add(const MappingInitiated(sessionId: 's'))
@@ -818,8 +829,15 @@ void main() {
     test(
       'the desktop\'s draft is applied for review, with a notification',
       () async {
+        // This phone has no model: opening the scan failed before the
+        // handover.
         seed(
           const ProcessingState(
+            status: PipelineStatus.failure(
+              error: 'x',
+              reason: PipelineFailureReason.modelNotFound,
+              sessionId: 's',
+            ),
             sessions: [
               ProcessingSession(
                 id: 's',
@@ -846,6 +864,7 @@ void main() {
         expect(session('s').status, ProcessingStatus.draft);
         // Still a scan: the Scan tab lists it.
         expect(session('s').origin, ProcessingOrigin.scan);
+        expect(bloc.state.status, const PipelineStatus.initial());
         expect(session('s').resources.single.id, 'from-desktop');
         expect(bloc.state.notification!.text, 'Scan: ready to review');
         expect(repository.edited.last.status, ProcessingStatus.draft);

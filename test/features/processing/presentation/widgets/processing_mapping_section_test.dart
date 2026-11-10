@@ -238,6 +238,55 @@ void main() {
     expect(find.text(_ro.processingFailed), findsNothing);
   });
 
+  group('a draft', () {
+    const draft = ProcessingSession(id: 's', status: ProcessingStatus.draft);
+
+    for (final (name, sessionId) in [
+      ('of another session', 'other'),
+      ('that belongs to no session', null),
+    ]) {
+      testWidgets('shows no "no AI model" failure $name over its records', (
+        tester,
+      ) async {
+        await pump(
+          tester,
+          status: PipelineStatus.failure(
+            error: 'x',
+            reason: PipelineFailureReason.modelNotFound,
+            sessionId: sessionId,
+          ),
+          session: draft,
+        );
+
+        expect(find.text(_ro.noAiModel), findsNothing);
+        expect(find.text(_ro.attachWithoutProcessing), findsNothing);
+      });
+    }
+
+    testWidgets('shows its own failure, a failed save', (tester) async {
+      await pump(
+        tester,
+        status: const PipelineStatus.failure(error: 'x', sessionId: 's'),
+        session: draft,
+      );
+
+      expect(find.text(_ro.processingFailed), findsOneWidget);
+    });
+  });
+
+  testWidgets('another session\'s failure is not shown', (tester) async {
+    await pump(
+      tester,
+      status: const PipelineStatus.failure(
+        error: 'x',
+        reason: PipelineFailureReason.modelNotFound,
+        sessionId: 'other',
+      ),
+    );
+
+    expect(find.text(_ro.noAiModel), findsNothing);
+  });
+
   group('process on desktop', () {
     testWidgets('mobile offers it for a session not yet processed', (
       tester,
