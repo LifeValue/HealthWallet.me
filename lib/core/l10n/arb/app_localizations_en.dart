@@ -218,11 +218,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get failedToUpdateDisplayName => 'Failed to update display name';
 
   @override
-  String failedToSaveSetting(String setting) {
-    return 'Couldn\'t save “$setting”. Try again.';
-  }
-
-  @override
   String get actionCannotBeUndone => 'This action cannot be undone.';
 
   @override
@@ -424,6 +419,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get attachToEncounter => 'Attach to Encounter';
+
+  @override
+  String get attachToPatient => 'Attach to Patient';
 
   @override
   String get continueProcessing => 'Continue Processing';
@@ -697,10 +695,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'The document is too large for the current AI working memory.';
 
   @override
-  String get processingFailedMemory =>
-      'Not enough free memory to run the AI model. Close other apps and try again, or turn off Deep Scan in AI Settings.';
-
-  @override
   String get processingFailedCapacitySuggestion =>
       'Tap the settings icon above and increase the Working memory to 2048 or higher, then retry.';
 
@@ -758,15 +752,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tokenPresetHigh => 'Long';
-
-  @override
-  String get tokenPresetLowHint => 'a few values';
-
-  @override
-  String get tokenPresetMediumHint => 'a short report';
-
-  @override
-  String get tokenPresetHighHint => 'a full report';
 
   @override
   String get tokenPresetCustom => 'Custom';
@@ -1491,15 +1476,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get desktopHandoverSendingFiles => 'Sending files...';
 
   @override
-  String get desktopHandoverProcessingOnDesktop => 'Processing on desktop...';
-
-  @override
-  String get desktopHandoverComplete => 'Complete!';
-
-  @override
-  String get desktopHandoverError => 'Error occurred';
-
-  @override
   String get desktopHandoverSending => 'Sending...';
 
   @override
@@ -1509,9 +1485,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String desktopHandoverFileCount(int count) {
     return '$count files';
   }
-
-  @override
-  String get desktopHandoverSuccess => 'Handed over to Desktop';
 
   @override
   String get desktopClose => 'Close';
@@ -2494,9 +2467,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noFilePathFound => 'No file path found';
 
   @override
-  String get handoverPatientMatched => 'Handover patient matched';
-
-  @override
   String get desktopDiscovering => 'Discovering...';
 
   @override
@@ -2547,46 +2517,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not update the backups. Please try again.';
 
   @override
-  String get backupRecordsOnly => 'Records only';
-
-  @override
-  String backupRestoreConfirmPointInTime(String date) {
-    return 'This replaces your records on this computer and on your paired phone with the backup from $date. Records added since then are removed. A “Before restore” copy of your current data is saved first and kept for 30 days, so you can undo this.';
-  }
-
-  @override
-  String get backupOldNoFiles =>
-      'This backup has no files. Records will be restored and your current files kept.';
-
-  @override
-  String backupSafetyName(String date) {
-    return 'Before restore $date';
-  }
-
-  @override
-  String get backupRestoreFailed =>
-      'Restore failed. Your data was not changed; the \"Before restore\" backup is in the list.';
-
-  @override
-  String get backupSafetyFailed =>
-      'Couldn\'t make a safety backup, so nothing was restored. Check free space and the backup folder.';
-
-  @override
-  String backupFilesNotRestored(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count files couldn\'t be restored.',
-      one: '1 file couldn\'t be restored.',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get backupRestorePhoneOffline =>
-      'Your phone isn\'t connected. Records added on it since its last sync will come back after it reconnects; changes it made to existing records will be replaced by the backup.';
-
-  @override
   String get desktopSyncFailed =>
       'Sync failed. Check the connection and try again.';
 
@@ -2611,23 +2541,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get desktopHandoverReceivingFiles => 'Receiving files...';
 
   @override
-  String get desktopHandoverProcessingStatus => 'Processing...';
-
-  @override
-  String get desktopHandoverSendingResults => 'Sending results...';
-
-  @override
-  String get desktopHandoverDone => 'Complete';
-
-  @override
   String get desktopHandoverStatusError => 'Error';
 
   @override
-  String get desktopHandoverWaitingForResults => 'Waiting for results...';
-
-  @override
   String get desktopHandoverNotAccepted =>
-      'The desktop did not accept the documents.';
+      'The desktop did not answer. Make sure HealthWallet is open and up to date on it.';
 
   @override
   String get desktopHandoverFileMissing =>
@@ -2660,9 +2578,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String trayQuit(String appName) {
     return 'Quit $appName';
   }
-
-  @override
-  String get desktopFinishedProcessing => 'Desktop finished processing';
 
   @override
   String get biometricAuthReason =>
@@ -4584,6 +4499,215 @@ class AppLocalizationsEn extends AppLocalizations {
   String desktopBackupSucceededMessage(String name, int count) {
     return '\"$name\" has been saved. It holds $count records.';
   }
+
+  @override
+  String get holderQuestionTitle => 'Whose records are these?';
+
+  @override
+  String holderQuestionMessage(String name) {
+    return 'Records arrived for $name, who doesn\'t match anyone in your wallet. Who is this?';
+  }
+
+  @override
+  String get holderQuestionSomeoneElse => 'Someone else';
+
+  @override
+  String get fhirTypeVisionPrescription => 'Vision Prescription';
+
+  @override
+  String get categoryVisionPrescriptions => 'Vision Prescriptions';
+
+  @override
+  String get lensTypeMultifocal => 'Multifocal glasses';
+
+  @override
+  String get lensTypeDistance => 'Distance glasses';
+
+  @override
+  String get lensTypeReading => 'Reading glasses';
+
+  @override
+  String get lensTypeOther => 'Glasses';
+
+  @override
+  String get fieldLensType => 'Lens Type';
+
+  @override
+  String get fieldDateWritten => 'Issued on';
+
+  @override
+  String get fieldRecommendedFollowUp => 'Next check-up';
+
+  @override
+  String get labelSerialNumber => 'Serial number';
+
+  @override
+  String get visionEyeRight => 'Right eye';
+
+  @override
+  String get visionEyeLeft => 'Left eye';
+
+  @override
+  String get visionSphere => 'Strength';
+
+  @override
+  String get visionCylinder => 'Astigmatism';
+
+  @override
+  String get visionAxis => 'Angle';
+
+  @override
+  String get visionAdd => 'Reading add';
+
+  @override
+  String get visionPrism => 'Prism';
+
+  @override
+  String get visionBase => 'Prism base';
+
+  @override
+  String get visionInvalidDioptre => 'Use a value like +1.25, in steps of 0.25';
+
+  @override
+  String get visionInvalidAxis => 'Use an angle from 0 to 180';
+
+  @override
+  String get stagedAlreadyInWallet => 'Already in your wallet';
+
+  @override
+  String get stagedWillBeCompleted =>
+      'Already in your wallet, will be completed';
+
+  @override
+  String get documentAlreadyInWallet =>
+      'Everything in this document is already in your wallet';
+
+  @override
+  String get processingStatusHandedOver => 'On the desktop';
+
+  @override
+  String get desktopHandoverSent =>
+      'Sent to the desktop. You\'ll be told when it\'s ready to review, here or on the desktop.';
+
+  @override
+  String get desktopHandoverConnectionLost =>
+      'The connection to the desktop was lost. Try again.';
+
+  @override
+  String get desktopHandoverTooLarge =>
+      'The document is too large to send to the desktop (over 200 MB).';
+
+  @override
+  String get desktopHandoverTimedOut =>
+      'The desktop stopped receiving the document. Try again.';
+
+  @override
+  String get handoverOnDesktopTitle => 'Being processed on the desktop';
+
+  @override
+  String get handoverOnDesktopMessage =>
+      'The draft comes back here to review when the desktop is done. You can also review and save it on the desktop.';
+
+  @override
+  String get handoverTakeBack => 'Process on this phone instead';
+
+  @override
+  String handoverReadyToReview(String origin) {
+    return '$origin: ready to review';
+  }
+
+  @override
+  String handoverFailedOnDesktop(String origin) {
+    return '$origin: the desktop could not process it. It\'s back on this phone.';
+  }
+
+  @override
+  String handoverNoModelOnDesktop(String origin) {
+    return '$origin: there is no AI model on the desktop. It\'s back on this phone.';
+  }
+
+  @override
+  String handoverDeletedOnDesktop(String origin) {
+    return '$origin was deleted on the desktop. It\'s back on this phone.';
+  }
+
+  @override
+  String handoverSavedOnDesktop(String origin) {
+    return '$origin was saved on the desktop. The records reach this phone with the next sync.';
+  }
+
+  @override
+  String handoverSavedOnPhone(String origin) {
+    return '$origin was saved on the phone.';
+  }
+
+  @override
+  String handoverDraftSavedOnDesktop(String origin) {
+    return '$origin was saved on the desktop. Any changes made here to its draft were not kept.';
+  }
+
+  @override
+  String handoverDraftSavedOnPhone(String origin) {
+    return '$origin was saved on the phone. Any changes made here to its draft were not kept.';
+  }
+
+  @override
+  String failedToSaveSetting(String setting) {
+    return 'Couldn\'t save “$setting”. Try again.';
+  }
+
+  @override
+  String get processingFailedMemory =>
+      'Not enough free memory to run the AI model. Close other apps and try again, or turn off Deep Scan in AI Settings.';
+
+  @override
+  String get tokenPresetLowHint => 'a few values';
+
+  @override
+  String get tokenPresetMediumHint => 'a short report';
+
+  @override
+  String get tokenPresetHighHint => 'a full report';
+
+  @override
+  String get backupRecordsOnly => 'Records only';
+
+  @override
+  String backupRestoreConfirmPointInTime(String date) {
+    return 'This replaces your records on this computer and on your paired phone with the backup from $date. Records added since then are removed. A “Before restore” copy of your current data is saved first and kept for 30 days, so you can undo this.';
+  }
+
+  @override
+  String get backupOldNoFiles =>
+      'This backup has no files. Records will be restored and your current files kept.';
+
+  @override
+  String backupSafetyName(String date) {
+    return 'Before restore $date';
+  }
+
+  @override
+  String get backupRestoreFailed =>
+      'Restore failed. Your data was not changed; the \"Before restore\" backup is in the list.';
+
+  @override
+  String get backupSafetyFailed =>
+      'Couldn\'t make a safety backup, so nothing was restored. Check free space and the backup folder.';
+
+  @override
+  String backupFilesNotRestored(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files couldn\'t be restored.',
+      one: '1 file couldn\'t be restored.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupRestorePhoneOffline =>
+      'Your phone isn\'t connected. Records added on it since its last sync will come back after it reconnects; changes it made to existing records will be replaced by the backup.';
 
   @override
   String aiModelDeleteTitle(String name) {

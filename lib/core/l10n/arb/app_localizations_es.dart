@@ -220,11 +220,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Error al actualizar nombre para mostrar';
 
   @override
-  String failedToSaveSetting(String setting) {
-    return 'No se pudo guardar «$setting». Inténtalo de nuevo.';
-  }
-
-  @override
   String get actionCannotBeUndone => 'Esta acción no se puede deshacer.';
 
   @override
@@ -430,6 +425,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get attachToEncounter => 'Adjuntar a encuentro';
+
+  @override
+  String get attachToPatient => 'Adjuntar a paciente';
 
   @override
   String get continueProcessing => 'Continuar procesamiento';
@@ -708,10 +706,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'El documento es demasiado grande para la memoria de trabajo actual de IA.';
 
   @override
-  String get processingFailedMemory =>
-      'No hay suficiente memoria libre para ejecutar el modelo de IA. Cierra otras apps e inténtalo de nuevo, o desactiva el Escaneo profundo en Ajustes de IA.';
-
-  @override
   String get processingFailedCapacitySuggestion =>
       'Toca el icono de ajustes arriba y aumenta la memoria de trabajo a 2048 o más, luego reintenta.';
 
@@ -769,15 +763,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tokenPresetHigh => 'Larga';
-
-  @override
-  String get tokenPresetLowHint => 'unos pocos valores';
-
-  @override
-  String get tokenPresetMediumHint => 'un informe breve';
-
-  @override
-  String get tokenPresetHighHint => 'un informe completo';
 
   @override
   String get tokenPresetCustom => 'Personalizado';
@@ -1506,16 +1491,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get desktopHandoverSendingFiles => 'Enviando archivos...';
 
   @override
-  String get desktopHandoverProcessingOnDesktop =>
-      'Procesando en el escritorio...';
-
-  @override
-  String get desktopHandoverComplete => '¡Completado!';
-
-  @override
-  String get desktopHandoverError => 'Ocurrió un error';
-
-  @override
   String get desktopHandoverSending => 'Enviando...';
 
   @override
@@ -1525,9 +1500,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String desktopHandoverFileCount(int count) {
     return '$count archivos';
   }
-
-  @override
-  String get desktopHandoverSuccess => 'Entregado al escritorio';
 
   @override
   String get desktopClose => 'Cerrar';
@@ -2518,9 +2490,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noFilePathFound => 'No se encontró la ruta del archivo';
 
   @override
-  String get handoverPatientMatched => 'Paciente de la entrega asociado';
-
-  @override
   String get desktopDiscovering => 'Buscando...';
 
   @override
@@ -2572,46 +2541,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'No se pudieron actualizar las copias de seguridad. Inténtalo de nuevo.';
 
   @override
-  String get backupRecordsOnly => 'Solo registros';
-
-  @override
-  String backupRestoreConfirmPointInTime(String date) {
-    return 'Esto reemplaza tus registros en este ordenador y en tu teléfono vinculado por la copia del $date. Los registros añadidos desde entonces se eliminan. Antes se guarda una copia «Antes de restaurar» de tus datos actuales, que se conserva 30 días para que puedas deshacerlo.';
-  }
-
-  @override
-  String get backupOldNoFiles =>
-      'Esta copia no tiene archivos. Se restaurarán los registros y se conservarán tus archivos actuales.';
-
-  @override
-  String backupSafetyName(String date) {
-    return 'Antes de restaurar $date';
-  }
-
-  @override
-  String get backupRestoreFailed =>
-      'La restauración falló. Tus datos no cambiaron; la copia \"Antes de restaurar\" está en la lista.';
-
-  @override
-  String get backupSafetyFailed =>
-      'No se pudo crear la copia de seguridad previa, así que no se restauró nada. Comprueba el espacio libre y la carpeta.';
-
-  @override
-  String backupFilesNotRestored(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'No se pudieron restaurar $count archivos.',
-      one: 'No se pudo restaurar 1 archivo.',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get backupRestorePhoneOffline =>
-      'Tu teléfono no está conectado. Los registros añadidos en él desde la última sincronización volverán cuando se conecte; los cambios que hizo en registros existentes se reemplazarán por la copia.';
-
-  @override
   String get desktopSyncFailed =>
       'La sincronización falló. Comprueba la conexión e inténtalo de nuevo.';
 
@@ -2637,23 +2566,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get desktopHandoverReceivingFiles => 'Recibiendo archivos...';
 
   @override
-  String get desktopHandoverProcessingStatus => 'Procesando...';
-
-  @override
-  String get desktopHandoverSendingResults => 'Enviando resultados...';
-
-  @override
-  String get desktopHandoverDone => 'Completado';
-
-  @override
   String get desktopHandoverStatusError => 'Error';
 
   @override
-  String get desktopHandoverWaitingForResults => 'Esperando resultados...';
-
-  @override
   String get desktopHandoverNotAccepted =>
-      'El escritorio no aceptó los documentos.';
+      'El escritorio no respondió. Asegúrate de que HealthWallet esté abierto y actualizado en él.';
 
   @override
   String get desktopHandoverFileMissing =>
@@ -2687,10 +2604,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String trayQuit(String appName) {
     return 'Salir de $appName';
   }
-
-  @override
-  String get desktopFinishedProcessing =>
-      'El escritorio terminó el procesamiento';
 
   @override
   String get biometricAuthReason =>
@@ -4642,6 +4555,215 @@ class AppLocalizationsEs extends AppLocalizations {
   String desktopBackupSucceededMessage(String name, int count) {
     return 'Se guardó \"$name\". Contiene $count registros.';
   }
+
+  @override
+  String get holderQuestionTitle => '¿De quién son estos registros?';
+
+  @override
+  String holderQuestionMessage(String name) {
+    return 'Han llegado registros de $name, que no coincide con nadie de tu cartera. ¿Quién es?';
+  }
+
+  @override
+  String get holderQuestionSomeoneElse => 'Otra persona';
+
+  @override
+  String get fhirTypeVisionPrescription => 'Receta óptica';
+
+  @override
+  String get categoryVisionPrescriptions => 'Recetas ópticas';
+
+  @override
+  String get lensTypeMultifocal => 'Gafas multifocales';
+
+  @override
+  String get lensTypeDistance => 'Gafas para ver de lejos';
+
+  @override
+  String get lensTypeReading => 'Gafas de lectura';
+
+  @override
+  String get lensTypeOther => 'Gafas';
+
+  @override
+  String get fieldLensType => 'Tipo de lentes';
+
+  @override
+  String get fieldDateWritten => 'Fecha de emisión';
+
+  @override
+  String get fieldRecommendedFollowUp => 'Próximo control';
+
+  @override
+  String get labelSerialNumber => 'Número de serie';
+
+  @override
+  String get visionEyeRight => 'Ojo derecho';
+
+  @override
+  String get visionEyeLeft => 'Ojo izquierdo';
+
+  @override
+  String get visionSphere => 'Graduación';
+
+  @override
+  String get visionCylinder => 'Astigmatismo';
+
+  @override
+  String get visionAxis => 'Ángulo';
+
+  @override
+  String get visionAdd => 'Adición lectura';
+
+  @override
+  String get visionPrism => 'Prisma';
+
+  @override
+  String get visionBase => 'Base del prisma';
+
+  @override
+  String get visionInvalidDioptre =>
+      'Usa un valor como +1.25, en pasos de 0.25';
+
+  @override
+  String get visionInvalidAxis => 'Usa un ángulo de 0 a 180';
+
+  @override
+  String get stagedAlreadyInWallet => 'Ya está en tu cartera';
+
+  @override
+  String get stagedWillBeCompleted => 'Ya está en tu cartera, se completará';
+
+  @override
+  String get documentAlreadyInWallet =>
+      'Todo lo de este documento ya está en tu cartera';
+
+  @override
+  String get processingStatusHandedOver => 'En el escritorio';
+
+  @override
+  String get desktopHandoverSent =>
+      'Enviado al escritorio. Te avisaremos cuando esté listo para revisar, aquí o en el escritorio.';
+
+  @override
+  String get desktopHandoverConnectionLost =>
+      'Se perdió la conexión con el escritorio. Inténtalo de nuevo.';
+
+  @override
+  String get desktopHandoverTooLarge =>
+      'El documento es demasiado grande para enviarlo al escritorio (más de 200 MB).';
+
+  @override
+  String get desktopHandoverTimedOut =>
+      'El escritorio dejó de recibir el documento. Inténtalo de nuevo.';
+
+  @override
+  String get handoverOnDesktopTitle => 'Procesándose en el escritorio';
+
+  @override
+  String get handoverOnDesktopMessage =>
+      'El borrador volverá aquí para revisarlo cuando el escritorio termine. También puedes revisarlo y guardarlo en el escritorio.';
+
+  @override
+  String get handoverTakeBack => 'Procesar en este teléfono';
+
+  @override
+  String handoverReadyToReview(String origin) {
+    return '$origin: listo para revisar';
+  }
+
+  @override
+  String handoverFailedOnDesktop(String origin) {
+    return '$origin: el escritorio no pudo procesarlo. Ha vuelto a este teléfono.';
+  }
+
+  @override
+  String handoverNoModelOnDesktop(String origin) {
+    return '$origin: no hay modelo de IA en el escritorio. Ha vuelto a este teléfono.';
+  }
+
+  @override
+  String handoverDeletedOnDesktop(String origin) {
+    return '$origin se eliminó en el escritorio. Ha vuelto a este teléfono.';
+  }
+
+  @override
+  String handoverSavedOnDesktop(String origin) {
+    return '$origin se guardó en el escritorio. Los registros llegarán a este teléfono con la próxima sincronización.';
+  }
+
+  @override
+  String handoverSavedOnPhone(String origin) {
+    return '$origin se guardó en el teléfono.';
+  }
+
+  @override
+  String handoverDraftSavedOnDesktop(String origin) {
+    return '$origin se guardó en el escritorio. Los cambios hechos aquí en su borrador no se conservaron.';
+  }
+
+  @override
+  String handoverDraftSavedOnPhone(String origin) {
+    return '$origin se guardó en el teléfono. Los cambios hechos aquí en su borrador no se conservaron.';
+  }
+
+  @override
+  String failedToSaveSetting(String setting) {
+    return 'No se pudo guardar «$setting». Inténtalo de nuevo.';
+  }
+
+  @override
+  String get processingFailedMemory =>
+      'No hay suficiente memoria libre para ejecutar el modelo de IA. Cierra otras apps e inténtalo de nuevo, o desactiva el Escaneo profundo en Ajustes de IA.';
+
+  @override
+  String get tokenPresetLowHint => 'unos pocos valores';
+
+  @override
+  String get tokenPresetMediumHint => 'un informe breve';
+
+  @override
+  String get tokenPresetHighHint => 'un informe completo';
+
+  @override
+  String get backupRecordsOnly => 'Solo registros';
+
+  @override
+  String backupRestoreConfirmPointInTime(String date) {
+    return 'Esto reemplaza tus registros en este ordenador y en tu teléfono vinculado por la copia del $date. Los registros añadidos desde entonces se eliminan. Antes se guarda una copia «Antes de restaurar» de tus datos actuales, que se conserva 30 días para que puedas deshacerlo.';
+  }
+
+  @override
+  String get backupOldNoFiles =>
+      'Esta copia no tiene archivos. Se restaurarán los registros y se conservarán tus archivos actuales.';
+
+  @override
+  String backupSafetyName(String date) {
+    return 'Antes de restaurar $date';
+  }
+
+  @override
+  String get backupRestoreFailed =>
+      'La restauración falló. Tus datos no cambiaron; la copia \"Antes de restaurar\" está en la lista.';
+
+  @override
+  String get backupSafetyFailed =>
+      'No se pudo crear la copia de seguridad previa, así que no se restauró nada. Comprueba el espacio libre y la carpeta.';
+
+  @override
+  String backupFilesNotRestored(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'No se pudieron restaurar $count archivos.',
+      one: 'No se pudo restaurar 1 archivo.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupRestorePhoneOffline =>
+      'Tu teléfono no está conectado. Los registros añadidos en él desde la última sincronización volverán cuando se conecte; los cambios que hizo en registros existentes se reemplazarán por la copia.';
 
   @override
   String aiModelDeleteTitle(String name) {

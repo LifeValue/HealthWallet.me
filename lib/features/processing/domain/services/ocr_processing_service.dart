@@ -53,8 +53,11 @@ class OcrProcessingHelper {
 
   /// The 72 dpi preview pages of [filePaths]: images as they are, PDFs one
   /// image per page.
+  /// The pages of [filePaths] as images: photos as they are, PDF pages
+  /// rendered at [dpi] (the preview's 72 unless OCR reads them directly).
   Future<List<String>> prepareAllImages({
     required List<String> filePaths,
+    double dpi = 72,
   }) async {
     final allImages = <String>[];
 
@@ -66,7 +69,7 @@ class OcrProcessingHelper {
       } else {
         try {
           final convertedImages = await _textRecognitionService
-              .convertPdfToImagesForPreview(path);
+              .convertPdfToImagesForPreview(path, dpi: dpi);
           allImages.addAll(convertedImages);
         } catch (e, stackTrace) {
           logger.e(

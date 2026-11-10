@@ -61,16 +61,20 @@ sealed class PipelineStatus with _$PipelineStatus {
   }) = SessionCreated;
 
   /// [error] is English diagnostic text for logs and the handover message;
-  /// the UI shows [reason]'s localized message.
+  /// the UI shows [reason]'s localized message. [sessionId] is the session
+  /// that failed, when the failure belongs to one.
   const factory PipelineStatus.failure({
     required String error,
     @Default(PipelineFailureReason.other) PipelineFailureReason reason,
+    String? sessionId,
   }) = Failure;
   const factory PipelineStatus.capacityFailure({required String sessionId}) =
       CapacityFailure;
   const factory PipelineStatus.convertingPdfs() = ConvertingPdfs;
   const factory PipelineStatus.savingResources() = SavingResources;
-  const factory PipelineStatus.success() = Success;
+
+  /// [sessionId] is the session whose records were saved.
+  const factory PipelineStatus.success({String? sessionId}) = Success;
 }
 
 @freezed
@@ -82,7 +86,6 @@ abstract class ProcessingState with _$ProcessingState {
     @Default([]) List<ProcessingSession> sessions,
     String? displayedSessionId,
     String? deletingSessionId,
-    @Default([]) List<String> allImagePathsForOCR,
     @Default({}) Map<String, List<String>> sessionImagePaths,
 
     /// The 200 dpi page OCR and the AI read for a 72 dpi preview page of a
@@ -95,7 +98,7 @@ abstract class ProcessingState with _$ProcessingState {
 
   /// The pages OCR and the AI read for [sessionId], in the preview's order.
   List<String> ocrPagesFor(String sessionId) => [
-    for (final preview in sessionImagePaths[sessionId] ?? allImagePathsForOCR)
+    for (final preview in sessionImagePaths[sessionId] ?? const <String>[])
       ocrPageByPreviewPath[preview] ?? preview,
   ];
 

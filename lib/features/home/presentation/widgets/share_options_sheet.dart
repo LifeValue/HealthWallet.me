@@ -97,21 +97,28 @@ Future<void> showShareOptionsMenu(
   if (value == null) return;
   if (!context.mounted) return;
 
+  // The export follows what Home shows; the pass is the whole person, with
+  // the same Patient row whatever the filter, so it updates the pass already
+  // in Wallet.
+  final scope = context.read<HomeBloc>().state.scope;
+  final holder = scope.holder;
+  final passPatientId = holder?.representativePatient.id ?? patientId ?? '';
   switch (value) {
     case 'export_ips':
-      final selectedSource = context.read<HomeBloc>().state.selectedSource;
       context.read<RecordsBloc>().add(
         RecordsSharePressed(
           patientName: patientName,
-          patientId: patientId,
-          sourceId: selectedSource == 'All' ? null : selectedSource,
+          patientId: scope.patient?.id ?? patientId,
+          sourceId: scope.sourceFilter,
+          sourceIds: holder?.sourceIds,
         ),
       );
     case 'apple_wallet':
       context.read<WalletPassBloc>().add(
         WalletPassRequested(
           type: WalletPassType.apple,
-          patientId: patientId ?? '',
+          patientId: passPatientId,
+          sourceIds: holder?.sourceIds,
           labels: WalletPassLabels.fromL10n(context.l10n),
         ),
       );
@@ -119,7 +126,8 @@ Future<void> showShareOptionsMenu(
       context.read<WalletPassBloc>().add(
         WalletPassRequested(
           type: WalletPassType.google,
-          patientId: patientId ?? '',
+          patientId: passPatientId,
+          sourceIds: holder?.sourceIds,
           labels: WalletPassLabels.fromL10n(context.l10n),
         ),
       );

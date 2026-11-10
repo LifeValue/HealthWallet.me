@@ -14,8 +14,14 @@ class SourceMapperImpl implements SourceMapper {
     final String platformName = _generatePlatformName(
       dto.platformType ?? 'fasten',
     );
-    final String labelSource = platformName;
-    final String platformType = 'fasten';
+    // The provider's name for the source (its hospital or portal), else
+    // the platform's.
+    final String labelSource = (dto.labelSource?.isNotEmpty ?? false)
+        ? dto.labelSource!
+        : platformName;
+    // The integration the source came through. The app only asks whether a
+    // source is the wallet (writable) or a provider's (read-only).
+    const String platformType = 'fasten';
 
     DateTime? createdAt;
     DateTime? updatedAt;

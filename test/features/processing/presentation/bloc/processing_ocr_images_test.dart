@@ -8,6 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/services/temp_file_sweeper.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/processing/data/services/pdf_conversion_mixin.dart';
 import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
@@ -18,6 +20,8 @@ import 'package:health_wallet/features/processing/domain/entity/processing_sessi
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extractor_registry.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
@@ -25,8 +29,6 @@ import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:image/image.dart' as img;
 import 'package:printing/printing.dart';
 // The plugin exports no other way to replace its platform, which the
@@ -152,13 +154,9 @@ class _FakeSyncRepository extends Fake implements SyncRepository {
   Future saveResources(List<IFhirResource> resources) async {}
 }
 
-class _FakeSourceTypeService extends Fake implements SourceTypeService {
+class _FakeHolderSelection extends Fake implements HolderSelection {
   @override
-  Future<Source> ensureWalletSourceForPatient({
-    required String patientId,
-    String? patientName,
-    required List<Source> availableSources,
-  }) async => Source(id: 'wallet-$patientId');
+  Future<void> select(String holderId) async {}
 }
 
 class _FakeDocumentReferenceService extends Fake
@@ -176,8 +174,11 @@ class _FakeDocumentReferenceService extends Fake
 
 class _FakeRecordsRepository extends Fake implements RecordsRepository {}
 
-class _FakePatientDeduplicationService extends Fake
-    implements PatientDeduplicationService {}
+class _FakeHolderService extends Fake implements HolderService {
+  @override
+  Future<Source> walletSourceOf(String holderId) async =>
+      Source(id: 'wallet-$holderId', holderId: holderId);
+}
 
 const _sessionId = '3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b';
 
@@ -199,11 +200,18 @@ void main() {
     OcrProcessingHelper(recognizer, PathResolver()),
     _FakeSyncRepository(),
     _FakeDocumentReferenceService(),
-    _FakePatientDeduplicationService(),
-    _FakeSourceTypeService(),
+    _FakeHolderService(),
+    _FakeHolderSelection(),
     _FakeRecordsRepository(),
     prefs,
     AppStringsProvider.forLocale(const Locale('en')),
+    LayoutExtractionService(
+      repository,
+      OcrProcessingHelper(recognizer, PathResolver()),
+      LayoutExtractorRegistry(const []),
+      _FakeHolderService(),
+      _FakeRecordsRepository(),
+    ),
   );
 
   setUp(() async {
@@ -298,7 +306,6 @@ void main() {
     final previews = bloc.state.sessionImagePaths[_sessionId]!;
     expect(previews, hasLength(3));
     expect(previews.every(isPreviewPage), isTrue);
-    expect(bloc.state.allImagePathsForOCR, previews);
     // The preview is rendered first; the OCR pages after it.
     expect(printing.rendered, [72, 200]);
 

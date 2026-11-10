@@ -2,13 +2,14 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart' show Variable;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/data/local/app_database.dart' hide Source;
 import 'package:health_wallet/features/records/data/data_source/shared_notes_datasource.dart';
 import 'package:health_wallet/features/records/data/repository/records_repository_impl.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
+import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../desktop/lww_sync/lww_sync_test_helpers.dart';
@@ -638,6 +639,33 @@ void main() {
       expect(stamps, hasLength(1), reason: 'one transaction, one stamp');
     });
 
+    test('clearDemoData also removes what was scanned or attached for the '
+        "demo person, and leaves other people's sources", () async {
+      await repository.loadDemoData();
+      await until(() async => await liveDemoRows() == 27);
+      await db.customStatement(
+        "UPDATE sources SET holder_id = 'john-doe-patient-001' "
+        "WHERE id = 'demo_data'",
+      );
+      await syncLocal.cacheSources(const [
+        Source(
+          id: 'wallet-john-doe-patient-001',
+          holderId: 'john-doe-patient-001',
+        ),
+        Source(id: 'wallet-jane', holderId: 'jane'),
+      ]);
+      await seed([dto('scan-1', sourceId: 'wallet-john-doe-patient-001')]);
+      await seed([dto('mine', sourceId: 'wallet-jane')]);
+
+      await repository.clearDemoData();
+
+      expect(await ids(repository.getResources()), ['mine']);
+      expect(
+        (await syncLocal.getSources()).map((s) => s.id),
+        ['wallet-jane'],
+      );
+    });
+
     test(
       'loading demo data again after clearing brings the rows back',
       () async {
@@ -875,6 +903,25 @@ void main() {
 
       final first = await repository.buildIpsExport(sourceId: 'src-2');
       expect(first.patientName, 'Unknown');
+    });
+
+    test("with the person's sources, the export reads those sources", () async {
+      await seed([
+        dto('pat-1', type: 'Patient'),
+        dto('obs-1', sourceId: 'src-2'),
+      ]);
+
+      final export = await repository.buildIpsExport(
+        patientId: 'pat-1',
+        sourceIds: ['src-1', 'src-2'],
+      );
+      expect(String.fromCharCodes(export.bytes.take(4)), '%PDF');
+
+      await expectLater(
+        repository.buildIpsExport(patientId: 'pat-1', sourceIds: ['src-2']),
+        throwsA(isA<Exception>()),
+        reason: 'the Patient row is read from the given sources too',
+      );
     });
 
     test('a deleted patient is not exported', () async {

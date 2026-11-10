@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
@@ -53,66 +54,21 @@ class SyncRepositoryImpl implements SyncRepository {
     return _localDataSource.getLastSyncTimestamp();
   }
 
+  /// The local sources, after storing what the provider lists. Read from
+  /// the database, so each source keeps its holder, the label the user gave
+  /// it and its tombstone.
   @override
   Future<List<entity.Source>> getSources() async {
-    // Always get local sources first to ensure wallet source is preserved
-    final localSources = await _localDataSource.getSources();
-
     try {
-      // Try to get sources from backend API
       final backendSources = await _sourceRemoteDataSource.getSources();
-
       if (backendSources.isNotEmpty) {
-        // Use backend sources directly
-        final enrichedSources = backendSources;
-
-        // Merge backend sources with local sources, preserving local sources
-        final mergedSources = <entity.Source>[];
-
-        // Add all backend sources
-        mergedSources.addAll(enrichedSources);
-
-        // Add local sources that are not in backend (like wallet)
-        for (final localSource in localSources) {
-          if (!enrichedSources.any(
-            (backendSource) => backendSource.id == localSource.id,
-          )) {
-            mergedSources.add(
-              entity.Source(
-                id: localSource.id,
-                platformName: localSource.platformName,
-                logo: localSource.logo,
-                labelSource: localSource.labelSource,
-                platformType: localSource.platformType,
-              ),
-            );
-          }
-        }
-
-        // Cache backend sources to local database for persistence
-        final localSourcesToCache = enrichedSources;
-        await _localDataSource.cacheSources(localSourcesToCache);
-
-        return mergedSources;
+        await _localDataSource.cacheProviderSources(backendSources);
       }
     } catch (e) {
-      // If backend is not available, fall back to local sources
+      // Offline or not connected to Fasten: the stored sources are shown.
+      logger.w('Fetching the provider sources failed', e);
     }
-
-    // Fallback to local sources only
-    final mappedSources = localSources
-        .map(
-          (e) => entity.Source(
-            id: e.id,
-            platformName: e.platformName,
-            logo: e.logo,
-            labelSource: e.labelSource,
-            platformType: e.platformType,
-          ),
-        )
-        .toList();
-
-    return mappedSources;
+    return _localDataSource.getSources();
   }
 
   @override
@@ -159,11 +115,6 @@ class SyncRepositoryImpl implements SyncRepository {
   @override
   Future<void> updateSourceLabel(String sourceId, String newLabel) async {
     return _localDataSource.updateSourceLabel(sourceId, newLabel);
-  }
-
-  @override
-  Future<void> createWalletSource() async {
-    return _localDataSource.createWalletSource();
   }
 
   @override

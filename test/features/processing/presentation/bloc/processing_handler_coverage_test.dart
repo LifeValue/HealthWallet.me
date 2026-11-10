@@ -9,6 +9,9 @@ import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart'
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/features/holders/domain/entity/holder.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/processing/domain/deep_scan_defaults.dart';
 import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
@@ -21,14 +24,14 @@ import 'package:health_wallet/features/processing/domain/entity/processing_sessi
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extractor_registry.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../helpers/log_capture.dart';
@@ -152,6 +155,7 @@ class _FakeOcrProcessingHelper extends Fake implements OcrProcessingHelper {
   @override
   Future<List<String>> prepareAllImages({
     required List<String> filePaths,
+    double dpi = 72,
   }) async => filePaths;
 
   @override
@@ -188,19 +192,77 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
   }
 }
 
-class _FakePatientDeduplicationService extends Fake
-    implements PatientDeduplicationService {
+/// The people in the wallet are the Patient rows of [records], one each.
+class _FakeHolderService extends Fake implements HolderService {
+  _FakeHolderService(this.records);
+
+  final _FakeRecordsRepository records;
   Patient? match;
   final candidates = <List<Patient>>[];
+  final wallets = <String>[];
+  final linked = <({String patientId, MappingPatient? scanned})>[];
+
+  static String holderOf(String patientId) => 'holder-$patientId';
 
   @override
-  Patient? findMatchingPatient(
-    MappingPatient draftPatient,
-    List<Patient> allPatients,
-  ) {
-    candidates.add(allPatients);
-    return match;
+  Future<HolderDirectory> load() async {
+    if (records.error != null) throw records.error!;
+    return HolderDirectory(
+      holders: [
+        for (final p in records.patients.whereType<Patient>())
+          Holder(
+            id: holderOf(p.id),
+            representativePatient: p,
+            sourceIds: [p.sourceId],
+            allPatientInstances: [p],
+          ),
+      ],
+    );
   }
+
+  @override
+  Holder? matchScanned(MappingPatient scanned, HolderDirectory directory) {
+    candidates.add([
+      for (final h in directory.holders) h.representativePatient,
+    ]);
+    final found = match;
+    return found == null
+        ? null
+        : Holder(
+            id: holderOf(found.id),
+            representativePatient: found,
+            sourceIds: [found.sourceId],
+            allPatientInstances: [found],
+          );
+  }
+
+  @override
+  bool isUnnamed(Holder holder) => false;
+
+  @override
+  Future<Source> walletSourceOf(String holderId) async {
+    wallets.add(holderId);
+    return Source(id: 'wallet-$holderId', holderId: holderId);
+  }
+
+  @override
+  Future<({Patient patient, String holderId})> walletPatientOf(
+    String patientId, {
+    MappingPatient? scanned,
+  }) async {
+    linked.add((patientId: patientId, scanned: scanned));
+    return (
+      patient: Patient(id: patientId, sourceId: 'wallet-$patientId'),
+      holderId: holderOf(patientId),
+    );
+  }
+}
+
+class _FakeHolderSelection extends Fake implements HolderSelection {
+  final selected = <String>[];
+
+  @override
+  Future<void> select(String holderId) async => selected.add(holderId);
 }
 
 class _FakeSyncRepository extends Fake implements SyncRepository {
@@ -212,20 +274,6 @@ class _FakeSyncRepository extends Fake implements SyncRepository {
   @override
   Future<void> saveResources(List<IFhirResource> resources) async {
     saved.add(List.of(resources));
-  }
-}
-
-class _FakeSourceTypeService extends Fake implements SourceTypeService {
-  final wallets = <({String patientId, String? patientName})>[];
-
-  @override
-  Future<Source> ensureWalletSourceForPatient({
-    required String patientId,
-    String? patientName,
-    required List<Source> availableSources,
-  }) async {
-    wallets.add((patientId: patientId, patientName: patientName));
-    return Source(id: 'wallet-$patientId');
   }
 }
 
@@ -283,9 +331,9 @@ void main() {
   late _FakeProcessingRepository repository;
   late _FakeOcrProcessingHelper ocr;
   late _FakeRecordsRepository records;
-  late _FakePatientDeduplicationService deduplication;
+  late _FakeHolderService holders;
   late _FakeSyncRepository sync;
-  late _FakeSourceTypeService sourceTypes;
+  late _FakeHolderSelection selection;
   late _FakeDocumentReferenceService documents;
   late SharedPreferences prefs;
   late ProcessingBloc bloc;
@@ -297,20 +345,27 @@ void main() {
     repository = _FakeProcessingRepository();
     ocr = _FakeOcrProcessingHelper();
     records = _FakeRecordsRepository();
-    deduplication = _FakePatientDeduplicationService();
     sync = _FakeSyncRepository();
-    sourceTypes = _FakeSourceTypeService();
+    holders = _FakeHolderService(records);
+    selection = _FakeHolderSelection();
     documents = _FakeDocumentReferenceService();
     bloc = ProcessingBloc(
       repository,
       ocr,
       sync,
       documents,
-      deduplication,
-      sourceTypes,
+      holders,
+      selection,
       records,
       prefs,
       AppStringsProvider.forLocale(const Locale('en')),
+      LayoutExtractionService(
+        repository,
+        ocr,
+        LayoutExtractorRegistry(const []),
+        holders,
+        records,
+      ),
     );
     states = [];
     final subscription = bloc.stream.listen(states.add);
@@ -439,7 +494,7 @@ void main() {
         'the report', () async {
       final known = _patient('p-known', title: 'Ana Pop');
       records.patients = [known];
-      deduplication.match = known;
+      holders.match = known;
       repository.container = const MappingDiagnosticReport(
         id: 'rep',
         reportName: MappedProperty(value: 'CBC'),
@@ -455,7 +510,7 @@ void main() {
       expect(staged.patient.draft, isNull);
       expect(staged.diagnosticReport?.draft, repository.container);
       expect(staged.isDiagnosticReportContainer, isTrue);
-      expect(deduplication.candidates.single, [known]);
+      expect(holders.candidates.single, [known]);
     });
 
     test('the saved AI settings are passed on, except the load settings on '
@@ -620,7 +675,7 @@ void main() {
 
         expect(repository.containerOnlyCalls, isEmpty);
         expect(repository.basicInfoCalls, hasLength(1));
-        expect(deduplication.candidates.single, hasLength(4));
+        expect(holders.candidates.single, hasLength(4));
         expect(session('s').patient.mode, ImportMode.createNew);
       });
 
@@ -633,7 +688,7 @@ void main() {
         expect(logs, loggedWarning('OCR patient pre-match failed'));
         expect(logs, loggedWarning('Error matching patient'));
         expect(repository.basicInfoCalls, hasLength(1));
-        expect(deduplication.candidates, isEmpty);
+        expect(holders.candidates, isEmpty);
         final staged = session('s');
         expect(staged.patient.mode, ImportMode.createNew);
         expect(staged.patient.draft, repository.extractedPatient);
@@ -835,6 +890,7 @@ void main() {
         const PipelineStatus.failure(
           error: 'Exception: decode error',
           reason: PipelineFailureReason.other,
+          sessionId: 's',
         ),
       );
       expect(logs, loggedWarning('resource extraction failed'));
@@ -961,14 +1017,12 @@ void main() {
         states.map((s) => s.status),
         containsAllInOrder([
           const PipelineStatus.savingResources(),
-          const PipelineStatus.success(),
+          const PipelineStatus.success(sessionId: 's'),
         ]),
       );
-      expect(sourceTypes.wallets.single, (
-        patientId: 'p-new',
-        patientName: 'Ana Pop',
-      ));
-      expect(prefs.getString('selected_patient_id'), 'p-new');
+      // Someone new gets a wallet of their own and is shown once saved.
+      expect(holders.wallets.single, 'p-new');
+      expect(selection.selected, ['p-new']);
 
       final [primaries, others] = sync.saved;
       expect(primaries.map((r) => (r.fhirType, r.id)), [
@@ -1011,7 +1065,7 @@ void main() {
         ),
       );
 
-      expect(bloc.state.status, const PipelineStatus.success());
+      expect(bloc.state.status, const PipelineStatus.success(sessionId: 's'));
       expect(sync.saved.single.first.id, 'p-new');
     });
 
@@ -1039,8 +1093,8 @@ void main() {
       expect(tag['display'], 'Space medicine');
     });
 
-    test('a linked patient with edits is saved under its own id and source, '
-        'and its wallet is named after it', () async {
+    test('a linked patient is written through their wallet Patient with the '
+        'scanned edits, and the scan is filed under them', () async {
       final existing = _patient('p-old', title: 'Ana Pop');
       await save(
         ProcessingSession(
@@ -1061,17 +1115,16 @@ void main() {
         ),
       );
 
-      expect(sourceTypes.wallets.single, (
-        patientId: 'p-old',
-        patientName: 'Ana Pop',
-      ));
+      final written = holders.linked.single;
+      expect(written.patientId, 'p-old');
+      expect(written.scanned?.givenName.value, 'Anna');
+      // The holder service writes the Patient; only the encounter is saved here.
       final primaries = sync.saved.single;
-      final patient = primaries.first as Patient;
-      expect(patient.id, 'p-old');
-      expect(patient.sourceId, 'src-p-old');
-      expect(primaries.last.subjectId, 'p-old');
-      expect(prefs.getString('selected_patient_id'), 'p-old');
-      expect(bloc.state.status, const PipelineStatus.success());
+      expect(primaries.map((r) => r.fhirType), [FhirType.Encounter]);
+      expect(primaries.single.subjectId, 'p-old');
+      expect(primaries.single.sourceId, 'wallet-p-old');
+      expect(selection.selected, ['holder-p-old']);
+      expect(bloc.state.status, const PipelineStatus.success(sessionId: 's'));
     });
 
     test('a linked patient and encounter save no new primary records, and '
@@ -1102,7 +1155,7 @@ void main() {
       final docs = documents.calls.single;
       expect(docs.encounter, encounter);
       expect(docs.title, 'Old visit');
-      expect(bloc.state.status, const PipelineStatus.success());
+      expect(bloc.state.status, const PipelineStatus.success(sessionId: 's'));
     });
 
     test('a linked patient and encounter without other resources save only '
@@ -1124,7 +1177,7 @@ void main() {
 
       expect(sync.saved, isEmpty);
       expect(documents.calls.single.patientId, 'p-old');
-      expect(bloc.state.status, const PipelineStatus.success());
+      expect(bloc.state.status, const PipelineStatus.success(sessionId: 's'));
     });
 
     test('a report container is saved as the report and the documents get '
@@ -1171,6 +1224,7 @@ void main() {
         const PipelineStatus.failure(
           error: 'Exception: Not enough memory',
           reason: PipelineFailureReason.notEnoughMemory,
+          sessionId: 's',
         ),
       );
       expect(logs, loggedWarning('resource creation failed'));
@@ -1204,7 +1258,7 @@ void main() {
       expect(bloc.state.status, const PipelineStatus.initial());
       expect(
         states.map((s) => s.status),
-        isNot(contains(const PipelineStatus.success())),
+        isNot(contains(isA<Success>())),
       );
     });
   });

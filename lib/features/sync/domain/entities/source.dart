@@ -14,6 +14,9 @@ abstract class Source with _$Source {
     @Default('wallet') String platformType,
     DateTime? createdAt,
     DateTime? updatedAt,
+
+    /// The person this source belongs to; null until it is linked.
+    String? holderId,
   }) = _Source;
 
   factory Source.fromJson(Map<String, dynamic> json) => _$SourceFromJson(json);

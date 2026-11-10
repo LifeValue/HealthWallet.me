@@ -79,8 +79,11 @@ abstract class RecordsRepository {
     int limit = 50,
   });
 
+  /// The IPS PDF of [patientId], from [sourceId], else [sourceIds] (the
+  /// person's sources), else the sources of that Patient row.
   Future<({Uint8List bytes, String patientName})> buildIpsExport({
     String? sourceId,
+    List<String>? sourceIds,
     String? patientId,
   });
 

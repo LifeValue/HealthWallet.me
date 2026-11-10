@@ -6,8 +6,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/processing/data/services/pdf_generation_service.dart';
+import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
@@ -17,14 +20,15 @@ import 'package:health_wallet/features/processing/domain/entity/processing_sessi
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extractor_registry.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../helpers/eventually.dart';
 import '../../../share_records/share_test_helpers.dart';
 
 const _docScanner = MethodChannel('flutter_doc_scanner');
@@ -40,9 +44,14 @@ class _FakeProcessingRepository extends Fake implements ProcessingRepository {
   Future<ProcessingSession> createProcessingSession({
     required List<String> filePaths,
     required ProcessingOrigin origin,
+    String? id,
   }) async {
     created.add(filePaths);
-    return ProcessingSession(id: 'new', filePaths: filePaths, origin: origin);
+    return ProcessingSession(
+      id: id ?? 'new',
+      filePaths: filePaths,
+      origin: origin,
+    );
   }
 
   @override
@@ -68,6 +77,32 @@ class _FakeProcessingRepository extends Fake implements ProcessingRepository {
 
   @override
   Future<bool> checkModelExistence() async => false;
+
+  /// The pages each records step read.
+  final remainingReads = <List<String>>[];
+
+  @override
+  Stream<MappingResourcesWithProgress> mapRemainingResources(
+    List<String> imagePaths, {
+    String? documentCategory,
+    bool useVision = false,
+    int? maxTokens,
+    int? gpuLayers,
+    int? threads,
+    int? contextSize,
+    ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
+  }) {
+    remainingReads.add(imagePaths);
+    return Stream.value((
+      [
+        MappingObservation(
+          id: 'obs-${remainingReads.length}',
+          observationName: const MappedProperty(value: 'Glucose'),
+        ),
+      ],
+      1.0,
+    ));
+  }
 }
 
 /// Reads "page N of M" from the OCR text of each path.
@@ -86,6 +121,7 @@ class _FakeOcrProcessingHelper extends Fake implements OcrProcessingHelper {
   @override
   Future<List<String>> prepareAllImages({
     required List<String> filePaths,
+    double dpi = 72,
   }) async => filePaths;
 }
 
@@ -96,10 +132,9 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {}
 class _FakeDocumentReferenceService extends Fake
     implements DocumentReferenceService {}
 
-class _FakePatientDeduplicationService extends Fake
-    implements PatientDeduplicationService {}
+class _FakeHolderSelection extends Fake implements HolderSelection {}
 
-class _FakeSourceTypeService extends Fake implements SourceTypeService {}
+class _FakeHolderService extends Fake implements HolderService {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -123,11 +158,18 @@ void main() {
       ocr,
       _FakeSyncRepository(),
       _FakeDocumentReferenceService(),
-      _FakePatientDeduplicationService(),
-      _FakeSourceTypeService(),
+      _FakeHolderService(),
+      _FakeHolderSelection(),
       _FakeRecordsRepository(),
       prefs,
       AppStringsProvider.forLocale(const Locale('en')),
+      LayoutExtractionService(
+        repository,
+        ocr,
+        LayoutExtractorRegistry(const []),
+        _FakeHolderService(),
+        _FakeRecordsRepository(),
+      ),
     );
   });
 
@@ -714,6 +756,234 @@ void main() {
         expect(bloc.isCapacityError(text), isTrue, reason: text);
       }
       expect(bloc.isCapacityError('Not enough memory'), isFalse);
+    });
+  });
+
+  group('handover', () {
+    const patient = StagedPatient(
+      draft: MappingPatient(id: 'p'),
+      mode: ImportMode.createNew,
+    );
+
+    test(
+      'the records step reads its own session\'s pages, not the pages of '
+      'the session opened last',
+      () async {
+        // Another document was opened and its pages prepared.
+        seed(
+          ProcessingState(
+            sessions: [
+              const ProcessingSession(
+                id: 'h',
+                filePaths: ['h-page.jpg'],
+                status: ProcessingStatus.patientExtracted,
+                origin: ProcessingOrigin.handover,
+                patient: patient,
+              ),
+              const ProcessingSession(
+                id: 'other',
+                filePaths: ['other-page.jpg'],
+                status: ProcessingStatus.draft,
+              ),
+            ],
+            sessionImagePaths: {
+              'other': [file('other-page.jpg').path],
+            },
+          ),
+        );
+
+        bloc.add(const ProcessRemainingResources(sessionId: 'h'));
+        await settle();
+
+        expect(repository.remainingReads.single, ['h-page.jpg']);
+        expect(session('h').status, ProcessingStatus.draft);
+      },
+    );
+
+    test(
+      'a handover with the phone\'s patient step runs on to its draft by '
+      'itself, under the phone\'s session id',
+      () async {
+        bloc.add(
+          DocumentImported(
+            filePaths: [file('page.jpg').path],
+            origin: ProcessingOrigin.handover,
+            sessionId: 'phone-id',
+            phase1Patient: patient,
+          ),
+        );
+        // The import copies a real file.
+        await eventually(
+          () => bloc.state.sessions.any(
+            (s) => s.id == 'phone-id' && s.status == ProcessingStatus.draft,
+          ),
+        );
+
+        expect(session('phone-id').status, ProcessingStatus.draft);
+        expect(session('phone-id').resources.single.id, 'obs-1');
+      },
+    );
+
+    test(
+      'a failed records step of a handover is not retried by the queue',
+      () async {
+        seed(
+          const ProcessingState(
+            sessions: [
+              ProcessingSession(
+                id: 'h',
+                filePaths: ['h.jpg'],
+                status: ProcessingStatus.patientExtracted,
+                origin: ProcessingOrigin.handover,
+                patient: patient,
+              ),
+            ],
+          ),
+        );
+        bloc.haltedHandovers.add('h');
+
+        bloc.add(
+          const ProcessRemainingResources(sessionId: 'h', automatic: true),
+        );
+        await settle();
+        expect(repository.remainingReads, isEmpty);
+
+        // The user retrying does run it.
+        bloc.add(const ProcessRemainingResources(sessionId: 'h'));
+        await settle();
+        expect(repository.remainingReads, hasLength(1));
+      },
+    );
+
+    test('a handed-over session is left alone by local steps', () async {
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(id: 's', filePaths: ['s.jpg'], patient: patient),
+          ],
+        ),
+      );
+
+      seed(
+        bloc.state.copyWith(
+          status: const PipelineStatus.failure(
+            error: 'x',
+            reason: PipelineFailureReason.modelNotFound,
+            sessionId: 's',
+          ),
+        ),
+      );
+      bloc.add(const SessionHandedOver(sessionId: 's'));
+      await settle();
+      expect(session('s').status, ProcessingStatus.handedOver);
+      // This phone's failure doesn't apply to what the desktop does.
+      expect(bloc.state.status, const PipelineStatus.initial());
+
+      bloc
+        ..add(const MappingInitiated(sessionId: 's'))
+        ..add(const ProcessRemainingResources(sessionId: 's'));
+      await settle();
+      expect(session('s').status, ProcessingStatus.handedOver);
+      expect(repository.remainingReads, isEmpty);
+    });
+
+    test(
+      'the desktop\'s draft is applied for review, with a notification',
+      () async {
+        // This phone has no model: opening the scan failed before the
+        // handover.
+        seed(
+          const ProcessingState(
+            status: PipelineStatus.failure(
+              error: 'x',
+              reason: PipelineFailureReason.modelNotFound,
+              sessionId: 's',
+            ),
+            sessions: [
+              ProcessingSession(
+                id: 's',
+                status: ProcessingStatus.handedOver,
+              ),
+            ],
+          ),
+        );
+
+        bloc.add(
+          const HandoverDraftReceived(
+            sessionId: 's',
+            patient: patient,
+            resources: [
+              MappingObservation(
+                id: 'from-desktop',
+                observationName: MappedProperty(value: 'Glucose'),
+              ),
+            ],
+          ),
+        );
+        await settle();
+
+        expect(session('s').status, ProcessingStatus.draft);
+        // Still a scan: the Scan tab lists it.
+        expect(session('s').origin, ProcessingOrigin.scan);
+        expect(bloc.state.status, const PipelineStatus.initial());
+        expect(session('s').resources.single.id, 'from-desktop');
+        expect(bloc.state.notification!.text, 'Scan: ready to review');
+        expect(repository.edited.last.status, ProcessingStatus.draft);
+      },
+    );
+
+    test('a session that came back is this device\'s again', () async {
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(id: 'a', status: ProcessingStatus.handedOver),
+            ProcessingSession(
+              id: 'b',
+              status: ProcessingStatus.handedOver,
+              patient: patient,
+            ),
+          ],
+        ),
+      );
+
+      bloc
+        ..add(
+          const HandoverReturned(
+            sessionId: 'a',
+            reason: HandoverReturnReason.withdrawn,
+          ),
+        )
+        ..add(
+          const HandoverReturned(
+            sessionId: 'b',
+            reason: HandoverReturnReason.noModelOnDesktop,
+          ),
+        );
+      await settle();
+
+      expect(session('a').status, ProcessingStatus.pending);
+      expect(session('b').status, ProcessingStatus.patientExtracted);
+      expect(
+        bloc.state.notification!.text,
+        'Scan: there is no AI model on the desktop. It\'s back on this phone.',
+      );
+    });
+
+    test('a session saved on the other device is removed', () async {
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(id: 's', status: ProcessingStatus.draft),
+          ],
+        ),
+      );
+
+      bloc.add(const SessionSavedElsewhere(sessionId: 's', byDesktop: true));
+      await settle();
+
+      expect(bloc.state.sessions, isEmpty);
+      expect(repository.deleted.single.id, 's');
+      expect(bloc.state.notification!.route.routeName, isEmpty);
     });
   });
 }

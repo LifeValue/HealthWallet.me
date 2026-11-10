@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
-import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
-import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/widgets/patient_card_details.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -42,76 +38,19 @@ class UnifiedPatientCard extends StatefulWidget {
 }
 
 class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
-  /// Null while the blood type loads.
-  String? _bloodTypeDisplay;
-  late RecordsRepository _recordsRepository;
-  late PatientSelectionService _patientSelectionService;
-
-  @override
-  void initState() {
-    super.initState();
-    _recordsRepository = getIt<RecordsRepository>();
-    _patientSelectionService = getIt<PatientSelectionService>();
-    _loadBloodType();
-  }
-
-  Future<void> _loadBloodType() async {
-    try {
-      final patientState = context.read<PatientBloc>().state;
-
-      final selectedSource = context.read<HomeBloc>().state.selectedSource;
-
-      final patientGroup = patientState.patientGroups[widget.patient.id];
-      final displayPatient = patientGroup != null
-          ? _patientSelectionService.getPatientFromGroup(
-              patientGroup: patientGroup,
-              selectedSource: selectedSource,
-              fallbackPatient: widget.patient,
-            )
-          : widget.patient;
-
-      final observations = await _recordsRepository.getBloodTypeObservations(
-        patientId: displayPatient.id,
-        sourceId: displayPatient.sourceId.isNotEmpty
-            ? displayPatient.sourceId
-            : null,
-      );
-
-      final extractedBloodType =
-          FhirFieldExtractor.extractBloodTypeFromObservations(observations);
-
-      if (mounted) {
-        setState(() {
-          _bloodTypeDisplay = extractedBloodType ?? context.l10n.homeNA;
-        });
-      }
-    } catch (e, stackTrace) {
-      logger.e('Error loading blood type: ${e.toString()}');
-      logger.e('Stack trace: $stackTrace');
-      if (mounted) {
-        setState(() {
-          _bloodTypeDisplay = context.l10n.homeNA;
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<HomeBloc, HomeState>(
       builder: (context, homeState) {
         return BlocBuilder<PatientBloc, PatientState>(
           builder: (context, blocState) {
-            final selectedSource = homeState.selectedSource;
-
-            final patientGroup = blocState.patientGroups[widget.patient.id];
-            final displayPatient = patientGroup != null
-                ? _patientSelectionService.getPatientFromGroup(
-                    patientGroup: patientGroup,
-                    selectedSource: selectedSource,
-                    fallbackPatient: widget.patient,
-                  )
-                : widget.patient;
+            // The person's own row, whatever source Home shows, so the card
+            // and the edit dialog show the same details.
+            final displayPatient =
+                blocState
+                    .patientGroups[widget.patient.id]
+                    ?.representativePatient ??
+                widget.patient;
 
             final currentPatient = blocState.patients.firstWhere(
               (p) => p.id == widget.patient.id,
@@ -124,69 +63,52 @@ class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
 
             final cardScale = widget.isExpanding ? 1.02 : 1.0;
 
-            return MultiBlocListener(
-              listeners: [
-                BlocListener<PatientBloc, PatientState>(
-                  listenWhen: (previous, current) =>
-                      previous.patients != current.patients ||
-                      previous.status != current.status ||
-                      previous.isEditingPatient != current.isEditingPatient,
-                  listener: (context, state) {
-                    if (state.status.toString().contains('Success') ||
-                        state.isEditingPatient == false) {
-                      _loadBloodType();
-                    }
-                  },
+            final bloodTypes = blocState.bloodTypes;
+            final bloodTypeDisplay = bloodTypes.containsKey(currentPatient.id)
+                ? bloodTypes[currentPatient.id] ?? context.l10n.homeNA
+                : context.l10n.loading;
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeInOutCubic,
+              padding: const EdgeInsets.all(Insets.small),
+              margin: const EdgeInsets.only(bottom: Insets.small),
+              transform: Matrix4.diagonal3Values(
+                cardScale,
+                cardScale,
+                cardScale,
+              ),
+              decoration: BoxDecoration(
+                color: _getCardColor(context, currentPatient),
+                border: Border.all(
+                  color: _getBorderColor(context, currentPatient),
                 ),
-                BlocListener<HomeBloc, HomeState>(
-                  listenWhen: (previous, current) =>
-                      previous.selectedSource != current.selectedSource,
-                  listener: (context, state) {
-                    _loadBloodType();
-                  },
-                ),
-              ],
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 800),
-                curve: Curves.easeInOutCubic,
-                padding: const EdgeInsets.all(Insets.small),
-                margin: const EdgeInsets.only(bottom: Insets.small),
-                transform: Matrix4.diagonal3Values(
-                  cardScale,
-                  cardScale,
-                  cardScale,
-                ),
-                decoration: BoxDecoration(
-                  color: _getCardColor(context, currentPatient),
-                  border: Border.all(
-                    color: _getBorderColor(context, currentPatient),
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  children: [
-                    _buildCardHeader(context, displayPatient, currentPatient),
-                    AnimatedSize(
-                      duration: Duration(
-                        milliseconds: widget.isExpanding ? 1200 : 800,
-                      ),
-                      curve: Curves.easeInOutCubic,
-                      child: (isExpanded || widget.isExpanding)
-                          ? PatientCardDetails(
-                              displayPatient: displayPatient,
-                              currentPatient: currentPatient,
-                              iconColor: widget.iconColor,
-                              textColor: widget.textColor,
-                              isExpanding: widget.isExpanding,
-                              isCollapsing: widget.isCollapsing,
-                              bloodTypeDisplay:
-                                  _bloodTypeDisplay ?? context.l10n.loading,
-                              onBloodTypeUpdated: _loadBloodType,
-                            )
-                          : const SizedBox.shrink(),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  _buildCardHeader(context, displayPatient, currentPatient),
+                  AnimatedSize(
+                    duration: Duration(
+                      milliseconds: widget.isExpanding ? 1200 : 800,
                     ),
-                  ],
-                ),
+                    curve: Curves.easeInOutCubic,
+                    child: (isExpanded || widget.isExpanding)
+                        ? PatientCardDetails(
+                            displayPatient: displayPatient,
+                            currentPatient: currentPatient,
+                            iconColor: widget.iconColor,
+                            textColor: widget.textColor,
+                            isExpanding: widget.isExpanding,
+                            isCollapsing: widget.isCollapsing,
+                            bloodTypeDisplay: bloodTypeDisplay,
+                            onBloodTypeUpdated: () => context
+                                .read<PatientBloc>()
+                                .add(const PatientBloodTypesRequested()),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ],
               ),
             );
           },

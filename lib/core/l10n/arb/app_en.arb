@@ -63,14 +63,6 @@
   "errorUpdatingSourceLabel": "Error updating source label",
   "getStarted": "Get Started",
   "failedToUpdateDisplayName": "Failed to update display name",
-  "failedToSaveSetting": "Couldn't save “{setting}”. Try again.",
-  "@failedToSaveSetting": {
-    "placeholders": {
-      "setting": {
-        "type": "String"
-      }
-    }
-  },
   "actionCannotBeUndone": "This action cannot be undone.",
   "deleteSourceConfirmPrefix": "This will permanently delete ",
   "deleteSourceConfirmSuffix": " and all its records. To confirm, type the source name below.",
@@ -142,6 +134,7 @@
   "fieldCannotBeEmpty": "This field cannot be empty",
   "selectDate": "Select date",
   "attachToEncounter": "Attach to Encounter",
+  "attachToPatient": "Attach to Patient",
   "continueProcessing": "Continue Processing",
   "recordsSavedTitle": "Successfully Saved",
   "whatNextQuestion": "What would you like to do next?",
@@ -232,7 +225,6 @@
   "chargerPluggedIn": "Charger plugged in.",
   "plugInChargerEllipsis": "Plug in the charger...",
   "processingFailedCapacity": "The document is too large for the current AI working memory.",
-  "processingFailedMemory": "Not enough free memory to run the AI model. Close other apps and try again, or turn off Deep Scan in AI Settings.",
   "processingFailedCapacitySuggestion": "Tap the settings icon above and increase the Working memory to 2048 or higher, then retry.",
   "increaseAiModelCapacity": "Increase AI Capacity",
   "goBack": "Go Back",
@@ -251,9 +243,6 @@
   "tokenPresetLow": "Short",
   "tokenPresetMedium": "Medium",
   "tokenPresetHigh": "Long",
-  "tokenPresetLowHint": "a few values",
-  "tokenPresetMediumHint": "a short report",
-  "tokenPresetHighHint": "a full report",
   "tokenPresetCustom": "Custom",
   "setTokens": "Set",
   "contextSizeLabel": "Working memory",
@@ -698,9 +687,6 @@
   "desktopCurrentDevice": "current device",
   "desktopHandoverPreparing": "Preparing...",
   "desktopHandoverSendingFiles": "Sending files...",
-  "desktopHandoverProcessingOnDesktop": "Processing on desktop...",
-  "desktopHandoverComplete": "Complete!",
-  "desktopHandoverError": "Error occurred",
   "desktopHandoverSending": "Sending...",
   "desktopHandoverSendingToDesktop": "Sending to Desktop",
   "desktopHandoverFileCount": "{count} files",
@@ -711,7 +697,6 @@
       }
     }
   },
-  "desktopHandoverSuccess": "Handed over to Desktop",
   "desktopClose": "Close",
   "desktopContinueImporting": "Continue Importing",
   "desktopHandoverToDesktop": "Handover to Desktop",
@@ -1115,7 +1100,6 @@
   "areYouSure": "Are you sure?",
   "resourceNotViewable": "This resource is not a viewable file",
   "noFilePathFound": "No file path found",
-  "handoverPatientMatched": "Handover patient matched",
   "desktopDiscovering": "Discovering...",
   "desktopTransportWifi": "WiFi",
   "desktopTransportDirect": "Direct",
@@ -1144,35 +1128,6 @@
   "desktopNoBackupLocation": "No backup location set on desktop. Open the desktop app and choose a backup folder first.",
   "desktopBackupFailed": "Backup failed. Please try again.",
   "desktopBackupActionFailed": "Could not update the backups. Please try again.",
-  "backupRecordsOnly": "Records only",
-  "backupRestoreConfirmPointInTime": "This replaces your records on this computer and on your paired phone with the backup from {date}. Records added since then are removed. A “Before restore” copy of your current data is saved first and kept for 30 days, so you can undo this.",
-  "@backupRestoreConfirmPointInTime": {
-    "placeholders": {
-      "date": {
-        "type": "String"
-      }
-    }
-  },
-  "backupOldNoFiles": "This backup has no files. Records will be restored and your current files kept.",
-  "backupSafetyName": "Before restore {date}",
-  "@backupSafetyName": {
-    "placeholders": {
-      "date": {
-        "type": "String"
-      }
-    }
-  },
-  "backupRestoreFailed": "Restore failed. Your data was not changed; the \"Before restore\" backup is in the list.",
-  "backupSafetyFailed": "Couldn't make a safety backup, so nothing was restored. Check free space and the backup folder.",
-  "backupFilesNotRestored": "{count, plural, =1{1 file couldn't be restored.} other{{count} files couldn't be restored.}}",
-  "@backupFilesNotRestored": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "backupRestorePhoneOffline": "Your phone isn't connected. Records added on it since its last sync will come back after it reconnects; changes it made to existing records will be replaced by the backup.",
   "desktopSyncFailed": "Sync failed. Check the connection and try again.",
   "desktopHandoverTransfer": "Transfer",
   "desktopHandoverNoActive": "No active handovers",
@@ -1190,12 +1145,8 @@
   },
   "desktopHandoverTransferComplete": "Transfer complete",
   "desktopHandoverReceivingFiles": "Receiving files...",
-  "desktopHandoverProcessingStatus": "Processing...",
-  "desktopHandoverSendingResults": "Sending results...",
-  "desktopHandoverDone": "Complete",
   "desktopHandoverStatusError": "Error",
-  "desktopHandoverWaitingForResults": "Waiting for results...",
-  "desktopHandoverNotAccepted": "The desktop did not accept the documents.",
+  "desktopHandoverNotAccepted": "The desktop did not answer. Make sure HealthWallet is open and up to date on it.",
   "desktopHandoverFileMissing": "A document could not be found on this device.",
   "desktopHandoverCancelled": "Cancelled",
   "desktopHandoverFailed": "Processing failed. Please try again.",
@@ -1219,7 +1170,6 @@
       }
     }
   },
-  "desktopFinishedProcessing": "Desktop finished processing",
   "biometricAuthReason": "Please authenticate to access your HealthWallet.me",
   "sourceUploadedOn": "Uploaded {date}",
   "@sourceUploadedOn": {
@@ -2363,6 +2313,180 @@
       }
     }
   },
+  "holderQuestionTitle": "Whose records are these?",
+  "holderQuestionMessage": "Records arrived for {name}, who doesn't match anyone in your wallet. Who is this?",
+  "@holderQuestionMessage": {
+    "description": "Asked when records arrive for someone who matches no one in the wallet, which has several people.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "holderQuestionSomeoneElse": "Someone else",
+  "fhirTypeVisionPrescription": "Vision Prescription",
+  "categoryVisionPrescriptions": "Vision Prescriptions",
+  "lensTypeMultifocal": "Multifocal glasses",
+  "lensTypeDistance": "Distance glasses",
+  "lensTypeReading": "Reading glasses",
+  "lensTypeOther": "Glasses",
+  "fieldLensType": "Lens Type",
+  "fieldDateWritten": "Issued on",
+  "fieldRecommendedFollowUp": "Next check-up",
+  "labelSerialNumber": "Serial number",
+  "visionEyeRight": "Right eye",
+  "visionEyeLeft": "Left eye",
+  "visionSphere": "Strength",
+  "@visionSphere": {
+    "description": "Column header of a glasses prescription, in plain words: the lens strength (sphere), in dioptres."
+  },
+  "visionCylinder": "Astigmatism",
+  "@visionCylinder": {
+    "description": "Column header of a glasses prescription, in plain words: the astigmatism correction (cylinder), in dioptres."
+  },
+  "visionAxis": "Angle",
+  "@visionAxis": {
+    "description": "Column header of a glasses prescription, in plain words: the angle of the astigmatism correction (axis), in degrees."
+  },
+  "visionAdd": "Reading add",
+  "@visionAdd": {
+    "description": "Column header of a glasses prescription, in plain words: the extra strength for reading (near addition), in dioptres."
+  },
+  "visionPrism": "Prism",
+  "visionBase": "Prism base",
+  "visionInvalidDioptre": "Use a value like +1.25, in steps of 0.25",
+  "@visionInvalidDioptre": {
+    "description": "Error under a lens strength field of a glasses prescription that is not a dioptre value in quarter steps."
+  },
+  "visionInvalidAxis": "Use an angle from 0 to 180",
+  "@visionInvalidAxis": {
+    "description": "Error under the astigmatism angle field of a glasses prescription that is not a whole number of degrees from 0 to 180."
+  },
+  "stagedAlreadyInWallet": "Already in your wallet",
+  "@stagedAlreadyInWallet": {
+    "description": "Shown on a record read from a document when the wallet already holds it."
+  },
+  "stagedWillBeCompleted": "Already in your wallet, will be completed",
+  "@stagedWillBeCompleted": {
+    "description": "Shown on a record read from a document when the wallet holds it with empty fields the document fills."
+  },
+  "documentAlreadyInWallet": "Everything in this document is already in your wallet",
+  "@documentAlreadyInWallet": {
+    "description": "Shown above Done when saving a document would add nothing to the wallet."
+  },
+  "processingStatusHandedOver": "On the desktop",
+  "desktopHandoverSent": "Sent to the desktop. You'll be told when it's ready to review, here or on the desktop.",
+  "desktopHandoverConnectionLost": "The connection to the desktop was lost. Try again.",
+  "desktopHandoverTooLarge": "The document is too large to send to the desktop (over 200 MB).",
+  "desktopHandoverTimedOut": "The desktop stopped receiving the document. Try again.",
+  "handoverOnDesktopTitle": "Being processed on the desktop",
+  "handoverOnDesktopMessage": "The draft comes back here to review when the desktop is done. You can also review and save it on the desktop.",
+  "handoverTakeBack": "Process on this phone instead",
+  "handoverReadyToReview": "{origin}: ready to review",
+  "@handoverReadyToReview": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverFailedOnDesktop": "{origin}: the desktop could not process it. It's back on this phone.",
+  "@handoverFailedOnDesktop": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverNoModelOnDesktop": "{origin}: there is no AI model on the desktop. It's back on this phone.",
+  "@handoverNoModelOnDesktop": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverDeletedOnDesktop": "{origin} was deleted on the desktop. It's back on this phone.",
+  "@handoverDeletedOnDesktop": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverSavedOnDesktop": "{origin} was saved on the desktop. The records reach this phone with the next sync.",
+  "@handoverSavedOnDesktop": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverSavedOnPhone": "{origin} was saved on the phone.",
+  "@handoverSavedOnPhone": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverDraftSavedOnDesktop": "{origin} was saved on the desktop. Any changes made here to its draft were not kept.",
+  "@handoverDraftSavedOnDesktop": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverDraftSavedOnPhone": "{origin} was saved on the phone. Any changes made here to its draft were not kept.",
+  "@handoverDraftSavedOnPhone": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToSaveSetting": "Couldn't save “{setting}”. Try again.",
+  "@failedToSaveSetting": {
+    "placeholders": {
+      "setting": {
+        "type": "String"
+      }
+    }
+  },
+  "processingFailedMemory": "Not enough free memory to run the AI model. Close other apps and try again, or turn off Deep Scan in AI Settings.",
+  "tokenPresetLowHint": "a few values",
+  "tokenPresetMediumHint": "a short report",
+  "tokenPresetHighHint": "a full report",
+  "backupRecordsOnly": "Records only",
+  "backupRestoreConfirmPointInTime": "This replaces your records on this computer and on your paired phone with the backup from {date}. Records added since then are removed. A “Before restore” copy of your current data is saved first and kept for 30 days, so you can undo this.",
+  "@backupRestoreConfirmPointInTime": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOldNoFiles": "This backup has no files. Records will be restored and your current files kept.",
+  "backupSafetyName": "Before restore {date}",
+  "@backupSafetyName": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreFailed": "Restore failed. Your data was not changed; the \"Before restore\" backup is in the list.",
+  "backupSafetyFailed": "Couldn't make a safety backup, so nothing was restored. Check free space and the backup folder.",
+  "backupFilesNotRestored": "{count, plural, =1{1 file couldn't be restored.} other{{count} files couldn't be restored.}}",
+  "@backupFilesNotRestored": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestorePhoneOffline": "Your phone isn't connected. Records added on it since its last sync will come back after it reconnects; changes it made to existing records will be replaced by the backup.",
   "aiModelDeleteTitle": "Delete {name}?",
   "aiModelDeleteMessage": "The model and its Deep Scan files are removed from this device. To scan with it again, you'll need to download it again (~{size} MB).",
   "@aiModelDeleteTitle": {

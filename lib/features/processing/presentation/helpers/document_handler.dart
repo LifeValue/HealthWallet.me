@@ -6,16 +6,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
-import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/processing/domain/services/attach_documents_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/dialog_helper.dart';
-import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
-import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 
 mixin DocumentHandler<T extends StatefulWidget> on State<T> {
@@ -24,13 +22,16 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
     ProcessingSession session,
   ) async {
     try {
-      final processingRepository = getIt<ProcessingRepository>();
-
-      final isModelLoaded = await processingRepository.checkModelExistence();
+      // A document of a known layout is read without the model, so it opens
+      // the review instead of the model download.
+      final canProcess = await getIt<LayoutExtractionService>().canProcess(
+        session.id,
+        filePaths: session.filePaths,
+      );
 
       if (!context.mounted) return;
 
-      if (isModelLoaded) {
+      if (canProcess) {
         unawaited(context.router.push(ProcessingRoute(sessionId: session.id)));
         return;
       }
@@ -51,7 +52,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
     ProcessingSession session,
   ) async {
     final result = await context.router.push<bool>(
-      LoadModelRoute(canAttachToEncounter: true),
+      LoadModelRoute(canAttachToEncounter: true, sessionId: session.id),
     );
     if (!context.mounted) return;
 
@@ -68,126 +69,36 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
         if (result == null || !context.mounted) return;
 
         final (patient, encounter) = result;
-
-        final existingPatient = patient.existing!;
-
-        Encounter finalEncounter;
-        if (encounter.draft != null) {
-          final homeState = context.read<HomeBloc>().state;
-          final patientState = context.read<PatientBloc>().state;
-
-          final selectedPatient = patientState.patients.isNotEmpty
-              ? patientState.patients.firstWhere(
-                  (p) => p.id == patientState.selectedPatientId,
-                  orElse: () => patientState.patients.first,
-                )
-              : null;
-
-          final patientForSource = selectedPatient ?? homeState.patient;
-          final patientId = patientForSource?.id ?? 'patient-default';
-          final patientName =
-              patientForSource?.displayTitle ??
-              SourceTypeService.unknownPatientName;
-
-          final sourceTypeService = getIt<SourceTypeService>();
-          final walletSource = await sourceTypeService
-              .getWritableSourceForPatient(
-                patientId: patientId,
-                patientName: patientName,
-                availableSources: homeState.sources,
-              );
-
-          finalEncounter = encounter.draft!.toFhirResource(
-            sourceId: walletSource.id,
-            subjectId: existingPatient.subjectId,
-          ) as Encounter;
-
-          unawaited(getIt<SyncRepository>().saveResources([finalEncounter]));
-        } else {
-          finalEncounter = encounter.existing!;
-        }
-
-        if (!context.mounted) return;
+        final title = context.l10n.attachedDocuments;
 
         try {
-          await attachToEncounter(context, session.filePaths, finalEncounter);
+          await getIt<AttachDocumentsService>().attach(
+            patient: patient.existing!,
+            encounter: encounter,
+            filePaths: session.filePaths,
+            title: title,
+          );
+          if (context.mounted) {
+            context.read<PatientBloc>().add(const PatientPatientsLoaded());
+            context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
+            unawaited(context.router.replaceAll([RecordsRoute()]));
+          }
+        } catch (e, s) {
+          logger.e('Attaching documents failed', e, s);
+          if (context.mounted) {
+            Navigator.of(context).pop();
+            DialogHelper.showErrorDialog(
+              context,
+              context.l10n.failedToAttachDocuments('$e'),
+            );
+          }
+        } finally {
           if (context.mounted) {
             context.read<ProcessingBloc>().add(
               SessionCleared(session: session),
             );
           }
-        } catch (e) {
-          if (context.mounted) {
-            context.read<ProcessingBloc>().add(
-              SessionCleared(session: session),
-            );
-          }
-          rethrow;
         }
-      }
-    }
-  }
-
-  Future<void> attachToEncounter(
-    BuildContext context,
-    List<String> filePaths,
-    Encounter encounter,
-  ) async {
-    try {
-      final homeState = context.read<HomeBloc>().state;
-      final patientState = context.read<PatientBloc>().state;
-      final attachedDocumentsTitle = context.l10n.attachedDocuments;
-
-      final selectedPatient = patientState.patients.isNotEmpty
-          ? patientState.patients.firstWhere(
-              (p) => p.id == patientState.selectedPatientId,
-              orElse: () => patientState.patients.first,
-            )
-          : null;
-
-      final patient = selectedPatient ?? homeState.patient;
-      final patientId = patient?.id ?? 'patient-default';
-      final patientName =
-          patient?.displayTitle ?? SourceTypeService.unknownPatientName;
-
-      final sourceTypeService = getIt<SourceTypeService>();
-      final walletSource = await sourceTypeService.getWritableSourceForPatient(
-        patientId: patientId,
-        patientName: patientName,
-        availableSources: homeState.sources,
-      );
-
-      if (context.mounted) {
-        context.read<PatientBloc>().add(
-          const PatientPatientsLoaded(),
-        );
-      }
-
-      final documentReferenceService = getIt<DocumentReferenceService>();
-
-      await documentReferenceService.saveGroupedDocumentsAsFhirRecords(
-        filePaths: filePaths,
-        patientId: patientId,
-        encounter: encounter,
-        sourceId: walletSource.id,
-        title: attachedDocumentsTitle,
-      );
-
-      if (context.mounted) {
-        context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
-      }
-
-      if (context.mounted) {
-        unawaited(context.router.replaceAll([RecordsRoute()]));
-      }
-    } catch (e) {
-      if (context.mounted) Navigator.of(context).pop();
-
-      if (context.mounted) {
-        DialogHelper.showErrorDialog(
-          context,
-          context.l10n.failedToAttachDocuments('$e'),
-        );
       }
     }
   }

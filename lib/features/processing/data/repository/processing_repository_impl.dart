@@ -263,6 +263,7 @@ class ProcessingRepositoryImpl extends Object
   Future<ProcessingSession> createProcessingSession({
     required List<String> filePaths,
     required ProcessingOrigin origin,
+    String? id,
   }) async {
     final relativePaths = await Future.wait(
       filePaths.map(_pathResolver.toRelative),
@@ -270,7 +271,7 @@ class ProcessingRepositoryImpl extends Object
     final absolutePaths = await _pathResolver.resolveAll(relativePaths);
 
     final session = ProcessingSession(
-      id: const Uuid().v4(),
+      id: id ?? const Uuid().v4(),
       filePaths: absolutePaths,
       origin: origin,
       createdAt: DateTime.now(),

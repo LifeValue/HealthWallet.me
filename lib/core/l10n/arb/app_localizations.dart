@@ -486,12 +486,6 @@ abstract class AppLocalizations {
   /// **'Failed to update display name'**
   String get failedToUpdateDisplayName;
 
-  /// No description provided for @failedToSaveSetting.
-  ///
-  /// In en, this message translates to:
-  /// **'Couldn\'t save “{setting}”. Try again.'**
-  String failedToSaveSetting(String setting);
-
   /// No description provided for @actionCannotBeUndone.
   ///
   /// In en, this message translates to:
@@ -875,6 +869,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Attach to Encounter'**
   String get attachToEncounter;
+
+  /// No description provided for @attachToPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach to Patient'**
+  String get attachToPatient;
 
   /// No description provided for @continueProcessing.
   ///
@@ -1374,12 +1374,6 @@ abstract class AppLocalizations {
   /// **'The document is too large for the current AI working memory.'**
   String get processingFailedCapacity;
 
-  /// No description provided for @processingFailedMemory.
-  ///
-  /// In en, this message translates to:
-  /// **'Not enough free memory to run the AI model. Close other apps and try again, or turn off Deep Scan in AI Settings.'**
-  String get processingFailedMemory;
-
   /// No description provided for @processingFailedCapacitySuggestion.
   ///
   /// In en, this message translates to:
@@ -1487,24 +1481,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Long'**
   String get tokenPresetHigh;
-
-  /// No description provided for @tokenPresetLowHint.
-  ///
-  /// In en, this message translates to:
-  /// **'a few values'**
-  String get tokenPresetLowHint;
-
-  /// No description provided for @tokenPresetMediumHint.
-  ///
-  /// In en, this message translates to:
-  /// **'a short report'**
-  String get tokenPresetMediumHint;
-
-  /// No description provided for @tokenPresetHighHint.
-  ///
-  /// In en, this message translates to:
-  /// **'a full report'**
-  String get tokenPresetHighHint;
 
   /// No description provided for @tokenPresetCustom.
   ///
@@ -2748,24 +2724,6 @@ abstract class AppLocalizations {
   /// **'Sending files...'**
   String get desktopHandoverSendingFiles;
 
-  /// No description provided for @desktopHandoverProcessingOnDesktop.
-  ///
-  /// In en, this message translates to:
-  /// **'Processing on desktop...'**
-  String get desktopHandoverProcessingOnDesktop;
-
-  /// No description provided for @desktopHandoverComplete.
-  ///
-  /// In en, this message translates to:
-  /// **'Complete!'**
-  String get desktopHandoverComplete;
-
-  /// No description provided for @desktopHandoverError.
-  ///
-  /// In en, this message translates to:
-  /// **'Error occurred'**
-  String get desktopHandoverError;
-
   /// No description provided for @desktopHandoverSending.
   ///
   /// In en, this message translates to:
@@ -2783,12 +2741,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} files'**
   String desktopHandoverFileCount(int count);
-
-  /// No description provided for @desktopHandoverSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Handed over to Desktop'**
-  String get desktopHandoverSuccess;
 
   /// No description provided for @desktopClose.
   ///
@@ -4637,12 +4589,6 @@ abstract class AppLocalizations {
   /// **'No file path found'**
   String get noFilePathFound;
 
-  /// No description provided for @handoverPatientMatched.
-  ///
-  /// In en, this message translates to:
-  /// **'Handover patient matched'**
-  String get handoverPatientMatched;
-
   /// No description provided for @desktopDiscovering.
   ///
   /// In en, this message translates to:
@@ -4727,54 +4673,6 @@ abstract class AppLocalizations {
   /// **'Could not update the backups. Please try again.'**
   String get desktopBackupActionFailed;
 
-  /// No description provided for @backupRecordsOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'Records only'**
-  String get backupRecordsOnly;
-
-  /// No description provided for @backupRestoreConfirmPointInTime.
-  ///
-  /// In en, this message translates to:
-  /// **'This replaces your records on this computer and on your paired phone with the backup from {date}. Records added since then are removed. A “Before restore” copy of your current data is saved first and kept for 30 days, so you can undo this.'**
-  String backupRestoreConfirmPointInTime(String date);
-
-  /// No description provided for @backupOldNoFiles.
-  ///
-  /// In en, this message translates to:
-  /// **'This backup has no files. Records will be restored and your current files kept.'**
-  String get backupOldNoFiles;
-
-  /// No description provided for @backupSafetyName.
-  ///
-  /// In en, this message translates to:
-  /// **'Before restore {date}'**
-  String backupSafetyName(String date);
-
-  /// No description provided for @backupRestoreFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Restore failed. Your data was not changed; the \"Before restore\" backup is in the list.'**
-  String get backupRestoreFailed;
-
-  /// No description provided for @backupSafetyFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Couldn\'t make a safety backup, so nothing was restored. Check free space and the backup folder.'**
-  String get backupSafetyFailed;
-
-  /// No description provided for @backupFilesNotRestored.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 file couldn\'t be restored.} other{{count} files couldn\'t be restored.}}'**
-  String backupFilesNotRestored(int count);
-
-  /// No description provided for @backupRestorePhoneOffline.
-  ///
-  /// In en, this message translates to:
-  /// **'Your phone isn\'t connected. Records added on it since its last sync will come back after it reconnects; changes it made to existing records will be replaced by the backup.'**
-  String get backupRestorePhoneOffline;
-
   /// No description provided for @desktopSyncFailed.
   ///
   /// In en, this message translates to:
@@ -4817,40 +4715,16 @@ abstract class AppLocalizations {
   /// **'Receiving files...'**
   String get desktopHandoverReceivingFiles;
 
-  /// No description provided for @desktopHandoverProcessingStatus.
-  ///
-  /// In en, this message translates to:
-  /// **'Processing...'**
-  String get desktopHandoverProcessingStatus;
-
-  /// No description provided for @desktopHandoverSendingResults.
-  ///
-  /// In en, this message translates to:
-  /// **'Sending results...'**
-  String get desktopHandoverSendingResults;
-
-  /// No description provided for @desktopHandoverDone.
-  ///
-  /// In en, this message translates to:
-  /// **'Complete'**
-  String get desktopHandoverDone;
-
   /// No description provided for @desktopHandoverStatusError.
   ///
   /// In en, this message translates to:
   /// **'Error'**
   String get desktopHandoverStatusError;
 
-  /// No description provided for @desktopHandoverWaitingForResults.
-  ///
-  /// In en, this message translates to:
-  /// **'Waiting for results...'**
-  String get desktopHandoverWaitingForResults;
-
   /// No description provided for @desktopHandoverNotAccepted.
   ///
   /// In en, this message translates to:
-  /// **'The desktop did not accept the documents.'**
+  /// **'The desktop did not answer. Make sure HealthWallet is open and up to date on it.'**
   String get desktopHandoverNotAccepted;
 
   /// No description provided for @desktopHandoverFileMissing.
@@ -4906,12 +4780,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Quit {appName}'**
   String trayQuit(String appName);
-
-  /// No description provided for @desktopFinishedProcessing.
-  ///
-  /// In en, this message translates to:
-  /// **'Desktop finished processing'**
-  String get desktopFinishedProcessing;
 
   /// No description provided for @biometricAuthReason.
   ///
@@ -8176,6 +8044,336 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'\"{name}\" has been saved. It holds {count} records.'**
   String desktopBackupSucceededMessage(String name, int count);
+
+  /// No description provided for @holderQuestionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Whose records are these?'**
+  String get holderQuestionTitle;
+
+  /// Asked when records arrive for someone who matches no one in the wallet, which has several people.
+  ///
+  /// In en, this message translates to:
+  /// **'Records arrived for {name}, who doesn\'t match anyone in your wallet. Who is this?'**
+  String holderQuestionMessage(String name);
+
+  /// No description provided for @holderQuestionSomeoneElse.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone else'**
+  String get holderQuestionSomeoneElse;
+
+  /// No description provided for @fhirTypeVisionPrescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Vision Prescription'**
+  String get fhirTypeVisionPrescription;
+
+  /// No description provided for @categoryVisionPrescriptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Vision Prescriptions'**
+  String get categoryVisionPrescriptions;
+
+  /// No description provided for @lensTypeMultifocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Multifocal glasses'**
+  String get lensTypeMultifocal;
+
+  /// No description provided for @lensTypeDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance glasses'**
+  String get lensTypeDistance;
+
+  /// No description provided for @lensTypeReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading glasses'**
+  String get lensTypeReading;
+
+  /// No description provided for @lensTypeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Glasses'**
+  String get lensTypeOther;
+
+  /// No description provided for @fieldLensType.
+  ///
+  /// In en, this message translates to:
+  /// **'Lens Type'**
+  String get fieldLensType;
+
+  /// No description provided for @fieldDateWritten.
+  ///
+  /// In en, this message translates to:
+  /// **'Issued on'**
+  String get fieldDateWritten;
+
+  /// No description provided for @fieldRecommendedFollowUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Next check-up'**
+  String get fieldRecommendedFollowUp;
+
+  /// No description provided for @labelSerialNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Serial number'**
+  String get labelSerialNumber;
+
+  /// No description provided for @visionEyeRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Right eye'**
+  String get visionEyeRight;
+
+  /// No description provided for @visionEyeLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left eye'**
+  String get visionEyeLeft;
+
+  /// Column header of a glasses prescription, in plain words: the lens strength (sphere), in dioptres.
+  ///
+  /// In en, this message translates to:
+  /// **'Strength'**
+  String get visionSphere;
+
+  /// Column header of a glasses prescription, in plain words: the astigmatism correction (cylinder), in dioptres.
+  ///
+  /// In en, this message translates to:
+  /// **'Astigmatism'**
+  String get visionCylinder;
+
+  /// Column header of a glasses prescription, in plain words: the angle of the astigmatism correction (axis), in degrees.
+  ///
+  /// In en, this message translates to:
+  /// **'Angle'**
+  String get visionAxis;
+
+  /// Column header of a glasses prescription, in plain words: the extra strength for reading (near addition), in dioptres.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading add'**
+  String get visionAdd;
+
+  /// No description provided for @visionPrism.
+  ///
+  /// In en, this message translates to:
+  /// **'Prism'**
+  String get visionPrism;
+
+  /// No description provided for @visionBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Prism base'**
+  String get visionBase;
+
+  /// Error under a lens strength field of a glasses prescription that is not a dioptre value in quarter steps.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a value like +1.25, in steps of 0.25'**
+  String get visionInvalidDioptre;
+
+  /// Error under the astigmatism angle field of a glasses prescription that is not a whole number of degrees from 0 to 180.
+  ///
+  /// In en, this message translates to:
+  /// **'Use an angle from 0 to 180'**
+  String get visionInvalidAxis;
+
+  /// Shown on a record read from a document when the wallet already holds it.
+  ///
+  /// In en, this message translates to:
+  /// **'Already in your wallet'**
+  String get stagedAlreadyInWallet;
+
+  /// Shown on a record read from a document when the wallet holds it with empty fields the document fills.
+  ///
+  /// In en, this message translates to:
+  /// **'Already in your wallet, will be completed'**
+  String get stagedWillBeCompleted;
+
+  /// Shown above Done when saving a document would add nothing to the wallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything in this document is already in your wallet'**
+  String get documentAlreadyInWallet;
+
+  /// No description provided for @processingStatusHandedOver.
+  ///
+  /// In en, this message translates to:
+  /// **'On the desktop'**
+  String get processingStatusHandedOver;
+
+  /// No description provided for @desktopHandoverSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent to the desktop. You\'ll be told when it\'s ready to review, here or on the desktop.'**
+  String get desktopHandoverSent;
+
+  /// No description provided for @desktopHandoverConnectionLost.
+  ///
+  /// In en, this message translates to:
+  /// **'The connection to the desktop was lost. Try again.'**
+  String get desktopHandoverConnectionLost;
+
+  /// No description provided for @desktopHandoverTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'The document is too large to send to the desktop (over 200 MB).'**
+  String get desktopHandoverTooLarge;
+
+  /// No description provided for @desktopHandoverTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'The desktop stopped receiving the document. Try again.'**
+  String get desktopHandoverTimedOut;
+
+  /// No description provided for @handoverOnDesktopTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Being processed on the desktop'**
+  String get handoverOnDesktopTitle;
+
+  /// No description provided for @handoverOnDesktopMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The draft comes back here to review when the desktop is done. You can also review and save it on the desktop.'**
+  String get handoverOnDesktopMessage;
+
+  /// No description provided for @handoverTakeBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Process on this phone instead'**
+  String get handoverTakeBack;
+
+  /// No description provided for @handoverReadyToReview.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin}: ready to review'**
+  String handoverReadyToReview(String origin);
+
+  /// No description provided for @handoverFailedOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin}: the desktop could not process it. It\'s back on this phone.'**
+  String handoverFailedOnDesktop(String origin);
+
+  /// No description provided for @handoverNoModelOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin}: there is no AI model on the desktop. It\'s back on this phone.'**
+  String handoverNoModelOnDesktop(String origin);
+
+  /// No description provided for @handoverDeletedOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} was deleted on the desktop. It\'s back on this phone.'**
+  String handoverDeletedOnDesktop(String origin);
+
+  /// No description provided for @handoverSavedOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} was saved on the desktop. The records reach this phone with the next sync.'**
+  String handoverSavedOnDesktop(String origin);
+
+  /// No description provided for @handoverSavedOnPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} was saved on the phone.'**
+  String handoverSavedOnPhone(String origin);
+
+  /// No description provided for @handoverDraftSavedOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} was saved on the desktop. Any changes made here to its draft were not kept.'**
+  String handoverDraftSavedOnDesktop(String origin);
+
+  /// No description provided for @handoverDraftSavedOnPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} was saved on the phone. Any changes made here to its draft were not kept.'**
+  String handoverDraftSavedOnPhone(String origin);
+
+  /// No description provided for @failedToSaveSetting.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save “{setting}”. Try again.'**
+  String failedToSaveSetting(String setting);
+
+  /// No description provided for @processingFailedMemory.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough free memory to run the AI model. Close other apps and try again, or turn off Deep Scan in AI Settings.'**
+  String get processingFailedMemory;
+
+  /// No description provided for @tokenPresetLowHint.
+  ///
+  /// In en, this message translates to:
+  /// **'a few values'**
+  String get tokenPresetLowHint;
+
+  /// No description provided for @tokenPresetMediumHint.
+  ///
+  /// In en, this message translates to:
+  /// **'a short report'**
+  String get tokenPresetMediumHint;
+
+  /// No description provided for @tokenPresetHighHint.
+  ///
+  /// In en, this message translates to:
+  /// **'a full report'**
+  String get tokenPresetHighHint;
+
+  /// No description provided for @backupRecordsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Records only'**
+  String get backupRecordsOnly;
+
+  /// No description provided for @backupRestoreConfirmPointInTime.
+  ///
+  /// In en, this message translates to:
+  /// **'This replaces your records on this computer and on your paired phone with the backup from {date}. Records added since then are removed. A “Before restore” copy of your current data is saved first and kept for 30 days, so you can undo this.'**
+  String backupRestoreConfirmPointInTime(String date);
+
+  /// No description provided for @backupOldNoFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup has no files. Records will be restored and your current files kept.'**
+  String get backupOldNoFiles;
+
+  /// No description provided for @backupSafetyName.
+  ///
+  /// In en, this message translates to:
+  /// **'Before restore {date}'**
+  String backupSafetyName(String date);
+
+  /// No description provided for @backupRestoreFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore failed. Your data was not changed; the \"Before restore\" backup is in the list.'**
+  String get backupRestoreFailed;
+
+  /// No description provided for @backupSafetyFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t make a safety backup, so nothing was restored. Check free space and the backup folder.'**
+  String get backupSafetyFailed;
+
+  /// No description provided for @backupFilesNotRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file couldn\'t be restored.} other{{count} files couldn\'t be restored.}}'**
+  String backupFilesNotRestored(int count);
+
+  /// No description provided for @backupRestorePhoneOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone isn\'t connected. Records added on it since its last sync will come back after it reconnects; changes it made to existing records will be replaced by the backup.'**
+  String get backupRestorePhoneOffline;
 
   /// Asks before deleting a downloaded AI model.
   ///

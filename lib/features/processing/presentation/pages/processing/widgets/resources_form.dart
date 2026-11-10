@@ -17,6 +17,7 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_vision_prescription.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/text_field_descriptor.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
@@ -129,6 +130,11 @@ class _ResourcesFormState extends State<ResourcesForm> {
                   resource: encounter!.mode == ImportMode.createNew
                       ? encounter.draft!
                       : MappingEncounter.fromFhirResource(encounter.existing!),
+                  walletNote: !encounter.isExistingVisit
+                      ? null
+                      : encounter.completesExistingVisit
+                      ? context.l10n.stagedWillBeCompleted
+                      : context.l10n.stagedAlreadyInWallet,
                   isStagedResource: true,
                   isLocked: widget.isAttachmentLocked,
                   onPropertyChanged: (propertyKey, newValue) =>
@@ -151,6 +157,17 @@ class _ResourcesFormState extends State<ResourcesForm> {
                 child: _buildResourceForm(
                   context,
                   resource: resource,
+                  walletNote: switch (resource) {
+                    MappingVisionPrescription(
+                      existingId: final id,
+                      :final completesExisting,
+                    )
+                        when id.isNotEmpty =>
+                      completesExisting
+                          ? context.l10n.stagedWillBeCompleted
+                          : context.l10n.stagedAlreadyInWallet,
+                    _ => null,
+                  },
                   onPropertyChanged: (propertyKey, newValue) =>
                       context.read<ProcessingBloc>().add(
                         ResourceChanged(
@@ -187,20 +204,25 @@ class _ResourcesFormState extends State<ResourcesForm> {
     int patientVersion = 0,
     bool isStagedResource = false,
     bool isLocked = false,
+    String? walletNote,
   }) {
     final Map<String, TextFieldDescriptor> textFields = resource
         .getFieldDescriptors(context.l10n);
+    // A record already in the wallet is only completed, never changed, so
+    // its fields can't be edited here, nor hold up saving the rest.
+    final readOnly = walletNote != null;
+    final locked = isLocked || readOnly;
 
     return Container(
       key: ValueKey('${resource.id}_v$patientVersion'),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isLocked
+          color: locked
               ? context.colorScheme.primary.withValues(alpha: 0.4)
               : context.theme.dividerColor,
         ),
-        color: isLocked
+        color: locked
             ? context.colorScheme.primary.withValues(alpha: 0.04)
             : null,
       ),
@@ -276,332 +298,431 @@ class _ResourcesFormState extends State<ResourcesForm> {
             ),
             if (resource is MappingPatient && widget.patient != null)
               _buildPatientMatchBanner(context, widget.patient!),
+            if (walletNote != null)
+              _buildBanner(
+                context,
+                icon: Icons.inventory_2_outlined,
+                color: context.colorScheme.primary,
+                text: walletNote,
+              ),
+            if (resource is MappingVisionPrescription)
+              IgnorePointer(
+                ignoring: readOnly,
+                child: _buildLensGrid(
+                  context,
+                  resource,
+                  readOnly: readOnly,
+                  onPropertyChanged: onPropertyChanged,
+                ),
+              ),
             const SizedBox(height: Insets.normal),
             ...textFields.entries.map((entry) {
               final propertyKey = entry.key;
               final descriptor = entry.value;
 
-              final confidenceLevel = ConfidenceLevel.fromDouble(
-                descriptor.confidenceLevel,
-              );
+              final confidenceLevel = descriptor.confidence;
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Text(descriptor.label, style: AppTextStyle.bodySmall),
-                          if (descriptor.fieldType == FieldType.date &&
-                              descriptor.value.isEmpty)
-                            const Padding(
-                              padding: EdgeInsets.only(left: 4),
-                              child: Icon(
-                                Icons.error_outline,
-                                size: 16,
-                                color: Colors.red,
-                              ),
-                            ),
-                        ],
-                      ),
-                      if (confidenceLevel != ConfidenceLevel.high)
-                        Text(
-                          '(${confidenceLevel.localizedName(context.l10n)})',
-                          style: AppTextStyle.labelSmall.copyWith(
-                            color: confidenceLevel.getColor(context),
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  if (descriptor.fieldType == FieldType.date)
-                    FormField<String>(
-                      key: ValueKey(
-                        '${resource.id}_${propertyKey}_form_${descriptor.value}',
-                      ),
-                      initialValue: descriptor.value,
-                      validator: (value) =>
-                          descriptor.validate(value)?.message(context.l10n),
-                      onSaved: (value) {
-                        if (value != null &&
-                            value != descriptor.value &&
-                            onPropertyChanged != null) {
-                          onPropertyChanged(propertyKey, value);
-                        }
-                      },
-                      builder: (field) {
-                        final hasError = field.hasError;
-                        final errorText = field.errorText;
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+              return IgnorePointer(
+                ignoring: readOnly,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
                           children: [
-                            InkWell(
-                              onTap: () async {
-                                final newValue = await _showDatePicker(
-                                  context,
-                                  propertyKey,
-                                  descriptor.value,
-                                  onPropertyChanged,
-                                );
-                                if (newValue != null) {
-                                  field.didChange(newValue);
-                                  field.validate();
-                                }
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
+                            Text(
+                              descriptor.label,
+                              style: AppTextStyle.bodySmall,
+                            ),
+                            if (descriptor.fieldType == FieldType.date &&
+                                descriptor.value.isEmpty &&
+                                descriptor.isRequired)
+                              const Padding(
+                                padding: EdgeInsets.only(left: 4),
+                                child: Icon(
+                                  Icons.error_outline,
+                                  size: 16,
+                                  color: Colors.red,
                                 ),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: hasError
-                                        ? Colors.red
-                                        : confidenceLevel.getColor(context),
-                                    width: 1.5,
+                              ),
+                          ],
+                        ),
+                        if (confidenceLevel != ConfidenceLevel.high)
+                          Text(
+                            '(${confidenceLevel.localizedName(context.l10n)})',
+                            style: AppTextStyle.labelSmall.copyWith(
+                              color: confidenceLevel.getColor(context),
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    if (descriptor.fieldType == FieldType.date)
+                      FormField<String>(
+                        key: ValueKey(
+                          '${resource.id}_${propertyKey}_form_${descriptor.value}',
+                        ),
+                        initialValue: descriptor.value,
+                        validator: (value) => readOnly
+                            ? null
+                            : descriptor.validate(value)?.message(context.l10n),
+                        onSaved: (value) {
+                          if (value != null &&
+                              value != descriptor.value &&
+                              onPropertyChanged != null) {
+                            onPropertyChanged(propertyKey, value);
+                          }
+                        },
+                        builder: (field) {
+                          final hasError = field.hasError;
+                          final errorText = field.errorText;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              InkWell(
+                                onTap: () async {
+                                  final newValue = await _showDatePicker(
+                                    context,
+                                    propertyKey,
+                                    descriptor.value,
+                                    onPropertyChanged,
+                                  );
+                                  if (newValue != null) {
+                                    field.didChange(newValue);
+                                    field.validate();
+                                  }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
                                   ),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        descriptor.value.isNotEmpty
-                                            ? _formatDateForDisplay(
-                                                descriptor.value,
-                                                context,
-                                              )
-                                            : context.l10n.selectDate,
-                                        style: AppTextStyle.labelLarge.copyWith(
-                                          color: descriptor.value.isNotEmpty
-                                              ? (context.isDarkMode
-                                                    ? AppColors.textPrimaryDark
-                                                    : AppColors.textPrimary)
-                                              : (context.isDarkMode
-                                                    ? AppColors
-                                                          .textSecondaryDark
-                                                    : AppColors.textSecondary),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: hasError
+                                          ? Colors.red
+                                          : confidenceLevel.getColor(context),
+                                      width: 1.5,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          descriptor.value.isNotEmpty
+                                              ? _formatDateForDisplay(
+                                                  descriptor.value,
+                                                  context,
+                                                )
+                                              : context.l10n.selectDate,
+                                          style: AppTextStyle.labelLarge.copyWith(
+                                            color: descriptor.value.isNotEmpty
+                                                ? (context.isDarkMode
+                                                      ? AppColors
+                                                            .textPrimaryDark
+                                                      : AppColors.textPrimary)
+                                                : (context.isDarkMode
+                                                      ? AppColors
+                                                            .textSecondaryDark
+                                                      : AppColors
+                                                            .textSecondary),
+                                          ),
                                         ),
                                       ),
+                                      const SizedBox(width: 6),
+                                      Assets.icons.calendar.svg(
+                                        width: 16,
+                                        height: 16,
+                                        colorFilter: ColorFilter.mode(
+                                          context.theme.iconTheme.color ??
+                                              context.colorScheme.onSurface,
+                                          BlendMode.srcIn,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              if (hasError && errorText != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: 4,
+                                    left: 12,
+                                  ),
+                                  child: Text(
+                                    errorText,
+                                    style: AppTextStyle.labelSmall.copyWith(
+                                      color: Colors.red,
                                     ),
-                                    const SizedBox(width: 6),
-                                    Assets.icons.calendar.svg(
-                                      width: 16,
-                                      height: 16,
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      )
+                    else if (descriptor.fieldType == FieldType.dropdown &&
+                        propertyKey == 'specialty')
+                      FormField<String>(
+                        key: ValueKey(
+                          '${resource.id}_${propertyKey}_form_${descriptor.value}',
+                        ),
+                        initialValue: descriptor.value,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: (value) =>
+                            !readOnly && (value == null || value.isEmpty)
+                            ? context.l10n.fieldCannotBeEmpty
+                            : null,
+                        builder: (field) => Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AppDropdownField<MedicalSpecialty>(
+                              value: descriptor.value,
+                              items: MedicalSpecialty.values,
+                              openAbove: true,
+                              hasError: field.hasError,
+                              // The English name is the stored value the
+                              // dropdown matches; the builders show it localized.
+                              getDisplayText: (s) => s.displayName,
+                              onChanged: (MedicalSpecialty s) {
+                                onPropertyChanged?.call(
+                                  propertyKey,
+                                  s.displayName,
+                                );
+                                field.didChange(s.displayName);
+                              },
+                              itemBuilder: (context, s, isSelected) => Row(
+                                children: [
+                                  s.icon.svg(
+                                    width: 20,
+                                    height: 20,
+                                    colorFilter: ColorFilter.mode(
+                                      isSelected
+                                          ? context.colorScheme.primary
+                                          : context.colorScheme.onSurface,
+                                      BlendMode.srcIn,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      s.localizedName(context.l10n),
+                                      style: AppTextStyle.bodyMedium.copyWith(
+                                        color: isSelected
+                                            ? context.colorScheme.primary
+                                            : context.colorScheme.onSurface,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              valueBuilder: (context, value) {
+                                final match = MedicalSpecialty.values
+                                    .where((s) => s.displayName == value)
+                                    .firstOrNull;
+                                if (match == null) {
+                                  return Text(
+                                    value.isEmpty
+                                        ? context.l10n.specialty
+                                        : value,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTextStyle.labelLarge.copyWith(
+                                      color: value.isEmpty
+                                          ? context.colorScheme.onSurface
+                                                .withValues(alpha: 0.5)
+                                          : context.colorScheme.onSurface,
+                                    ),
+                                  );
+                                }
+                                return Row(
+                                  children: [
+                                    match.icon.svg(
+                                      width: 18,
+                                      height: 18,
                                       colorFilter: ColorFilter.mode(
-                                        context.theme.iconTheme.color ??
-                                            context.colorScheme.onSurface,
+                                        context.colorScheme.onSurface,
                                         BlendMode.srcIn,
                                       ),
                                     ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      match.localizedName(context.l10n),
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppTextStyle.labelLarge.copyWith(
+                                        color: context.colorScheme.onSurface,
+                                      ),
+                                    ),
                                   ],
-                                ),
-                              ),
+                                );
+                              },
                             ),
-                            if (hasError && errorText != null)
+                            if (field.hasError && field.errorText != null)
                               Padding(
                                 padding: const EdgeInsets.only(
                                   top: 4,
                                   left: 12,
                                 ),
                                 child: Text(
-                                  errorText,
+                                  field.errorText!,
                                   style: AppTextStyle.labelSmall.copyWith(
                                     color: Colors.red,
                                   ),
                                 ),
                               ),
                           ],
-                        );
-                      },
-                    )
-                  else if (descriptor.fieldType == FieldType.dropdown &&
-                      propertyKey == 'specialty')
-                    FormField<String>(
-                      key: ValueKey(
-                        '${resource.id}_${propertyKey}_form_${descriptor.value}',
-                      ),
-                      initialValue: descriptor.value,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      validator: (value) => (value == null || value.isEmpty)
-                          ? context.l10n.fieldCannotBeEmpty
-                          : null,
-                      builder: (field) => Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AppDropdownField<MedicalSpecialty>(
-                            value: descriptor.value,
-                            items: MedicalSpecialty.values,
-                            openAbove: true,
-                            hasError: field.hasError,
-                            // The English name is the stored value the
-                            // dropdown matches; the builders show it localized.
-                            getDisplayText: (s) => s.displayName,
-                            onChanged: (MedicalSpecialty s) {
-                              onPropertyChanged?.call(
-                                propertyKey,
-                                s.displayName,
-                              );
-                              field.didChange(s.displayName);
-                            },
-                            itemBuilder: (context, s, isSelected) => Row(
-                              children: [
-                                s.icon.svg(
-                                  width: 20,
-                                  height: 20,
-                                  colorFilter: ColorFilter.mode(
-                                    isSelected
-                                        ? context.colorScheme.primary
-                                        : context.colorScheme.onSurface,
-                                    BlendMode.srcIn,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    s.localizedName(context.l10n),
-                                    style: AppTextStyle.bodyMedium.copyWith(
-                                      color: isSelected
-                                          ? context.colorScheme.primary
-                                          : context.colorScheme.onSurface,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            valueBuilder: (context, value) {
-                              final match = MedicalSpecialty.values
-                                  .where((s) => s.displayName == value)
-                                  .firstOrNull;
-                              if (match == null) {
-                                return Text(
-                                  value.isEmpty
-                                      ? context.l10n.specialty
-                                      : value,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTextStyle.labelLarge.copyWith(
-                                    color: value.isEmpty
-                                        ? context.colorScheme.onSurface
-                                              .withValues(alpha: 0.5)
-                                        : context.colorScheme.onSurface,
-                                  ),
-                                );
-                              }
-                              return Row(
-                                children: [
-                                  match.icon.svg(
-                                    width: 18,
-                                    height: 18,
-                                    colorFilter: ColorFilter.mode(
-                                      context.colorScheme.onSurface,
-                                      BlendMode.srcIn,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    match.localizedName(context.l10n),
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AppTextStyle.labelLarge.copyWith(
-                                      color: context.colorScheme.onSurface,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                          if (field.hasError && field.errorText != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4, left: 12),
-                              child: Text(
-                                field.errorText!,
-                                style: AppTextStyle.labelSmall.copyWith(
-                                  color: Colors.red,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    )
-                  else if (descriptor.fieldType == FieldType.dropdown)
-                    AppDropdownField<String>(
-                      value: _getGenderDisplayValue(descriptor.value, context),
-                      items: [
-                        context.l10n.male,
-                        context.l10n.female,
-                        context.l10n.preferNotToSay,
-                      ],
-                      getDisplayText: (item) => item,
-                      onChanged: (String newValue) {
-                        final fhirValue = _mapDisplayGenderToFhir(
-                          newValue,
+                        ),
+                      )
+                    else if (descriptor.fieldType == FieldType.dropdown)
+                      AppDropdownField<String>(
+                        value: _getGenderDisplayValue(
+                          descriptor.value,
                           context,
-                        );
-                        onPropertyChanged?.call(propertyKey, fhirValue);
-                      },
-                    )
-                  else
-                    TextFormField(
-                      key: ValueKey('${resource.id}_$propertyKey'),
-                      initialValue: descriptor.value,
-                      validator: (value) =>
-                          descriptor.validate(value)?.message(context.l10n),
-                      inputFormatters: descriptor.inputFormatters,
-                      keyboardType: descriptor.keyboardType,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      style: AppTextStyle.labelLarge,
-                      onChanged: (value) =>
-                          onPropertyChanged?.call(propertyKey, value),
-                      decoration: InputDecoration(
-                        isDense: true,
-                        helperText: ' ',
-                        helperStyle: const TextStyle(height: 0, fontSize: 0),
-                        disabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: confidenceLevel.getColor(context),
-                          ),
-                          borderRadius: BorderRadius.circular(8),
                         ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: confidenceLevel.getColor(context),
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: confidenceLevel.getColor(context),
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        errorBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.red),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        focusedErrorBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(
-                            color: Colors.red,
-                            width: 1.5,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
+                        items: [
+                          context.l10n.male,
+                          context.l10n.female,
+                          context.l10n.preferNotToSay,
+                        ],
+                        getDisplayText: (item) => item,
+                        onChanged: (String newValue) {
+                          final fhirValue = _mapDisplayGenderToFhir(
+                            newValue,
+                            context,
+                          );
+                          onPropertyChanged?.call(propertyKey, fhirValue);
+                        },
+                      )
+                    else
+                      TextFormField(
+                        key: ValueKey('${resource.id}_$propertyKey'),
+                        initialValue: descriptor.value,
+                        readOnly: readOnly,
+                        validator: (value) => readOnly
+                            ? null
+                            : descriptor.validate(value)?.message(context.l10n),
+                        inputFormatters: descriptor.inputFormatters,
+                        keyboardType: descriptor.keyboardType,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        style: AppTextStyle.labelLarge,
+                        onChanged: (value) =>
+                            onPropertyChanged?.call(propertyKey, value),
+                        decoration: _fieldDecoration(
+                          context,
+                          confidenceLevel,
                         ),
                       ),
-                    ),
-                  if (entry.key != textFields.entries.last.key)
-                    const SizedBox(height: 16),
-                ],
+                    if (entry.key != textFields.entries.last.key)
+                      const SizedBox(height: 16),
+                  ],
+                ),
               );
             }),
           ],
         ),
+      ),
+    );
+  }
+
+  InputDecoration _fieldDecoration(
+    BuildContext context,
+    ConfidenceLevel confidenceLevel, {
+    String? hintText,
+    EdgeInsetsGeometry contentPadding = const EdgeInsets.symmetric(
+      horizontal: 12,
+      vertical: 10,
+    ),
+  }) {
+    OutlineInputBorder border(Color color, {double width = 1}) =>
+        OutlineInputBorder(
+          borderSide: BorderSide(color: color, width: width),
+          borderRadius: BorderRadius.circular(8),
+        );
+    final color = confidenceLevel.getColor(context);
+    return InputDecoration(
+      isDense: true,
+      hintText: hintText,
+      helperText: ' ',
+      helperStyle: const TextStyle(height: 0, fontSize: 0),
+      errorMaxLines: 4,
+      disabledBorder: border(color),
+      enabledBorder: border(color),
+      focusedBorder: border(color),
+      errorBorder: border(Colors.red),
+      focusedErrorBorder: border(Colors.red, width: 1.5),
+      contentPadding: contentPadding,
+    );
+  }
+
+  /// A glasses prescription's lens values as on paper, but turned so it
+  /// fits a phone: one row per value, a field per eye.
+  Widget _buildLensGrid(
+    BuildContext context,
+    MappingVisionPrescription resource, {
+    required bool readOnly,
+    Function(String, String)? onPropertyChanged,
+  }) {
+    final l10n = context.l10n;
+    Widget header(String text) => Padding(
+      padding: const EdgeInsets.symmetric(horizontal: Insets.extraSmall),
+      child: Text(text, style: AppTextStyle.bodySmall),
+    );
+    Widget cell(String key, TextFieldDescriptor descriptor) => Padding(
+      padding: const EdgeInsets.all(Insets.extraSmall),
+      child: TextFormField(
+        key: ValueKey('${resource.id}_$key'),
+        initialValue: descriptor.value,
+        readOnly: readOnly,
+        validator: (value) =>
+            readOnly ? null : descriptor.validate(value)?.message(l10n),
+        keyboardType: descriptor.keyboardType,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        textAlign: TextAlign.center,
+        style: AppTextStyle.labelLarge,
+        onChanged: (value) => onPropertyChanged?.call(key, value),
+        decoration: _fieldDecoration(
+          context,
+          descriptor.confidence,
+          hintText: '-',
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: Insets.small,
+            vertical: Insets.small,
+          ),
+        ),
+      ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(top: Insets.normal),
+      child: Table(
+        columnWidths: const {
+          0: FlexColumnWidth(1.3),
+          1: FlexColumnWidth(),
+          2: FlexColumnWidth(),
+        },
+        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+        children: [
+          TableRow(
+            children: [
+              const SizedBox.shrink(),
+              header(l10n.visionEyeRight),
+              header(l10n.visionEyeLeft),
+            ],
+          ),
+          for (final row in resource.lensRows(l10n))
+            TableRow(
+              children: [
+                Text(row.right.label, style: AppTextStyle.bodySmall),
+                cell(row.rightKey, row.right),
+                cell(row.leftKey, row.left),
+              ],
+            ),
+        ],
       ),
     );
   }
@@ -689,6 +810,7 @@ class _ResourcesFormState extends State<ResourcesForm> {
         patient: widget.patient,
         encounter: widget.encounter,
         confirmText: context.l10n.save,
+        patientOnly: widget.diagnosticReport?.hasSelection ?? false,
       ),
     );
     if (result == null || !context.mounted) return;
@@ -820,7 +942,38 @@ class _ResourcesFormState extends State<ResourcesForm> {
     required String text,
     VoidCallback? onAction,
     IconData? actionIcon,
-  }) {
+  }) => ReviewBanner(
+    icon: icon,
+    leadingIcon: leadingIcon,
+    color: color,
+    text: text,
+    onAction: onAction,
+    actionIcon: actionIcon,
+  );
+}
+
+/// A one-line note on a staged record in the review (a patient match, a
+/// record already in the wallet), with an optional action.
+class ReviewBanner extends StatelessWidget {
+  const ReviewBanner({
+    required this.color,
+    required this.text,
+    this.icon,
+    this.leadingIcon,
+    this.onAction,
+    this.actionIcon,
+    super.key,
+  });
+
+  final IconData? icon;
+  final Widget? leadingIcon;
+  final Color color;
+  final String text;
+  final VoidCallback? onAction;
+  final IconData? actionIcon;
+
+  @override
+  Widget build(BuildContext context) {
     final trailingIcon = actionIcon ?? Icons.close;
     final leading = leadingIcon ?? Icon(icon, size: 16, color: color);
     final banner = Container(

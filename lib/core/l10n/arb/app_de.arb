@@ -60,7 +60,6 @@
   "preferNotToSay": "Keine Angabe",
   "errorUpdatingSourceLabel": "Fehler beim Aktualisieren der Quellenbezeichnung",
   "failedToUpdateDisplayName": "Fehler beim Aktualisieren des Anzeigenamens",
-  "failedToSaveSetting": "„{setting}“ konnte nicht gespeichert werden. Versuche es erneut.",
   "actionCannotBeUndone": "Diese Aktion kann nicht rückgängig gemacht werden.",
   "deleteRecordConfirm": "Bist du sicher, dass du diesen Eintrag löschen möchtest?",
   "deleteNoteConfirm": "Bist du sicher, dass du diese Notiz löschen möchtest?",
@@ -120,6 +119,7 @@
   "fieldCannotBeEmpty": "Dieses Feld darf nicht leer sein",
   "selectDate": "Datum auswählen",
   "attachToEncounter": "An Termin anhängen",
+  "attachToPatient": "An Patient anhängen",
   "continueProcessing": "Verarbeitung fortsetzen",
   "recordsSavedTitle": "Erfolgreich gespeichert",
   "whatNextQuestion": "Was möchtest du als Nächstes tun?",
@@ -212,7 +212,6 @@
   "chargerPluggedIn": "Ladegerät eingesteckt.",
   "plugInChargerEllipsis": "Stecke das Ladegerät ein...",
   "processingFailedCapacity": "Das Dokument ist zu groß für den aktuellen KI-Arbeitsspeicher.",
-  "processingFailedMemory": "Nicht genügend freier Speicher, um das KI-Modell auszuführen. Schließe andere Apps und versuche es erneut, oder schalte den Tiefenscan in den KI-Einstellungen aus.",
   "processingFailedCapacitySuggestion": "Tippe oben auf das Einstellungssymbol und erhöhe den KI-Arbeitsspeicher auf 2048 oder höher, dann erneut versuchen.",
   "increaseAiModelCapacity": "KI-Kapazität erhöhen",
   "goBack": "Zurück",
@@ -221,9 +220,6 @@
   "tokenPresetLow": "Kurz",
   "tokenPresetMedium": "Mittel",
   "tokenPresetHigh": "Lang",
-  "tokenPresetLowHint": "ein paar Werte",
-  "tokenPresetMediumHint": "ein kurzer Bericht",
-  "tokenPresetHighHint": "ein vollständiger Bericht",
   "tokenPresetCustom": "Benutzerdefiniert",
   "setTokens": "Festlegen",
   "aiModelManage": "KI-Optionen verwalten",
@@ -657,9 +653,6 @@
   "desktopCurrentDevice": "aktuelles Gerät",
   "desktopHandoverPreparing": "Wird vorbereitet...",
   "desktopHandoverSendingFiles": "Dateien werden gesendet...",
-  "desktopHandoverProcessingOnDesktop": "Wird auf dem Desktop verarbeitet...",
-  "desktopHandoverComplete": "Fertig!",
-  "desktopHandoverError": "Fehler aufgetreten",
   "desktopHandoverSending": "Wird gesendet...",
   "desktopHandoverSendingToDesktop": "Wird an den Desktop gesendet",
   "desktopHandoverFileCount": "{count} Dateien",
@@ -670,7 +663,6 @@
       }
     }
   },
-  "desktopHandoverSuccess": "An den Desktop übergeben",
   "desktopClose": "Schließen",
   "desktopContinueImporting": "Weiter importieren",
   "desktopHandoverToDesktop": "An Desktop übergeben",
@@ -1074,7 +1066,6 @@
   "areYouSure": "Bist du sicher?",
   "resourceNotViewable": "Diese Ressource ist keine anzeigbare Datei",
   "noFilePathFound": "Kein Dateipfad gefunden",
-  "handoverPatientMatched": "Patient der Übergabe zugeordnet",
   "desktopDiscovering": "Suche läuft...",
   "desktopTransportWifi": "WLAN",
   "desktopTransportDirect": "Direkt",
@@ -1089,35 +1080,6 @@
   "desktopNoBackupLocation": "Auf dem Desktop ist kein Backup-Speicherort festgelegt. Öffne die Desktop-App und wähle zuerst einen Backup-Ordner.",
   "desktopBackupFailed": "Backup fehlgeschlagen. Bitte versuche es erneut.",
   "desktopBackupActionFailed": "Die Backups konnten nicht aktualisiert werden. Bitte versuche es erneut.",
-  "backupRecordsOnly": "Nur Aufzeichnungen",
-  "backupRestoreConfirmPointInTime": "Dadurch werden deine Aufzeichnungen auf diesem Computer und deinem gekoppelten Telefon durch das Backup vom {date} ersetzt. Seitdem hinzugefügte Aufzeichnungen werden entfernt. Vorher wird eine Kopie „Vor Wiederherstellung“ deiner aktuellen Daten gespeichert und 30 Tage aufbewahrt, damit du das rückgängig machen kannst.",
-  "@backupRestoreConfirmPointInTime": {
-    "placeholders": {
-      "date": {
-        "type": "String"
-      }
-    }
-  },
-  "backupOldNoFiles": "Dieses Backup enthält keine Dateien. Die Aufzeichnungen werden wiederhergestellt, deine aktuellen Dateien bleiben erhalten.",
-  "backupSafetyName": "Vor Wiederherstellung {date}",
-  "@backupSafetyName": {
-    "placeholders": {
-      "date": {
-        "type": "String"
-      }
-    }
-  },
-  "backupRestoreFailed": "Wiederherstellung fehlgeschlagen. Deine Daten wurden nicht geändert; das Backup \"Vor Wiederherstellung\" ist in der Liste.",
-  "backupSafetyFailed": "Das Sicherheits-Backup konnte nicht erstellt werden, daher wurde nichts wiederhergestellt. Prüfe den freien Speicher und den Ordner.",
-  "backupFilesNotRestored": "{count, plural, =1{1 Datei konnte nicht wiederhergestellt werden.} other{{count} Dateien konnten nicht wiederhergestellt werden.}}",
-  "@backupFilesNotRestored": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "backupRestorePhoneOffline": "Dein Telefon ist nicht verbunden. Seit der letzten Synchronisierung darauf hinzugefügte Aufzeichnungen kommen zurück, sobald es sich wieder verbindet; Änderungen an vorhandenen Aufzeichnungen werden durch das Backup ersetzt.",
   "desktopSyncFailed": "Synchronisierung fehlgeschlagen. Prüfe die Verbindung und versuche es erneut.",
   "desktopHandoverTransfer": "Übertragung",
   "desktopHandoverNoActive": "Keine aktiven Übergaben",
@@ -1125,12 +1087,8 @@
   "desktopHandoverFilesProgress": "{received}/{total} Dateien",
   "desktopHandoverTransferComplete": "Übertragung abgeschlossen",
   "desktopHandoverReceivingFiles": "Dateien werden empfangen...",
-  "desktopHandoverProcessingStatus": "Wird verarbeitet...",
-  "desktopHandoverSendingResults": "Ergebnisse werden gesendet...",
-  "desktopHandoverDone": "Abgeschlossen",
   "desktopHandoverStatusError": "Fehler",
-  "desktopHandoverWaitingForResults": "Warte auf Ergebnisse...",
-  "desktopHandoverNotAccepted": "Der Desktop hat die Dokumente nicht angenommen.",
+  "desktopHandoverNotAccepted": "Der Desktop hat nicht geantwortet. Stelle sicher, dass HealthWallet dort geöffnet und aktuell ist.",
   "desktopHandoverFileMissing": "Ein Dokument wurde auf diesem Gerät nicht gefunden.",
   "desktopHandoverCancelled": "Abgebrochen",
   "desktopHandoverFailed": "Verarbeitung fehlgeschlagen. Bitte versuche es erneut.",
@@ -1140,7 +1098,6 @@
   "traySyncStatus": "Synchronisierung: {status}",
   "trayUpToDate": "Aktuell",
   "trayQuit": "{appName} beenden",
-  "desktopFinishedProcessing": "Desktop hat die Verarbeitung abgeschlossen",
   "biometricAuthReason": "Bitte authentifiziere dich, um auf dein HealthWallet.me zuzugreifen",
   "sourceUploadedOn": "Hochgeladen {date}",
   "shareStatusReadyToShare": "Bereit zum Teilen",
@@ -1685,6 +1642,82 @@
   "desktopNewQrUnpairsHint": "Ein neuer QR-Code entkoppelt dieses Telefon; damit koppelst du ein anderes.",
   "desktopNotFound": "Desktop nicht gefunden. Prüfe, ob HealthWallet dort geöffnet ist und beide Geräte im selben Netzwerk sind.",
   "desktopBackupSucceededMessage": "\"{name}\" wurde gespeichert. Sie enthält {count} Aufzeichnungen.",
+  "holderQuestionTitle": "Wem gehören diese Aufzeichnungen?",
+  "holderQuestionMessage": "Es sind Aufzeichnungen für {name} eingegangen. Diese Person passt zu niemandem in deiner Wallet. Wer ist das?",
+  "holderQuestionSomeoneElse": "Jemand anderes",
+  "fhirTypeVisionPrescription": "Brillenrezept",
+  "categoryVisionPrescriptions": "Brillenrezepte",
+  "lensTypeMultifocal": "Gleitsichtbrille",
+  "lensTypeDistance": "Fernbrille",
+  "lensTypeReading": "Lesebrille",
+  "lensTypeOther": "Brille",
+  "fieldLensType": "Glasart",
+  "fieldDateWritten": "Ausgestellt am",
+  "fieldRecommendedFollowUp": "Nächste Kontrolle",
+  "labelSerialNumber": "Seriennummer",
+  "visionEyeRight": "Rechtes Auge",
+  "visionEyeLeft": "Linkes Auge",
+  "visionSphere": "Stärke",
+  "visionCylinder": "Astigmatismus",
+  "visionAxis": "Winkel",
+  "visionAdd": "Lesezusatz",
+  "visionPrism": "Prisma",
+  "visionBase": "Prismenbasis",
+  "visionInvalidDioptre": "Einen Wert wie +1.25 eingeben, in Schritten von 0.25",
+  "visionInvalidAxis": "Einen Winkel von 0 bis 180 eingeben",
+  "stagedAlreadyInWallet": "Bereits in deiner Wallet",
+  "stagedWillBeCompleted": "Bereits in deiner Wallet, wird ergänzt",
+  "documentAlreadyInWallet": "Alles aus diesem Dokument ist bereits in deiner Wallet",
+  "processingStatusHandedOver": "Auf dem Desktop",
+  "desktopHandoverSent": "An den Desktop gesendet. Du wirst benachrichtigt, sobald du es hier oder auf dem Desktop prüfen kannst.",
+  "desktopHandoverConnectionLost": "Die Verbindung zum Desktop wurde unterbrochen. Versuche es erneut.",
+  "desktopHandoverTooLarge": "Das Dokument ist zu groß für den Desktop (über 200 MB).",
+  "desktopHandoverTimedOut": "Der Desktop hat den Empfang des Dokuments abgebrochen. Versuche es erneut.",
+  "handoverOnDesktopTitle": "Wird auf dem Desktop verarbeitet",
+  "handoverOnDesktopMessage": "Der Entwurf kommt zum Prüfen hierher zurück, sobald der Desktop fertig ist. Du kannst ihn auch auf dem Desktop prüfen und speichern.",
+  "handoverTakeBack": "Stattdessen auf diesem Telefon verarbeiten",
+  "handoverReadyToReview": "{origin}: bereit zur Prüfung",
+  "handoverFailedOnDesktop": "{origin}: Der Desktop konnte es nicht verarbeiten. Es ist wieder auf diesem Telefon.",
+  "handoverNoModelOnDesktop": "{origin}: Auf dem Desktop gibt es kein KI-Modell. Es ist wieder auf diesem Telefon.",
+  "handoverDeletedOnDesktop": "{origin} wurde auf dem Desktop gelöscht. Es ist wieder auf diesem Telefon.",
+  "handoverSavedOnDesktop": "{origin} wurde auf dem Desktop gespeichert. Die Einträge kommen mit der nächsten Synchronisierung auf dieses Telefon.",
+  "handoverSavedOnPhone": "{origin} wurde auf dem Telefon gespeichert.",
+  "handoverDraftSavedOnDesktop": "{origin} wurde auf dem Desktop gespeichert. Hier gemachte Änderungen am Entwurf wurden nicht übernommen.",
+  "handoverDraftSavedOnPhone": "{origin} wurde auf dem Telefon gespeichert. Hier gemachte Änderungen am Entwurf wurden nicht übernommen.",
+  "failedToSaveSetting": "„{setting}“ konnte nicht gespeichert werden. Versuche es erneut.",
+  "processingFailedMemory": "Nicht genügend freier Speicher, um das KI-Modell auszuführen. Schließe andere Apps und versuche es erneut, oder schalte den Tiefenscan in den KI-Einstellungen aus.",
+  "tokenPresetLowHint": "ein paar Werte",
+  "tokenPresetMediumHint": "ein kurzer Bericht",
+  "tokenPresetHighHint": "ein vollständiger Bericht",
+  "backupRecordsOnly": "Nur Aufzeichnungen",
+  "backupRestoreConfirmPointInTime": "Dadurch werden deine Aufzeichnungen auf diesem Computer und deinem gekoppelten Telefon durch das Backup vom {date} ersetzt. Seitdem hinzugefügte Aufzeichnungen werden entfernt. Vorher wird eine Kopie „Vor Wiederherstellung“ deiner aktuellen Daten gespeichert und 30 Tage aufbewahrt, damit du das rückgängig machen kannst.",
+  "@backupRestoreConfirmPointInTime": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOldNoFiles": "Dieses Backup enthält keine Dateien. Die Aufzeichnungen werden wiederhergestellt, deine aktuellen Dateien bleiben erhalten.",
+  "backupSafetyName": "Vor Wiederherstellung {date}",
+  "@backupSafetyName": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreFailed": "Wiederherstellung fehlgeschlagen. Deine Daten wurden nicht geändert; das Backup \"Vor Wiederherstellung\" ist in der Liste.",
+  "backupSafetyFailed": "Das Sicherheits-Backup konnte nicht erstellt werden, daher wurde nichts wiederhergestellt. Prüfe den freien Speicher und den Ordner.",
+  "backupFilesNotRestored": "{count, plural, =1{1 Datei konnte nicht wiederhergestellt werden.} other{{count} Dateien konnten nicht wiederhergestellt werden.}}",
+  "@backupFilesNotRestored": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestorePhoneOffline": "Dein Telefon ist nicht verbunden. Seit der letzten Synchronisierung darauf hinzugefügte Aufzeichnungen kommen zurück, sobald es sich wieder verbindet; Änderungen an vorhandenen Aufzeichnungen werden durch das Backup ersetzt.",
   "aiModelDeleteTitle": "{name} löschen?",
   "aiModelDeleteMessage": "Das Modell und seine Tiefenscan-Dateien werden von diesem Gerät entfernt. Um wieder damit zu scannen, musst du es erneut herunterladen (~{size} MB)."
 }

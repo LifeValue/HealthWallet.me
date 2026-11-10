@@ -59,7 +59,9 @@ void main() {
         .where((e) => e.value.$1 != e.value.$2)
         .map((e) => e.key)
         .toList();
-    expect(differing, ['fhirType.MedicationStatement']);
+    // A handed-over session is stored as "Handed Over" and shown by where it
+    // is: "On the desktop".
+    expect(differing, ['fhirType.MedicationStatement', 'status.handedOver']);
     expect(
       FhirType.MedicationStatement.localizedName(l10n),
       'Medication Statement',

@@ -1,6 +1,7 @@
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/extractor_provenance.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/text_field_descriptor.dart';
@@ -21,6 +22,9 @@ abstract class MappingPractitioner
     @Default(MappedProperty()) MappedProperty practitionerName,
     @Default(MappedProperty()) MappedProperty specialty,
     @Default(MappedProperty()) MappedProperty identifier,
+
+    /// The extractor tag code (`<id>@<version>`), empty otherwise.
+    @Default('') String provenance,
   }) = _MappingPractitioner;
 
   factory MappingPractitioner.fromJson(Map<String, dynamic> json) {
@@ -29,6 +33,7 @@ abstract class MappingPractitioner
       practitionerName: MappedProperty.fromJson(json['practitionerName']),
       specialty: MappedProperty.fromJson(json['specialty']),
       identifier: MappedProperty.fromJson(json['identifier']),
+      provenance: json['provenance'] as String? ?? '',
     );
   }
 
@@ -48,6 +53,7 @@ abstract class MappingPractitioner
     'practitionerName': practitionerName.toJson(),
     'specialty': specialty.toJson(),
     'identifier': identifier.toJson(),
+    if (provenance.isNotEmpty) 'provenance': provenance,
   };
 
   @override
@@ -58,7 +64,7 @@ abstract class MappingPractitioner
     fhir_r4.FhirMeta? meta,
   }) {
     final fhir_r4.Practitioner practitioner = fhir_r4.Practitioner(
-      meta: meta,
+      meta: ExtractorProvenance.merge(meta, provenance),
       name: [
         fhir_r4.HumanName(text: fhir_r4.FhirString(practitionerName.value)),
       ],
@@ -138,6 +144,7 @@ abstract class MappingPractitioner
               ? 1
               : identifier.confidenceLevel,
         ),
+        provenance: provenance,
       );
 
   @override

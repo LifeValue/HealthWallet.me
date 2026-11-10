@@ -1,15 +1,16 @@
 import 'dart:async';
 
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/holders/domain/entity/holder.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
 import 'package:injectable/injectable.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 part 'patient_bloc.freezed.dart';
 part 'patient_event.dart';
@@ -17,36 +18,50 @@ part 'patient_state.dart';
 
 @injectable
 class PatientBloc extends Bloc<PatientEvent, PatientState> {
-  final RecordsRepository _recordsRepository;
-  final PatientDeduplicationService _deduplicationService;
+  final HolderService _holderService;
+  final HolderSelection _selection;
   final PatientEditService _patientEditService;
-  static const String _selectedPatientIdKey = 'selected_patient_id';
+  late final StreamSubscription<HolderScope> _scopeChanges;
+
+  /// The last selection shown, so the one this bloc asked for isn't shown
+  /// twice when it also arrives through [HolderSelection.changes].
+  HolderScope? _shown;
 
   PatientBloc(
-    this._recordsRepository,
-    this._deduplicationService,
+    this._holderService,
+    this._selection,
     this._patientEditService,
   ) : super(const PatientState()) {
-    on<PatientInitialised>(_onInitialised);
-    on<PatientPatientsLoaded>(_onPatientsLoaded);
-    on<PatientReorder>(_onPatientReorder);
-    on<PatientDataUpdatedFromSync>(_onDataUpdatedFromSync);
-    on<PatientEditStarted>(_onEditStarted);
-    on<PatientEditCancelled>(_onEditCancelled);
-    on<PatientEditSaved>(_onEditSaved);
-    on<PatientSelectionChanged>(_onSelectionChanged);
+    on<PatientInitialised>(_onInitialised, transformer: restartable());
+    on<PatientPatientsLoaded>(_onPatientsLoaded, transformer: restartable());
+    on<PatientScopeChanged>(_onScopeChanged, transformer: sequential());
+    on<PatientReorder>(_onPatientReorder, transformer: droppable());
+    on<PatientEditStarted>(_onEditStarted, transformer: sequential());
+    on<PatientEditCancelled>(_onEditCancelled, transformer: sequential());
+    on<PatientEditSaved>(_onEditSaved, transformer: droppable());
+    on<PatientSelectionChanged>(
+      _onSelectionChanged,
+      transformer: sequential(),
+    );
+    on<PatientHolderAnswered>(_onHolderAnswered, transformer: droppable());
+    on<PatientBloodTypesRequested>(
+      (_, emit) => _loadBloodTypes(emit),
+      transformer: restartable(),
+    );
+    _scopeChanges = _selection.changes.listen(
+      (scope) => add(PatientScopeChanged(scope)),
+    );
   }
 
-  Future<void> _saveSelectedPatient(String patientId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_selectedPatientIdKey, patientId);
+  @override
+  Future<void> close() async {
+    await _scopeChanges.cancel();
+    return super.close();
   }
 
-  Future<String?> _loadSelectedPatient() async {
-    final prefs = await SharedPreferences.getInstance();
-    final patientId = prefs.getString(_selectedPatientIdKey);
-    return patientId;
-  }
+  /// The holder a listed patient stands for.
+  String _holderIdOf(String patientId) =>
+      state.patientGroups[patientId]?.id ?? patientId;
 
   Future<void> _onInitialised(
     PatientInitialised event,
@@ -55,176 +70,92 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
     await _loadPatients(emit);
   }
 
-  PatientGroup? _findMatchingGroupByOldPatient(
-    Map<String, PatientGroup> newGroups,
-    PatientGroup oldGroup,
-  ) {
-    final oldRepresentative = oldGroup.representativePatient;
-
-    for (final group in newGroups.values) {
-      final hasMatchingResourceId = group.allPatientInstances.any(
-        (p) => p.resourceId == oldRepresentative.resourceId,
-      );
-
-      if (hasMatchingResourceId) {
-        return group;
-      }
-
-      final oldIdentifiers = oldRepresentative.identifier
-          ?.where((id) => id.value?.isNotEmpty == true)
-          .map((id) => id.value)
-          .toSet();
-      final newIdentifiers = group.representativePatient.identifier
-          ?.where((id) => id.value?.isNotEmpty == true)
-          .map((id) => id.value)
-          .toSet();
-
-      if (oldIdentifiers != null &&
-          newIdentifiers != null &&
-          oldIdentifiers.intersection(newIdentifiers).isNotEmpty) {
-        return group;
-      }
-    }
-
-    return null;
-  }
-
   Future<void> _loadPatients(
     Emitter<PatientState> emit, {
     bool preserveOrder = false,
-    String? preservePatientId,
   }) async {
     emit(state.copyWith(status: const PatientStatus.loading()));
-
     try {
-      int? oldPosition;
-      if (preserveOrder && preservePatientId != null) {
-        oldPosition = state.patients.indexWhere(
-          (p) => p.id == preservePatientId,
-        );
-      }
-
-      final allPatientsResources = await _recordsRepository.getResources(
-        resourceTypes: [FhirType.Patient],
-        limit: 100,
-      );
-
-      final allPatients = allPatientsResources.whereType<Patient>().toList();
-
-      final uniquePatients = _deduplicationService.getUniquePatients(
-        allPatients,
-      );
-
-      final patientGroups = _deduplicationService.deduplicatePatients(
-        allPatients,
-      );
-
-      final enhancedPatientGroups = await _deduplicationService
-          .enhancePatientGroupsWithSubjectId(
-            patientGroups,
-            allPatients,
-          );
-
-      final savedPatientId = await _loadSelectedPatient();
-
-      Set<String> expandedIds = <String>{};
-      String? selectedPatientId;
-      Patient? patientToPreserve;
-
-      if (preserveOrder &&
-          preservePatientId != null &&
-          oldPosition != null &&
-          oldPosition >= 0) {
-        var matchingGroup = _deduplicationService.findPatientGroup(
-          enhancedPatientGroups,
-          preservePatientId,
-        );
-
-        if (matchingGroup == null) {
-          final oldPatientGroup = state.patientGroups[preservePatientId];
-          if (oldPatientGroup != null) {
-            matchingGroup = _findMatchingGroupByOldPatient(
-              enhancedPatientGroups,
-              oldPatientGroup,
-            );
-          }
-        }
-
-        if (matchingGroup != null) {
-          patientToPreserve = matchingGroup.representativePatient;
-          selectedPatientId = patientToPreserve.id;
-          expandedIds = {patientToPreserve.id};
-        }
-      }
-
-      if (preserveOrder &&
-          patientToPreserve != null &&
-          oldPosition != null &&
-          oldPosition >= 0) {
-        final patient = patientToPreserve;
-        final position = oldPosition;
-        final newPatientIndex = uniquePatients.indexWhere(
-          (p) => p.id == patient.id,
-        );
-        if (newPatientIndex != -1) {
-          uniquePatients.removeAt(newPatientIndex);
-          final insertIndex = position < uniquePatients.length
-              ? position
-              : uniquePatients.length;
-          uniquePatients.insert(insertIndex, patient);
-        }
-      } else {
-        if (savedPatientId != null &&
-            uniquePatients.any((p) => p.id == savedPatientId)) {
-          final savedPatient = uniquePatients.firstWhere(
-            (p) => p.id == savedPatientId,
-          );
-          expandedIds = {savedPatient.id};
-          selectedPatientId = savedPatient.id;
-
-          if (uniquePatients.first.id != savedPatient.id) {
-            uniquePatients.remove(savedPatient);
-            uniquePatients.insert(0, savedPatient);
-          }
-        } else {
-          expandedIds = uniquePatients.isNotEmpty
-              ? {uniquePatients.first.id}
-              : <String>{};
-          if (uniquePatients.isNotEmpty) {
-            selectedPatientId = uniquePatients.first.id;
-          }
-        }
-      }
-
-      emit(
-        state.copyWith(
-          status: const PatientStatus.success(),
-          patients: uniquePatients,
-          allPatientsAcrossSources: allPatients,
-          patientGroups: enhancedPatientGroups,
-          expandedPatientIds: expandedIds,
-          selectedPatientId: selectedPatientId,
-        ),
-      );
-
-      if (selectedPatientId != null) {
-        await _saveSelectedPatient(selectedPatientId);
-      }
+      _show(emit, await _selection.refresh(), preserveOrder: preserveOrder);
+      await _loadBloodTypes(emit);
     } catch (e) {
       logger.e('Error in _loadPatients: $e');
       emit(state.copyWith(status: PatientStatus.failure(e)));
     }
   }
 
+  /// A selection made elsewhere (a scan, the demo data) or the people read
+  /// again by someone else.
+  Future<void> _onScopeChanged(
+    PatientScopeChanged event,
+    Emitter<PatientState> emit,
+  ) async {
+    if (identical(event.scope, _shown) || !event.scope.loaded) return;
+    final moved = event.scope.holder?.patientId != state.selectedPatientId;
+    _show(emit, event.scope, preserveOrder: !moved);
+    await _loadBloodTypes(emit);
+  }
+
+  Future<void> _loadBloodTypes(Emitter<PatientState> emit) async {
+    final bloodTypes = <String, String?>{};
+    for (final patient in state.patients) {
+      try {
+        bloodTypes[patient.id] = await _patientEditService.getCurrentBloodType(
+          patient,
+        );
+      } catch (e) {
+        logger.w('Reading the blood type of ${patient.id} failed', e);
+        bloodTypes[patient.id] = null;
+      }
+    }
+    emit(state.copyWith(bloodTypes: bloodTypes));
+  }
+
+  /// One patient per person. The selected person comes first, unless the
+  /// list keeps its order (after an edit, or when only the people changed),
+  /// which also keeps what is expanded.
+  void _show(
+    Emitter<PatientState> emit,
+    HolderScope scope, {
+    required bool preserveOrder,
+  }) {
+    _shown = scope;
+    final holders = scope.directory.holders;
+    final selected = scope.holder;
+    final patients = [for (final h in holders) h.representativePatient];
+    if (preserveOrder) {
+      final position = {
+        for (final (i, p) in state.patients.indexed) _holderIdOf(p.id): i,
+      };
+      final holderOf = {for (final h in holders) h.patientId: h.id};
+      int at(Patient p) => position[holderOf[p.id]] ?? position.length;
+      patients.sort((a, b) => at(a).compareTo(at(b)));
+    } else if (selected != null) {
+      patients
+        ..removeWhere((p) => p.id == selected.patientId)
+        ..insert(0, selected.representativePatient);
+    }
+    final ids = {for (final p in patients) p.id};
+
+    emit(
+      state.copyWith(
+        status: const PatientStatus.success(),
+        patients: patients,
+        patientGroups: {for (final h in holders) h.patientId: h},
+        holderQuestions: scope.directory.questions,
+        selectedPatientId: selected?.patientId,
+        expandedPatientIds: preserveOrder
+            ? state.expandedPatientIds.intersection(ids)
+            : {?selected?.patientId},
+      ),
+    );
+  }
+
   Future<void> _onPatientsLoaded(
     PatientPatientsLoaded event,
     Emitter<PatientState> emit,
   ) async {
-    await _loadPatients(
-      emit,
-      preserveOrder: event.preserveOrder,
-      preservePatientId: event.preservePatientId,
-    );
+    await _loadPatients(emit, preserveOrder: event.preserveOrder);
   }
 
   Future<void> _onPatientReorder(
@@ -285,8 +216,6 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
     currentPatients.remove(selectedPatient);
     currentPatients.insert(0, selectedPatient);
 
-    await _saveSelectedPatient(selectedPatient.id);
-
     emit(
       state.copyWith(
         patients: currentPatients,
@@ -295,6 +224,7 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
         swappingToPatientId: '',
       ),
     );
+    await _selection.select(_holderIdOf(selectedPatient.id));
 
     await Future.delayed(const Duration(milliseconds: 560));
 
@@ -329,10 +259,17 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
     );
   }
 
-  Future<void> _onDataUpdatedFromSync(
-    PatientDataUpdatedFromSync event,
+  Future<void> _onHolderAnswered(
+    PatientHolderAnswered event,
     Emitter<PatientState> emit,
-  ) async {}
+  ) async {
+    try {
+      await _holderService.answer(event.ask.question, holderId: event.holderId);
+    } catch (e, s) {
+      logger.e('Saving whose records arrived failed', e, s);
+    }
+    await _loadPatients(emit, preserveOrder: true);
+  }
 
   Future<void> _onEditStarted(
     PatientEditStarted event,
@@ -379,7 +316,9 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
 
       final availableSources = event.availableSources.cast<Source>();
 
-      await _patientEditService.savePatientEdits(
+      // The row the edit went to: the person's wallet copy when the row
+      // shown came from a provider.
+      final saved = await _patientEditService.savePatientEdits(
         currentPatient: currentPatient,
         given: event.given,
         family: event.family,
@@ -390,25 +329,21 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
         availableSources: availableSources,
       );
 
-      await _loadPatients(
-        emit,
-        preserveOrder: true,
-        preservePatientId: event.patientId,
+      final currentBloodType = await _patientEditService.getCurrentBloodType(
+        saved,
       );
+      if (currentBloodType != event.bloodType) {
+        await _patientEditService.updateBloodTypeObservation(
+          saved,
+          event.bloodType,
+        );
+      }
+
+      await _loadPatients(emit, preserveOrder: true);
 
       final finalExpandedIds = wasExpanded
           ? state.expandedPatientIds
           : <String>{};
-
-      final currentBloodType = await _patientEditService.getCurrentBloodType(
-        currentPatient,
-      );
-      if (currentBloodType != event.bloodType) {
-        await _patientEditService.updateBloodTypeObservation(
-          currentPatient,
-          event.bloodType,
-        );
-      }
 
       emit(
         state.copyWith(
@@ -440,8 +375,6 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
     Emitter<PatientState> emit,
   ) async {
     try {
-      await _saveSelectedPatient(event.patientId);
-
       final updatedPatients = List<Patient>.from(state.patients);
       final index = updatedPatients.indexWhere((p) => p.id == event.patientId);
       if (index > 0) {
@@ -456,6 +389,7 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
           expandedPatientIds: {event.patientId},
         ),
       );
+      await _selection.select(_holderIdOf(event.patientId));
     } catch (e) {
       logger.e('Error in _onSelectionChanged: $e');
       emit(

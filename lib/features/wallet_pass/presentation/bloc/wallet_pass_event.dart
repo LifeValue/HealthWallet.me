@@ -13,6 +13,9 @@ abstract class WalletPassRequested extends WalletPassEvent
     required WalletPassType type,
     required String patientId,
 
+    /// All the person's sources, whatever Home's filter.
+    List<String>? sourceIds,
+
     /// The pass texts; the active app language when null.
     WalletPassLabels? labels,
   }) = _WalletPassRequested;

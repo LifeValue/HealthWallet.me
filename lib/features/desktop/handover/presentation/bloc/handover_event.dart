@@ -3,16 +3,13 @@ part of 'handover_bloc.dart';
 @freezed
 sealed class HandoverEvent with _$HandoverEvent {
   const factory HandoverEvent.initialised() = HandoverInitialised;
-  const factory HandoverEvent.offerReceived({
-    required HandoverSession session,
-  }) = HandoverOfferReceived;
-  const factory HandoverEvent.fileReceived({
-    required String sessionId,
-  }) = HandoverFileReceived;
-  const factory HandoverEvent.sessionUpdated({
-    required HandoverSession session,
-  }) = HandoverSessionUpdated;
-  const factory HandoverEvent.processingComplete({
-    required String sessionId,
-  }) = HandoverProcessingComplete;
+  const factory HandoverEvent.transferUpdated({
+    required HandoverSession transfer,
+  }) = HandoverTransferUpdated;
+  const factory HandoverEvent.phoneEventReceived({
+    required IncomingHandoverEvent event,
+  }) = HandoverPhoneEventReceived;
+  const factory HandoverEvent.processingChanged({
+    required ProcessingState processing,
+  }) = HandoverProcessingChanged;
 }

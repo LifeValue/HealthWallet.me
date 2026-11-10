@@ -1,15 +1,15 @@
 import 'package:bloc_test/bloc_test.dart' show MockBloc, whenListen;
-import 'package:fhir_r4/fhir_r4.dart' show AdministrativeGender, FhirString;
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4 show HumanName;
+import 'package:fhir_r4/fhir_r4.dart' show AdministrativeGender, FhirString;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/theme/theme.dart';
+import 'package:health_wallet/features/holders/domain/entity/holder.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
@@ -225,8 +225,8 @@ void main() {
     });
   }
 
-  testWidgets('shows and keeps the wallet copy\'s gender, not the '
-      'provider\'s', (tester) async {
+  testWidgets('shows and keeps the gender of the row shown for the person, '
+      'their wallet copy, not the provider\'s', (tester) async {
     final provider = Patient(
       id: 'patient-1',
       sourceId: 'provider-1',
@@ -254,8 +254,9 @@ void main() {
       const Stream<PatientState>.empty(),
       initialState: PatientState(
         patientGroups: {
-          provider.id: PatientGroup(
-            representativePatient: provider,
+          provider.id: Holder(
+            id: provider.id,
+            representativePatient: wallet,
             sourceIds: [provider.sourceId, wallet.sourceId],
             allPatientInstances: [provider, wallet],
           ),

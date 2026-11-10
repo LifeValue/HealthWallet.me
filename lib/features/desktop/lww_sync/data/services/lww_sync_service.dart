@@ -261,10 +261,17 @@ class LwwSyncService {
       upTo = seq;
     }
 
+    final more = await _db
+        .customSelect(
+          'SELECT EXISTS(SELECT 1 FROM sync_outbox WHERE seq > ?) AS more',
+          variables: [Variable.withInt(upTo)],
+        )
+        .getSingle();
     return SyncBatch(
       id: upTo,
       deviceId: await getLocalDeviceId(),
       tables: tables,
+      more: more.data['more'] == 1,
     );
   }
 

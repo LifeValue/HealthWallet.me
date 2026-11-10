@@ -13,8 +13,6 @@ import 'package:health_wallet/features/desktop/handover/presentation/bloc/handov
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 
-import '../../../helpers/log_capture.dart';
-
 class _MockProcessingBloc extends MockBloc<ProcessingEvent, ProcessingState>
     implements ProcessingBloc {}
 
@@ -45,7 +43,6 @@ class _NavigationController extends Fake
 }
 
 void main() {
-  final logs = captureLogs();
   late _MockProcessingBloc processingBloc;
   late _MockSyncBloc syncBloc;
 
@@ -89,8 +86,8 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('on the phone, a missing handover sender is logged and the '
-      'dashboard still opens', (tester) async {
+  testWidgets('on the phone, the dashboard opens without the desktop\'s '
+      'handover', (tester) async {
     getIt
       ..registerSingleton<AppPlatform>(AppPlatform.mobile)
       // The import page is the last of the phone's four pages.
@@ -101,37 +98,27 @@ void main() {
     await pumpDashboard(tester);
 
     expect(find.byType(ImportPage), findsOne);
-    expect(
-      logs,
-      loggedWarning('Could not listen for handover results from the desktop'),
-    );
   });
 
-  testWidgets('on the desktop, a handover bloc that cannot be resolved for '
-      'the results is logged and the dashboard still opens', (tester) async {
+  testWidgets('on the desktop, the dashboard opens with the handover bloc', (
+    tester,
+  ) async {
     final handoverBloc = _MockHandoverBloc();
     whenListen(
       handoverBloc,
       const Stream<HandoverState>.empty(),
       initialState: HandoverState.initial(),
     );
-    var resolutions = 0;
     getIt
       ..registerSingleton<AppPlatform>(AppPlatform.desktop)
       // The import page is the last of the desktop's three pages.
       ..registerSingleton<PageViewNavigationController>(
         _NavigationController(2),
       )
-      // Resolves for the transfer listener, then fails for the results one.
-      ..registerFactory<HandoverBloc>(
-        () => resolutions++ == 0
-            ? handoverBloc
-            : throw StateError('HandoverBloc is not available'),
-      );
+      ..registerSingleton<HandoverBloc>(handoverBloc);
 
     await pumpDashboard(tester);
 
     expect(find.byType(ImportPage), findsOne);
-    expect(logs, loggedWarning('Could not listen for finished handovers'));
   });
 }

@@ -12,12 +12,12 @@ import 'package:health_wallet/features/desktop/communication/data/services/disco
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
-import 'package:health_wallet/features/desktop/handover/data/services/handover_service.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/bloc/handover_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/desktop/tray/data/services/tray_service.dart';
 import 'package:health_wallet/features/desktop/tray/data/services/window_lifecycle_service.dart';
 import 'package:health_wallet/features/desktop/tray/presentation/bloc/tray_bloc.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_linking_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 
 void main() async {
@@ -29,6 +29,9 @@ void main() async {
 
   await configureDependencies();
 
+  // Before the first screen asks whose records to show.
+  await getIt<HolderLinkingService>().linkUnassigned();
+
   getIt.registerLazySingleton<CommunicationBloc>(
     () => CommunicationBloc(
       getIt<AppPlatform>(),
@@ -37,7 +40,6 @@ void main() async {
       getIt<DiscoveryService>(),
       onPhoneConnected: () {
         getIt<BackupBloc>().sendBackupStatus();
-        getIt<HandoverService>().resendPendingResults();
       },
     ),
   );

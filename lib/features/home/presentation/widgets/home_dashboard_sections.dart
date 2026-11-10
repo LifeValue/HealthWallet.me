@@ -6,7 +6,6 @@ import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/utils/patient_source_utils.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/overlay_annotations/overlay_annotations.dart';
 import 'package:health_wallet/features/home/core/constants/home_constants.dart';
@@ -22,7 +21,6 @@ import 'package:health_wallet/features/home/presentation/widgets/home_section_he
 import 'package:health_wallet/features/home/presentation/widgets/section_info_modal.dart';
 import 'package:health_wallet/features/home/presentation/widgets/source/source_selector_widget.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 
 class HomeDashboardSections extends StatelessWidget {
   final HomeState state;
@@ -150,10 +148,10 @@ class HomeDashboardSections extends StatelessWidget {
           subtitle: SourceSelectorWidget(
             sources: state.sources,
             selectedSource: state.selectedSource,
-            onSourceChanged: (sourceId, patientSourceIds) {
-              context.read<HomeBloc>().add(
-                HomeSourceChanged(sourceId, patientSourceIds: patientSourceIds),
-              );
+            holderSourceIds: state.scope.holder?.sourceIds,
+            holderName: state.scope.holder?.representativePatient.displayTitle,
+            onSourceChanged: (sourceId) {
+              context.read<HomeBloc>().add(HomeSourceChanged(sourceId));
             },
             currentPatient: state.patient,
             onSourceLabelEdit: (source) {
@@ -162,31 +160,7 @@ class HomeDashboardSections extends StatelessWidget {
               );
             },
             onSourceDelete: (source) {
-              final patientSourceIds = PatientSourceUtils.getPatientSourceIds(
-                context,
-              );
-              final filteredPatientSourceIds = patientSourceIds
-                  ?.where((id) => id != source.id)
-                  .toList();
-
-              final patientState = context.read<PatientBloc>().state;
-              final selectedPatientId = patientState.selectedPatientId;
-
-              context.read<HomeBloc>().add(
-                HomeSourceDeleted(
-                  source.id,
-                  patientSourceIds: filteredPatientSourceIds,
-                ),
-              );
-
-              if (selectedPatientId != null) {
-                context.read<PatientBloc>().add(
-                  PatientPatientsLoaded(
-                    preserveOrder: true,
-                    preservePatientId: selectedPatientId,
-                  ),
-                );
-              }
+              context.read<HomeBloc>().add(HomeSourceDeleted(source.id));
             },
           ),
           filterLabel: state.overviewViewMode == OverviewViewMode.specialties

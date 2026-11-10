@@ -63,7 +63,6 @@
   "errorUpdatingSourceLabel": "Eroare la actualizarea etichetei sursei",
   "getStarted": "Începe",
   "failedToUpdateDisplayName": "Nu s-a putut actualiza numele afișat",
-  "failedToSaveSetting": "Nu s-a putut salva setarea „{setting}”. Încearcă din nou.",
   "actionCannotBeUndone": "Această acțiune nu poate fi anulată.",
   "deleteRecordConfirm": "Ești sigur că vrei să ștergi această înregistrare?",
   "deleteNoteConfirm": "Ești sigur că vrei să ștergi această notă?",
@@ -125,6 +124,7 @@
   "fieldCannotBeEmpty": "Acest câmp nu poate fi gol",
   "selectDate": "Selectează data",
   "attachToEncounter": "Atașează la Consultație",
+  "attachToPatient": "Atașează la Pacient",
   "continueProcessing": "Continuă Procesarea",
   "recordsSavedTitle": "Salvat cu succes",
   "whatNextQuestion": "Ce ai dori să faci în continuare?",
@@ -215,7 +215,6 @@
   "chargerPluggedIn": "Încărcătorul este conectat.",
   "plugInChargerEllipsis": "Conectează încărcătorul...",
   "processingFailedCapacity": "Documentul este prea mare pentru memoria de lucru curentă a AI-ului.",
-  "processingFailedMemory": "Nu există suficientă memorie liberă pentru a rula modelul AI. Închide alte aplicații și încearcă din nou, sau dezactivează Scanare Profundă din Setări AI.",
   "processingFailedCapacitySuggestion": "Apasă pe pictograma de setări de mai sus și crește Memoria de lucru la 2048 sau mai mare, apoi reîncearcă.",
   "increaseAiModelCapacity": "Crește Capacitatea AI",
   "goBack": "Înapoi",
@@ -234,9 +233,6 @@
   "tokenPresetLow": "Scurt",
   "tokenPresetMedium": "Mediu",
   "tokenPresetHigh": "Lung",
-  "tokenPresetLowHint": "câteva valori",
-  "tokenPresetMediumHint": "un raport scurt",
-  "tokenPresetHighHint": "un raport complet",
   "tokenPresetCustom": "Personalizat",
   "setTokens": "Setează",
   "contextSizeLabel": "Memorie de lucru",
@@ -660,9 +656,6 @@
   "desktopCurrentDevice": "dispozitiv actual",
   "desktopHandoverPreparing": "Se pregătește...",
   "desktopHandoverSendingFiles": "Se trimit fișierele...",
-  "desktopHandoverProcessingOnDesktop": "Se procesează pe desktop...",
-  "desktopHandoverComplete": "Finalizat!",
-  "desktopHandoverError": "A apărut o eroare",
   "desktopHandoverSending": "Se trimite...",
   "desktopHandoverSendingToDesktop": "Se trimite pe desktop",
   "desktopHandoverFileCount": "{count} fișiere",
@@ -673,7 +666,6 @@
       }
     }
   },
-  "desktopHandoverSuccess": "Predat pe desktop",
   "desktopClose": "Închide",
   "desktopContinueImporting": "Continuă importul",
   "desktopHandoverToDesktop": "Predare pe desktop",
@@ -1073,7 +1065,6 @@
   "areYouSure": "Ești sigur?",
   "resourceNotViewable": "Această resursă nu este un fișier care poate fi vizualizat",
   "noFilePathFound": "Nu s-a găsit calea fișierului",
-  "handoverPatientMatched": "Pacientul din predare a fost asociat",
   "desktopDiscovering": "Se caută...",
   "desktopTransportWifi": "Wi-Fi",
   "desktopTransportDirect": "Direct",
@@ -1088,35 +1079,6 @@
   "desktopNoBackupLocation": "Nu este setată o locație de backup pe desktop. Deschide aplicația desktop și alege mai întâi un folder de backup.",
   "desktopBackupFailed": "Backup-ul a eșuat. Încearcă din nou.",
   "desktopBackupActionFailed": "Backup-urile nu au putut fi actualizate. Încearcă din nou.",
-  "backupRecordsOnly": "Doar înregistrări",
-  "backupRestoreConfirmPointInTime": "Aceasta înlocuiește înregistrările de pe acest computer și de pe telefonul asociat cu copia din {date}. Înregistrările adăugate între timp sunt eliminate. Mai întâi se salvează o copie „Înainte de restaurare” a datelor actuale, păstrată 30 de zile, ca să poți anula.",
-  "@backupRestoreConfirmPointInTime": {
-    "placeholders": {
-      "date": {
-        "type": "String"
-      }
-    }
-  },
-  "backupOldNoFiles": "Această copie nu conține fișiere. Înregistrările vor fi restaurate, iar fișierele actuale păstrate.",
-  "backupSafetyName": "Înainte de restaurare {date}",
-  "@backupSafetyName": {
-    "placeholders": {
-      "date": {
-        "type": "String"
-      }
-    }
-  },
-  "backupRestoreFailed": "Restaurarea a eșuat. Datele nu au fost modificate; copia \"Înainte de restaurare\" este în listă.",
-  "backupSafetyFailed": "Copia de siguranță nu a putut fi creată, așa că nu s-a restaurat nimic. Verifică spațiul liber și folderul.",
-  "backupFilesNotRestored": "{count, plural, one{Un fișier nu a putut fi restaurat.} few{{count} fișiere nu au putut fi restaurate.} other{{count} de fișiere nu au putut fi restaurate.}}",
-  "@backupFilesNotRestored": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "backupRestorePhoneOffline": "Telefonul nu este conectat. Înregistrările adăugate pe el de la ultima sincronizare vor reveni după ce se reconectează; modificările făcute la înregistrările existente vor fi înlocuite de copie.",
   "desktopSyncFailed": "Sincronizarea a eșuat. Verifică conexiunea și încearcă din nou.",
   "desktopHandoverTransfer": "Transfer",
   "desktopHandoverNoActive": "Nicio predare activă",
@@ -1124,12 +1086,8 @@
   "desktopHandoverFilesProgress": "{received}/{total} fișiere",
   "desktopHandoverTransferComplete": "Transfer finalizat",
   "desktopHandoverReceivingFiles": "Se primesc fișierele...",
-  "desktopHandoverProcessingStatus": "Se procesează...",
-  "desktopHandoverSendingResults": "Se trimit rezultatele...",
-  "desktopHandoverDone": "Finalizat",
   "desktopHandoverStatusError": "Eroare",
-  "desktopHandoverWaitingForResults": "Se așteaptă rezultatele...",
-  "desktopHandoverNotAccepted": "Desktopul nu a acceptat documentele.",
+  "desktopHandoverNotAccepted": "Desktopul nu a răspuns. Asigură-te că HealthWallet este deschis și actualizat pe el.",
   "desktopHandoverFileMissing": "Un document nu a fost găsit pe acest dispozitiv.",
   "desktopHandoverCancelled": "Anulat",
   "desktopHandoverFailed": "Procesarea a eșuat. Încearcă din nou.",
@@ -1139,7 +1097,6 @@
   "traySyncStatus": "Sincronizare: {status}",
   "trayUpToDate": "La zi",
   "trayQuit": "Închide {appName}",
-  "desktopFinishedProcessing": "Desktopul a terminat procesarea",
   "biometricAuthReason": "Autentifică-te pentru a accesa HealthWallet.me",
   "sourceUploadedOn": "Încărcat {date}",
   "shareStatusReadyToShare": "Gata de partajare",
@@ -1684,6 +1641,82 @@
   "desktopNewQrUnpairsHint": "Un cod QR nou dezasociază acest telefon; folosește-l pentru a asocia altul.",
   "desktopNotFound": "Desktopul nu a fost găsit. Verifică dacă HealthWallet este deschis pe el și dacă ambele dispozitive sunt în aceeași rețea.",
   "desktopBackupSucceededMessage": "\"{name}\" a fost salvată. Conține {count} înregistrări.",
+  "holderQuestionTitle": "Ale cui sunt aceste înregistrări?",
+  "holderQuestionMessage": "Au sosit înregistrări pentru {name}, care nu corespunde nimănui din portofelul tău. Cine este?",
+  "holderQuestionSomeoneElse": "Altcineva",
+  "fhirTypeVisionPrescription": "Rețetă de ochelari",
+  "categoryVisionPrescriptions": "Rețete de ochelari",
+  "lensTypeMultifocal": "Ochelari multifocali",
+  "lensTypeDistance": "Ochelari pentru distanță",
+  "lensTypeReading": "Ochelari pentru citit",
+  "lensTypeOther": "Ochelari",
+  "fieldLensType": "Tip de lentile",
+  "fieldDateWritten": "Data emiterii",
+  "fieldRecommendedFollowUp": "Următorul control",
+  "labelSerialNumber": "Număr de serie",
+  "visionEyeRight": "Ochi drept",
+  "visionEyeLeft": "Ochi stâng",
+  "visionSphere": "Dioptrii",
+  "visionCylinder": "Astigmatism",
+  "visionAxis": "Unghi",
+  "visionAdd": "Adiție citit",
+  "visionPrism": "Prismă",
+  "visionBase": "Baza prismei",
+  "visionInvalidDioptre": "Folosește o valoare ca +1.25, din 0.25 în 0.25",
+  "visionInvalidAxis": "Folosește un unghi între 0 și 180",
+  "stagedAlreadyInWallet": "Deja în portofelul tău",
+  "stagedWillBeCompleted": "Deja în portofelul tău, va fi completat",
+  "documentAlreadyInWallet": "Tot ce conține acest document este deja în portofelul tău",
+  "processingStatusHandedOver": "Pe desktop",
+  "desktopHandoverSent": "Trimis pe desktop. Vei fi anunțat când îl poți verifica, aici sau pe desktop.",
+  "desktopHandoverConnectionLost": "Conexiunea cu desktopul s-a întrerupt. Încearcă din nou.",
+  "desktopHandoverTooLarge": "Documentul este prea mare pentru a fi trimis pe desktop (peste 200 MB).",
+  "desktopHandoverTimedOut": "Desktopul a încetat să primească documentul. Încearcă din nou.",
+  "handoverOnDesktopTitle": "Se procesează pe desktop",
+  "handoverOnDesktopMessage": "Ciorna revine aici pentru verificare când desktopul termină. O poți verifica și salva și pe desktop.",
+  "handoverTakeBack": "Procesează pe acest telefon",
+  "handoverReadyToReview": "{origin}: gata de verificare",
+  "handoverFailedOnDesktop": "{origin}: desktopul nu l-a putut procesa. A revenit pe acest telefon.",
+  "handoverNoModelOnDesktop": "{origin}: nu există model AI pe desktop. A revenit pe acest telefon.",
+  "handoverDeletedOnDesktop": "{origin} a fost șters pe desktop. A revenit pe acest telefon.",
+  "handoverSavedOnDesktop": "{origin} a fost salvat pe desktop. Înregistrările ajung pe acest telefon la următoarea sincronizare.",
+  "handoverSavedOnPhone": "{origin} a fost salvat pe telefon.",
+  "handoverDraftSavedOnDesktop": "{origin} a fost salvat pe desktop. Modificările făcute aici ciornei nu au fost păstrate.",
+  "handoverDraftSavedOnPhone": "{origin} a fost salvat pe telefon. Modificările făcute aici ciornei nu au fost păstrate.",
+  "failedToSaveSetting": "Nu s-a putut salva setarea „{setting}”. Încearcă din nou.",
+  "processingFailedMemory": "Nu există suficientă memorie liberă pentru a rula modelul AI. Închide alte aplicații și încearcă din nou, sau dezactivează Scanare Profundă din Setări AI.",
+  "tokenPresetLowHint": "câteva valori",
+  "tokenPresetMediumHint": "un raport scurt",
+  "tokenPresetHighHint": "un raport complet",
+  "backupRecordsOnly": "Doar înregistrări",
+  "backupRestoreConfirmPointInTime": "Aceasta înlocuiește înregistrările de pe acest computer și de pe telefonul asociat cu copia din {date}. Înregistrările adăugate între timp sunt eliminate. Mai întâi se salvează o copie „Înainte de restaurare” a datelor actuale, păstrată 30 de zile, ca să poți anula.",
+  "@backupRestoreConfirmPointInTime": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOldNoFiles": "Această copie nu conține fișiere. Înregistrările vor fi restaurate, iar fișierele actuale păstrate.",
+  "backupSafetyName": "Înainte de restaurare {date}",
+  "@backupSafetyName": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreFailed": "Restaurarea a eșuat. Datele nu au fost modificate; copia \"Înainte de restaurare\" este în listă.",
+  "backupSafetyFailed": "Copia de siguranță nu a putut fi creată, așa că nu s-a restaurat nimic. Verifică spațiul liber și folderul.",
+  "backupFilesNotRestored": "{count, plural, one{Un fișier nu a putut fi restaurat.} few{{count} fișiere nu au putut fi restaurate.} other{{count} de fișiere nu au putut fi restaurate.}}",
+  "@backupFilesNotRestored": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestorePhoneOffline": "Telefonul nu este conectat. Înregistrările adăugate pe el de la ultima sincronizare vor reveni după ce se reconectează; modificările făcute la înregistrările existente vor fi înlocuite de copie.",
   "aiModelDeleteTitle": "Ștergi {name}?",
   "aiModelDeleteMessage": "Modelul și fișierele pentru Scanarea Profundă sunt șterse de pe acest dispozitiv. Ca să scanezi din nou cu el, va trebui să-l descarci din nou (~{size} MB)."
 }

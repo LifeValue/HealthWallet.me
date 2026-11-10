@@ -64,7 +64,6 @@
   "preferNotToSay": "Prefiero no decir",
   "errorUpdatingSourceLabel": "Error al actualizar etiqueta de fuente",
   "failedToUpdateDisplayName": "Error al actualizar nombre para mostrar",
-  "failedToSaveSetting": "No se pudo guardar «{setting}». Inténtalo de nuevo.",
   "actionCannotBeUndone": "Esta acción no se puede deshacer.",
   "deleteRecordConfirm": "¿Estás seguro de que quieres eliminar este registro?",
   "deleteNoteConfirm": "¿Estás seguro de que quieres eliminar esta nota?",
@@ -124,6 +123,7 @@
   "fieldCannotBeEmpty": "Este campo no puede estar vacío",
   "selectDate": "Seleccionar fecha",
   "attachToEncounter": "Adjuntar a encuentro",
+  "attachToPatient": "Adjuntar a paciente",
   "continueProcessing": "Continuar procesamiento",
   "recordsSavedTitle": "Guardado exitosamente",
   "whatNextQuestion": "¿Qué te gustaría hacer a continuación?",
@@ -216,7 +216,6 @@
   "chargerPluggedIn": "Cargador conectado.",
   "plugInChargerEllipsis": "Conecta el cargador...",
   "processingFailedCapacity": "El documento es demasiado grande para la memoria de trabajo actual de IA.",
-  "processingFailedMemory": "No hay suficiente memoria libre para ejecutar el modelo de IA. Cierra otras apps e inténtalo de nuevo, o desactiva el Escaneo profundo en Ajustes de IA.",
   "processingFailedCapacitySuggestion": "Toca el icono de ajustes arriba y aumenta la memoria de trabajo a 2048 o más, luego reintenta.",
   "increaseAiModelCapacity": "Aumentar capacidad de IA",
   "goBack": "Volver",
@@ -225,9 +224,6 @@
   "tokenPresetLow": "Corta",
   "tokenPresetMedium": "Media",
   "tokenPresetHigh": "Larga",
-  "tokenPresetLowHint": "unos pocos valores",
-  "tokenPresetMediumHint": "un informe breve",
-  "tokenPresetHighHint": "un informe completo",
   "tokenPresetCustom": "Personalizado",
   "setTokens": "Establecer",
   "aiModelManage": "Gestionar opciones de IA",
@@ -661,9 +657,6 @@
   "desktopCurrentDevice": "dispositivo actual",
   "desktopHandoverPreparing": "Preparando...",
   "desktopHandoverSendingFiles": "Enviando archivos...",
-  "desktopHandoverProcessingOnDesktop": "Procesando en el escritorio...",
-  "desktopHandoverComplete": "¡Completado!",
-  "desktopHandoverError": "Ocurrió un error",
   "desktopHandoverSending": "Enviando...",
   "desktopHandoverSendingToDesktop": "Enviando al escritorio",
   "desktopHandoverFileCount": "{count} archivos",
@@ -674,7 +667,6 @@
       }
     }
   },
-  "desktopHandoverSuccess": "Entregado al escritorio",
   "desktopClose": "Cerrar",
   "desktopContinueImporting": "Continuar importando",
   "desktopHandoverToDesktop": "Entregar al escritorio",
@@ -1078,7 +1070,6 @@
   "areYouSure": "¿Estás seguro?",
   "resourceNotViewable": "Este recurso no es un archivo visualizable",
   "noFilePathFound": "No se encontró la ruta del archivo",
-  "handoverPatientMatched": "Paciente de la entrega asociado",
   "desktopDiscovering": "Buscando...",
   "desktopTransportWifi": "Wi-Fi",
   "desktopTransportDirect": "Directa",
@@ -1093,35 +1084,6 @@
   "desktopNoBackupLocation": "No hay una ubicación de copia de seguridad en el escritorio. Abre la app de escritorio y elige primero una carpeta.",
   "desktopBackupFailed": "La copia de seguridad falló. Inténtalo de nuevo.",
   "desktopBackupActionFailed": "No se pudieron actualizar las copias de seguridad. Inténtalo de nuevo.",
-  "backupRecordsOnly": "Solo registros",
-  "backupRestoreConfirmPointInTime": "Esto reemplaza tus registros en este ordenador y en tu teléfono vinculado por la copia del {date}. Los registros añadidos desde entonces se eliminan. Antes se guarda una copia «Antes de restaurar» de tus datos actuales, que se conserva 30 días para que puedas deshacerlo.",
-  "@backupRestoreConfirmPointInTime": {
-    "placeholders": {
-      "date": {
-        "type": "String"
-      }
-    }
-  },
-  "backupOldNoFiles": "Esta copia no tiene archivos. Se restaurarán los registros y se conservarán tus archivos actuales.",
-  "backupSafetyName": "Antes de restaurar {date}",
-  "@backupSafetyName": {
-    "placeholders": {
-      "date": {
-        "type": "String"
-      }
-    }
-  },
-  "backupRestoreFailed": "La restauración falló. Tus datos no cambiaron; la copia \"Antes de restaurar\" está en la lista.",
-  "backupSafetyFailed": "No se pudo crear la copia de seguridad previa, así que no se restauró nada. Comprueba el espacio libre y la carpeta.",
-  "backupFilesNotRestored": "{count, plural, =1{No se pudo restaurar 1 archivo.} other{No se pudieron restaurar {count} archivos.}}",
-  "@backupFilesNotRestored": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "backupRestorePhoneOffline": "Tu teléfono no está conectado. Los registros añadidos en él desde la última sincronización volverán cuando se conecte; los cambios que hizo en registros existentes se reemplazarán por la copia.",
   "desktopSyncFailed": "La sincronización falló. Comprueba la conexión e inténtalo de nuevo.",
   "desktopHandoverTransfer": "Transferencia",
   "desktopHandoverNoActive": "No hay transferencias activas",
@@ -1129,12 +1091,8 @@
   "desktopHandoverFilesProgress": "{received}/{total} archivos",
   "desktopHandoverTransferComplete": "Transferencia completada",
   "desktopHandoverReceivingFiles": "Recibiendo archivos...",
-  "desktopHandoverProcessingStatus": "Procesando...",
-  "desktopHandoverSendingResults": "Enviando resultados...",
-  "desktopHandoverDone": "Completado",
   "desktopHandoverStatusError": "Error",
-  "desktopHandoverWaitingForResults": "Esperando resultados...",
-  "desktopHandoverNotAccepted": "El escritorio no aceptó los documentos.",
+  "desktopHandoverNotAccepted": "El escritorio no respondió. Asegúrate de que HealthWallet esté abierto y actualizado en él.",
   "desktopHandoverFileMissing": "No se encontró un documento en este dispositivo.",
   "desktopHandoverCancelled": "Cancelado",
   "desktopHandoverFailed": "El procesamiento falló. Inténtalo de nuevo.",
@@ -1144,7 +1102,6 @@
   "traySyncStatus": "Sincronización: {status}",
   "trayUpToDate": "Actualizado",
   "trayQuit": "Salir de {appName}",
-  "desktopFinishedProcessing": "El escritorio terminó el procesamiento",
   "biometricAuthReason": "Autentícate para acceder a tu HealthWallet.me",
   "sourceUploadedOn": "Subido {date}",
   "shareStatusReadyToShare": "Listo para compartir",
@@ -1689,6 +1646,82 @@
   "desktopNewQrUnpairsHint": "Un nuevo código QR desempareja este teléfono; úsalo para emparejar otro.",
   "desktopNotFound": "No se encontró el escritorio. Comprueba que HealthWallet está abierto en él y que ambos dispositivos están en la misma red.",
   "desktopBackupSucceededMessage": "Se guardó \"{name}\". Contiene {count} registros.",
+  "holderQuestionTitle": "¿De quién son estos registros?",
+  "holderQuestionMessage": "Han llegado registros de {name}, que no coincide con nadie de tu cartera. ¿Quién es?",
+  "holderQuestionSomeoneElse": "Otra persona",
+  "fhirTypeVisionPrescription": "Receta óptica",
+  "categoryVisionPrescriptions": "Recetas ópticas",
+  "lensTypeMultifocal": "Gafas multifocales",
+  "lensTypeDistance": "Gafas para ver de lejos",
+  "lensTypeReading": "Gafas de lectura",
+  "lensTypeOther": "Gafas",
+  "fieldLensType": "Tipo de lentes",
+  "fieldDateWritten": "Fecha de emisión",
+  "fieldRecommendedFollowUp": "Próximo control",
+  "labelSerialNumber": "Número de serie",
+  "visionEyeRight": "Ojo derecho",
+  "visionEyeLeft": "Ojo izquierdo",
+  "visionSphere": "Graduación",
+  "visionCylinder": "Astigmatismo",
+  "visionAxis": "Ángulo",
+  "visionAdd": "Adición lectura",
+  "visionPrism": "Prisma",
+  "visionBase": "Base del prisma",
+  "visionInvalidDioptre": "Usa un valor como +1.25, en pasos de 0.25",
+  "visionInvalidAxis": "Usa un ángulo de 0 a 180",
+  "stagedAlreadyInWallet": "Ya está en tu cartera",
+  "stagedWillBeCompleted": "Ya está en tu cartera, se completará",
+  "documentAlreadyInWallet": "Todo lo de este documento ya está en tu cartera",
+  "processingStatusHandedOver": "En el escritorio",
+  "desktopHandoverSent": "Enviado al escritorio. Te avisaremos cuando esté listo para revisar, aquí o en el escritorio.",
+  "desktopHandoverConnectionLost": "Se perdió la conexión con el escritorio. Inténtalo de nuevo.",
+  "desktopHandoverTooLarge": "El documento es demasiado grande para enviarlo al escritorio (más de 200 MB).",
+  "desktopHandoverTimedOut": "El escritorio dejó de recibir el documento. Inténtalo de nuevo.",
+  "handoverOnDesktopTitle": "Procesándose en el escritorio",
+  "handoverOnDesktopMessage": "El borrador volverá aquí para revisarlo cuando el escritorio termine. También puedes revisarlo y guardarlo en el escritorio.",
+  "handoverTakeBack": "Procesar en este teléfono",
+  "handoverReadyToReview": "{origin}: listo para revisar",
+  "handoverFailedOnDesktop": "{origin}: el escritorio no pudo procesarlo. Ha vuelto a este teléfono.",
+  "handoverNoModelOnDesktop": "{origin}: no hay modelo de IA en el escritorio. Ha vuelto a este teléfono.",
+  "handoverDeletedOnDesktop": "{origin} se eliminó en el escritorio. Ha vuelto a este teléfono.",
+  "handoverSavedOnDesktop": "{origin} se guardó en el escritorio. Los registros llegarán a este teléfono con la próxima sincronización.",
+  "handoverSavedOnPhone": "{origin} se guardó en el teléfono.",
+  "handoverDraftSavedOnDesktop": "{origin} se guardó en el escritorio. Los cambios hechos aquí en su borrador no se conservaron.",
+  "handoverDraftSavedOnPhone": "{origin} se guardó en el teléfono. Los cambios hechos aquí en su borrador no se conservaron.",
+  "failedToSaveSetting": "No se pudo guardar «{setting}». Inténtalo de nuevo.",
+  "processingFailedMemory": "No hay suficiente memoria libre para ejecutar el modelo de IA. Cierra otras apps e inténtalo de nuevo, o desactiva el Escaneo profundo en Ajustes de IA.",
+  "tokenPresetLowHint": "unos pocos valores",
+  "tokenPresetMediumHint": "un informe breve",
+  "tokenPresetHighHint": "un informe completo",
+  "backupRecordsOnly": "Solo registros",
+  "backupRestoreConfirmPointInTime": "Esto reemplaza tus registros en este ordenador y en tu teléfono vinculado por la copia del {date}. Los registros añadidos desde entonces se eliminan. Antes se guarda una copia «Antes de restaurar» de tus datos actuales, que se conserva 30 días para que puedas deshacerlo.",
+  "@backupRestoreConfirmPointInTime": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOldNoFiles": "Esta copia no tiene archivos. Se restaurarán los registros y se conservarán tus archivos actuales.",
+  "backupSafetyName": "Antes de restaurar {date}",
+  "@backupSafetyName": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreFailed": "La restauración falló. Tus datos no cambiaron; la copia \"Antes de restaurar\" está en la lista.",
+  "backupSafetyFailed": "No se pudo crear la copia de seguridad previa, así que no se restauró nada. Comprueba el espacio libre y la carpeta.",
+  "backupFilesNotRestored": "{count, plural, =1{No se pudo restaurar 1 archivo.} other{No se pudieron restaurar {count} archivos.}}",
+  "@backupFilesNotRestored": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestorePhoneOffline": "Tu teléfono no está conectado. Los registros añadidos en él desde la última sincronización volverán cuando se conecte; los cambios que hizo en registros existentes se reemplazarán por la copia.",
   "aiModelDeleteTitle": "¿Eliminar {name}?",
   "aiModelDeleteMessage": "El modelo y sus archivos de escaneo profundo se eliminarán de este dispositivo. Para volver a escanear con él, tendrás que descargarlo de nuevo (~{size} MB)."
 }

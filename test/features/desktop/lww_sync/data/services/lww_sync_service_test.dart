@@ -126,7 +126,8 @@ void main() {
       },
     );
 
-    test('a batch stops at the row limit and continues from there', () async {
+    test('a batch stops at the row limit and continues from there, saying '
+        'whether more follow', () async {
       for (var i = 0; i < LwwSyncService.maxBatchRows + 5; i++) {
         await insertFhir(db, id: 'r$i');
       }
@@ -135,8 +136,23 @@ void main() {
         first.tables['fhir_resource'],
         hasLength(LwwSyncService.maxBatchRows),
       );
+      expect(first.more, isTrue);
       final second = (await service.nextBatch(first.id))!;
       expect(second.tables['fhir_resource'], hasLength(5));
+      expect(second.more, isFalse);
+    });
+
+    test('a batch from a sender without the more flag is the last one', () {
+      final batch = SyncBatch.fromJson({
+        'id': 3,
+        'deviceId': 'old-phone',
+        'tables': <String, dynamic>{},
+      });
+      expect(batch.more, isFalse);
+      expect(
+        SyncBatch.fromJson(batch.copyWith(more: true).toJson()).more,
+        isTrue,
+      );
     });
 
     test('rows deleted since they were logged make an empty batch', () async {
@@ -243,6 +259,26 @@ void main() {
       expect(await titleOf('a'), 'kept');
       final raw = (await fetchRow(db, 'fhir_resource', 'a'))!['resource_raw'];
       expect(raw, isNot(contains('secret')));
+    });
+
+    test("a source's holder arrives, and a newer row from a peer without the "
+        'column keeps it', () async {
+      Map<String, dynamic> sourceRow(int updatedAt, [String? holder]) => {
+        'id': 'src-1',
+        'platform_type': 'fasten',
+        'label_source': 'Clinic $updatedAt',
+        'updated_at': updatedAt,
+        'holder_id': ?holder,
+      };
+      await service.applyBatch(
+        incoming('sources', [sourceRow(ms(at(1)), 'jane')]),
+      );
+      await service.applyBatch(
+        incoming('sources', [sourceRow(ms(at(2)))], id: 2),
+      );
+      final row = (await fetchRow(db, 'sources', 'src-1'))!;
+      expect(row['label_source'], 'Clinic ${ms(at(2))}');
+      expect(row['holder_id'], 'jane');
     });
 
     test('rows of tables outside the synced set are ignored', () async {

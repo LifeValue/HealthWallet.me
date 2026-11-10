@@ -2,263 +2,339 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:health_wallet/core/di/injection.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/message_router.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
+import 'package:health_wallet/features/desktop/handover/data/services/handover_outbox.dart';
+import 'package:health_wallet/features/desktop/handover/domain/entity/handover_protocol.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
-import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
-import 'package:health_wallet/features/processing/domain/entity/model_not_found_exception.dart';
-import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
-import 'package:uuid/uuid.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+part 'handover_sender_service.freezed.dart';
+
+/// What the desktop said about a document this phone handed over.
+@freezed
+sealed class DesktopHandoverEvent with _$DesktopHandoverEvent {
+  const factory DesktopHandoverEvent.progress({
+    required String sessionId,
+    required double progress,
+  }) = DesktopHandoverProgress;
+
+  /// The desktop's draft, to review on this phone.
+  const factory DesktopHandoverEvent.result({
+    required String sessionId,
+    required HandoverDraft draft,
+  }) = DesktopHandoverResult;
+
+  const factory DesktopHandoverEvent.failed({
+    required String sessionId,
+    required HandoverFailure failure,
+  }) = DesktopHandoverFailed;
+
+  /// The desktop's user saved the records there.
+  const factory DesktopHandoverEvent.saved({required String sessionId}) =
+      DesktopHandoverSaved;
+
+  /// The desktop's user deleted the document there.
+  const factory DesktopHandoverEvent.cancelled({required String sessionId}) =
+      DesktopHandoverCancelled;
+}
+
+/// The phone's end of a handover: sends a document's files to the desktop
+/// and reports what the desktop says about it. Messages the desktop must
+/// receive wait in an outbox until it acknowledges them.
 @lazySingleton
 class HandoverSenderService {
-  final TcpService _tcpService;
-  final MessageRouter _messageRouter;
+  HandoverSenderService(this._tcp, this._router, this._prefs)
+    : _outbox = HandoverOutbox(_prefs, _tcp, key: outboxKey);
 
-  final _sessionUpdateController =
-      StreamController<HandoverSession>.broadcast();
-  final Map<String, HandoverSession> _activeSessions = {};
-  final Map<String, bool> _cancelled = {};
-  Map<String, dynamic>? _resultPayload;
-  final _resultController = StreamController<Map<String, dynamic>>.broadcast();
-  final Set<String> _processedResultIds = {};
+  static const outboxKey = 'handover_outbox_phone';
 
-  Stream<Map<String, dynamic>> get resultReceived => _resultController.stream;
-  Map<String, dynamic>? get lastResult => _resultPayload;
+  /// Processing sessions whose files are on the desktop, which also holds
+  /// their draft until one of the two saves or deletes it.
+  static const handedOverKey = 'handover_sessions_phone';
 
-  StreamSubscription? _acceptSub;
-  StreamSubscription? _progressSub;
-  StreamSubscription? _resultSub;
-  StreamSubscription? _step1Sub;
+  final TcpService _tcp;
+  final SharedPreferences _prefs;
+  final MessageRouter _router;
+  final HandoverOutbox _outbox;
 
-  Stream<HandoverSession> get sessionUpdates => _sessionUpdateController.stream;
+  /// How long to wait for the desktop's answer; shortened in tests.
+  @visibleForTesting
+  Duration acceptTimeout = HandoverProtocol.acceptTimeout;
 
-  HandoverSenderService(this._tcpService, this._messageRouter) {
-    _progressSub = _messageRouter
-        .on('handover.progress')
-        .listen(_handleProgress);
-    _resultSub = _messageRouter.on('handover.result').listen(_handleResult);
-    _step1Sub = _messageRouter
-        .on('handover.step1_complete')
-        .listen(_handleStep1Complete);
+  final _transfers = StreamController<HandoverSession>.broadcast();
+  final _events = StreamController<DesktopHandoverEvent>.broadcast();
+  final Map<String, Completer<HandoverFailure?>> _answers = {};
+  final Set<String> _cancelled = {};
+  final List<StreamSubscription<Object?>> _subscriptions = [];
+
+  /// Progress of the transfers this phone is making.
+  Stream<HandoverSession> get transfers => _transfers.stream;
+
+  /// What the desktop reports, once per message; acknowledge each with
+  /// [acknowledge] after handling it.
+  Stream<DesktopHandoverEvent> get desktopEvents => _events.stream;
+
+  void start() {
+    if (_subscriptions.isNotEmpty) return;
+    void on(String type, void Function(Map<String, dynamic>) handle) =>
+        _subscriptions.add(_router.on(type).listen(handle));
+
+    on(HandoverMessage.accept, (m) => _answer(m, null));
+    on(
+      HandoverMessage.reject,
+      (m) => _answer(m, HandoverFailure.fromWire(m['reason'] as String?)),
+    );
+    on(HandoverMessage.progress, (m) {
+      final id = m['session_id'];
+      final progress = m['progress'];
+      if (id is String && progress is num) {
+        _events.add(
+          DesktopHandoverEvent.progress(
+            sessionId: id,
+            progress: progress.toDouble().clamp(0, 1),
+          ),
+        );
+      }
+    });
+    on(HandoverMessage.result, (m) {
+      final id = m['session_id'];
+      final draft = m['draft'];
+      if (id is! String || draft is! Map<String, dynamic>) return;
+      try {
+        _events.add(
+          DesktopHandoverEvent.result(
+            sessionId: id,
+            draft: HandoverDraft.fromJson(draft),
+          ),
+        );
+      } on Object catch (e) {
+        // Unreadable: acknowledged so the desktop stops sending it, and the
+        // document comes back to this phone.
+        logger.w('[HandoverSender] unreadable result for $id', e);
+        _events.add(
+          DesktopHandoverEvent.failed(
+            sessionId: id,
+            failure: HandoverFailure.failed,
+          ),
+        );
+        unawaited(acknowledge(id, HandoverMessage.result));
+      }
+    });
+    on(HandoverMessage.failed, (m) {
+      final id = m['session_id'];
+      if (id is! String) return;
+      _events.add(
+        DesktopHandoverEvent.failed(
+          sessionId: id,
+          failure: HandoverFailure.fromWire(m['reason'] as String?),
+        ),
+      );
+    });
+    on(HandoverMessage.saved, (m) {
+      final id = m['session_id'];
+      if (id is String) _events.add(DesktopHandoverEvent.saved(sessionId: id));
+    });
+    on(HandoverMessage.cancel, (m) {
+      final id = m['session_id'];
+      if (id is String) {
+        _events.add(DesktopHandoverEvent.cancelled(sessionId: id));
+      }
+    });
+    on(HandoverMessage.ack, (m) {
+      final id = m['session_id'];
+      final type = m['type'];
+      if (id is String && type is String) {
+        unawaited(_outbox.acknowledge(id, type));
+      }
+    });
+    _subscriptions.add(
+      _tcp.connectionState
+          .where((s) => s == ConnectionState.connected)
+          .listen((_) => unawaited(_outbox.flush())),
+    );
+    _outbox.retryEvery(HandoverProtocol.outboxRetry);
   }
 
-  Future<void> sendHandover(
+  void _answer(Map<String, dynamic> message, HandoverFailure? failure) {
+    final answer = _answers[message['session_id']];
+    if (answer != null && !answer.isCompleted) answer.complete(failure);
+  }
+
+  /// Sends the files of processing session [sessionId] and completes with
+  /// the transfer's end: [HandoverStatus.sent] once the desktop has every
+  /// byte, or [HandoverStatus.error] with the reason. Never throws.
+  Future<HandoverSession> send(
+    String sessionId,
     List<String> filePaths, {
     Map<String, dynamic>? phase1Data,
   }) async {
-    final sessionId = const Uuid().v4();
-
-    _cancelled[sessionId] = false;
-
-    final session = HandoverSession(
+    _cancelled.remove(sessionId);
+    var session = HandoverSession(
       sessionId: sessionId,
-      status: HandoverStatus.sending,
       fileCount: filePaths.length,
     );
-    _activeSessions[sessionId] = session;
-    _sessionUpdateController.add(session);
-
-    int totalBytes = 0;
-    for (final path in filePaths) {
-      totalBytes += await File(path).length();
+    void report(HandoverSession next) {
+      session = next;
+      _transfers.add(next);
     }
 
-    await _tcpService.sendData('handover.offer', {
-      'session_id': sessionId,
-      'file_count': filePaths.length,
-      'total_bytes': totalBytes,
-      'phase1_data': ?phase1Data,
-    });
+    HandoverSession fail(HandoverFailure failure) {
+      report(session.copyWith(status: HandoverStatus.error, failure: failure));
+      return session;
+    }
 
-    final acceptCompleter = Completer<void>();
-    unawaited(_acceptSub?.cancel());
-    _acceptSub = _messageRouter.on('handover.accept').listen((payload) {
-      final acceptedId = payload['session_id'] as String?;
-      if (acceptedId == sessionId && !acceptCompleter.isCompleted) {
-        acceptCompleter.complete();
-      }
-    });
+    report(session);
 
+    final sizes = <int>[];
     try {
-      await acceptCompleter.future.timeout(const Duration(seconds: 30));
-    } on TimeoutException {
-      _updateSession(
-        sessionId,
-        HandoverStatus.error,
-        error: 'Desktop did not accept',
-        failure: HandoverFailure.notAccepted,
-      );
-      return;
+      for (final path in filePaths) {
+        sizes.add(await File(path).length());
+      }
+    } on FileSystemException catch (e) {
+      logger.w('[HandoverSender] a file to send is missing', e);
+      return fail(HandoverFailure.fileNotFound);
+    }
+    final total = sizes.fold<int>(0, (a, b) => a + b);
+    if (filePaths.isEmpty) return fail(HandoverFailure.fileNotFound);
+    if (total > HandoverProtocol.maxTotalBytes) {
+      return fail(HandoverFailure.tooLarge);
     }
 
-    if (_cancelled[sessionId] == true) return;
-
-    for (var i = 0; i < filePaths.length; i++) {
-      if (_cancelled[sessionId] == true) return;
-
-      final file = File(filePaths[i]);
-      if (!await file.exists()) {
-        _updateSession(
-          sessionId,
-          HandoverStatus.error,
-          error: 'File not found: ${p.basename(filePaths[i])}',
-          failure: HandoverFailure.fileNotFound,
-        );
-        return;
-      }
-      final bytes = await file.readAsBytes();
-      final data = base64Encode(bytes);
-      final fileName = p.basename(filePaths[i]);
-
-      await _tcpService.sendData('handover.file', {
+    // Listening before the offer goes out: over MPC the answer can arrive
+    // before the send returns.
+    final answer = Completer<HandoverFailure?>();
+    _answers[sessionId] = answer;
+    HandoverFailure? refused;
+    try {
+      await _tcp.sendData(HandoverMessage.offer, {
         'session_id': sessionId,
-        'file_index': i,
-        'file_name': fileName,
-        'data': data,
+        'v': HandoverProtocol.version,
+        'files': [
+          for (var i = 0; i < filePaths.length; i++)
+            {'name': p.basename(filePaths[i]), 'size': sizes[i]},
+        ],
+        'phase1_data': ?phase1Data,
       });
-
-      final progress = (i + 1) / filePaths.length * 0.5;
-      final sending = _activeSessions[sessionId]!.copyWith(
-        receivedCount: i + 1,
-        progress: progress,
+      refused = await answer.future.timeout(
+        acceptTimeout,
+        onTimeout: () => HandoverFailure.notAccepted,
       );
-      _activeSessions[sessionId] = sending;
-      _sessionUpdateController.add(sending);
+    } on Exception catch (e) {
+      logger.w('[HandoverSender] offer not sent', e);
+      return fail(HandoverFailure.connectionLost);
+    } finally {
+      _answers.remove(sessionId);
+    }
+    if (refused != null) return fail(refused);
+
+    // The desktop accepted: from here on it holds partial files, so a
+    // transfer that stops tells it to drop them.
+    HandoverSession stop(HandoverFailure failure) {
+      unawaited(withdraw(sessionId));
+      return fail(failure);
     }
 
-    _updateSession(sessionId, HandoverStatus.waitingForResults, progress: 0.5);
-  }
+    if (_cancelled.contains(sessionId)) return stop(HandoverFailure.cancelled);
 
-  void cancelHandover(String sessionId) {
-    _cancelled[sessionId] = true;
-    _updateSession(
-      sessionId,
-      HandoverStatus.error,
-      error: 'Cancelled',
-      failure: HandoverFailure.cancelled,
-    );
-  }
-
-  void _handleProgress(Map<String, dynamic> payload) {
-    final sessionId = payload['session_id'] as String?;
-    if (sessionId == null) return;
-
-    final session = _activeSessions[sessionId];
-    if (session == null) return;
-
-    final status = payload['status'] as String?;
-    final progress =
-        (payload['progress'] as num?)?.toDouble() ?? session.progress;
-
-    if (status == 'error') {
-      final error = payload['error'] as String? ?? 'Processing failed';
-      _updateSession(
-        sessionId,
-        HandoverStatus.error,
-        progress: progress,
-        error: error,
-        failure: _remoteFailure(payload['reason'] as String?, error),
-      );
-      return;
+    var sent = 0;
+    for (var i = 0; i < filePaths.length; i++) {
+      RandomAccessFile? file;
+      try {
+        file = await File(filePaths[i]).open();
+        var offset = 0;
+        while (offset < sizes[i]) {
+          if (_cancelled.contains(sessionId)) {
+            return stop(HandoverFailure.cancelled);
+          }
+          final bytes = await file.read(HandoverProtocol.chunkBytes);
+          if (bytes.isEmpty) throw const FileSystemException('File shrank');
+          await _tcp.sendData(HandoverMessage.chunk, {
+            'session_id': sessionId,
+            'index': i,
+            'offset': offset,
+            'data': base64Encode(bytes),
+          });
+          offset += bytes.length;
+          sent += bytes.length;
+          report(
+            session.copyWith(
+              progress: total == 0 ? 1 : sent / total,
+              receivedCount: offset >= sizes[i] ? i + 1 : i,
+            ),
+          );
+        }
+      } on FileSystemException catch (e) {
+        logger.w('[HandoverSender] a file to send could not be read', e);
+        return stop(HandoverFailure.fileNotFound);
+      } on Exception catch (e) {
+        // Told on the next connection; the desktop also drops partial files
+        // once it hears nothing for a while.
+        logger.w('[HandoverSender] the link dropped while sending', e);
+        return stop(HandoverFailure.connectionLost);
+      } finally {
+        await file?.close();
+      }
     }
-
-    final updated = session.copyWith(
-      status: HandoverStatus.waitingForResults,
-      progress: progress,
+    report(
+      session.copyWith(
+        status: HandoverStatus.sent,
+        progress: 1,
+        receivedCount: filePaths.length,
+      ),
     );
-    _activeSessions[sessionId] = updated;
-    _sessionUpdateController.add(updated);
+    return session;
   }
 
-  void _handleResult(Map<String, dynamic> payload) {
-    final sessionId = payload['session_id'] as String?;
-    if (sessionId == null) return;
-    if (_processedResultIds.contains(sessionId)) return;
-    _processedResultIds.add(sessionId);
+  Set<String> get handedOver =>
+      (_prefs.getStringList(handedOverKey) ?? const []).toSet();
 
-    _updateSession(sessionId, HandoverStatus.complete, progress: 1.0);
-    _resultPayload = payload;
-    _resultController.add(payload);
+  Future<void> markHandedOver(String sessionId) => _prefs.setStringList(
+    handedOverKey,
+    {...handedOver, sessionId}.toList(),
+  );
 
+  /// The desktop no longer holds the session.
+  Future<void> forgetHandedOver(String sessionId) => _prefs.setStringList(
+    handedOverKey,
+    (handedOver..remove(sessionId)).toList(),
+  );
+
+  /// Stops a transfer in progress; [send] then ends as cancelled.
+  void cancelTransfer(String sessionId) => _cancelled.add(sessionId);
+
+  /// Tells the desktop to drop the document: the phone takes it back.
+  Future<void> withdraw(String sessionId) =>
+      _outbox.add(HandoverMessage.cancel, {'session_id': sessionId});
+
+  /// Tells the desktop the records were saved on this phone.
+  Future<void> reportSaved(String sessionId) =>
+      _outbox.add(HandoverMessage.saved, {'session_id': sessionId});
+
+  /// Confirms a message from the desktop was handled, so it isn't sent
+  /// again. Lost confirmations only make the desktop repeat the message.
+  Future<void> acknowledge(String sessionId, String type) async {
     try {
-      final processingBloc = getIt<ProcessingBloc>();
-      final sessions = processingBloc.state.sessions;
-      final pendingSessions = sessions.where(
-        (s) => s.status == ProcessingStatus.pending && s.filePaths.isNotEmpty,
-      );
-      for (final session in pendingSessions) {
-        processingBloc.add(SessionCleared(session: session));
-      }
-    } catch (_) {}
-
-    try {
-      getIt<LwwSyncBloc>().add(const SyncTriggered());
-    } catch (_) {}
+      await _tcp.sendData(HandoverMessage.ack, {
+        'session_id': sessionId,
+        'type': type,
+      });
+    } on Exception catch (e) {
+      logger.w('[HandoverSender] $type acknowledgement not sent', e);
+    }
   }
-
-  void _handleStep1Complete(Map<String, dynamic> payload) {
-    final sessionId = payload['session_id'] as String?;
-    if (sessionId == null) return;
-    if (_processedResultIds.contains(sessionId)) return;
-    _processedResultIds.add(sessionId);
-
-    _updateSession(sessionId, HandoverStatus.complete, progress: 1.0);
-    _resultController.add(payload);
-
-    try {
-      final processingBloc = getIt<ProcessingBloc>();
-      final sessions = processingBloc.state.sessions;
-      final pendingSessions = sessions.where(
-        (s) => s.status == ProcessingStatus.pending && s.filePaths.isNotEmpty,
-      );
-      for (final session in pendingSessions) {
-        processingBloc.add(SessionCleared(session: session));
-      }
-    } catch (_) {}
-
-    try {
-      getIt<LwwSyncBloc>().add(const SyncTriggered());
-    } catch (_) {}
-  }
-
-  void _updateSession(
-    String sessionId,
-    HandoverStatus status, {
-    double? progress,
-    String? error,
-    HandoverFailure? failure,
-  }) {
-    final session = _activeSessions[sessionId];
-    if (session == null) return;
-
-    final updated = session.copyWith(
-      status: status,
-      progress: progress ?? session.progress,
-      error: error,
-      failure: failure,
-    );
-    _activeSessions[sessionId] = updated;
-    _sessionUpdateController.add(updated);
-  }
-
-  /// Desktops from before the `reason` field send only the error text, which
-  /// contains [ModelNotFoundException.message] when the model is missing.
-  static HandoverFailure _remoteFailure(String? reason, String error) =>
-      reason == HandoverFailure.modelNotFoundReason ||
-          error.contains(ModelNotFoundException.message)
-      ? HandoverFailure.modelNotFound
-      : HandoverFailure.failed;
 
   void dispose() {
-    _acceptSub?.cancel();
-    _progressSub?.cancel();
-    _resultSub?.cancel();
-    _step1Sub?.cancel();
-    _sessionUpdateController.close();
+    _outbox.stopRetrying();
+    for (final s in _subscriptions) {
+      unawaited(s.cancel());
+    }
+    _subscriptions.clear();
+    unawaited(_transfers.close());
+    unawaited(_events.close());
   }
 }

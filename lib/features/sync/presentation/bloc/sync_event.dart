@@ -77,10 +77,3 @@ abstract class DemoDataConfirmed extends SyncEvent with _$DemoDataConfirmed {
 
   const factory DemoDataConfirmed() = _DemoDataConfirmed;
 }
-
-@freezed
-abstract class CreateWalletSource extends SyncEvent with _$CreateWalletSource {
-  const CreateWalletSource._();
-
-  const factory CreateWalletSource() = _CreateWalletSource;
-}

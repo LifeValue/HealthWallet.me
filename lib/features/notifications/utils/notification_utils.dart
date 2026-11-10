@@ -27,7 +27,9 @@ void showProcessingDoneNotification(
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.all(20),
       onTap: (_) {
-        if (context.mounted) {
+        // A notification about something already gone (a draft saved on the
+        // other device) leads nowhere.
+        if (context.mounted && notification.route.routeName.isNotEmpty) {
           context.appRouter.push(notification.route);
         }
       },

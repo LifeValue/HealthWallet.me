@@ -29,9 +29,7 @@ class HandoverPage extends StatelessWidget {
         builder: (context, handoverState) {
           return BlocBuilder<ProcessingBloc, ProcessingState>(
             builder: (context, processingState) {
-              final transferSessions = handoverState.activeSessions.values
-                  .where((s) => s.status == HandoverStatus.receiving)
-                  .toList();
+              final transferSessions = handoverState.transfers.values.toList();
               final processingSessions = processingState.sessions
                   .where((s) => s.origin == ProcessingOrigin.handover)
                   .toList();
@@ -145,7 +143,7 @@ class _HandoverTransferCard extends StatelessWidget {
       padding: const EdgeInsets.all(Insets.normal),
       decoration: BoxDecoration(
         color: context.surfaceColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Insets.smallNormal),
         border: Border.all(color: context.borderColor),
       ),
       child: Column(
@@ -153,7 +151,14 @@ class _HandoverTransferCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              _StatusIcon(status: session.status),
+              const SizedBox(
+                width: Insets.medium,
+                height: Insets.medium,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                ),
+              ),
               const SizedBox(width: Insets.smallNormal),
               Expanded(
                 child: Text(
@@ -164,93 +169,31 @@ class _HandoverTransferCard extends StatelessWidget {
                   ),
                 ),
               ),
-              if (session.fileCount > 0)
-                Text(
-                  context.l10n.desktopHandoverFilesProgress(
-                    '${session.receivedCount}',
-                    '${session.fileCount}',
-                  ),
-                  style: AppTextStyle.labelSmall.copyWith(
-                    color: context.secondaryTextColor,
-                  ),
+              Text(
+                context.l10n.desktopHandoverFilesProgress(
+                  '${session.receivedCount}',
+                  '${session.fileCount}',
                 ),
-            ],
-          ),
-          if (session.status != HandoverStatus.complete) ...[
-            const SizedBox(height: Insets.smallNormal),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: session.progress,
-                minHeight: 4,
-                backgroundColor: context.borderColor,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  session.status == HandoverStatus.error
-                      ? AppColors.error
-                      : AppColors.primary,
+                style: AppTextStyle.labelSmall.copyWith(
+                  color: context.secondaryTextColor,
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: Insets.smallNormal),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(Insets.extraSmall),
+            child: LinearProgressIndicator(
+              value: session.progress,
+              minHeight: Insets.extraSmall,
+              backgroundColor: context.borderColor,
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.primary,
+              ),
             ),
-          ],
-          if (session.status == HandoverStatus.complete) ...[
-            const SizedBox(height: Insets.small),
-            Row(
-              children: [
-                const Icon(
-                  Icons.check_circle,
-                  size: 16,
-                  color: AppColors.success,
-                ),
-                const SizedBox(width: Insets.extraSmall),
-                Text(
-                  context.l10n.desktopHandoverTransferComplete,
-                  style: AppTextStyle.labelSmall.copyWith(
-                    color: AppColors.success,
-                  ),
-                ),
-              ],
-            ),
-          ],
-          if (session.status == HandoverStatus.error) ...[
-            const SizedBox(height: Insets.small),
-            Text(
-              session.failure == HandoverFailure.modelNotFound
-                  ? context.l10n.modelNotFoundError
-                  : context.l10n.desktopHandoverFailed,
-              style: AppTextStyle.labelSmall.copyWith(color: AppColors.error),
-            ),
-          ],
+          ),
         ],
       ),
     );
-  }
-}
-
-class _StatusIcon extends StatelessWidget {
-  final HandoverStatus status;
-
-  const _StatusIcon({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    switch (status) {
-      case HandoverStatus.complete:
-        return const Icon(
-          Icons.check_circle,
-          size: 24,
-          color: AppColors.success,
-        );
-      case HandoverStatus.error:
-        return const Icon(Icons.error, size: 24, color: AppColors.error);
-      default:
-        return const SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(
-            strokeWidth: 2.5,
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-          ),
-        );
-    }
   }
 }

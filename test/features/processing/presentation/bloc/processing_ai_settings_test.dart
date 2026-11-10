@@ -4,16 +4,18 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/processing/domain/deep_scan_defaults.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extractor_registry.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../share_records/share_test_helpers.dart';
@@ -39,10 +41,9 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {}
 class _FakeDocumentReferenceService extends Fake
     implements DocumentReferenceService {}
 
-class _FakePatientDeduplicationService extends Fake
-    implements PatientDeduplicationService {}
+class _FakeHolderService extends Fake implements HolderService {}
 
-class _FakeSourceTypeService extends Fake implements SourceTypeService {}
+class _FakeHolderSelection extends Fake implements HolderSelection {}
 
 /// The bloc reads the platform from `dart:io`, so on a test host it runs as
 /// the desktop; the mobile side of the reset is covered by
@@ -74,11 +75,18 @@ void main() {
       _FakeOcrProcessingHelper(),
       _FakeSyncRepository(),
       _FakeDocumentReferenceService(),
-      _FakePatientDeduplicationService(),
-      _FakeSourceTypeService(),
+      _FakeHolderService(),
+      _FakeHolderSelection(),
       _FakeRecordsRepository(),
       await SharedPreferences.getInstance(),
       AppStringsProvider.forLocale(const Locale('en')),
+      LayoutExtractionService(
+        repository,
+        _FakeOcrProcessingHelper(),
+        LayoutExtractorRegistry(const []),
+        _FakeHolderService(),
+        _FakeRecordsRepository(),
+      ),
     );
     blocs.add(bloc);
     return bloc;

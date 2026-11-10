@@ -432,6 +432,26 @@ void main() {
       },
     );
 
+    test('13 → 14 keeps every source, with no holder yet', () async {
+      final db = await migrateFrom(13, (schema) {
+        schema.rawDatabase.execute(
+          'INSERT INTO sources (id, platform_name, platform_type, '
+          "label_source, updated_at) VALUES ('src-1', 'Epic', 'fasten', "
+          "'Clinic', 1000)",
+        );
+      });
+
+      final source = (await rows(
+        db,
+        "SELECT * FROM sources WHERE id = 'src-1'",
+      )).single.data;
+      expect(source['label_source'], 'Clinic');
+      expect(source['updated_at'], 1000);
+      expect(source['holder_id'], isNull);
+
+      await db.close();
+    });
+
     test(
       '10 → 11 tolerates specialty_override left by an interrupted run',
       () async {

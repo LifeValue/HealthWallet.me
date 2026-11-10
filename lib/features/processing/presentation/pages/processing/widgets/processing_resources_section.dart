@@ -73,6 +73,15 @@ class ProcessingResourcesSection extends StatelessWidget {
         ] else ...[
           _AddResourceButton(sessionId: sessionId),
           const SizedBox(height: Insets.normal),
+          // Saving adds nothing: the document was imported before.
+          if (displayedSession.isAlreadyInWallet) ...[
+            ReviewBanner(
+              icon: Icons.inventory_2_outlined,
+              color: context.colorScheme.primary,
+              text: context.l10n.documentAlreadyInWallet,
+            ),
+            const SizedBox(height: Insets.normal),
+          ],
           _SaveButton(
             state: state,
             onSaveResources: onSaveResources,
@@ -236,7 +245,9 @@ class _ScannedBasicButtons extends StatelessWidget {
             if (!session.isDocumentAttached) ...[
               Expanded(
                 child: AppButton(
-                  label: context.l10n.attachToEncounter,
+                  label: session.isDiagnosticReportContainer
+                      ? context.l10n.attachToPatient
+                      : context.l10n.attachToEncounter,
                   variant: AppButtonVariant.transparent,
                   onPressed: () => _attachToEncounter(context),
                   fullWidth: false,
@@ -284,13 +295,13 @@ class _ScannedBasicButtons extends StatelessWidget {
                 Icon(
                   Icons.computer,
                   size: 20,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: context.colorScheme.primary,
                 ),
                 const SizedBox(width: Insets.small),
                 Text(
                   context.l10n.continueProcessingOnDesktop,
                   style: AppTextStyle.bodySmall.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
+                    color: context.colorScheme.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -333,7 +344,10 @@ class _ScannedBasicButtons extends StatelessWidget {
       builder: (context) => AttachToEncounterWidget(
         patient: session.patient,
         encounter: session.encounter,
-        confirmText: context.l10n.attachToEncounter,
+        confirmText: session.isDiagnosticReportContainer
+            ? context.l10n.attachToPatient
+            : context.l10n.attachToEncounter,
+        patientOnly: session.isDiagnosticReportContainer,
       ),
     );
 

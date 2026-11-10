@@ -16,7 +16,7 @@ import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_
 import 'package:health_wallet/features/desktop/handover/presentation/utils/handover_utils.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/processing_mapping_section.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/processing_resources_section.dart';
@@ -127,7 +127,10 @@ class _ProcessingPageState extends State<ProcessingPage> {
       builder: (context) => AttachToEncounterWidget(
         patient: activeSession.patient,
         encounter: activeSession.encounter,
-        confirmText: context.l10n.attachToEncounter,
+        confirmText: activeSession.isDiagnosticReportContainer
+            ? context.l10n.attachToPatient
+            : context.l10n.attachToEncounter,
+        patientOnly: activeSession.isDiagnosticReportContainer,
       ),
     );
 
@@ -180,7 +183,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
         );
         if (displayedSession == null) return;
 
-        if (state.status == const PipelineStatus.success()) {
+        if (state.status is Success) {
           try {
             getIt<LwwSyncBloc>().add(const SyncTriggered());
           } catch (e) {
@@ -259,7 +262,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
                     final sessionImages =
                         state.sessionImagePaths[widget.sessionId] ??
-                        state.allImagePathsForOCR;
+                        const <String>[];
 
                     final isConverting =
                         state.status == const PipelineStatus.convertingPdfs() &&
@@ -341,8 +344,15 @@ class _ProcessingPageState extends State<ProcessingPage> {
                                         ),
                                       ),
                                   checkModelExistence: () =>
-                                      getIt<ProcessingRepository>()
-                                          .checkModelExistence(),
+                                      getIt<LayoutExtractionService>()
+                                          .canProcess(
+                                            widget.sessionId,
+                                            filePaths:
+                                                displayedSession.filePaths,
+                                            imagePaths: state.ocrPagesFor(
+                                              widget.sessionId,
+                                            ),
+                                          ),
                                   onProcessOnDesktop: () {
                                     HandoverUtils.initiateHandover(
                                       context,

@@ -3,6 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/extractor_provenance.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/text_field_descriptor.dart';
@@ -24,6 +25,16 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
     @Default(MappedProperty()) MappedProperty gender,
     @Default(MappedProperty()) MappedProperty patientIdentifier,
     @Default('ID') String identifierLabel,
+
+    /// The identifier's system when the document says whose number it is,
+    /// e.g. `http://healthwallet.me/clinic/<clinicKey>/patient` for a
+    /// clinic's patient number (written with type `MR`). Empty: derived from
+    /// [identifierLabel] and the device's region.
+    @Default('') String identifierSystem,
+
+    /// The extractor tag code (`<id>@<version>`), empty for AI or typed
+    /// patients.
+    @Default('') String provenance,
   }) = _MappingPatient;
 
   factory MappingPatient.fromJson(
@@ -44,6 +55,8 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
         json['patientIdentifier'] ?? json['patientMRN'] ?? json['patientId'],
       ),
       identifierLabel: rawLabel.isEmpty ? defaultLabel : rawLabel,
+      identifierSystem: json['identifierSystem'] as String? ?? '',
+      provenance: json['provenance'] as String? ?? '',
     );
   }
 
@@ -69,10 +82,13 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
         value: FhirFieldExtractor.extractPatientGiven(patient),
         confidenceLevel: 1,
       ),
+      // Empty when unknown, never today: the review form would offer it,
+      // and saving would store it as the birth date.
       dateOfBirth: MappedProperty(
-        value: DateFormatUtils.isoCompact(
-          FhirFieldExtractor.extractPatientBirthDate(patient) ?? DateTime.now(),
-        ),
+        value: switch (FhirFieldExtractor.extractPatientBirthDate(patient)) {
+          final date? => DateFormatUtils.isoCompact(date),
+          null => '',
+        },
         confidenceLevel: 1,
       ),
       gender: MappedProperty(
@@ -99,6 +115,8 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
     'gender': gender.toJson(),
     'patientIdentifier': patientIdentifier.toJson(),
     'identifierLabel': identifierLabel,
+    if (identifierSystem.isNotEmpty) 'identifierSystem': identifierSystem,
+    if (provenance.isNotEmpty) 'provenance': provenance,
   };
 
   @override
@@ -108,14 +126,19 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
     String? subjectId,
     fhir_r4.FhirMeta? meta,
   }) {
-    final identifierCoding = _mapLabelToFhirCode(identifierLabel);
+    final scoped = this.identifierSystem.isNotEmpty;
+    final identifierCoding = scoped
+        ? 'MR'
+        : _mapLabelToFhirCode(identifierLabel);
     final profile = CountryIdentifier.forCurrentLocale();
-    final identifierSystem = identifierCoding == profile.identifierFhirCode
+    final identifierSystem = scoped
+        ? this.identifierSystem
+        : identifierCoding == profile.identifierFhirCode
         ? profile.fhirIdentifierSystem
         : 'http://healthwallet.me/mrn';
 
     final fhir_r4.Patient patient = fhir_r4.Patient(
-      meta: meta,
+      meta: ExtractorProvenance.merge(meta, provenance),
       name: [
         fhir_r4.HumanName(
           family: fhir_r4.FhirString(familyName.value),
@@ -251,6 +274,8 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
           : patientIdentifier.confidenceLevel,
     ),
     identifierLabel: identifierLabel,
+    identifierSystem: identifierSystem,
+    provenance: provenance,
   );
 
   @override

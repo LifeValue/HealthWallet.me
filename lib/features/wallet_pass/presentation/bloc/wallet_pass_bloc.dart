@@ -37,7 +37,10 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
     emit(state.copyWith(status: WalletPassStatus.loading, errorMessage: null));
 
     try {
-      final cardData = await _cardBuilder.build(patientId: event.patientId);
+      final cardData = await _cardBuilder.build(
+        patientId: event.patientId,
+        sourceIds: event.sourceIds,
+      );
       emit(
         state.copyWith(
           status: WalletPassStatus.dataReady,

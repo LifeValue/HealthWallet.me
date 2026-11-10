@@ -8,10 +8,10 @@ import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart'
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/theme/theme.dart';
+import 'package:health_wallet/features/holders/domain/entity/holder.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
@@ -331,7 +331,8 @@ void main() {
         const Stream<PatientState>.empty(),
         initialState: PatientState(
           patientGroups: {
-            'patient-1': PatientGroup(
+            'patient-1': Holder(
+              id: 'patient-1',
               representativePatient: provider,
               sourceIds: [provider.sourceId],
               allPatientInstances: [provider],
@@ -345,7 +346,6 @@ void main() {
       await save(tester);
 
       expect(savedEdit().patientId, 'provider-patient');
-      expect(savedEdit().sourceId, 'provider-1');
     });
   });
 

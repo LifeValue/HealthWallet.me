@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:health_wallet/core/utils/validator.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 
 enum FieldType {
   text,
@@ -26,6 +27,15 @@ class TextFieldDescriptor {
   final List<FieldValidationError? Function(String?)>? validators;
   final List<TextInputFormatter>? inputFormatters;
   final TextInputType? keyboardType;
+
+  /// How sure the reading of [value] is, for the review's hint. An empty
+  /// field shows none: nothing was read to doubt.
+  ConfidenceLevel get confidence => value.trim().isEmpty
+      ? ConfidenceLevel.high
+      : ConfidenceLevel.fromDouble(confidenceLevel);
+
+  /// Whether the field must be filled in: a validator rejects it empty.
+  bool get isRequired => validate('') != null;
 
   /// The first validation error of [value], or null when it is valid.
   FieldValidationError? validate(String? value) {

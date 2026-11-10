@@ -3,15 +3,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extractor_registry.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/capture_error_listener.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _FakeProcessingRepository extends Fake implements ProcessingRepository {}
@@ -25,10 +27,9 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {}
 class _FakeDocumentReferenceService extends Fake
     implements DocumentReferenceService {}
 
-class _FakePatientDeduplicationService extends Fake
-    implements PatientDeduplicationService {}
+class _FakeHolderSelection extends Fake implements HolderSelection {}
 
-class _FakeSourceTypeService extends Fake implements SourceTypeService {}
+class _FakeHolderService extends Fake implements HolderService {}
 
 void main() {
   final ro = lookupAppLocalizations(const Locale('ro'));
@@ -36,16 +37,24 @@ void main() {
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
+    final ocr = _FakeOcrProcessingHelper();
     bloc = ProcessingBloc(
       _FakeProcessingRepository(),
-      _FakeOcrProcessingHelper(),
+      ocr,
       _FakeSyncRepository(),
       _FakeDocumentReferenceService(),
-      _FakePatientDeduplicationService(),
-      _FakeSourceTypeService(),
+      _FakeHolderService(),
+      _FakeHolderSelection(),
       _FakeRecordsRepository(),
       await SharedPreferences.getInstance(),
       AppStringsProvider.forLocale(const Locale('ro')),
+      LayoutExtractionService(
+        _FakeProcessingRepository(),
+        ocr,
+        LayoutExtractorRegistry(const []),
+        _FakeHolderService(),
+        _FakeRecordsRepository(),
+      ),
     );
   });
 

@@ -221,11 +221,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Fehler beim Aktualisieren des Anzeigenamens';
 
   @override
-  String failedToSaveSetting(String setting) {
-    return '„$setting“ konnte nicht gespeichert werden. Versuche es erneut.';
-  }
-
-  @override
   String get actionCannotBeUndone =>
       'Diese Aktion kann nicht rückgängig gemacht werden.';
 
@@ -432,6 +427,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get attachToEncounter => 'An Termin anhängen';
+
+  @override
+  String get attachToPatient => 'An Patient anhängen';
 
   @override
   String get continueProcessing => 'Verarbeitung fortsetzen';
@@ -711,10 +709,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Das Dokument ist zu groß für den aktuellen KI-Arbeitsspeicher.';
 
   @override
-  String get processingFailedMemory =>
-      'Nicht genügend freier Speicher, um das KI-Modell auszuführen. Schließe andere Apps und versuche es erneut, oder schalte den Tiefenscan in den KI-Einstellungen aus.';
-
-  @override
   String get processingFailedCapacitySuggestion =>
       'Tippe oben auf das Einstellungssymbol und erhöhe den KI-Arbeitsspeicher auf 2048 oder höher, dann erneut versuchen.';
 
@@ -772,15 +766,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get tokenPresetHigh => 'Lang';
-
-  @override
-  String get tokenPresetLowHint => 'ein paar Werte';
-
-  @override
-  String get tokenPresetMediumHint => 'ein kurzer Bericht';
-
-  @override
-  String get tokenPresetHighHint => 'ein vollständiger Bericht';
 
   @override
   String get tokenPresetCustom => 'Benutzerdefiniert';
@@ -1512,16 +1497,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get desktopHandoverSendingFiles => 'Dateien werden gesendet...';
 
   @override
-  String get desktopHandoverProcessingOnDesktop =>
-      'Wird auf dem Desktop verarbeitet...';
-
-  @override
-  String get desktopHandoverComplete => 'Fertig!';
-
-  @override
-  String get desktopHandoverError => 'Fehler aufgetreten';
-
-  @override
   String get desktopHandoverSending => 'Wird gesendet...';
 
   @override
@@ -1531,9 +1506,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String desktopHandoverFileCount(int count) {
     return '$count Dateien';
   }
-
-  @override
-  String get desktopHandoverSuccess => 'An den Desktop übergeben';
 
   @override
   String get desktopClose => 'Schließen';
@@ -2521,9 +2493,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noFilePathFound => 'Kein Dateipfad gefunden';
 
   @override
-  String get handoverPatientMatched => 'Patient der Übergabe zugeordnet';
-
-  @override
   String get desktopDiscovering => 'Suche läuft...';
 
   @override
@@ -2575,46 +2544,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Die Backups konnten nicht aktualisiert werden. Bitte versuche es erneut.';
 
   @override
-  String get backupRecordsOnly => 'Nur Aufzeichnungen';
-
-  @override
-  String backupRestoreConfirmPointInTime(String date) {
-    return 'Dadurch werden deine Aufzeichnungen auf diesem Computer und deinem gekoppelten Telefon durch das Backup vom $date ersetzt. Seitdem hinzugefügte Aufzeichnungen werden entfernt. Vorher wird eine Kopie „Vor Wiederherstellung“ deiner aktuellen Daten gespeichert und 30 Tage aufbewahrt, damit du das rückgängig machen kannst.';
-  }
-
-  @override
-  String get backupOldNoFiles =>
-      'Dieses Backup enthält keine Dateien. Die Aufzeichnungen werden wiederhergestellt, deine aktuellen Dateien bleiben erhalten.';
-
-  @override
-  String backupSafetyName(String date) {
-    return 'Vor Wiederherstellung $date';
-  }
-
-  @override
-  String get backupRestoreFailed =>
-      'Wiederherstellung fehlgeschlagen. Deine Daten wurden nicht geändert; das Backup \"Vor Wiederherstellung\" ist in der Liste.';
-
-  @override
-  String get backupSafetyFailed =>
-      'Das Sicherheits-Backup konnte nicht erstellt werden, daher wurde nichts wiederhergestellt. Prüfe den freien Speicher und den Ordner.';
-
-  @override
-  String backupFilesNotRestored(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count Dateien konnten nicht wiederhergestellt werden.',
-      one: '1 Datei konnte nicht wiederhergestellt werden.',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get backupRestorePhoneOffline =>
-      'Dein Telefon ist nicht verbunden. Seit der letzten Synchronisierung darauf hinzugefügte Aufzeichnungen kommen zurück, sobald es sich wieder verbindet; Änderungen an vorhandenen Aufzeichnungen werden durch das Backup ersetzt.';
-
-  @override
   String get desktopSyncFailed =>
       'Synchronisierung fehlgeschlagen. Prüfe die Verbindung und versuche es erneut.';
 
@@ -2640,23 +2569,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get desktopHandoverReceivingFiles => 'Dateien werden empfangen...';
 
   @override
-  String get desktopHandoverProcessingStatus => 'Wird verarbeitet...';
-
-  @override
-  String get desktopHandoverSendingResults => 'Ergebnisse werden gesendet...';
-
-  @override
-  String get desktopHandoverDone => 'Abgeschlossen';
-
-  @override
   String get desktopHandoverStatusError => 'Fehler';
 
   @override
-  String get desktopHandoverWaitingForResults => 'Warte auf Ergebnisse...';
-
-  @override
   String get desktopHandoverNotAccepted =>
-      'Der Desktop hat die Dokumente nicht angenommen.';
+      'Der Desktop hat nicht geantwortet. Stelle sicher, dass HealthWallet dort geöffnet und aktuell ist.';
 
   @override
   String get desktopHandoverFileMissing =>
@@ -2690,10 +2607,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String trayQuit(String appName) {
     return '$appName beenden';
   }
-
-  @override
-  String get desktopFinishedProcessing =>
-      'Desktop hat die Verarbeitung abgeschlossen';
 
   @override
   String get biometricAuthReason =>
@@ -4656,6 +4569,215 @@ class AppLocalizationsDe extends AppLocalizations {
   String desktopBackupSucceededMessage(String name, int count) {
     return '\"$name\" wurde gespeichert. Sie enthält $count Aufzeichnungen.';
   }
+
+  @override
+  String get holderQuestionTitle => 'Wem gehören diese Aufzeichnungen?';
+
+  @override
+  String holderQuestionMessage(String name) {
+    return 'Es sind Aufzeichnungen für $name eingegangen. Diese Person passt zu niemandem in deiner Wallet. Wer ist das?';
+  }
+
+  @override
+  String get holderQuestionSomeoneElse => 'Jemand anderes';
+
+  @override
+  String get fhirTypeVisionPrescription => 'Brillenrezept';
+
+  @override
+  String get categoryVisionPrescriptions => 'Brillenrezepte';
+
+  @override
+  String get lensTypeMultifocal => 'Gleitsichtbrille';
+
+  @override
+  String get lensTypeDistance => 'Fernbrille';
+
+  @override
+  String get lensTypeReading => 'Lesebrille';
+
+  @override
+  String get lensTypeOther => 'Brille';
+
+  @override
+  String get fieldLensType => 'Glasart';
+
+  @override
+  String get fieldDateWritten => 'Ausgestellt am';
+
+  @override
+  String get fieldRecommendedFollowUp => 'Nächste Kontrolle';
+
+  @override
+  String get labelSerialNumber => 'Seriennummer';
+
+  @override
+  String get visionEyeRight => 'Rechtes Auge';
+
+  @override
+  String get visionEyeLeft => 'Linkes Auge';
+
+  @override
+  String get visionSphere => 'Stärke';
+
+  @override
+  String get visionCylinder => 'Astigmatismus';
+
+  @override
+  String get visionAxis => 'Winkel';
+
+  @override
+  String get visionAdd => 'Lesezusatz';
+
+  @override
+  String get visionPrism => 'Prisma';
+
+  @override
+  String get visionBase => 'Prismenbasis';
+
+  @override
+  String get visionInvalidDioptre =>
+      'Einen Wert wie +1.25 eingeben, in Schritten von 0.25';
+
+  @override
+  String get visionInvalidAxis => 'Einen Winkel von 0 bis 180 eingeben';
+
+  @override
+  String get stagedAlreadyInWallet => 'Bereits in deiner Wallet';
+
+  @override
+  String get stagedWillBeCompleted => 'Bereits in deiner Wallet, wird ergänzt';
+
+  @override
+  String get documentAlreadyInWallet =>
+      'Alles aus diesem Dokument ist bereits in deiner Wallet';
+
+  @override
+  String get processingStatusHandedOver => 'Auf dem Desktop';
+
+  @override
+  String get desktopHandoverSent =>
+      'An den Desktop gesendet. Du wirst benachrichtigt, sobald du es hier oder auf dem Desktop prüfen kannst.';
+
+  @override
+  String get desktopHandoverConnectionLost =>
+      'Die Verbindung zum Desktop wurde unterbrochen. Versuche es erneut.';
+
+  @override
+  String get desktopHandoverTooLarge =>
+      'Das Dokument ist zu groß für den Desktop (über 200 MB).';
+
+  @override
+  String get desktopHandoverTimedOut =>
+      'Der Desktop hat den Empfang des Dokuments abgebrochen. Versuche es erneut.';
+
+  @override
+  String get handoverOnDesktopTitle => 'Wird auf dem Desktop verarbeitet';
+
+  @override
+  String get handoverOnDesktopMessage =>
+      'Der Entwurf kommt zum Prüfen hierher zurück, sobald der Desktop fertig ist. Du kannst ihn auch auf dem Desktop prüfen und speichern.';
+
+  @override
+  String get handoverTakeBack => 'Stattdessen auf diesem Telefon verarbeiten';
+
+  @override
+  String handoverReadyToReview(String origin) {
+    return '$origin: bereit zur Prüfung';
+  }
+
+  @override
+  String handoverFailedOnDesktop(String origin) {
+    return '$origin: Der Desktop konnte es nicht verarbeiten. Es ist wieder auf diesem Telefon.';
+  }
+
+  @override
+  String handoverNoModelOnDesktop(String origin) {
+    return '$origin: Auf dem Desktop gibt es kein KI-Modell. Es ist wieder auf diesem Telefon.';
+  }
+
+  @override
+  String handoverDeletedOnDesktop(String origin) {
+    return '$origin wurde auf dem Desktop gelöscht. Es ist wieder auf diesem Telefon.';
+  }
+
+  @override
+  String handoverSavedOnDesktop(String origin) {
+    return '$origin wurde auf dem Desktop gespeichert. Die Einträge kommen mit der nächsten Synchronisierung auf dieses Telefon.';
+  }
+
+  @override
+  String handoverSavedOnPhone(String origin) {
+    return '$origin wurde auf dem Telefon gespeichert.';
+  }
+
+  @override
+  String handoverDraftSavedOnDesktop(String origin) {
+    return '$origin wurde auf dem Desktop gespeichert. Hier gemachte Änderungen am Entwurf wurden nicht übernommen.';
+  }
+
+  @override
+  String handoverDraftSavedOnPhone(String origin) {
+    return '$origin wurde auf dem Telefon gespeichert. Hier gemachte Änderungen am Entwurf wurden nicht übernommen.';
+  }
+
+  @override
+  String failedToSaveSetting(String setting) {
+    return '„$setting“ konnte nicht gespeichert werden. Versuche es erneut.';
+  }
+
+  @override
+  String get processingFailedMemory =>
+      'Nicht genügend freier Speicher, um das KI-Modell auszuführen. Schließe andere Apps und versuche es erneut, oder schalte den Tiefenscan in den KI-Einstellungen aus.';
+
+  @override
+  String get tokenPresetLowHint => 'ein paar Werte';
+
+  @override
+  String get tokenPresetMediumHint => 'ein kurzer Bericht';
+
+  @override
+  String get tokenPresetHighHint => 'ein vollständiger Bericht';
+
+  @override
+  String get backupRecordsOnly => 'Nur Aufzeichnungen';
+
+  @override
+  String backupRestoreConfirmPointInTime(String date) {
+    return 'Dadurch werden deine Aufzeichnungen auf diesem Computer und deinem gekoppelten Telefon durch das Backup vom $date ersetzt. Seitdem hinzugefügte Aufzeichnungen werden entfernt. Vorher wird eine Kopie „Vor Wiederherstellung“ deiner aktuellen Daten gespeichert und 30 Tage aufbewahrt, damit du das rückgängig machen kannst.';
+  }
+
+  @override
+  String get backupOldNoFiles =>
+      'Dieses Backup enthält keine Dateien. Die Aufzeichnungen werden wiederhergestellt, deine aktuellen Dateien bleiben erhalten.';
+
+  @override
+  String backupSafetyName(String date) {
+    return 'Vor Wiederherstellung $date';
+  }
+
+  @override
+  String get backupRestoreFailed =>
+      'Wiederherstellung fehlgeschlagen. Deine Daten wurden nicht geändert; das Backup \"Vor Wiederherstellung\" ist in der Liste.';
+
+  @override
+  String get backupSafetyFailed =>
+      'Das Sicherheits-Backup konnte nicht erstellt werden, daher wurde nichts wiederhergestellt. Prüfe den freien Speicher und den Ordner.';
+
+  @override
+  String backupFilesNotRestored(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Dateien konnten nicht wiederhergestellt werden.',
+      one: '1 Datei konnte nicht wiederhergestellt werden.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupRestorePhoneOffline =>
+      'Dein Telefon ist nicht verbunden. Seit der letzten Synchronisierung darauf hinzugefügte Aufzeichnungen kommen zurück, sobald es sich wieder verbindet; Änderungen an vorhandenen Aufzeichnungen werden durch das Backup ersetzt.';
 
   @override
   String aiModelDeleteTitle(String name) {

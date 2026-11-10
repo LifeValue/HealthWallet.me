@@ -34,3 +34,4 @@ export 'procedure/procedure.dart';
 export 'related_person/related_person.dart';
 export 'service_request/service_request.dart';
 export 'specimen/specimen.dart';
+export 'vision_prescription/vision_prescription.dart';

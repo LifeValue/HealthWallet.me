@@ -21,6 +21,7 @@ const criticalAreas = <String, String>{
   'Scan → FHIR mapping':
       'lib/features/processing/domain/entity/mapping_resources/',
   'Patient services': 'lib/features/user/domain/services/',
+  'Holders and sources': 'lib/features/holders/',
   'Share records': 'lib/features/share_records/data/',
   'Sync data': 'lib/features/sync/data/',
   'App lock': 'lib/features/app_lock/',

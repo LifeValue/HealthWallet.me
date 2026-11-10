@@ -28,7 +28,10 @@ class _FakeCardBuilder extends Fake implements EmergencyCardBuilder {
   int calls = 0;
 
   @override
-  Future<EmergencyCardData> build({required String patientId}) async {
+  Future<EmergencyCardData> build({
+    required String patientId,
+    List<String>? sourceIds,
+  }) async {
     calls++;
     if (error != null) throw error!;
     return _card;

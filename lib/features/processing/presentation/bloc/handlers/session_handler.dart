@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:collection/collection.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
@@ -14,6 +16,7 @@ import 'package:health_wallet/features/processing/domain/entity/model_not_found_
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
@@ -24,6 +27,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
   OcrProcessingHelper get ocrProcessingHelper;
   ProcessingRepository get processingRepository;
   AppStringsProvider get strings;
+  LayoutExtractionService get layoutExtraction;
 
   void updateSession(
     Emitter<ProcessingState> emit, {
@@ -108,6 +112,27 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
   ) async {
     emit(state.copyWith(status: const PipelineStatus.loading()));
     try {
+      // The same document sent again (a handover retried after a failure)
+      // replaces the earlier attempt and its files.
+      final previous = state.sessions.firstWhereOrNull(
+        (s) => event.sessionId != null && s.id == event.sessionId,
+      );
+      if (previous != null) {
+        if (previous.isProcessing) {
+          await processingRepository.cancelGeneration();
+          await processingRepository.waitForStreamCompletion();
+        }
+        layoutExtraction.forget(previous.id);
+        emit(
+          state.copyWith(
+            sessions: [...state.sessions]..remove(previous),
+            sessionImagePaths: {...state.sessionImagePaths}
+              ..remove(previous.id),
+          ),
+        );
+        await processingRepository.deleteProcessingSession(previous);
+      }
+
       final persistedPaths = <String>[];
 
       for (final filePath in event.filePaths) {
@@ -121,9 +146,10 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
       if (persistedPaths.isEmpty) {
         emit(
           state.copyWith(
-            status: const PipelineStatus.failure(
+            status: PipelineStatus.failure(
               error: 'No valid files found',
               reason: PipelineFailureReason.noValidFiles,
+              sessionId: event.sessionId,
             ),
           ),
         );
@@ -134,7 +160,12 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
           ? await _autoReorderByPageNumber(persistedPaths)
           : persistedPaths;
 
-      await createSession(emit, filePaths: orderedPaths, origin: event.origin);
+      await createSession(
+        emit,
+        filePaths: orderedPaths,
+        origin: event.origin,
+        id: event.sessionId,
+      );
 
       if (event.phase1Patient != null) {
         final session = state.sessions.first;
@@ -148,6 +179,13 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
           updateDb: true,
         );
       }
+
+      // A handover is processed through to its draft without anyone at the
+      // desktop; when another session is running it waits its turn.
+      if (event.origin == ProcessingOrigin.handover &&
+          !state.sessions.any((s) => s.isProcessing)) {
+        startNextPendingSession();
+      }
     } catch (e, s) {
       logger.e('[ProcessingBloc] import failed', e, s);
       emit(
@@ -155,6 +193,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
           status: PipelineStatus.failure(
             error: 'Failed to import document: $e',
             reason: PipelineFailureReason.importFailed,
+            sessionId: event.sessionId,
           ),
         ),
       );
@@ -165,16 +204,21 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     Emitter<ProcessingState> emit, {
     required List<String> filePaths,
     required ProcessingOrigin origin,
+    String? id,
   }) async {
     final session = await processingRepository.createProcessingSession(
       filePaths: filePaths,
       origin: origin,
+      id: id,
     );
 
     emit(
       state.copyWith(
         status: PipelineStatus.sessionCreated(session: session),
-        sessions: [session, ...state.sessions],
+        sessions: [
+          session,
+          ...state.sessions.where((s) => s.id != session.id),
+        ],
       ),
     );
   }
@@ -216,6 +260,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
 
       final newSessions = [...state.sessions]
         ..removeWhere((session) => session.id == event.session.id);
+      layoutExtraction.forget(event.session.id);
 
       final previews = state.sessionImagePaths[event.session.id] ?? const [];
       final ocrPages = _ocrPagesOf(previews);
@@ -298,12 +343,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         state.sessionImagePaths,
       )..[event.sessionId] = allImages;
 
-      emit(
-        state.copyWith(
-          allImagePathsForOCR: allImages,
-          sessionImagePaths: updatedImageMap,
-        ),
-      );
+      emit(state.copyWith(sessionImagePaths: updatedImageMap));
 
       if (anotherSessionProcessing &&
           session.status != ProcessingStatus.draft) {
@@ -323,10 +363,14 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
 
       if (session.status == ProcessingStatus.pending) {
         try {
-          final isModelLoaded = await processingRepository
-              .checkModelExistence();
+          // A document of a known layout is read without the model.
+          final canProcess = await layoutExtraction.canProcess(
+            event.sessionId,
+            filePaths: session.filePaths,
+            imagePaths: state.ocrPagesFor(event.sessionId),
+          );
 
-          if (isModelLoaded) {
+          if (canProcess) {
             add(MappingInitiated(sessionId: event.sessionId));
           } else {
             emit(
@@ -336,6 +380,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
                   // what a desktop sends to the phone as the handover error.
                   error: const ModelNotFoundException().toString(),
                   reason: PipelineFailureReason.modelNotFound,
+                  sessionId: event.sessionId,
                 ),
               ),
             );
@@ -353,6 +398,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
           status: PipelineStatus.failure(
             error: e.toString(),
             reason: PipelineFailureReason.of(e),
+            sessionId: event.sessionId,
           ),
         ),
       );
@@ -372,6 +418,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     final updatedSession = state.sessions[sessionIndex].copyWith(
       filePaths: event.reorderedPaths,
     );
+    layoutExtraction.forget(event.sessionId);
     final updatedSessions = [...state.sessions];
     updatedSessions[sessionIndex] = updatedSession;
 

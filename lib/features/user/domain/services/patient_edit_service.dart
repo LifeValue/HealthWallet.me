@@ -4,6 +4,7 @@ import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart'
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/blood_observation_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
@@ -19,12 +20,14 @@ import 'package:uuid/uuid.dart';
 class PatientEditService {
   final RecordsRepository _recordsRepository;
   final SourceTypeService _sourceTypeService;
+  final HolderService _holderService;
 
   CountryIdentifier _countryProfile = CountryIdentifier.forCurrentLocale();
 
   PatientEditService(
     this._recordsRepository,
     this._sourceTypeService,
+    this._holderService,
   );
 
   Future<Patient> savePatientEdits({
@@ -70,7 +73,6 @@ class PatientEditService {
         gender: gender,
         identifierValue: identifierValue,
         contactPhone: contactPhone,
-        availableSources: availableSources,
       );
     }
   }
@@ -155,23 +157,14 @@ class PatientEditService {
     String? gender,
     String? identifierValue,
     String? contactPhone,
-    required List<Source> availableSources,
   }) async {
-    final walletSource = await _sourceTypeService.getWritableSourceForPatient(
-      patientId: readOnlyPatient.resourceId,
-      patientName: readOnlyPatient.displayTitle,
-      availableSources: availableSources,
+    final holder = (await _holderService.load()).ofPatient(readOnlyPatient);
+    final walletSource = await _holderService.walletSourceOf(
+      holder?.id ?? readOnlyPatient.id,
     );
 
-    final existingWalletPatients = await _recordsRepository.getResources(
-      resourceTypes: [FhirType.Patient],
-      sourceId: walletSource.id,
-    );
-
-    final existingWalletPatient = existingWalletPatients
-        .whereType<Patient>()
-        .where((p) => _hasSameIdentifiers(p, readOnlyPatient))
-        .firstOrNull;
+    // The person's copy from an earlier edit, whatever its identifiers say.
+    final existingWalletPatient = holder?.getPatientForSource(walletSource.id);
 
     if (existingWalletPatient != null) {
       return await _updatePatientInPlace(
@@ -401,29 +394,6 @@ class PatientEditService {
     return identifiers.isEmpty ? null : identifiers;
   }
 
-  bool _hasSameIdentifiers(Patient p1, Patient p2) {
-    if (p1.identifier == null || p2.identifier == null) return false;
-    if (p1.identifier!.isEmpty || p2.identifier!.isEmpty) return false;
-
-    final ids1 = p1.identifier!
-        .where(
-          (id) =>
-              id.system?.valueString != null && id.value?.valueString != null,
-        )
-        .map((id) => '${id.system!.valueString}:${id.value!.valueString}')
-        .toSet();
-
-    final ids2 = p2.identifier!
-        .where(
-          (id) =>
-              id.system?.valueString != null && id.value?.valueString != null,
-        )
-        .map((id) => '${id.system!.valueString}:${id.value!.valueString}')
-        .toSet();
-
-    return ids1.intersection(ids2).isNotEmpty;
-  }
-
   Future<String?> getCurrentBloodType(Patient patient) async {
     try {
       final observations = await _recordsRepository.getBloodTypeObservations(
@@ -436,11 +406,14 @@ class PatientEditService {
     }
   }
 
+  /// Saves the blood type of the person [patient] belongs to on their own
+  /// wallet Patient, made if they have none; never on a provider's row.
   Future<void> updateBloodTypeObservation(
-    Patient patient,
+    Patient person,
     String bloodType,
   ) async {
     try {
+      final patient = (await _holderService.walletPatientOf(person.id)).patient;
       final existingObservations = await _recordsRepository
           .getBloodTypeObservations(
             patientId: patient.id,

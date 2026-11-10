@@ -7,12 +7,12 @@ void main() {
   final mapper = SourceMapperImpl();
 
   group('SourceMapperImpl.mapToEntity', () {
-    test('maps a full DTO', () {
+    test("maps a full DTO, keeping the provider's name for the source", () {
       const dto = SourceDto(
         id: 'src-1',
         platformName: 'Ignored',
         logo: 'https://logo',
-        labelSource: 'Ignored too',
+        labelSource: 'City Hospital',
         platformType: 'epic',
         createdAt: '2024-01-02T03:04:05Z',
         updatedAt: '2024-02-03T04:05:06Z',
@@ -23,7 +23,7 @@ void main() {
           id: 'src-1',
           platformName: 'Epic',
           logo: 'https://logo',
-          labelSource: 'Epic',
+          labelSource: 'City Hospital',
           platformType: 'fasten',
           createdAt: DateTime.utc(2024, 1, 2, 3, 4, 5),
           updatedAt: DateTime.utc(2024, 2, 3, 4, 5, 6),

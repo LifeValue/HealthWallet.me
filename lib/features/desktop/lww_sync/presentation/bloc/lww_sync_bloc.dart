@@ -51,11 +51,21 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
   @visibleForTesting
   static Duration settleDelay = const Duration(seconds: 1);
 
+  /// How long to wait for the rest of a run of batches the sender said would
+  /// follow, in case it stops sending (a dropped link, or only deleted rows
+  /// left), before reloading the lists anyway.
+  @visibleForTesting
+  static Duration settleFallback = const Duration(seconds: 10);
+
   final _subscriptions = <StreamSubscription>[];
   SyncPeerState? _peer;
   int? _inFlight;
   Timer? _ackTimer;
   Timer? _settleTimer;
+
+  /// Rows were applied since the lists last reloaded.
+  bool _recordsUnsettled = false;
+  final _initialised = Completer<void>();
 
   /// Set while this side waits for the peer's answer to its digest, so a
   /// check that moves no rows still shows as running.
@@ -101,6 +111,7 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
         case LwwMessageReceived(:final type, :final payload):
           await _onMessage(type, payload, emit);
         case LwwRecordsSettled():
+          _recordsUnsettled = false;
           emit(state.copyWith(recordsVersion: state.recordsVersion + 1));
         case LwwAckTimedOut(:final batchId):
           if (_inFlight == batchId) {
@@ -183,7 +194,13 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
     if (_tcpService.isConnected) {
       await _onConnectionChanged(true, emit);
     }
+    if (!_initialised.isCompleted) _initialised.complete();
   }
+
+  /// Completes once the bloc listens to the link, so tests can connect a
+  /// peer without its first messages arriving before anyone listens.
+  @visibleForTesting
+  Future<void> get initialised => _initialised.future;
 
   Future<void> _onTriggered(Emitter<LwwSyncState> emit) async {
     await _refreshPending(emit);
@@ -453,9 +470,11 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
         lastSyncTime: _peer?.lastSyncAt ?? state.lastSyncTime,
       ),
     );
-    if (applied.count > 0) {
+    if (applied.count > 0) _recordsUnsettled = true;
+    if (_recordsUnsettled) {
+      // Reloads once after the last batch of a run, not after each one.
       _settleTimer?.cancel();
-      _settleTimer = Timer(settleDelay, () {
+      _settleTimer = Timer(batch.more ? settleFallback : settleDelay, () {
         if (!isClosed) add(const LwwRecordsSettled());
       });
     }

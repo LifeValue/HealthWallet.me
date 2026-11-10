@@ -221,11 +221,6 @@ class AppLocalizationsRo extends AppLocalizations {
       'Nu s-a putut actualiza numele afișat';
 
   @override
-  String failedToSaveSetting(String setting) {
-    return 'Nu s-a putut salva setarea „$setting”. Încearcă din nou.';
-  }
-
-  @override
   String get actionCannotBeUndone => 'Această acțiune nu poate fi anulată.';
 
   @override
@@ -430,6 +425,9 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get attachToEncounter => 'Atașează la Consultație';
+
+  @override
+  String get attachToPatient => 'Atașează la Pacient';
 
   @override
   String get continueProcessing => 'Continuă Procesarea';
@@ -708,10 +706,6 @@ class AppLocalizationsRo extends AppLocalizations {
       'Documentul este prea mare pentru memoria de lucru curentă a AI-ului.';
 
   @override
-  String get processingFailedMemory =>
-      'Nu există suficientă memorie liberă pentru a rula modelul AI. Închide alte aplicații și încearcă din nou, sau dezactivează Scanare Profundă din Setări AI.';
-
-  @override
   String get processingFailedCapacitySuggestion =>
       'Apasă pe pictograma de setări de mai sus și crește Memoria de lucru la 2048 sau mai mare, apoi reîncearcă.';
 
@@ -769,15 +763,6 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get tokenPresetHigh => 'Lung';
-
-  @override
-  String get tokenPresetLowHint => 'câteva valori';
-
-  @override
-  String get tokenPresetMediumHint => 'un raport scurt';
-
-  @override
-  String get tokenPresetHighHint => 'un raport complet';
 
   @override
   String get tokenPresetCustom => 'Personalizat';
@@ -1511,16 +1496,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String get desktopHandoverSendingFiles => 'Se trimit fișierele...';
 
   @override
-  String get desktopHandoverProcessingOnDesktop =>
-      'Se procesează pe desktop...';
-
-  @override
-  String get desktopHandoverComplete => 'Finalizat!';
-
-  @override
-  String get desktopHandoverError => 'A apărut o eroare';
-
-  @override
   String get desktopHandoverSending => 'Se trimite...';
 
   @override
@@ -1530,9 +1505,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String desktopHandoverFileCount(int count) {
     return '$count fișiere';
   }
-
-  @override
-  String get desktopHandoverSuccess => 'Predat pe desktop';
 
   @override
   String get desktopClose => 'Închide';
@@ -2522,9 +2494,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String get noFilePathFound => 'Nu s-a găsit calea fișierului';
 
   @override
-  String get handoverPatientMatched => 'Pacientul din predare a fost asociat';
-
-  @override
   String get desktopDiscovering => 'Se caută...';
 
   @override
@@ -2575,47 +2544,6 @@ class AppLocalizationsRo extends AppLocalizations {
       'Backup-urile nu au putut fi actualizate. Încearcă din nou.';
 
   @override
-  String get backupRecordsOnly => 'Doar înregistrări';
-
-  @override
-  String backupRestoreConfirmPointInTime(String date) {
-    return 'Aceasta înlocuiește înregistrările de pe acest computer și de pe telefonul asociat cu copia din $date. Înregistrările adăugate între timp sunt eliminate. Mai întâi se salvează o copie „Înainte de restaurare” a datelor actuale, păstrată 30 de zile, ca să poți anula.';
-  }
-
-  @override
-  String get backupOldNoFiles =>
-      'Această copie nu conține fișiere. Înregistrările vor fi restaurate, iar fișierele actuale păstrate.';
-
-  @override
-  String backupSafetyName(String date) {
-    return 'Înainte de restaurare $date';
-  }
-
-  @override
-  String get backupRestoreFailed =>
-      'Restaurarea a eșuat. Datele nu au fost modificate; copia \"Înainte de restaurare\" este în listă.';
-
-  @override
-  String get backupSafetyFailed =>
-      'Copia de siguranță nu a putut fi creată, așa că nu s-a restaurat nimic. Verifică spațiul liber și folderul.';
-
-  @override
-  String backupFilesNotRestored(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count de fișiere nu au putut fi restaurate.',
-      few: '$count fișiere nu au putut fi restaurate.',
-      one: 'Un fișier nu a putut fi restaurat.',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get backupRestorePhoneOffline =>
-      'Telefonul nu este conectat. Înregistrările adăugate pe el de la ultima sincronizare vor reveni după ce se reconectează; modificările făcute la înregistrările existente vor fi înlocuite de copie.';
-
-  @override
   String get desktopSyncFailed =>
       'Sincronizarea a eșuat. Verifică conexiunea și încearcă din nou.';
 
@@ -2640,23 +2568,11 @@ class AppLocalizationsRo extends AppLocalizations {
   String get desktopHandoverReceivingFiles => 'Se primesc fișierele...';
 
   @override
-  String get desktopHandoverProcessingStatus => 'Se procesează...';
-
-  @override
-  String get desktopHandoverSendingResults => 'Se trimit rezultatele...';
-
-  @override
-  String get desktopHandoverDone => 'Finalizat';
-
-  @override
   String get desktopHandoverStatusError => 'Eroare';
 
   @override
-  String get desktopHandoverWaitingForResults => 'Se așteaptă rezultatele...';
-
-  @override
   String get desktopHandoverNotAccepted =>
-      'Desktopul nu a acceptat documentele.';
+      'Desktopul nu a răspuns. Asigură-te că HealthWallet este deschis și actualizat pe el.';
 
   @override
   String get desktopHandoverFileMissing =>
@@ -2689,9 +2605,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String trayQuit(String appName) {
     return 'Închide $appName';
   }
-
-  @override
-  String get desktopFinishedProcessing => 'Desktopul a terminat procesarea';
 
   @override
   String get biometricAuthReason =>
@@ -4657,6 +4570,216 @@ class AppLocalizationsRo extends AppLocalizations {
   String desktopBackupSucceededMessage(String name, int count) {
     return '\"$name\" a fost salvată. Conține $count înregistrări.';
   }
+
+  @override
+  String get holderQuestionTitle => 'Ale cui sunt aceste înregistrări?';
+
+  @override
+  String holderQuestionMessage(String name) {
+    return 'Au sosit înregistrări pentru $name, care nu corespunde nimănui din portofelul tău. Cine este?';
+  }
+
+  @override
+  String get holderQuestionSomeoneElse => 'Altcineva';
+
+  @override
+  String get fhirTypeVisionPrescription => 'Rețetă de ochelari';
+
+  @override
+  String get categoryVisionPrescriptions => 'Rețete de ochelari';
+
+  @override
+  String get lensTypeMultifocal => 'Ochelari multifocali';
+
+  @override
+  String get lensTypeDistance => 'Ochelari pentru distanță';
+
+  @override
+  String get lensTypeReading => 'Ochelari pentru citit';
+
+  @override
+  String get lensTypeOther => 'Ochelari';
+
+  @override
+  String get fieldLensType => 'Tip de lentile';
+
+  @override
+  String get fieldDateWritten => 'Data emiterii';
+
+  @override
+  String get fieldRecommendedFollowUp => 'Următorul control';
+
+  @override
+  String get labelSerialNumber => 'Număr de serie';
+
+  @override
+  String get visionEyeRight => 'Ochi drept';
+
+  @override
+  String get visionEyeLeft => 'Ochi stâng';
+
+  @override
+  String get visionSphere => 'Dioptrii';
+
+  @override
+  String get visionCylinder => 'Astigmatism';
+
+  @override
+  String get visionAxis => 'Unghi';
+
+  @override
+  String get visionAdd => 'Adiție citit';
+
+  @override
+  String get visionPrism => 'Prismă';
+
+  @override
+  String get visionBase => 'Baza prismei';
+
+  @override
+  String get visionInvalidDioptre =>
+      'Folosește o valoare ca +1.25, din 0.25 în 0.25';
+
+  @override
+  String get visionInvalidAxis => 'Folosește un unghi între 0 și 180';
+
+  @override
+  String get stagedAlreadyInWallet => 'Deja în portofelul tău';
+
+  @override
+  String get stagedWillBeCompleted => 'Deja în portofelul tău, va fi completat';
+
+  @override
+  String get documentAlreadyInWallet =>
+      'Tot ce conține acest document este deja în portofelul tău';
+
+  @override
+  String get processingStatusHandedOver => 'Pe desktop';
+
+  @override
+  String get desktopHandoverSent =>
+      'Trimis pe desktop. Vei fi anunțat când îl poți verifica, aici sau pe desktop.';
+
+  @override
+  String get desktopHandoverConnectionLost =>
+      'Conexiunea cu desktopul s-a întrerupt. Încearcă din nou.';
+
+  @override
+  String get desktopHandoverTooLarge =>
+      'Documentul este prea mare pentru a fi trimis pe desktop (peste 200 MB).';
+
+  @override
+  String get desktopHandoverTimedOut =>
+      'Desktopul a încetat să primească documentul. Încearcă din nou.';
+
+  @override
+  String get handoverOnDesktopTitle => 'Se procesează pe desktop';
+
+  @override
+  String get handoverOnDesktopMessage =>
+      'Ciorna revine aici pentru verificare când desktopul termină. O poți verifica și salva și pe desktop.';
+
+  @override
+  String get handoverTakeBack => 'Procesează pe acest telefon';
+
+  @override
+  String handoverReadyToReview(String origin) {
+    return '$origin: gata de verificare';
+  }
+
+  @override
+  String handoverFailedOnDesktop(String origin) {
+    return '$origin: desktopul nu l-a putut procesa. A revenit pe acest telefon.';
+  }
+
+  @override
+  String handoverNoModelOnDesktop(String origin) {
+    return '$origin: nu există model AI pe desktop. A revenit pe acest telefon.';
+  }
+
+  @override
+  String handoverDeletedOnDesktop(String origin) {
+    return '$origin a fost șters pe desktop. A revenit pe acest telefon.';
+  }
+
+  @override
+  String handoverSavedOnDesktop(String origin) {
+    return '$origin a fost salvat pe desktop. Înregistrările ajung pe acest telefon la următoarea sincronizare.';
+  }
+
+  @override
+  String handoverSavedOnPhone(String origin) {
+    return '$origin a fost salvat pe telefon.';
+  }
+
+  @override
+  String handoverDraftSavedOnDesktop(String origin) {
+    return '$origin a fost salvat pe desktop. Modificările făcute aici ciornei nu au fost păstrate.';
+  }
+
+  @override
+  String handoverDraftSavedOnPhone(String origin) {
+    return '$origin a fost salvat pe telefon. Modificările făcute aici ciornei nu au fost păstrate.';
+  }
+
+  @override
+  String failedToSaveSetting(String setting) {
+    return 'Nu s-a putut salva setarea „$setting”. Încearcă din nou.';
+  }
+
+  @override
+  String get processingFailedMemory =>
+      'Nu există suficientă memorie liberă pentru a rula modelul AI. Închide alte aplicații și încearcă din nou, sau dezactivează Scanare Profundă din Setări AI.';
+
+  @override
+  String get tokenPresetLowHint => 'câteva valori';
+
+  @override
+  String get tokenPresetMediumHint => 'un raport scurt';
+
+  @override
+  String get tokenPresetHighHint => 'un raport complet';
+
+  @override
+  String get backupRecordsOnly => 'Doar înregistrări';
+
+  @override
+  String backupRestoreConfirmPointInTime(String date) {
+    return 'Aceasta înlocuiește înregistrările de pe acest computer și de pe telefonul asociat cu copia din $date. Înregistrările adăugate între timp sunt eliminate. Mai întâi se salvează o copie „Înainte de restaurare” a datelor actuale, păstrată 30 de zile, ca să poți anula.';
+  }
+
+  @override
+  String get backupOldNoFiles =>
+      'Această copie nu conține fișiere. Înregistrările vor fi restaurate, iar fișierele actuale păstrate.';
+
+  @override
+  String backupSafetyName(String date) {
+    return 'Înainte de restaurare $date';
+  }
+
+  @override
+  String get backupRestoreFailed =>
+      'Restaurarea a eșuat. Datele nu au fost modificate; copia \"Înainte de restaurare\" este în listă.';
+
+  @override
+  String get backupSafetyFailed =>
+      'Copia de siguranță nu a putut fi creată, așa că nu s-a restaurat nimic. Verifică spațiul liber și folderul.';
+
+  @override
+  String backupFilesNotRestored(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de fișiere nu au putut fi restaurate.',
+      few: '$count fișiere nu au putut fi restaurate.',
+      one: 'Un fișier nu a putut fi restaurat.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupRestorePhoneOffline =>
+      'Telefonul nu este conectat. Înregistrările adăugate pe el de la ultima sincronizare vor reveni după ce se reconectează; modificările făcute la înregistrările existente vor fi înlocuite de copie.';
 
   @override
   String aiModelDeleteTitle(String name) {

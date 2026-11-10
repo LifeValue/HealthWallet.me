@@ -17,6 +17,7 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/processing_page.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/processing_mapping_section.dart';
@@ -66,6 +67,17 @@ class _FakeNavigation extends Fake implements PageViewNavigationController {
 class _FakeProcessingRepository extends Fake implements ProcessingRepository {
   @override
   Future<bool> checkModelExistence() async => false;
+}
+
+/// No model and no known layout: the session can't be processed here.
+class _FakeLayoutExtractionService extends Fake
+    implements LayoutExtractionService {
+  @override
+  Future<bool> canProcess(
+    String sessionId, {
+    required List<String> filePaths,
+    List<String>? imagePaths,
+  }) async => false;
 }
 
 final _en = lookupAppLocalizations(const Locale('en'));
@@ -132,6 +144,9 @@ void main() {
         _FakeDeviceCapabilityService(),
       )
       ..registerSingleton<ProcessingRepository>(_FakeProcessingRepository())
+      ..registerSingleton<LayoutExtractionService>(
+        _FakeLayoutExtractionService(),
+      )
       ..registerFactory<AttachToEncounterBloc>(() => attachBloc);
 
     // Built at run time, as the router builds it.

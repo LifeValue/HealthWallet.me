@@ -18,6 +18,18 @@ const _fast = LinkTimings(
   serverIdle: Duration(seconds: 2),
 );
 
+/// [_fast] without the idle limits, for tests about what arrives rather than
+/// liveness: both ends share one isolate here, so sealing and opening a few
+/// megabytes stops both from hearing anything for longer than [_fast] allows
+/// on a slow runner.
+const _noIdle = LinkTimings(
+  handshake: Duration(milliseconds: 800),
+  approval: Duration(seconds: 5),
+  pingInterval: Duration(milliseconds: 100),
+  clientIdle: Duration(minutes: 1),
+  serverIdle: Duration(minutes: 1),
+);
+
 const desktopId = 'desktop-1';
 const phoneId = 'phone-1';
 
@@ -203,6 +215,8 @@ void main() {
       final atPhone = <String>[];
       desktop.messages.listen((m) => atDesktop.add(m.payloadString));
       phone.messages.listen((m) => atPhone.add(m.payloadString));
+      desktop.timings = _noIdle;
+      phone.timings = _noIdle;
       await connect(phone);
       await until(() => desktop.isConnected);
 
@@ -549,6 +563,8 @@ void main() {
       () async {
         final atDesktop = <String>[];
         desktop.messages.listen((m) => atDesktop.add(m.payloadString));
+        desktop.timings = _noIdle;
+        phone.timings = _noIdle;
         await connectPhone();
         await until(() => desktop.isConnected);
         expect(desktop.transport, LinkTransport.mpc);

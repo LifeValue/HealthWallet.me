@@ -8,6 +8,9 @@ import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_matcher.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/processing/domain/deep_scan_defaults.dart';
@@ -16,18 +19,19 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_vision_prescription.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/record_completion.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
@@ -36,10 +40,11 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
   RecordsRepository get recordsRepository;
   SyncRepository get syncRepository;
   DocumentReferenceService get documentReferenceService;
-  PatientDeduplicationService get deduplicationService;
-  SourceTypeService get sourceTypeService;
+  HolderService get holderService;
+  HolderSelection get holderSelection;
   SharedPreferences get prefs;
   AppStringsProvider get strings;
+  LayoutExtractionService get layoutExtraction;
 
   void updateSession(
     Emitter<ProcessingState> emit, {
@@ -58,6 +63,35 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
   void startNextPendingSession();
   Future<void> ensureOcrPages(Emitter<ProcessingState> emit, String sessionId);
 
+  /// Handovers whose extraction failed: the queue leaves them alone until
+  /// the user retries, so a failure isn't repeated after every other
+  /// document.
+  Set<String> get haltedHandovers;
+
+  /// The pages of [sessionId] itself, prepared when no step has prepared them
+  /// yet. Never another session's pages: a step that starts before the
+  /// session was opened (a handover's phase 2) would read the wrong document.
+  Future<List<String>> sessionImagesFor(
+    String sessionId,
+    Emitter<ProcessingState> emit,
+  ) async {
+    final cached = state.sessionImagePaths[sessionId];
+    if (cached != null && cached.isNotEmpty) return cached;
+    final session = state.sessions.firstWhereOrNull((s) => s.id == sessionId);
+    if (session == null) return const [];
+    final images = await ocrProcessingHelper.prepareAllImages(
+      filePaths: session.filePaths,
+    );
+    if (!emit.isDone) {
+      emit(
+        state.copyWith(
+          sessionImagePaths: {...state.sessionImagePaths, sessionId: images},
+        ),
+      );
+    }
+    return images;
+  }
+
   void onMappingInitiated(
     MappingInitiated event,
     Emitter<ProcessingState> emit,
@@ -68,9 +102,11 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     if (session == null) return;
     if (session.isProcessing ||
         session.status == ProcessingStatus.draft ||
-        session.status == ProcessingStatus.patientExtracted) {
+        session.status == ProcessingStatus.patientExtracted ||
+        session.status == ProcessingStatus.handedOver) {
       return;
     }
+    haltedHandovers.remove(event.sessionId);
     emit(state.copyWith(status: const PipelineStatus.loading()));
     final anotherSessionProcessing = state.sessions.any(
       (s) => s.id != event.sessionId && s.isProcessing,
@@ -85,6 +121,8 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       );
       final isDesktop =
           Platform.isMacOS || Platform.isLinux || Platform.isWindows;
+      // Its own previews (never another session's), then their 200 dpi pages.
+      await sessionImagesFor(event.sessionId, emit);
       await ensureOcrPages(emit, event.sessionId);
       final sessionImages = state.ocrPagesFor(event.sessionId);
       if (sessionImages.isEmpty) {
@@ -96,15 +134,17 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         );
         emit(
           state.copyWith(
-            status: const PipelineStatus.failure(
+            status: PipelineStatus.failure(
               error: 'No images were generated from the document',
               reason: PipelineFailureReason.noImagesGenerated,
+              sessionId: event.sessionId,
             ),
           ),
         );
         return;
       }
-      final medicalText = await ocrProcessingHelper.processOcrForImages(
+      final medicalText = await layoutExtraction.ocrText(
+        event.sessionId,
         sessionImages,
       );
       if (medicalText.isEmpty || medicalText.trim().isEmpty) {
@@ -113,6 +153,44 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           sessionId: event.sessionId,
           status: ProcessingStatus.draft,
         );
+        return;
+      }
+      // A document of a known layout is read by its extractor, without the
+      // AI, and goes straight to the review.
+      final layout = layoutExtraction.extract(medicalText);
+      if (layout != null) {
+        final stagedPatient = await _matchOrCreatePatient(layout.patient);
+        final staging = await layoutExtraction.stage(
+          layout,
+          holderPatient: stagedPatient.existing,
+        );
+        // Cancelled while reading: nothing is staged.
+        final current = state.sessions.firstWhereOrNull(
+          (s) => s.id == event.sessionId,
+        );
+        if (processingRepository.shouldCancelGeneration ||
+            current?.status != ProcessingStatus.processingPatient) {
+          return;
+        }
+        updateSession(
+          emit,
+          sessionId: event.sessionId,
+          status: ProcessingStatus.draft,
+          patient: stagedPatient,
+          encounter: staging.encounter,
+          resources: staging.resources,
+          updateDb: true,
+        );
+        emit(
+          state.copyWith(
+            notification: Notification(
+              text: strings.l10n.processingFinished(_originName(session)),
+              route: ProcessingRoute(sessionId: event.sessionId),
+              time: DateTime.now(),
+            ),
+          ),
+        );
+        startNextPendingSession();
         return;
       }
       final ocrPreMatch = await _tryMatchPatientFromOcr(medicalText);
@@ -239,6 +317,9 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       startNextPendingSession();
     } on Exception catch (e, s) {
       logger.e('[ProcessingBloc] patient extraction failed', e, s);
+      if (session.origin == ProcessingOrigin.handover) {
+        haltedHandovers.add(event.sessionId);
+      }
       updateSession(
         emit,
         sessionId: event.sessionId,
@@ -260,6 +341,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
               status: PipelineStatus.failure(
                 error: e.toString(),
                 reason: PipelineFailureReason.of(e),
+                sessionId: event.sessionId,
               ),
             ),
           );
@@ -272,27 +354,30 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       session?.origin.localizedName(strings.l10n) ??
       strings.l10n.fhirTypeDocumentReference;
 
+  /// The person whose identifier appears in the scanned text, before the AI
+  /// reads the patient.
   Future<Patient?> _tryMatchPatientFromOcr(String ocrText) async {
     if (ocrText.isEmpty) return null;
     try {
-      final allPatientsResources = await recordsRepository.getResources(
-        resourceTypes: [FhirType.Patient],
-        limit: 1000,
-      );
-      final allPatients = allPatientsResources.whereType<Patient>().toList();
-      if (allPatients.isEmpty) return null;
-
-      for (final patient in allPatients) {
-        if (patient.identifier == null) continue;
-        for (final id in patient.identifier!) {
-          final value = id.value?.valueString;
-          if (value == null || value.length < 5) continue;
-          if (ocrText.contains(value) ||
-              _fuzzyIdentifierMatch(value, ocrText)) {
-            ProcessingLogBuffer.instance.log(
-              '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: found identifier $value',
-            );
-            return patient;
+      final directory = await holderService.load();
+      for (final holder in directory.holders) {
+        for (final patient in holder.allPatientInstances) {
+          for (final id in patient.identifier ?? const <fhir_r4.Identifier>[]) {
+            final value = id.value?.valueString;
+            if (value == null || value.length < 6) continue;
+            // A clinic's own patient number says nothing outside it.
+            if (id.system?.valueString?.startsWith(
+                  HolderMatcher.clinicSystemPrefix,
+                ) ??
+                false) {
+              continue;
+            }
+            if (HolderMatcher.appearsIn(value, ocrText)) {
+              ProcessingLogBuffer.instance.log(
+                '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: found identifier $value',
+              );
+              return holder.representativePatient;
+            }
           }
         }
       }
@@ -303,34 +388,16 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     return null;
   }
 
-  bool _fuzzyIdentifierMatch(String identifier, String ocrText) {
-    final digitsOnly = identifier.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digitsOnly.length < 5) return false;
-
-    if (ocrText.contains(digitsOnly)) return true;
-
-    if (digitsOnly.length > 10) {
-      final trimmed = digitsOnly.substring(0, digitsOnly.length - 1);
-      if (ocrText.contains(trimmed)) return true;
-    }
-
-    return false;
-  }
-
   Future<StagedPatient> _matchOrCreatePatient(MappingPatient patient) async {
     try {
-      final allPatientsResources = await recordsRepository.getResources(
-        resourceTypes: [FhirType.Patient],
-        limit: 1000,
-      );
-      final allPatients = allPatientsResources.whereType<Patient>().toList();
-      final matchedPatient = deduplicationService.findMatchingPatient(
-        patient,
-        allPatients,
-      );
-      if (matchedPatient != null) {
+      final directory = await holderService.load();
+      final holder = holderService.matchScanned(patient, directory);
+      if (holder != null) {
+        // The unnamed default holder is proposed, not matched: the scan's
+        // details are kept to name them.
         return StagedPatient(
-          existing: matchedPatient,
+          existing: holder.representativePatient,
+          draft: holderService.isUnnamed(holder) ? patient : null,
           mode: ImportMode.linkExisting,
         );
       }
@@ -345,11 +412,25 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     ProcessRemainingResources event,
     Emitter<ProcessingState> emit,
   ) async {
-    emit(state.copyWith(status: const PipelineStatus.loading()));
     final session = state.sessions.firstWhereOrNull(
       (s) => s.id == event.sessionId,
     );
-    if (session == null) return;
+    if (event.automatic) {
+      // The queue continues a handover only from its patient step, once.
+      if (session?.status != ProcessingStatus.patientExtracted ||
+          haltedHandovers.contains(event.sessionId)) {
+        return;
+      }
+    } else {
+      haltedHandovers.remove(event.sessionId);
+    }
+    emit(state.copyWith(status: const PipelineStatus.loading()));
+    // Already running: a second run would extract the records twice.
+    if (session == null ||
+        session.isProcessing ||
+        session.status == ProcessingStatus.handedOver) {
+      return;
+    }
     final anotherSessionProcessing = state.sessions.any(
       (s) => s.id != event.sessionId && s.isProcessing,
     );
@@ -361,6 +442,8 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         sessionId: event.sessionId,
         status: ProcessingStatus.processing,
       );
+      // Its own previews (never another session's), then their 200 dpi pages.
+      await sessionImagesFor(event.sessionId, emit);
       await ensureOcrPages(emit, event.sessionId);
       final sessionImages = state.ocrPagesFor(event.sessionId);
       final activeSession = state.sessions.firstWhereOrNull(
@@ -453,6 +536,9 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       final failedSession = state.sessions.firstWhereOrNull(
         (s) => s.id == event.sessionId,
       );
+      if (failedSession?.origin == ProcessingOrigin.handover) {
+        haltedHandovers.add(event.sessionId);
+      }
       updateSession(
         emit,
         sessionId: event.sessionId,
@@ -475,6 +561,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
               status: PipelineStatus.failure(
                 error: e.toString(),
                 reason: PipelineFailureReason.of(e),
+                sessionId: event.sessionId,
               ),
             ),
           );
@@ -524,17 +611,6 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     }
     emit(state.copyWith(status: const PipelineStatus.savingResources()));
     try {
-      final (subjectId, sourceId, finalContainer, _) =
-          await _persistPrimaryResources(activeSession);
-      await prefs.setString('selected_patient_id', subjectId);
-      final otherResources = activeSession.resources
-          .where(
-            (r) =>
-                r is! MappingPatient &&
-                r is! MappingEncounter &&
-                r is! MappingDiagnosticReport,
-          )
-          .toList();
       final encounterDraft = activeSession.encounter.draft;
       final specialtyValue = encounterDraft?.specialty.value ?? '';
       String specialtyEnumName = '';
@@ -555,16 +631,63 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
               ],
             )
           : null;
-      final List<IFhirResource> fhirResources = otherResources
-          .map(
-            (resource) => resource.toFhirResource(
-              sourceId: sourceId,
-              subjectId: subjectId,
-              encounterId: finalContainer.id,
-              meta: specialtyMeta,
-            ),
+
+      // Records a layout document found already in the wallet are completed
+      // (empty fields only), never saved again.
+      final otherResources = activeSession.resources
+          .where(
+            (r) =>
+                r is! MappingPatient &&
+                r is! MappingEncounter &&
+                r is! MappingDiagnosticReport &&
+                !(r is MappingVisionPrescription && r.existingId.isNotEmpty),
           )
           .toList();
+      final completions = await _completedPrescriptions(
+        activeSession,
+        meta: specialtyMeta,
+      );
+      final visitFill = _completedVisit(activeSession);
+      // The review's own test, with what saving would really complete.
+      final completed = {for (final c in completions) c.id};
+      final checked = activeSession.copyWith(
+        resources: [
+          for (final r in activeSession.resources)
+            r is MappingVisionPrescription && r.existingId.isNotEmpty
+                ? r.copyWith(
+                    completesExisting: completed.contains(r.existingId),
+                  )
+                : r,
+        ],
+      );
+      if (checked.isAlreadyInWallet) {
+        // Everything the document holds is in the wallet: nothing to write,
+        // not even the document.
+        final holder = (await holderService.load()).ofPatientId(
+          activeSession.patient.existing!.id,
+        );
+        if (holder != null) await holderSelection.select(holder.id);
+        emit(
+          state.copyWith(
+            status: PipelineStatus.success(sessionId: activeSession.id),
+          ),
+        );
+        return;
+      }
+
+      final (subjectId, sourceId, finalContainer, holderId) =
+          await _persistPrimaryResources(activeSession, visitFill: visitFill);
+      final List<IFhirResource> fhirResources = [
+        ...otherResources.map(
+          (resource) => resource.toFhirResource(
+            sourceId: sourceId,
+            subjectId: subjectId,
+            encounterId: finalContainer.id,
+            meta: specialtyMeta,
+          ),
+        ),
+        ...completions,
+      ];
       if (fhirResources.isNotEmpty) {
         await syncRepository.saveResources(fhirResources);
       }
@@ -579,7 +702,13 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         sourceId: sourceId,
         title: finalContainer.displayTitle,
       );
-      emit(state.copyWith(status: const PipelineStatus.success()));
+      // Shows the person the scan was filed under, once it is all saved.
+      await holderSelection.select(holderId);
+      emit(
+        state.copyWith(
+          status: PipelineStatus.success(sessionId: activeSession.id),
+        ),
+      );
     } catch (e, s) {
       logger.e('[ProcessingBloc] resource creation failed', e, s);
       emit(
@@ -587,10 +716,78 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           status: PipelineStatus.failure(
             error: e.toString(),
             reason: PipelineFailureReason.of(e),
+            sessionId: event.sessionId,
           ),
         ),
       );
     }
+  }
+
+  /// The stored prescriptions the session's twins complete, with only the
+  /// fields they leave empty filled; a twin that adds nothing is left out.
+  Future<List<IFhirResource>> _completedPrescriptions(
+    ProcessingSession session, {
+    fhir_r4.FhirMeta? meta,
+  }) async {
+    final twins = session.resources
+        .whereType<MappingVisionPrescription>()
+        .where((r) => r.existingId.isNotEmpty)
+        .toList();
+    if (twins.isEmpty) return const [];
+    final stored = {
+      for (final r in await recordsRepository.getResources(
+        resourceTypes: const [FhirType.VisionPrescription],
+        limit: LayoutExtractionService.allRecords,
+      ))
+        if (r is VisionPrescription) r.id: r,
+    };
+    final encounterId =
+        session.encounter.existing?.id ?? session.encounter.draft?.id;
+    return [
+      for (final twin in twins)
+        if (stored[twin.existingId] case final row?)
+          if (RecordCompletion.visionPrescription(
+                row.rawResource,
+                twin
+                    .toFhirResource(
+                      sourceId: row.sourceId,
+                      subjectId: row.subjectId,
+                      encounterId: encounterId,
+                      meta: meta,
+                    )
+                    .rawResource,
+                provenance: twin.provenance,
+              )
+              case final completed?)
+            row.copyWith(
+              rawResource: completed,
+              encounterId: row.encounterId.isNotEmpty
+                  ? row.encounterId
+                  : _referenceId(completed['encounter']),
+            ),
+    ];
+  }
+
+  static String _referenceId(Object? reference) =>
+      reference is Map && reference['reference'] is String
+      ? (reference['reference'] as String).split('/').last
+      : '';
+
+  /// The existing visit with the identifiers the document adds (its serial),
+  /// or null when it has them all or the visit is new.
+  Encounter? _completedVisit(ProcessingSession session) {
+    final existing = session.encounter.existing;
+    final draft = session.encounter.draft;
+    if (session.encounter.mode != ImportMode.linkExisting ||
+        existing == null ||
+        draft == null) {
+      return null;
+    }
+    final completed = RecordCompletion.addIdentifiers(
+      existing.rawResource,
+      draft,
+    );
+    return completed == null ? null : existing.copyWith(rawResource: completed);
   }
 
   void onDocumentAttached(
@@ -610,46 +807,34 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     );
   }
 
-  Future<(String, String, IFhirResource, Patient)> _persistPrimaryResources(
-    ProcessingSession activeSession,
-  ) async {
+  /// The patient, source, container and holder the scan is filed under.
+  Future<(String, String, IFhirResource, String)> _persistPrimaryResources(
+    ProcessingSession activeSession, {
+    Encounter? visitFill,
+  }) async {
     String subjectId;
     String sourceId;
+    String holderId;
     final List<IFhirResource> resourcesToSave = [];
-    final availableSources = await syncRepository.getSources();
     if (activeSession.patient.mode == ImportMode.linkExisting &&
         activeSession.patient.existing != null) {
-      final Patient existingPatient = activeSession.patient.existing!;
-      final walletSource = await sourceTypeService.ensureWalletSourceForPatient(
-        patientId: existingPatient.id,
-        patientName: existingPatient.displayTitle,
-        availableSources: availableSources,
+      // The person's own wallet Patient, never the row the match found
+      // (it may be a provider's); the scanned fields fill only what it
+      // leaves empty.
+      final written = await holderService.walletPatientOf(
+        activeSession.patient.existing!.id,
+        scanned: activeSession.patient.draft,
       );
-      subjectId = existingPatient.id;
-      sourceId = walletSource.id;
-
-      if (activeSession.patient.draft != null) {
-        final draftWithExistingId = activeSession.patient.draft!.copyWith(
-          id: existingPatient.id,
-        );
-        resourcesToSave.add(
-          draftWithExistingId.toFhirResource(
-            sourceId: existingPatient.sourceId,
-            subjectId: '',
-            encounterId: '',
-          ),
-        );
-      }
+      subjectId = written.patient.id;
+      sourceId = written.patient.sourceId;
+      holderId = written.holderId;
     } else {
+      // Someone new: a holder of their own, named after their Patient row.
       final MappingPatient draftPatient = activeSession.patient.draft!;
-      final walletSource = await sourceTypeService.ensureWalletSourceForPatient(
-        patientId: draftPatient.id,
-        patientName:
-            '${draftPatient.givenName.value} ${draftPatient.familyName.value}',
-        availableSources: availableSources,
-      );
+      final walletSource = await holderService.walletSourceOf(draftPatient.id);
       subjectId = draftPatient.id;
       sourceId = walletSource.id;
+      holderId = walletSource.holderId ?? draftPatient.id;
       resourcesToSave.add(
         draftPatient.toFhirResource(
           sourceId: sourceId,
@@ -669,7 +854,8 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       );
       resourcesToSave.add(finalContainer);
     } else if (activeSession.encounter.existing != null) {
-      finalContainer = activeSession.encounter.existing!;
+      finalContainer = visitFill ?? activeSession.encounter.existing!;
+      if (visitFill != null) resourcesToSave.add(visitFill);
     } else {
       final MappingEncounter draftEncounter = activeSession.encounter.draft!;
       finalContainer = draftEncounter.toFhirResource(
@@ -683,16 +869,6 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       await syncRepository.saveResources(resourcesToSave);
     }
 
-    final Patient finalPatient;
-    final savedPatient = resourcesToSave.whereType<Patient>().firstOrNull;
-    if (savedPatient != null) {
-      finalPatient = savedPatient;
-    } else if (activeSession.patient.existing != null) {
-      finalPatient = activeSession.patient.existing!;
-    } else {
-      finalPatient = resourcesToSave.firstWhere((r) => r is Patient) as Patient;
-    }
-
-    return (subjectId, sourceId, finalContainer, finalPatient);
+    return (subjectId, sourceId, finalContainer, holderId);
   }
 }

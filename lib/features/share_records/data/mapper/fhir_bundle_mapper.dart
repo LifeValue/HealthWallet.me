@@ -221,8 +221,19 @@ class FhirBundleMapper {
       'MedicationRequest' => _extractCodeableConceptTitle(
         json['medicationCodeableConcept'],
       ),
+      'VisionPrescription' => _extractCodeableConceptTitle(
+        _lensProduct(json['lensSpecification']),
+      ),
       _ => '',
     };
+  }
+
+  /// The title the document printed for a prescription (its lenses'
+  /// product text), never a code's display.
+  static Map<String, dynamic>? _lensProduct(dynamic lenses) {
+    if (lenses is! List || lenses.isEmpty || lenses.first is! Map) return null;
+    final product = (lenses.first as Map)['product'];
+    return product is Map ? {'text': product['text']} : null;
   }
 
   /// The first coding's display that has one, then the text, then ''.
@@ -267,6 +278,10 @@ class FhirBundleMapper {
         break;
       case 'MedicationRequest':
         dateString = json['authoredOn']?.toString();
+        break;
+      case 'VisionPrescription':
+        dateString =
+            json['dateWritten']?.toString() ?? json['created']?.toString();
         break;
       case 'DiagnosticReport':
         dateString =

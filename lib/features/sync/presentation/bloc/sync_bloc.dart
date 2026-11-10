@@ -42,7 +42,6 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     on<TriggerTutorial>(_onTriggerTutorial);
     on<ResetTutorial>(_onResetTutorial);
     on<DemoDataConfirmed>(_onDemoDataConfirmed);
-    on<CreateWalletSource>(_onCreateWalletSource);
   }
 
   Future<void> _onSyncInitialised(
@@ -104,9 +103,13 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
         '[SYNC] Parsed SyncQrData: token=${syncQrData.token.substring(0, syncQrData.token.length > 10 ? 10 : syncQrData.token.length)}... urls=${syncQrData.serverBaseUrls} endpoint=${syncQrData.syncEndpoint}',
       );
 
-      debugPrint('[SYNC] Creating default patient...');
-      await _defaultPatientService.createAndSetAsMain();
-      debugPrint('[SYNC] Default patient created');
+      // Without the default holder the provider's patient becomes the
+      // first holder, so a failure here doesn't stop the sync.
+      try {
+        await _defaultPatientService.createAndSetAsMain();
+      } catch (e) {
+        logger.w('Creating the default patient before the sync failed', e);
+      }
 
       Exception? exception;
       _syncRepository.setBearerToken(syncQrData.token);
@@ -247,6 +250,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       emit(
         state.copyWith(
           hasDemoData: hasDemoData,
+          demoLoads: state.demoLoads + 1,
         ),
       );
 
@@ -326,16 +330,5 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
         demoDataConfirmed: true,
       ),
     );
-  }
-
-  Future<void> _onCreateWalletSource(
-    CreateWalletSource event,
-    Emitter<SyncState> emit,
-  ) async {
-    try {
-      await _defaultPatientService.createAndSetAsMain();
-    } catch (e) {
-      logger.e('Error creating wallet source: $e');
-    }
   }
 }

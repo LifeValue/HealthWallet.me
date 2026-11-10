@@ -8,7 +8,11 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
+import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/processing/domain/ai_settings_reset.dart';
 import 'package:health_wallet/features/processing/domain/deep_scan_defaults.dart';
@@ -22,14 +26,13 @@ import 'package:health_wallet/features/processing/domain/entity/processing_sessi
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/handlers/processing_handler.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/handlers/session_handler.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -44,11 +47,12 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   final OcrProcessingHelper _ocrProcessingHelper;
   final SyncRepository _syncRepository;
   final DocumentReferenceService _documentReferenceService;
-  final PatientDeduplicationService _deduplicationService;
-  final SourceTypeService _sourceTypeService;
+  final HolderService _holderService;
+  final HolderSelection _holderSelection;
   final RecordsRepository _recordsRepository;
   final SharedPreferences _prefs;
   final AppStringsProvider _strings;
+  final LayoutExtractionService _layoutExtraction;
 
   @override
   ProcessingRepository get processingRepository => _repository;
@@ -67,10 +71,10 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
       _documentReferenceService;
 
   @override
-  PatientDeduplicationService get deduplicationService => _deduplicationService;
+  HolderService get holderService => _holderService;
 
   @override
-  SourceTypeService get sourceTypeService => _sourceTypeService;
+  HolderSelection get holderSelection => _holderSelection;
 
   @override
   SharedPreferences get prefs => _prefs;
@@ -78,16 +82,25 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   @override
   AppStringsProvider get strings => _strings;
 
+  @override
+  LayoutExtractionService get layoutExtraction => _layoutExtraction;
+
+  final Set<String> _haltedHandovers = {};
+
+  @override
+  Set<String> get haltedHandovers => _haltedHandovers;
+
   ProcessingBloc(
     this._repository,
     this._ocrProcessingHelper,
     this._syncRepository,
     this._documentReferenceService,
-    this._deduplicationService,
-    this._sourceTypeService,
+    this._holderService,
+    this._holderSelection,
     this._recordsRepository,
     this._prefs,
     this._strings,
+    this._layoutExtraction,
   ) : super(const ProcessingState()) {
     on<ProcessingInitialised>(
       onProcessingInitialised,
@@ -122,6 +135,16 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     on<ContainerTypeSwitched>(_onContainerTypeSwitched);
     on<PageRotated>(onPageRotated, transformer: sequential());
     on<OcrPagesReleased>(onOcrPagesReleased, transformer: sequential());
+    on<SessionHandedOver>(_onSessionHandedOver, transformer: sequential());
+    on<HandoverDraftReceived>(
+      _onHandoverDraftReceived,
+      transformer: sequential(),
+    );
+    on<HandoverReturned>(_onHandoverReturned, transformer: sequential());
+    on<SessionSavedElsewhere>(
+      _onSessionSavedElsewhere,
+      transformer: sequential(),
+    );
   }
 
   @override
@@ -136,12 +159,31 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
 
   @override
   void startNextPendingSession() {
+    // A handover past its patient step goes first: it is furthest along,
+    // and the phone waits for it.
+    if (_continueHandover()) return;
     final pendingSession = state.sessions.firstWhereOrNull(
-      (s) => s.status == ProcessingStatus.pending,
+      (s) =>
+          s.status == ProcessingStatus.pending &&
+          !_haltedHandovers.contains(s.id),
     );
     if (pendingSession != null) {
       add(SessionActivated(sessionId: pendingSession.id));
     }
+  }
+
+  /// Starts the records step of a handover waiting after its patient step;
+  /// false when there is none.
+  bool _continueHandover() {
+    final handover = state.sessions.firstWhereOrNull(
+      (s) =>
+          s.origin == ProcessingOrigin.handover &&
+          s.status == ProcessingStatus.patientExtracted &&
+          !_haltedHandovers.contains(s.id),
+    );
+    if (handover == null) return false;
+    add(ProcessRemainingResources(sessionId: handover.id, automatic: true));
+    return true;
   }
 
   @override
@@ -161,6 +203,9 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     if (sessionIndex == -1) return;
 
     final activeSession = state.sessions[sessionIndex];
+    // The desktop has it: a local step that ends after the handover (its
+    // cancel, a late result) leaves it as it is.
+    if (activeSession.status == ProcessingStatus.handedOver) return;
 
     final updatedSession = activeSession.copyWith(
       progress: progress ?? activeSession.progress,
@@ -198,7 +243,22 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     await _resetMistakenAiSettingsOnce(isDesktop: isDesktop);
 
     try {
-      final sessions = await _repository.getProcessingSessions();
+      final sessions = [
+        for (final s in await _repository.getProcessingSessions())
+          // A step the app was closed in the middle of starts again; left
+          // "processing", the session would hold up every other one.
+          switch (s.status) {
+            ProcessingStatus.processingPatient => s.copyWith(
+              status: ProcessingStatus.pending,
+              progress: 0,
+            ),
+            ProcessingStatus.processing => s.copyWith(
+              status: ProcessingStatus.patientExtracted,
+              progress: 0,
+            ),
+            _ => s,
+          },
+      ];
 
       final useVision =
           _prefs.getBool(SharedPrefsConstants.aiUseVision) ??
@@ -210,6 +270,10 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
           useVision: useVision,
         ),
       );
+      // A handover the app was closed before finishing carries on.
+      if (sessions.any((s) => s.origin == ProcessingOrigin.handover)) {
+        startNextPendingSessionOf(ProcessingOrigin.handover);
+      }
     } on Exception catch (e, s) {
       logger.e('Loading the processing sessions failed', e, s);
       emit(
@@ -330,5 +394,195 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
         updateDb: true,
       );
     }
+  }
+
+  /// Starts the next waiting session of [origin] only.
+  void startNextPendingSessionOf(ProcessingOrigin origin) {
+    if (_continueHandover()) return;
+    final next = state.sessions.firstWhereOrNull(
+      (s) =>
+          s.origin == origin &&
+          s.status == ProcessingStatus.pending &&
+          !_haltedHandovers.contains(s.id),
+    );
+    if (next != null) add(SessionActivated(sessionId: next.id));
+  }
+
+  /// The status, unless it is a failure of [sessionId].
+  PipelineStatus _withoutFailureOf(String sessionId) => switch (state.status) {
+    Failure(sessionId: final id) when id == sessionId =>
+      const PipelineStatus.initial(),
+    CapacityFailure(sessionId: final id) when id == sessionId =>
+      const PipelineStatus.initial(),
+    final other => other,
+  };
+
+  /// A draft dropped here may have had edits: the text says they weren't
+  /// kept.
+  String _savedElsewhereText(
+    ProcessingSession session, {
+    required bool byDesktop,
+  }) {
+    final name = session.origin.localizedName(_strings.l10n);
+    final l10n = _strings.l10n;
+    if (session.status == ProcessingStatus.draft) {
+      return byDesktop
+          ? l10n.handoverDraftSavedOnDesktop(name)
+          : l10n.handoverDraftSavedOnPhone(name);
+    }
+    return byDesktop
+        ? l10n.handoverSavedOnDesktop(name)
+        : l10n.handoverSavedOnPhone(name);
+  }
+
+  void _replaceSession(Emitter<ProcessingState> emit, ProcessingSession next) {
+    emit(
+      state.copyWith(
+        sessions: [
+          for (final s in state.sessions) s.id == next.id ? next : s,
+        ],
+      ),
+    );
+    _repository.editProcessingSession(next);
+  }
+
+  Future<void> _stopLocalProcessing(ProcessingSession session) async {
+    if (!session.isProcessing) return;
+    await _repository.cancelGeneration();
+    await _repository.waitForStreamCompletion();
+    await _repository.disposeModel();
+  }
+
+  Future<void> _onSessionHandedOver(
+    SessionHandedOver event,
+    Emitter<ProcessingState> emit,
+  ) async {
+    final session = state.sessions.firstWhereOrNull(
+      (s) => s.id == event.sessionId,
+    );
+    if (session == null || session.status == ProcessingStatus.handedOver) {
+      return;
+    }
+    // Marked first, so the step being cancelled can't change it back.
+    _replaceSession(
+      emit,
+      session.copyWith(status: ProcessingStatus.handedOver, progress: 0),
+    );
+    // The desktop processes it: a failure of this phone's attempt (no model)
+    // no longer applies.
+    emit(state.copyWith(status: _withoutFailureOf(session.id)));
+    await _stopLocalProcessing(session);
+    _layoutExtraction.forget(session.id);
+  }
+
+  Future<void> _onHandoverDraftReceived(
+    HandoverDraftReceived event,
+    Emitter<ProcessingState> emit,
+  ) async {
+    final session = state.sessions.firstWhereOrNull(
+      (s) => s.id == event.sessionId,
+    );
+    // Taken back and processed here meanwhile: this device's own result
+    // stands.
+    if (session == null ||
+        session.isProcessing ||
+        session.status == ProcessingStatus.draft) {
+      return;
+    }
+    _replaceSession(
+      emit,
+      session.copyWith(
+        status: ProcessingStatus.draft,
+        progress: 1,
+        patient: event.patient,
+        encounter: event.encounter,
+        diagnosticReport: event.diagnosticReport,
+        resources: event.resources,
+      ),
+    );
+    emit(
+      state.copyWith(
+        status: _withoutFailureOf(session.id),
+        notification: Notification(
+          text: _strings.l10n.handoverReadyToReview(
+            session.origin.localizedName(_strings.l10n),
+          ),
+          route: ProcessingRoute(sessionId: session.id),
+          time: DateTime.now(),
+        ),
+      ),
+    );
+  }
+
+  void _onHandoverReturned(
+    HandoverReturned event,
+    Emitter<ProcessingState> emit,
+  ) {
+    final session = state.sessions.firstWhereOrNull(
+      (s) => s.id == event.sessionId,
+    );
+    if (session == null || session.status != ProcessingStatus.handedOver) {
+      return;
+    }
+    _replaceSession(
+      emit,
+      session.copyWith(
+        status: session.patient.hasSelection
+            ? ProcessingStatus.patientExtracted
+            : ProcessingStatus.pending,
+        progress: 0,
+      ),
+    );
+    final name = session.origin.localizedName(_strings.l10n);
+    final text = switch (event.reason) {
+      HandoverReturnReason.withdrawn => null,
+      HandoverReturnReason.failedOnDesktop =>
+        _strings.l10n.handoverFailedOnDesktop(name),
+      HandoverReturnReason.noModelOnDesktop =>
+        _strings.l10n.handoverNoModelOnDesktop(name),
+      HandoverReturnReason.deletedOnDesktop =>
+        _strings.l10n.handoverDeletedOnDesktop(name),
+    };
+    if (text == null) return;
+    emit(
+      state.copyWith(
+        notification: Notification(
+          text: text,
+          route: ProcessingRoute(sessionId: session.id),
+          time: DateTime.now(),
+          type: NotificationType.error,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onSessionSavedElsewhere(
+    SessionSavedElsewhere event,
+    Emitter<ProcessingState> emit,
+  ) async {
+    final session = state.sessions.firstWhereOrNull(
+      (s) => s.id == event.sessionId,
+    );
+    if (session == null) return;
+    await _stopLocalProcessing(session);
+    _layoutExtraction.forget(session.id);
+    _haltedHandovers.remove(session.id);
+    emit(
+      state.copyWith(
+        sessions: [
+          for (final s in state.sessions)
+            if (s.id != session.id) s,
+        ],
+        sessionImagePaths: {...state.sessionImagePaths}..remove(session.id),
+        status: _withoutFailureOf(session.id),
+        notification: Notification(
+          text: _savedElsewhereText(session, byDesktop: event.byDesktop),
+          time: DateTime.now(),
+          type: NotificationType.success,
+        ),
+      ),
+    );
+    // The records come through the sync; this copy and its files go.
+    await _repository.deleteProcessingSession(session);
   }
 }

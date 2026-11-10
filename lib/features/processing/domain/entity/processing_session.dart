@@ -9,6 +9,7 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_vision_prescription.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
@@ -37,6 +38,30 @@ abstract class ProcessingSession
 
   bool get isDiagnosticReportContainer =>
       diagnosticReport != null && diagnosticReport!.hasSelection;
+
+  /// Whether a layout extractor read this document ([MappingEncounter]
+  /// carries its visit key).
+  bool get isLayoutDocument => encounter.draft?.visitKey != null;
+
+  /// Whether everything a layout document holds is already in the wallet,
+  /// complete: the person, the visit with every identifier, each record.
+  /// Saving then writes nothing. Always false for a document the AI read.
+  bool get isAlreadyInWallet {
+    final existing = encounter.existing;
+    if (!isLayoutDocument || isDiagnosticReportContainer) return false;
+    return patient.mode == ImportMode.linkExisting &&
+        patient.existing != null &&
+        patient.draft == null &&
+        encounter.mode == ImportMode.linkExisting &&
+        existing != null &&
+        encounter.draft!.identifiersMissingFrom(existing.rawResource).isEmpty &&
+        resources.every(
+          (r) =>
+              r is MappingVisionPrescription &&
+              r.existingId.isNotEmpty &&
+              !r.completesExisting,
+        );
+  }
 
   factory ProcessingSession.fromDto(ProcessingSessionDto dto) {
     final filePaths = (jsonDecode(dto.filePaths ?? '') as List<dynamic>)
@@ -114,6 +139,13 @@ abstract class ProcessingSession
   bool get isProcessing =>
       status == ProcessingStatus.processingPatient ||
       status == ProcessingStatus.processing;
+
+  /// Whether the document can still be sent to the desktop to process: not
+  /// once it has its records to review, nor while the desktop has it.
+  bool get canHandOver =>
+      filePaths.isNotEmpty &&
+      status != ProcessingStatus.draft &&
+      status != ProcessingStatus.handedOver;
 }
 
 enum ProcessingStatus {
@@ -122,7 +154,11 @@ enum ProcessingStatus {
   patientExtracted,
   processing,
   draft,
-  cancelled;
+  cancelled,
+
+  /// The files are on the paired desktop, which processes the document; the
+  /// draft comes back here to review.
+  handedOver;
 
   factory ProcessingStatus.fromString(String string) {
     switch (string) {
@@ -136,6 +172,8 @@ enum ProcessingStatus {
         return ProcessingStatus.processingPatient;
       case 'Patient Extracted':
         return ProcessingStatus.patientExtracted;
+      case 'Handed Over':
+        return ProcessingStatus.handedOver;
       default:
         return ProcessingStatus.pending;
     }
@@ -156,12 +194,15 @@ enum ProcessingStatus {
         return 'Draft';
       case ProcessingStatus.cancelled:
         return 'Cancelled';
+      case ProcessingStatus.handedOver:
+        return 'Handed Over';
     }
   }
 
   Color getColor(BuildContext context) {
     switch (this) {
       case ProcessingStatus.pending:
+      case ProcessingStatus.handedOver:
         return context.colorScheme.secondary;
       case ProcessingStatus.processing:
       case ProcessingStatus.draft:

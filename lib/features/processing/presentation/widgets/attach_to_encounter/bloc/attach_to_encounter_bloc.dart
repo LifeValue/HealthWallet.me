@@ -2,12 +2,13 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/holders/domain/entity/holder.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:injectable/injectable.dart';
 
 part 'attach_to_encounter_bloc.freezed.dart';
@@ -18,12 +19,12 @@ part 'attach_to_encounter_state.dart';
 class AttachToEncounterBloc
     extends Bloc<AttachToEncounterEvent, AttachToEncounterState> {
   final RecordsRepository _recordsRepository;
-  final PatientDeduplicationService _deduplicationService;
-  List<Patient> _allPatients = [];
+  final HolderService _holderService;
+  HolderDirectory _directory = const HolderDirectory();
 
   AttachToEncounterBloc(
     this._recordsRepository,
-    this._deduplicationService,
+    this._holderService,
   ) : super(const AttachToEncounterState()) {
     on<AttachToEncounterStarted>(_onStarted);
     on<AttachToEncounterPatientChanged>(_onPatientChanged);
@@ -37,14 +38,10 @@ class AttachToEncounterBloc
     Emitter<AttachToEncounterState> emit,
   ) async {
     try {
-      final allPatientsResources = await _recordsRepository.getResources(
-        resourceTypes: [FhirType.Patient],
-        limit: 100,
-      );
-
-      _allPatients = allPatientsResources.whereType<Patient>().toList();
-      final List<Patient> uniquePatients = _deduplicationService
-          .getUniquePatients(_allPatients);
+      _directory = await _holderService.load();
+      final List<Patient> uniquePatients = [
+        for (final holder in _directory.holders) holder.representativePatient,
+      ];
 
       if (uniquePatients.isEmpty) {
         emit(
@@ -60,15 +57,18 @@ class AttachToEncounterBloc
 
       if (event.patient.mode == ImportMode.linkExisting &&
           event.patient.existing != null) {
-        selectedPatient = uniquePatients.firstWhere(
-          (patient) => patient.id == event.patient.existing!.id,
-          orElse: () => uniquePatients.first,
-        );
+        // The match can be any of the person's rows.
+        selectedPatient =
+            _directory
+                .ofPatient(event.patient.existing!)
+                ?.representativePatient ??
+            uniquePatients.first;
       }
 
       emit(
         state.copyWith(
           existingPatients: uniquePatients,
+          scannedPatient: event.patient.draft,
           selectedPatient: selectedPatient,
           patient: event.patient.copyWith(
             draft: (selectedPatient is MappingPatient)
@@ -105,11 +105,11 @@ class AttachToEncounterBloc
     AttachToEncounterPatientChanged event,
     Emitter<AttachToEncounterState> emit,
   ) async {
-    if (event.patient is MappingPatient) {
+    if (event.patient case final MappingPatient scanned) {
       emit(
         state.copyWith(
           patient: StagedPatient(
-            draft: state.patient.draft,
+            draft: scanned,
             mode: ImportMode.createNew,
           ),
           existingEncounters: [],
@@ -122,7 +122,9 @@ class AttachToEncounterBloc
       emit(
         state.copyWith(
           selectedPatient: event.patient,
-          patient: state.patient.copyWith(
+          // The scanned fields are dropped, as the user was told; kept, they
+          // would be written into the chosen person.
+          patient: StagedPatient(
             existing: event.patient,
             mode: ImportMode.linkExisting,
           ),
@@ -138,15 +140,7 @@ class AttachToEncounterBloc
     Patient patient,
   ) async {
     try {
-      final patientSourceIds = _deduplicationService.getSourcesForPatient(
-        patient.id,
-        _allPatients,
-      );
-      final resourceSourceIds = await _deduplicationService
-          .getSourceIdsForPatient(
-            patient.resourceId,
-          );
-      final sourceIds = {...patientSourceIds, ...resourceSourceIds}.toList();
+      final sourceIds = _directory.ofPatient(patient)?.sourceIds ?? const [];
 
       final resources = await _recordsRepository.getResources(
         resourceTypes: [FhirType.Encounter],

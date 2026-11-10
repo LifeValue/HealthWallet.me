@@ -83,6 +83,7 @@ extension HomeRecordsCategoryL10n on HomeRecordsCategory {
     HomeRecordsCategory.demographics => l10n.categoryDemographics,
     HomeRecordsCategory.procedures => l10n.categoryProcedures,
     HomeRecordsCategory.healthInsurance => l10n.categoryHealthInsurance,
+    HomeRecordsCategory.visionPrescriptions => l10n.categoryVisionPrescriptions,
   };
 }
 
@@ -117,6 +118,7 @@ extension FhirTypeL10n on FhirType {
     FhirType.RelatedPerson => l10n.fhirTypeRelatedPerson,
     FhirType.ServiceRequest => l10n.fhirTypeServiceRequest,
     FhirType.Specimen => l10n.fhirTypeSpecimen,
+    FhirType.VisionPrescription => l10n.fhirTypeVisionPrescription,
     FhirType.GeneralResource => l10n.fhirTypeGeneralResource,
   };
 }
@@ -138,6 +140,7 @@ extension ProcessingStatusL10n on ProcessingStatus {
     ProcessingStatus.processing => l10n.processingStatusProcessing,
     ProcessingStatus.draft => l10n.processingStatusDraft,
     ProcessingStatus.cancelled => l10n.processingStatusCancelled,
+    ProcessingStatus.handedOver => l10n.processingStatusHandedOver,
   };
 }
 
@@ -171,28 +174,28 @@ String localizedUnit(String unit, AppLocalizations l10n) =>
       _ => unit,
     };
 
-/// Message the phone shows for a handover that failed, as seen from the
-/// phone: [HandoverFailure.modelNotFound] means the desktop has no model.
+/// Why a handover failed, as the phone shows it.
 extension HandoverFailureL10n on HandoverFailure {
   String localizedMessage(AppLocalizations l10n) => switch (this) {
     HandoverFailure.notAccepted => l10n.desktopHandoverNotAccepted,
     HandoverFailure.fileNotFound => l10n.desktopHandoverFileMissing,
+    HandoverFailure.connectionLost => l10n.desktopHandoverConnectionLost,
     HandoverFailure.cancelled => l10n.desktopHandoverCancelled,
     HandoverFailure.modelNotFound => l10n.noAiModelOnDesktop,
+    HandoverFailure.tooLarge => l10n.desktopHandoverTooLarge,
+    HandoverFailure.desktopOutdated => l10n.desktopUpdateDesktopApp,
+    HandoverFailure.timeout => l10n.desktopHandoverTimedOut,
     HandoverFailure.failed => l10n.desktopHandoverFailed,
   };
 }
 
-/// Label the desktop shows for a handover it is receiving.
+/// Label of a transfer on either end.
 extension HandoverStatusL10n on HandoverStatus {
   String localizedLabel(AppLocalizations l10n) => switch (this) {
     HandoverStatus.receiving => l10n.desktopHandoverReceivingFiles,
-    HandoverStatus.processing => l10n.desktopHandoverProcessingStatus,
-    HandoverStatus.sendingResults => l10n.desktopHandoverSendingResults,
-    HandoverStatus.complete => l10n.desktopHandoverDone,
-    HandoverStatus.error => l10n.desktopHandoverStatusError,
     HandoverStatus.sending => l10n.desktopHandoverSending,
-    HandoverStatus.waitingForResults => l10n.desktopHandoverWaitingForResults,
+    HandoverStatus.sent => l10n.desktopHandoverTransferComplete,
+    HandoverStatus.error => l10n.desktopHandoverStatusError,
   };
 }
 
@@ -203,10 +206,9 @@ String phoneHandoverStatusText(
   AppLocalizations l10n,
 ) => switch (session?.status) {
   null => l10n.desktopHandoverPreparing,
-  HandoverStatus.sending => l10n.desktopHandoverSendingFiles,
-  HandoverStatus.waitingForResults => l10n.desktopHandoverProcessingOnDesktop,
-  HandoverStatus.complete => l10n.desktopHandoverComplete,
+  HandoverStatus.sending ||
+  HandoverStatus.receiving => l10n.desktopHandoverSendingFiles,
+  HandoverStatus.sent => l10n.desktopHandoverSent,
   HandoverStatus.error =>
-    session!.failure?.localizedMessage(l10n) ?? l10n.desktopHandoverError,
-  _ => l10n.desktopHandoverSending,
+    (session!.failure ?? HandoverFailure.failed).localizedMessage(l10n),
 };

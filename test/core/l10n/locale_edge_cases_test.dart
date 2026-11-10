@@ -11,8 +11,6 @@ import 'package:health_wallet/features/home/domain/services/specialty_classifier
 import 'package:health_wallet/features/home/presentation/bloc/handlers/home_data_handler.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 
 /// Preferences saved by a build from before the translation: the order is
 /// stored as the English titles and category names.
@@ -38,14 +36,6 @@ class _LayoutBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
 
   @override
   RecordsRepository get recordsRepository => throw UnimplementedError();
-
-  @override
-  PatientDeduplicationService get deduplicationService =>
-      throw UnimplementedError();
-
-  @override
-  PatientSelectionService get patientSelectionService =>
-      throw UnimplementedError();
 
   @override
   PatientVitalFactory get patientVitalFactory => throw UnimplementedError();

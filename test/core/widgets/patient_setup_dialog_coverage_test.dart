@@ -8,10 +8,10 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/theme/theme.dart';
 import 'package:health_wallet/core/widgets/patient_setup_dialog.dart';
+import 'package:health_wallet/features/holders/domain/entity/holder.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/mixins/id_card_scan_mixin.dart';
@@ -218,8 +218,8 @@ void main() {
       expect(hinted('MRN (optional)'), findsOneWidget);
     });
 
-    testWidgets('sets up the wallet copy of a patient seen in several '
-        'sources', (tester) async {
+    testWidgets('sets up the row shown for a person seen in several sources, '
+        'their wallet copy', (tester) async {
       const provider = Patient(id: 'patient-1', sourceId: 'provider-1');
       const wallet = Patient(id: 'patient-1-wallet', sourceId: 'wallet-1');
       whenListen(
@@ -227,8 +227,9 @@ void main() {
         const Stream<PatientState>.empty(),
         initialState: const PatientState(
           patientGroups: {
-            'patient-1': PatientGroup(
-              representativePatient: provider,
+            'patient-1': Holder(
+              id: 'patient-1',
+              representativePatient: wallet,
               sourceIds: ['provider-1', 'wallet-1'],
               allPatientInstances: [provider, wallet],
             ),
@@ -241,18 +242,19 @@ void main() {
       await save(tester);
 
       expect(savedEdit().patientId, 'patient-1-wallet');
-      expect(savedEdit().sourceId, 'wallet-1');
     });
 
-    testWidgets('sets up the group\'s main copy when there is no wallet '
-        'copy', (tester) async {
+    testWidgets('sets up the row shown when there is no wallet copy', (
+      tester,
+    ) async {
       const provider = Patient(id: 'provider-patient', sourceId: 'provider-1');
       whenListen(
         patientBloc,
         const Stream<PatientState>.empty(),
         initialState: const PatientState(
           patientGroups: {
-            'patient-1': PatientGroup(
+            'patient-1': Holder(
+              id: 'patient-1',
               representativePatient: provider,
               sourceIds: ['provider-1'],
               allPatientInstances: [provider],

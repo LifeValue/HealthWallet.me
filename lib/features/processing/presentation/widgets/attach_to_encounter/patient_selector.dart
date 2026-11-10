@@ -57,7 +57,8 @@ class PatientSelector extends StatelessWidget {
   ) {
     final patient = state.patient;
 
-    if (state.existingPatients.isEmpty && patient.draft == null) {
+    final scanned = state.scannedPatient ?? patient.draft;
+    if (state.existingPatients.isEmpty && scanned == null) {
       return Text(
         context.l10n.noPatientsAvailable,
         style: AppTextStyle.bodySmall.copyWith(
@@ -67,8 +68,8 @@ class PatientSelector extends StatelessWidget {
     }
 
     final items = <dynamic>[];
-    if (patient.draft != null) {
-      items.add(patient.draft);
+    if (scanned != null) {
+      items.add(scanned);
     }
     items.addAll(state.existingPatients);
 

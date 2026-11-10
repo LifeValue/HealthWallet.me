@@ -72,25 +72,29 @@ void main() {
         ro.desktopHandoverSendingFiles,
       );
       expect(
-        phoneHandoverStatusText(session(HandoverStatus.waitingForResults), ro),
-        ro.desktopHandoverProcessingOnDesktop,
-      );
-      expect(
-        phoneHandoverStatusText(session(HandoverStatus.complete), ro),
-        ro.desktopHandoverComplete,
+        phoneHandoverStatusText(session(HandoverStatus.sent), ro),
+        ro.desktopHandoverSent,
       );
     });
 
-    test('shows the failure, never the technical error text', () {
-      final failed = session(
-        HandoverStatus.error,
-        HandoverFailure.modelNotFound,
-      ).copyWith(error: 'Exception: Model file not found at /x');
-
-      expect(phoneHandoverStatusText(failed, ro), ro.noAiModelOnDesktop);
+    test('shows why it failed', () {
+      expect(
+        phoneHandoverStatusText(
+          session(HandoverStatus.error, HandoverFailure.modelNotFound),
+          ro,
+        ),
+        ro.noAiModelOnDesktop,
+      );
+      expect(
+        phoneHandoverStatusText(
+          session(HandoverStatus.error, HandoverFailure.desktopOutdated),
+          ro,
+        ),
+        ro.desktopUpdateDesktopApp,
+      );
       expect(
         phoneHandoverStatusText(session(HandoverStatus.error), ro),
-        ro.desktopHandoverError,
+        ro.desktopHandoverFailed,
       );
     });
   });
