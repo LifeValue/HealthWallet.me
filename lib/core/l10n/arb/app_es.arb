@@ -1,9 +1,5 @@
 {
   "@@locale": "es",
-  "counterAppBarTitle": "Contador",
-  "@counterAppBarTitle": {
-    "description": "Texto mostrado en la AppBar de la página del contador"
-  },
   "onboardingWelcomeTitle": "¡una Cartera de Salud para Ti!",
   "onboardingWelcomeSubtitle": "<link>HealthWallet.me</link> ya se conecta a más de 100.000 proveedores de salud estadounidenses, y estamos expandiendo a nuevos países.",
   "onboardingWelcomeDescription": "Agrega registros de cualquier proveedor, importa documentos manualmente o solicita soporte para tu país.",
