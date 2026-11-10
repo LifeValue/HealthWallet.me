@@ -117,6 +117,8 @@ Shared by all modes: the basic-info prompts and `PatientPostProcessor`'s default
 | `NativeTextRecognitionService`                                                                  | `processing/data/services/`              |
 | `ProcessingSession` (persisted in `ProcessingSessions`, not synced)                             | domain entity                            |
 
+A step the app was closed in the middle of starts again at the next launch: the session goes back to pending, or to its patient step. Every step reads its own session's pages (`sessionImagePaths`, prepared when missing), never another session's.
+
 Models (`lib/core/config/constants/ai_model_config.dart`), downloaded on demand into the app documents directory:
 
 | Model                       | Model   | mmproj | Notes                                                                                                                                                                          |
@@ -251,18 +253,26 @@ Deletes: no code in `lib/` sets `deleted_at`, and none ever has; repositories ha
 
 `backup_bloc.dart` also sends `backup_start`, `backup_chunk` and `backup_complete`; nothing listens for them. The phone asks for a backup (`PhoneBackupRequested`) only once its changes were acknowledged, so the snapshot holds them.
 
-**Handover** (`desktop/handover/`): mobile offloads AI processing to desktop. `HandoverSenderService` sends on mobile; `HandoverService` receives on desktop.
+**Handover** (`desktop/handover/`): the phone sends a document to the desktop, which runs the AI; the draft can then be reviewed and saved on either device, and the first save wins. On the phone `HandoverSenderService` (transfer, outbox) and `PhoneHandoverBloc` (started in `main.dart`); on the desktop `HandoverService` (receive, outbox) and `HandoverBloc` (started in `main_desktop.dart`). Messages are `data` frames (`HandoverMessage` in `domain/entity/handover_protocol.dart`), each with `session_id`: the phone's processing session id, which the desktop's session takes too (`DocumentImported.sessionId`), so both ends always speak about the same session.
 
-| Type                      | Direction        | Meaning                                               |
-| ------------------------- | ---------------- | ----------------------------------------------------- |
-| `handover.offer`          | mobile → desktop | session_id, file_count, optional phase1_data          |
-| `handover.accept`         | desktop → mobile | Accepted                                              |
-| `handover.file`           | mobile → desktop | One image, base64                                     |
-| `handover.progress`       | desktop → mobile | Inference progress                                    |
-| `handover.step1_complete` | desktop → mobile | Patient extraction done (when phase1_data was absent) |
-| `handover.result`         | desktop → mobile | Full FHIR resource list                               |
+| Type               | Direction        | Meaning                                                                                         |
+| ------------------ | ---------------- | ----------------------------------------------------------------------------------------------- |
+| `handover.offer`   | phone → desktop  | `v` (2), `files` (`name`, `size`), optional `phase1_data` (the phone's patient step)             |
+| `handover.accept`  | desktop → phone  | Ready for the files                                                                             |
+| `handover.reject`  | desktop → phone  | `reason`: `version` (another handover version), `too_large` (over 200 MB), `failed`             |
+| `handover.chunk`   | phone → desktop  | `index`, `offset`, `data`: 256 KiB of a file, base64, in order                                  |
+| `handover.progress`| desktop → phone  | Processing `progress`, 0 to 1                                                                   |
+| `handover.result`  | desktop → phone  | `draft`: the staged patient, visit or report, and records, ids included (`HandoverDraft`)       |
+| `handover.failed`  | desktop → phone  | `reason`: `model_not_found`, `timeout`, `failed`                                                |
+| `handover.saved`   | either           | The records were saved on the sender; the other device drops its draft                          |
+| `handover.cancel`  | either           | The phone took the document back, or the desktop's user deleted it                              |
+| `handover.ack`     | either           | `type` of the `result`, `failed`, `saved` or `cancel` received                                  |
 
-On `handover.step1_complete` and `handover.result` mobile clears its pending processing sessions and fires `LwwSyncBloc` `SyncTriggered`, so the records arrive through LWW sync.
+`result`, `failed`, `saved` and `cancel` wait in an outbox (`HandoverOutbox`, in preferences) until the other device acknowledges them, and are sent again on every connection and every 30 s while connected; receiving one twice changes nothing. A device acknowledges a message about a session it no longer has and drops it.
+
+- **Phone.** `PhoneHandoverSendRequested` checks the files, sends the offer (listening for the answer first), and the files in chunks; a missing file, a drop, a cancel, a refusal or no answer within 30 s (an older desktop never answers) ends the transfer with a `HandoverFailure`, never an exception. Once every byte arrived the session becomes `ProcessingStatus.handedOver`: local processing stops, the queue skips it, and the processing screen offers "Process on this phone instead" (`handover.cancel`). The desktop's draft makes it a `draft` again with origin `handover` (`HandoverDraftReceived`); a failure or a delete on the desktop returns it as it was (`HandoverReturned`); a save on the desktop removes it (`SessionSavedElsewhere`). Saving or deleting it on the phone tells the desktop.
+- **Desktop.** Files are assembled by index and offset in a temporary folder (a gap or a repeat fails the transfer, 60 s without a chunk times it out) and deleted once processing has its own copies. The session runs through to its draft without anyone at the desktop: with the phone's patient step it continues from it, otherwise it starts from the beginning; while another session processes it waits its turn (`ProcessingBloc.startNextPendingSession` continues handovers first). A failure of that session (`Failure.sessionId`) is reported; the queue doesn't retry a failed handover until the user does. Its draft is sent once (`handover_reported_desktop`), a save there sends `saved` (`Success.sessionId`), a delete sends `cancel`. The Handover tab shows transfers while they arrive and the handover sessions.
+- **Saving on both.** A session's records keep the draft's ids and its documents get ids from the session (`DocumentReferenceService.sessionDocumentId`), so saving the same handover on both devices while apart writes the same rows, which the LWW sync merges.
 
 **Tray** (`desktop/tray/`): `TrayService` owns the macOS/Windows tray icon and menu, `WindowLifecycleService` minimise-to-tray and restore, `TrayBloc` reflects connection and sync state.
 

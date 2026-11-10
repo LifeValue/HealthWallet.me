@@ -52,7 +52,31 @@ Step 3 changes what goes over the wire. To avoid bumping the link version for it
 
 ## Status
 
-Not started. Nothing has run on devices.
+Implemented on `feature/handover-stabilization`. Nothing has run on devices yet. `scripts/check.sh` passes except the two SSDP tests, which fail on any machine where another app holds UDP port 1900.
+
+**A7, decided 2026-11-10: both.** The desktop runs the AI and keeps its draft, and sends the draft to the phone, which turns it into a normal draft session. Either device can review and save it; the first save tells the other, which drops its draft. Saving on both while apart writes the same rows (the draft's ids, document ids derived from the session), which the LWW sync merges.
+
+The handover protocol is version 2: the phone and the desktop must both be updated. An older desktop never answers an offer, and the phone says to update it; an older phone's offer is rejected. How it works now is in `architecture.md`, "Handover".
+
+| Issue  | Status                                                                                                                                                              |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A1, A2 | Fixed. A result applies to its own session only; results for sessions the phone doesn't have are acknowledged and dropped; messages wait in an outbox until acknowledged |
+| A3     | Fixed. The desktop session takes the phone's session id; everything is tracked by id                                                                                |
+| A4     | Fixed. Every step reads its own session's pages, prepared when missing                                                                                              |
+| A5     | Fixed. Files go in 256 KiB chunks, assembled by index and offset; 200 MB per handover                                                                              |
+| A6     | Fixed. Every failure ends the transfer with a reason; a cancel or a drop tells the desktop, which also times out after 60 s                                          |
+| A7     | Done as decided above                                                                                                                                               |
+| B1     | Fixed. The queue continues a handover after its patient step; a step interrupted by closing the app starts again                                                     |
+| B2, B3 | Fixed                                                                                                                                                               |
+| B4     | Fixed. Failures carry their session id                                                                                                                              |
+| B5     | Fixed. The phone keeps the document as "On the desktop" until the draft comes back; failures and deletes on the desktop return it with a notification            |
+| B6     | Fixed. Received files go to a temporary folder, deleted once processing has its copies                                                                              |
+| B7     | Fixed. The load-model page hands over the document it was opened for, through the same path                                                                       |
+| B8, B9 | Fixed. Messages survive restarts in the outbox; the Handover tab shows only transfers in progress                                                                  |
+| C1–C8  | Fixed, except C2 in part: `HandoverBloc` and `PhoneHandoverBloc` (presentation) drive `ProcessingBloc`; the services no longer use `getIt` or the blocs                |
+| T1–T5  | Done: the old service tests are replaced by tests over a linked pair of fake links, both blocs and the processing steps                                           |
+
+Also fixed with them: tapping a notification without a route does nothing (part of `mobile-stabilization.md` B6), and a document's records keep stable ids when a session is saved again.
 
 ## Known issues
 
