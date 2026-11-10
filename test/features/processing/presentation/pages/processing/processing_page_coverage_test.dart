@@ -383,6 +383,36 @@ void main() {
       ]);
     });
 
+    testPage('attached from the no-model notice, the saved message names '
+        'the visit', (tester) async {
+      const failed = PipelineStatus.failure(
+        error: 'no model',
+        reason: PipelineFailureReason.modelNotFound,
+      );
+      const session = ProcessingSession(
+        id: 's1',
+        origin: ProcessingOrigin.import,
+      );
+      await pumpPage(tester, stateWith(session, status: failed));
+
+      await tapText(tester, _en.attachWithoutProcessing);
+      await tapText(tester, _en.save);
+      states.add(
+        stateWith(
+          session.copyWith(
+            encounter: const StagedEncounter(
+              existing: Encounter(id: 'e1', title: 'Checkup'),
+            ),
+          ),
+          status: const PipelineStatus.success(sessionId: 's1'),
+        ),
+      );
+      await frames(tester);
+
+      expect(find.text(_en.recordsSavedTitle), findsOne);
+      expect(find.text(_en.documentAttachedTo('Checkup')), findsOne);
+    });
+
     testPage('closing the attach dialog without a choice sends nothing', (
       tester,
     ) async {
@@ -641,6 +671,23 @@ void main() {
       expect(find.text(_en.recordsSavedTitle), findsOne);
       expect(find.text(_en.whatNextQuestion), findsOne);
     }
+
+    testPage('a document that was read names no visit', (tester) async {
+      const session = ProcessingSession(
+        id: 's1',
+        status: ProcessingStatus.draft,
+        origin: ProcessingOrigin.import,
+        encounter: StagedEncounter(
+          existing: Encounter(id: 'e1', title: 'Checkup'),
+        ),
+      );
+      await pumpPage(tester, stateWith(session));
+      states.add(stateWith(session, status: const PipelineStatus.success()));
+      await frames(tester);
+
+      expect(find.text(_en.recordsSavedTitle), findsOne);
+      expect(find.text(_en.documentAttachedTo('Checkup')), findsNothing);
+    });
 
     testPage('after a scan the user can continue scanning', (
       tester,

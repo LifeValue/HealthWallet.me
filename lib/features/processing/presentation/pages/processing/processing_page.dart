@@ -57,6 +57,10 @@ class _ProcessingPageState extends State<ProcessingPage> {
   final _pageController = PageController();
   DeviceAiCapability _deviceCapability = DeviceAiCapability.full;
 
+  /// Whether the document was filed without being read, here or from the
+  /// pages-only view, so the saved message names the visit it went to.
+  bool _attachedWithoutProcessing = false;
+
   @override
   void initState() {
     context.read<ProcessingBloc>().add(
@@ -86,6 +90,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
       builder: (ctx) => const AttachToEncounterWidget(),
     );
     if (result == null || !mounted) return;
+    _attachedWithoutProcessing = true;
     final (patient, encounter) = result;
     context.read<ProcessingBloc>()
       ..add(
@@ -244,7 +249,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
           final scanBloc = context.read<ProcessingBloc>();
           final navController = getIt<PageViewNavigationController>();
           final isDesktop = getIt<AppPlatform>().isDesktop;
-          final visit = widget.attachOnly
+          final visit = widget.attachOnly || _attachedWithoutProcessing
               ? _visitLabel(displayedSession.encounter)
               : '';
           final dialogResult = await AppSimpleDialog.showConfirmation(
