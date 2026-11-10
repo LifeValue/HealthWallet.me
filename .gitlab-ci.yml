@@ -479,6 +479,43 @@ scan:secrets:
     - rm -f android/app/upload-keystore.jks android/key.properties android/fastlane/service-account.json
     - rm -f AuthKey.p8
 
+# The integration tests in integration_test/ boot the real mobile app on an iOS simulator. They
+# need no secrets (an empty .env, as in `checks`), so they can run on any branch, but they hold
+# the shared Mac mini for several minutes: automatic on develop, release/* and master, by hand
+# elsewhere. Each run gets a fresh simulator, deleted afterwards, since the tests leave the app in
+# Romanian with demo data. extraction_bench/ needs downloaded models and is left to developers.
+test:integration:
+  stage: check
+  tags: [shell-macmini]
+  needs: ["checks"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH =~ /^release\//
+    - when: manual
+      allow_failure: true
+  cache:
+    - *bundle_cache
+  before_script:
+    - *macmini_toolchain
+    - *private_deps
+    - touch .env
+    - mkdir -p assets/certs/android
+    - fvm flutter pub get
+    - fvm dart run build_runner build
+    - *ios_cocoapods
+    - fvm flutter precache --ios
+    - cd ios
+    - *pod_install
+    - cd ..
+  script:
+    - |
+      device_type="$(xcrun simctl list devicetypes | sed -n 's/^iPhone \([0-9][0-9]*\) (\(com[^)]*\))$/\1 \2/p' | sort -n | tail -1 | cut -d' ' -f2)"
+      [ -n "$device_type" ] || { echo "No iPhone simulator type on the Mac mini"; exit 1; }
+      udid="$(xcrun simctl create "health-wallet-ci-$CI_JOB_ID" "$device_type")"
+      xcrun simctl boot "$udid"
+      fvm flutter test integration_test/app_l10n_test.dart -d "$udid"
+  after_script:
+    - xcrun simctl delete "health-wallet-ci-$CI_JOB_ID" || true
+
 # Deploys follow Gitflow: only develop, release/* and master can deploy; feature/*, bugfix/* and
 # hotfix/* branches get no deploy jobs. allow_failure: a manual job from `rules:` defaults to
 # false, which would leave every pipeline "blocked" until someone ran each deploy. Deploys are
