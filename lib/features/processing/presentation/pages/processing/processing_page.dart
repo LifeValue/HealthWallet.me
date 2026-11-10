@@ -205,7 +205,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
         );
         if (displayedSession == null) return;
 
-        if (state.status == const PipelineStatus.success()) {
+        if (state.status is Success) {
           try {
             getIt<LwwSyncBloc>().add(const SyncTriggered());
           } catch (e) {

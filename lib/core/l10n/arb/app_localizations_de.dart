@@ -1505,16 +1505,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get desktopHandoverSendingFiles => 'Dateien werden gesendet...';
 
   @override
-  String get desktopHandoverProcessingOnDesktop =>
-      'Wird auf dem Desktop verarbeitet...';
-
-  @override
-  String get desktopHandoverComplete => 'Fertig!';
-
-  @override
-  String get desktopHandoverError => 'Fehler aufgetreten';
-
-  @override
   String get desktopHandoverSending => 'Wird gesendet...';
 
   @override
@@ -1524,9 +1514,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String desktopHandoverFileCount(int count) {
     return '$count Dateien';
   }
-
-  @override
-  String get desktopHandoverSuccess => 'An den Desktop übergeben';
 
   @override
   String get desktopClose => 'Schließen';
@@ -2514,9 +2501,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noFilePathFound => 'Kein Dateipfad gefunden';
 
   @override
-  String get handoverPatientMatched => 'Patient der Übergabe zugeordnet';
-
-  @override
   String get desktopDiscovering => 'Suche läuft...';
 
   @override
@@ -2597,23 +2581,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get desktopHandoverReceivingFiles => 'Dateien werden empfangen...';
 
   @override
-  String get desktopHandoverProcessingStatus => 'Wird verarbeitet...';
-
-  @override
-  String get desktopHandoverSendingResults => 'Ergebnisse werden gesendet...';
-
-  @override
-  String get desktopHandoverDone => 'Abgeschlossen';
-
-  @override
   String get desktopHandoverStatusError => 'Fehler';
 
   @override
-  String get desktopHandoverWaitingForResults => 'Warte auf Ergebnisse...';
-
-  @override
   String get desktopHandoverNotAccepted =>
-      'Der Desktop hat die Dokumente nicht angenommen.';
+      'Der Desktop hat nicht geantwortet. Stelle sicher, dass HealthWallet dort geöffnet und aktuell ist.';
 
   @override
   String get desktopHandoverFileMissing =>
@@ -2647,10 +2619,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String trayQuit(String appName) {
     return '$appName beenden';
   }
-
-  @override
-  String get desktopFinishedProcessing =>
-      'Desktop hat die Verarbeitung abgeschlossen';
 
   @override
   String get biometricAuthReason =>
@@ -4706,4 +4674,63 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get documentAlreadyInWallet =>
       'Alles aus diesem Dokument ist bereits in deiner Wallet';
+
+  @override
+  String get processingStatusHandedOver => 'Auf dem Desktop';
+
+  @override
+  String get desktopHandoverSent =>
+      'An den Desktop gesendet. Du wirst benachrichtigt, sobald du es hier oder auf dem Desktop prüfen kannst.';
+
+  @override
+  String get desktopHandoverConnectionLost =>
+      'Die Verbindung zum Desktop wurde unterbrochen. Versuche es erneut.';
+
+  @override
+  String get desktopHandoverTooLarge =>
+      'Das Dokument ist zu groß für den Desktop (über 200 MB).';
+
+  @override
+  String get desktopHandoverTimedOut =>
+      'Der Desktop hat den Empfang des Dokuments abgebrochen. Versuche es erneut.';
+
+  @override
+  String get handoverOnDesktopTitle => 'Wird auf dem Desktop verarbeitet';
+
+  @override
+  String get handoverOnDesktopMessage =>
+      'Der Entwurf kommt zum Prüfen hierher zurück, sobald der Desktop fertig ist. Du kannst ihn auch auf dem Desktop prüfen und speichern.';
+
+  @override
+  String get handoverTakeBack => 'Stattdessen auf diesem Telefon verarbeiten';
+
+  @override
+  String handoverReadyToReview(String origin) {
+    return '$origin: bereit zur Prüfung';
+  }
+
+  @override
+  String handoverFailedOnDesktop(String origin) {
+    return '$origin: Der Desktop konnte es nicht verarbeiten. Es ist wieder auf diesem Telefon.';
+  }
+
+  @override
+  String handoverNoModelOnDesktop(String origin) {
+    return '$origin: Auf dem Desktop gibt es kein KI-Modell. Es ist wieder auf diesem Telefon.';
+  }
+
+  @override
+  String handoverDeletedOnDesktop(String origin) {
+    return '$origin wurde auf dem Desktop gelöscht. Es ist wieder auf diesem Telefon.';
+  }
+
+  @override
+  String handoverSavedOnDesktop(String origin) {
+    return '$origin wurde auf dem Desktop gespeichert. Die Einträge kommen mit der nächsten Synchronisierung auf dieses Telefon.';
+  }
+
+  @override
+  String handoverSavedOnPhone(String origin) {
+    return '$origin wurde auf dem Telefon gespeichert.';
+  }
 }

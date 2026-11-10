@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
@@ -9,6 +10,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/bloc/phone_handover_bloc.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
@@ -44,7 +46,10 @@ class ProcessingMappingSection extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget content;
 
-    if (state.status is CapacityFailure) {
+    if (displayedSession.status == ProcessingStatus.handedOver) {
+      // The desktop has it; a failure shown here would be another session's.
+      content = _HandedOverMessage(sessionId: displayedSession.id);
+    } else if (state.status is CapacityFailure) {
       content = _buildCapacityFailure(context);
     } else if (state.status is Failure) {
       content = _buildFailure(context, state.status as Failure);
@@ -62,6 +67,7 @@ class ProcessingMappingSection extends StatelessWidget {
         !getIt<AppPlatform>().isDesktop &&
         displayedSession.status != ProcessingStatus.draft &&
         displayedSession.status != ProcessingStatus.patientExtracted &&
+        displayedSession.status != ProcessingStatus.handedOver &&
         onProcessOnDesktop != null;
 
     if (!showDesktopLink) return content;
@@ -358,6 +364,74 @@ class _QueuedMessage extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// A session the desktop is processing: its progress there, and a way to
+/// process it on this phone after all.
+class _HandedOverMessage extends StatelessWidget {
+  const _HandedOverMessage({required this.sessionId});
+
+  final String sessionId;
+
+  @override
+  Widget build(BuildContext context) {
+    final bloc = getIt<PhoneHandoverBloc>();
+    return BlocBuilder<PhoneHandoverBloc, PhoneHandoverState>(
+      bloc: bloc,
+      buildWhen: (a, b) =>
+          a.desktopProgress[sessionId] != b.desktopProgress[sessionId],
+      builder: (context, state) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(Insets.normal),
+        decoration: BoxDecoration(
+          color: context.colorScheme.primary.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(Insets.small),
+          border: Border.all(
+            color: context.colorScheme.primary.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Icon(Icons.computer, color: context.colorScheme.primary),
+                const SizedBox(width: Insets.small),
+                Expanded(
+                  child: Text(
+                    context.l10n.handoverOnDesktopTitle,
+                    style: AppTextStyle.bodyMedium.copyWith(
+                      color: context.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: Insets.small),
+            CustomProgressIndicator(
+              progress: state.desktopProgress[sessionId] ?? 0,
+            ),
+            const SizedBox(height: Insets.small),
+            Text(
+              context.l10n.handoverOnDesktopMessage,
+              style: AppTextStyle.bodySmall.copyWith(
+                color: context.secondaryTextColor,
+              ),
+            ),
+            const SizedBox(height: Insets.normal),
+            AppButton(
+              label: context.l10n.handoverTakeBack,
+              variant: AppButtonVariant.outlined,
+              height: Insets.large,
+              onPressed: () => bloc.add(
+                PhoneHandoverTakeBackRequested(sessionId: sessionId),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

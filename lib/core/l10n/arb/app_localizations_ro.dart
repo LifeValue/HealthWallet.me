@@ -1504,16 +1504,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String get desktopHandoverSendingFiles => 'Se trimit fișierele...';
 
   @override
-  String get desktopHandoverProcessingOnDesktop =>
-      'Se procesează pe desktop...';
-
-  @override
-  String get desktopHandoverComplete => 'Finalizat!';
-
-  @override
-  String get desktopHandoverError => 'A apărut o eroare';
-
-  @override
   String get desktopHandoverSending => 'Se trimite...';
 
   @override
@@ -1523,9 +1513,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String desktopHandoverFileCount(int count) {
     return '$count fișiere';
   }
-
-  @override
-  String get desktopHandoverSuccess => 'Predat pe desktop';
 
   @override
   String get desktopClose => 'Închide';
@@ -2515,9 +2502,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String get noFilePathFound => 'Nu s-a găsit calea fișierului';
 
   @override
-  String get handoverPatientMatched => 'Pacientul din predare a fost asociat';
-
-  @override
   String get desktopDiscovering => 'Se caută...';
 
   @override
@@ -2595,23 +2579,11 @@ class AppLocalizationsRo extends AppLocalizations {
   String get desktopHandoverReceivingFiles => 'Se primesc fișierele...';
 
   @override
-  String get desktopHandoverProcessingStatus => 'Se procesează...';
-
-  @override
-  String get desktopHandoverSendingResults => 'Se trimit rezultatele...';
-
-  @override
-  String get desktopHandoverDone => 'Finalizat';
-
-  @override
   String get desktopHandoverStatusError => 'Eroare';
 
   @override
-  String get desktopHandoverWaitingForResults => 'Se așteaptă rezultatele...';
-
-  @override
   String get desktopHandoverNotAccepted =>
-      'Desktopul nu a acceptat documentele.';
+      'Desktopul nu a răspuns. Asigură-te că HealthWallet este deschis și actualizat pe el.';
 
   @override
   String get desktopHandoverFileMissing =>
@@ -2644,9 +2616,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String trayQuit(String appName) {
     return 'Închide $appName';
   }
-
-  @override
-  String get desktopFinishedProcessing => 'Desktopul a terminat procesarea';
 
   @override
   String get biometricAuthReason =>
@@ -4705,4 +4674,63 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get documentAlreadyInWallet =>
       'Tot ce conține acest document este deja în portofelul tău';
+
+  @override
+  String get processingStatusHandedOver => 'Pe desktop';
+
+  @override
+  String get desktopHandoverSent =>
+      'Trimis pe desktop. Vei fi anunțat când îl poți verifica, aici sau pe desktop.';
+
+  @override
+  String get desktopHandoverConnectionLost =>
+      'Conexiunea cu desktopul s-a întrerupt. Încearcă din nou.';
+
+  @override
+  String get desktopHandoverTooLarge =>
+      'Documentul este prea mare pentru a fi trimis pe desktop (peste 200 MB).';
+
+  @override
+  String get desktopHandoverTimedOut =>
+      'Desktopul a încetat să primească documentul. Încearcă din nou.';
+
+  @override
+  String get handoverOnDesktopTitle => 'Se procesează pe desktop';
+
+  @override
+  String get handoverOnDesktopMessage =>
+      'Ciorna revine aici pentru verificare când desktopul termină. O poți verifica și salva și pe desktop.';
+
+  @override
+  String get handoverTakeBack => 'Procesează pe acest telefon';
+
+  @override
+  String handoverReadyToReview(String origin) {
+    return '$origin: gata de verificare';
+  }
+
+  @override
+  String handoverFailedOnDesktop(String origin) {
+    return '$origin: desktopul nu l-a putut procesa. A revenit pe acest telefon.';
+  }
+
+  @override
+  String handoverNoModelOnDesktop(String origin) {
+    return '$origin: nu există model AI pe desktop. A revenit pe acest telefon.';
+  }
+
+  @override
+  String handoverDeletedOnDesktop(String origin) {
+    return '$origin a fost șters pe desktop. A revenit pe acest telefon.';
+  }
+
+  @override
+  String handoverSavedOnDesktop(String origin) {
+    return '$origin a fost salvat pe desktop. Înregistrările ajung pe acest telefon la următoarea sincronizare.';
+  }
+
+  @override
+  String handoverSavedOnPhone(String origin) {
+    return '$origin a fost salvat pe telefon.';
+  }
 }

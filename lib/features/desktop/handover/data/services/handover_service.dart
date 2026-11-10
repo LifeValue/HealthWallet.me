@@ -2,392 +2,382 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:collection/collection.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/message_router.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
+import 'package:health_wallet/features/desktop/handover/data/services/handover_outbox.dart';
+import 'package:health_wallet/features/desktop/handover/domain/entity/handover_protocol.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
-import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+part 'handover_service.freezed.dart';
+
+/// What the paired phone did with a handover.
+@freezed
+sealed class IncomingHandoverEvent with _$IncomingHandoverEvent {
+  /// Every file of the document arrived, in page order.
+  const factory IncomingHandoverEvent.received({
+    required String sessionId,
+    required List<String> filePaths,
+    Map<String, dynamic>? phase1Data,
+  }) = IncomingHandoverReceived;
+
+  /// The phone took the document back.
+  const factory IncomingHandoverEvent.cancelled({required String sessionId}) =
+      IncomingHandoverCancelled;
+
+  /// The records were saved on the phone.
+  const factory IncomingHandoverEvent.saved({required String sessionId}) =
+      IncomingHandoverSaved;
+}
+
+class _File {
+  _File(this.path, this.size);
+  final String path;
+  final int size;
+  int received = 0;
+}
+
+class _Transfer {
+  _Transfer(this.dir, this.files, this.phase1Data);
+  final Directory dir;
+  final List<_File> files;
+  final Map<String, dynamic>? phase1Data;
+  Timer? idle;
+
+  int get total => files.fold(0, (a, f) => a + f.size);
+  int get received => files.fold(0, (a, f) => a + f.received);
+  int get completeFiles => files.where((f) => f.received == f.size).length;
+}
+
+/// The desktop's end of a handover: receives a document's files from the
+/// phone and sends back what processing made of it. Messages the phone must
+/// receive wait in an outbox until it acknowledges them.
 @lazySingleton
 class HandoverService {
-  final MessageRouter _messageRouter;
-  final TcpService _tcpService;
-  final ProcessingBloc _processingBloc;
+  HandoverService(this._tcp, this._router, this._prefs)
+    : _outbox = HandoverOutbox(_prefs, _tcp, key: outboxKey);
 
-  final Map<String, HandoverSession> _sessions = {};
-  final Map<String, List<String>> _receivedFiles = {};
-  final Map<String, Map<String, dynamic>?> _phase1Data = {};
-  final _sessionUpdateController =
-      StreamController<HandoverSession>.broadcast();
-  final Map<String, ({String type, Map<String, dynamic> payload})>
-  _pendingResults = {};
+  static const outboxKey = 'handover_outbox_desktop';
 
-  StreamSubscription? _offerSub;
-  StreamSubscription? _fileSub;
-  StreamSubscription? _processingBlocSub;
+  /// Sessions whose draft was already sent, so a restart or a second draft
+  /// (the desktop's user retrying a step) doesn't send it again.
+  static const reportedKey = 'handover_reported_desktop';
 
-  Stream<HandoverSession> get sessionUpdates => _sessionUpdateController.stream;
+  final TcpService _tcp;
+  final SharedPreferences _prefs;
+  final MessageRouter _router;
+  final HandoverOutbox _outbox;
 
-  HandoverService(
-    this._messageRouter,
-    this._tcpService,
-    this._processingBloc,
-  );
+  /// Where files are assembled; overridable in tests.
+  @visibleForTesting
+  Future<Directory> Function() temporaryDirectory = getTemporaryDirectory;
 
-  void startListening({
-    required void Function(HandoverSession session) onOfferReceived,
-    required void Function(String sessionId) onFileReceived,
-    required void Function(String sessionId) onProcessingComplete,
-  }) {
-    _offerSub = _messageRouter.on('handover.offer').listen((payload) {
-      _handleOffer(payload, onOfferReceived);
+  /// How long a transfer may wait for its next chunk; shortened in tests.
+  @visibleForTesting
+  Duration idleTimeout = HandoverProtocol.idleTimeout;
+
+  final _transfers = StreamController<HandoverSession>.broadcast();
+  final _events = StreamController<IncomingHandoverEvent>.broadcast();
+  final Map<String, _Transfer> _active = {};
+  final List<StreamSubscription<Object?>> _subscriptions = [];
+
+  // Messages are handled one at a time, so chunks are written in order.
+  Future<void> _queue = Future.value();
+
+  /// Transfers in progress and how they ended.
+  Stream<HandoverSession> get transfers => _transfers.stream;
+
+  Stream<IncomingHandoverEvent> get phoneEvents => _events.stream;
+
+  void start() {
+    if (_subscriptions.isNotEmpty) return;
+    void on(String type, Future<void> Function(Map<String, dynamic>) handle) =>
+        _subscriptions.add(
+          _router.on(type).listen((m) {
+            _queue = _queue.then((_) => handle(m)).catchError((Object e) {
+              logger.w('[Handover] $type not handled', e);
+            });
+          }),
+        );
+
+    on(HandoverMessage.offer, _onOffer);
+    on(HandoverMessage.chunk, _onChunk);
+    on(HandoverMessage.cancel, (m) async {
+      final id = m['session_id'];
+      if (id is! String) return;
+      await _drop(id);
+      _events.add(IncomingHandoverEvent.cancelled(sessionId: id));
+      await _acknowledge(id, HandoverMessage.cancel);
     });
-
-    _fileSub = _messageRouter.on('handover.file').listen((payload) {
-      _handleFileChunk(payload, onFileReceived, onProcessingComplete);
+    on(HandoverMessage.saved, (m) async {
+      final id = m['session_id'];
+      if (id is! String) return;
+      _events.add(IncomingHandoverEvent.saved(sessionId: id));
+      await _acknowledge(id, HandoverMessage.saved);
     });
-  }
-
-  void _handleOffer(
-    Map<String, dynamic> payload,
-    void Function(HandoverSession session) onOfferReceived,
-  ) {
-    final sessionId = payload['session_id'] as String;
-    final fileCount = payload['file_count'] as int;
-
-    final session = HandoverSession(
-      sessionId: sessionId,
-      status: HandoverStatus.receiving,
-      fileCount: fileCount,
+    on(HandoverMessage.ack, (m) async {
+      final id = m['session_id'];
+      final type = m['type'];
+      if (id is String && type is String) {
+        await _outbox.acknowledge(id, type);
+      }
+    });
+    _subscriptions.add(
+      _tcp.connectionState
+          .where((s) => s == ConnectionState.connected)
+          .listen((_) => unawaited(_outbox.flush())),
     );
-
-    _sessions[sessionId] = session;
-    _receivedFiles[sessionId] = [];
-    _phase1Data[sessionId] = payload['phase1_data'] as Map<String, dynamic>?;
-
-    _sendQuietly('handover.accept', {
-      'session_id': sessionId,
-    });
-
-    onOfferReceived(session);
-    _sessionUpdateController.add(session);
+    _outbox.retryEvery(HandoverProtocol.outboxRetry);
   }
 
-  Future<void> _handleFileChunk(
-    Map<String, dynamic> payload,
-    void Function(String sessionId) onFileReceived,
-    void Function(String sessionId) onProcessingComplete,
-  ) async {
-    final sessionId = payload['session_id'] as String;
-    final fileName = payload['file_name'] as String;
-    final data = payload['data'] as String;
+  Future<void> _onOffer(Map<String, dynamic> m) async {
+    final id = m['session_id'];
+    if (id is! String || id.isEmpty) return;
+    if (m['v'] != HandoverProtocol.version) {
+      return _reject(id, HandoverFailure.desktopOutdated);
+    }
+    final files = <({String name, int size})>[];
+    for (final f in m['files'] as List? ?? const []) {
+      if (f is! Map || f['name'] is! String || f['size'] is! int) {
+        return _reject(id, HandoverFailure.failed);
+      }
+      final size = f['size'] as int;
+      if (size < 0) return _reject(id, HandoverFailure.failed);
+      files.add((name: f['name'] as String, size: size));
+    }
+    if (files.isEmpty) return _reject(id, HandoverFailure.failed);
+    final total = files.fold<int>(0, (a, f) => a + f.size);
+    if (total > HandoverProtocol.maxTotalBytes) {
+      return _reject(id, HandoverFailure.tooLarge);
+    }
 
-    final session = _sessions[sessionId];
-    if (session == null) return;
+    // The phone sends the document again (after a failure or a drop): the
+    // earlier attempt is replaced.
+    await _drop(id);
+    final dir = Directory(
+      p.join((await temporaryDirectory()).path, 'handover', _safe(id)),
+    );
+    if (await dir.exists()) await dir.delete(recursive: true);
+    await dir.create(recursive: true);
+    final transfer = _Transfer(
+      dir,
+      [
+        for (var i = 0; i < files.length; i++)
+          // The index keeps pages in order and same-named pages apart.
+          _File(
+            p.join(dir.path, '${i}_${_safe(files[i].name)}'),
+            files[i].size,
+          ),
+      ],
+      (m['phase1_data'] as Map?)?.cast<String, dynamic>(),
+    );
+    for (final f in transfer.files) {
+      await File(f.path).writeAsBytes(const [], flush: true);
+    }
+    _active[id] = transfer;
+    _touch(id);
+    await _sendQuietly(HandoverMessage.accept, {'session_id': id});
+    _report(id, transfer);
+    if (transfer.total == 0) await _complete(id);
+  }
 
+  Future<void> _onChunk(Map<String, dynamic> m) async {
+    final id = m['session_id'];
+    final transfer = _active[id];
+    // A chunk of a transfer already dropped or finished.
+    if (id is! String || transfer == null) return;
+    final index = m['index'];
+    final offset = m['offset'];
+    final data = m['data'];
+    if (index is! int ||
+        index < 0 ||
+        index >= transfer.files.length ||
+        offset is! int ||
+        data is! String) {
+      return _fail(id, HandoverFailure.failed);
+    }
+    final file = transfer.files[index];
+    final List<int> bytes;
     try {
-      final importsDir = await _getImportsDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final ext = p.extension(fileName);
-      final baseName = p.basenameWithoutExtension(fileName);
-      final persistedName = '${baseName}_$timestamp$ext';
-      final filePath = p.join(importsDir.path, persistedName);
-      final fileBytes = base64Decode(data);
-      await File(filePath).writeAsBytes(fileBytes);
-
-      _receivedFiles[sessionId]!.add(filePath);
-
-      final updatedSession = session.copyWith(
-        receivedCount: _receivedFiles[sessionId]!.length,
-        progress: _receivedFiles[sessionId]!.length / session.fileCount * 0.5,
-      );
-      _sessions[sessionId] = updatedSession;
-
-      onFileReceived(sessionId);
-      _sessionUpdateController.add(updatedSession);
-
-      if (updatedSession.receivedCount >= session.fileCount) {
-        await _startProcessing(sessionId, onProcessingComplete);
-      }
-    } catch (e) {
-      _updateSessionError(sessionId, e.toString());
+      bytes = base64Decode(data);
+    } on FormatException catch (e) {
+      logger.w('[Handover] undecodable chunk for $id', e);
+      return _fail(id, HandoverFailure.failed);
     }
+    // Chunks come in order; a gap or a repeat means the file is corrupt.
+    if (offset != file.received || file.received + bytes.length > file.size) {
+      return _fail(id, HandoverFailure.failed);
+    }
+    await File(file.path).writeAsBytes(bytes, mode: FileMode.append);
+    file.received += bytes.length;
+    _touch(id);
+    _report(id, transfer);
+    if (transfer.received == transfer.total) await _complete(id);
   }
 
-  Future<void> _startProcessing(
-    String sessionId,
-    void Function(String sessionId) onProcessingComplete,
-  ) async {
-    final processingSession = _sessions[sessionId]!.copyWith(
-      status: HandoverStatus.processing,
-      progress: 0.5,
-    );
-    _sessions[sessionId] = processingSession;
-    _sessionUpdateController.add(processingSession);
-
-    _step1Notified = false;
-
-    final filePaths = _receivedFiles[sessionId]!;
-    final phase1 = _phase1Data[sessionId];
-    _hasPhase1Data = phase1 != null && phase1['patient'] != null;
-
-    StagedPatient? phase1Patient;
-    StagedEncounter? phase1Encounter;
-    StagedDiagnosticReport? phase1DiagnosticReport;
-
-    if (_hasPhase1Data) {
-      final p1 = phase1!;
-      phase1Patient = stagedPatientFromJson(
-        p1['patient'] as Map<String, dynamic>,
-      );
-      if (p1['encounter'] != null) {
-        phase1Encounter = stagedEncounterFromJson(
-          p1['encounter'] as Map<String, dynamic>,
-        );
-      }
-      if (p1['diagnosticReport'] != null) {
-        phase1DiagnosticReport = stagedDiagnosticReportFromJson(
-          p1['diagnosticReport'] as Map<String, dynamic>,
-        );
-      }
-    }
-
-    _processingBloc.add(
-      DocumentImported(
-        filePaths: filePaths,
-        origin: ProcessingOrigin.handover,
-        phase1Patient: phase1Patient,
-        phase1Encounter: phase1Encounter,
-        phase1DiagnosticReport: phase1DiagnosticReport,
+  Future<void> _complete(String id) async {
+    final transfer = _active.remove(id);
+    if (transfer == null) return;
+    transfer.idle?.cancel();
+    _transfers.add(
+      HandoverSession(
+        sessionId: id,
+        status: HandoverStatus.sent,
+        fileCount: transfer.files.length,
+        receivedCount: transfer.files.length,
+        progress: 1,
       ),
     );
+    _events.add(
+      IncomingHandoverEvent.received(
+        sessionId: id,
+        filePaths: [for (final f in transfer.files) f.path],
+        phase1Data: transfer.phase1Data,
+      ),
+    );
+  }
 
-    var sessionActivated = false;
-    var phase2Triggered = false;
+  void _report(String id, _Transfer transfer) => _transfers.add(
+    HandoverSession(
+      sessionId: id,
+      status: HandoverStatus.receiving,
+      fileCount: transfer.files.length,
+      receivedCount: transfer.completeFiles,
+      progress: transfer.total == 0 ? 1 : transfer.received / transfer.total,
+    ),
+  );
 
-    unawaited(_processingBlocSub?.cancel());
-    _processingBlocSub = _processingBloc.stream.listen((processingState) {
-      final newSession = processingState.sessions.firstWhereOrNull(
-        (s) => s.origin == ProcessingOrigin.handover,
-      );
-      if (newSession == null) return;
-
-      if (!sessionActivated && processingState.status is SessionCreated) {
-        sessionActivated = true;
-        if (!_hasPhase1Data) {
-          _processingBloc.add(SessionActivated(sessionId: newSession.id));
-        }
-      }
-
-      if (_hasPhase1Data &&
-          !phase2Triggered &&
-          newSession.status == ProcessingStatus.patientExtracted) {
-        phase2Triggered = true;
-        _processingBloc.add(SessionActivated(sessionId: newSession.id));
-        Future.delayed(const Duration(milliseconds: 300), () {
-          _processingBloc.add(
-            ProcessRemainingResources(sessionId: newSession.id),
-          );
-        });
-      }
-
-      _handleProcessingStateChange(
-        sessionId,
-        processingState,
-        onProcessingComplete,
-      );
+  void _touch(String id) {
+    final transfer = _active[id];
+    if (transfer == null) return;
+    transfer.idle?.cancel();
+    transfer.idle = Timer(idleTimeout, () {
+      _queue = _queue.then((_) => _fail(id, HandoverFailure.timeout));
     });
   }
 
-  bool _step1Notified = false;
-  bool _hasPhase1Data = false;
-
-  void _handleProcessingStateChange(
-    String sessionId,
-    ProcessingState processingState,
-    void Function(String sessionId) onProcessingComplete,
-  ) {
-    final session = _sessions[sessionId];
-    if (session == null || session.status == HandoverStatus.complete) return;
-
-    final activeProcessingSession = processingState.sessions.firstWhereOrNull(
-      (s) => s.origin == ProcessingOrigin.handover,
+  /// Ends a transfer that can't finish and tells the phone why.
+  Future<void> _fail(String id, HandoverFailure failure) async {
+    final transfer = _active[id];
+    if (transfer == null) return;
+    await _drop(id);
+    _transfers.add(
+      HandoverSession(
+        sessionId: id,
+        status: HandoverStatus.error,
+        fileCount: transfer.files.length,
+        failure: failure,
+      ),
     );
-    if (activeProcessingSession == null) return;
+    await sendFailed(id, failure);
+  }
 
-    if (activeProcessingSession.status == ProcessingStatus.processing ||
-        activeProcessingSession.status == ProcessingStatus.processingPatient) {
-      final progress = 0.5 + (activeProcessingSession.progress * 0.3);
-      final updated = session.copyWith(progress: progress);
-      _sessions[sessionId] = updated;
-      _sessionUpdateController.add(updated);
+  /// Forgets a transfer in progress and deletes what arrived of it.
+  Future<void> _drop(String id) async {
+    final transfer = _active.remove(id);
+    if (transfer == null) return;
+    transfer.idle?.cancel();
+    await _deleteDir(transfer.dir);
+  }
 
-      _sendQuietly('handover.progress', {
-        'session_id': sessionId,
-        'progress': progress,
-        'status': 'processing',
+  Future<void> _reject(String id, HandoverFailure failure) =>
+      _sendQuietly(HandoverMessage.reject, {
+        'session_id': id,
+        'reason': failure.wire,
       });
-    }
 
-    if (activeProcessingSession.status == ProcessingStatus.patientExtracted &&
-        !_step1Notified &&
-        !_hasPhase1Data) {
-      _step1Notified = true;
-      final updated = session.copyWith(
-        status: HandoverStatus.complete,
-        progress: 1.0,
-      );
-      _sessions[sessionId] = updated;
-      _sessionUpdateController.add(updated);
+  /// Processing progress, 0 to 1; dropped when the phone isn't connected.
+  Future<void> sendProgress(String id, double progress) => _sendQuietly(
+    HandoverMessage.progress,
+    {'session_id': id, 'progress': progress},
+  );
 
-      final step1Payload = {'session_id': sessionId};
-      _pendingResults[sessionId] = (
-        type: 'handover.step1_complete',
-        payload: step1Payload,
-      );
-      _sendQuietly('handover.step1_complete', step1Payload);
-
-      _processingBlocSub?.cancel();
-      _processingBlocSub = null;
-      onProcessingComplete(sessionId);
-    }
-
-    if (activeProcessingSession.status == ProcessingStatus.draft) {
-      final sendingSession = session.copyWith(
-        status: HandoverStatus.sendingResults,
-        progress: 0.85,
-      );
-      _sessions[sessionId] = sendingSession;
-      _sessionUpdateController.add(sendingSession);
-
-      _sendResults(sessionId, activeProcessingSession, onProcessingComplete);
-    }
-
-    if (processingState.status is Failure) {
-      final failure = processingState.status as Failure;
-      _updateSessionError(
-        sessionId,
-        failure.error,
-        failure: failure.reason == PipelineFailureReason.modelNotFound
-            ? HandoverFailure.modelNotFound
-            : HandoverFailure.failed,
-      );
-    }
-  }
-
-  Future<void> _sendResults(
-    String sessionId,
-    ProcessingSession processingSession,
-    void Function(String sessionId) onProcessingComplete,
-  ) async {
-    try {
-      final resources = processingSession.resources
-          .map((r) => r.toJson())
-          .toList();
-
-      final patientJson = processingSession.patient.draft?.toJson();
-      final encounterJson = processingSession.encounter.draft?.toJson();
-
-      final resultPayload = {
-        'session_id': sessionId,
-        'resources': resources,
-        'patient': ?patientJson,
-        'encounter': ?encounterJson,
-      };
-
-      _pendingResults[sessionId] = (
-        type: 'handover.result',
-        payload: resultPayload,
-      );
-
-      await _tcpService.sendData('handover.result', resultPayload);
-
-      final completedSession = HandoverSession(
-        sessionId: sessionId,
-        status: HandoverStatus.complete,
-        fileCount: _sessions[sessionId]!.fileCount,
-        receivedCount: _sessions[sessionId]!.receivedCount,
-        progress: 1.0,
-      );
-      _sessions[sessionId] = completedSession;
-      _sessionUpdateController.add(completedSession);
-
-      unawaited(_processingBlocSub?.cancel());
-      _processingBlocSub = null;
-
-      onProcessingComplete(sessionId);
-    } catch (e) {
-      _updateSessionError(sessionId, e.toString());
-    }
-  }
-
-  void _updateSessionError(
-    String sessionId,
-    String error, {
-    HandoverFailure failure = HandoverFailure.failed,
-  }) {
-    final session = _sessions[sessionId];
-    if (session == null) return;
-
-    final errorSession = session.copyWith(
-      status: HandoverStatus.error,
-      error: error,
-      failure: failure,
-    );
-    _sessions[sessionId] = errorSession;
-    _sessionUpdateController.add(errorSession);
-
-    _sendQuietly('handover.progress', {
-      'session_id': sessionId,
-      'progress': session.progress,
-      'status': 'error',
-      'error': error,
-      if (failure == HandoverFailure.modelNotFound)
-        'reason': HandoverFailure.modelNotFoundReason,
+  /// The draft for the phone to review, once per session.
+  Future<void> sendResult(String id, HandoverDraft draft) async {
+    final reported = _prefs.getStringList(reportedKey) ?? const [];
+    if (reported.contains(id)) return;
+    await _prefs.setStringList(reportedKey, [...reported, id]);
+    await _outbox.add(HandoverMessage.result, {
+      'session_id': id,
+      'draft': draft.toJson(),
     });
   }
 
-  Future<Directory> _getImportsDirectory() async {
-    final appDir = await getApplicationDocumentsDirectory();
-    final dir = Directory(p.join(appDir.path, 'imports'));
-    if (!await dir.exists()) {
-      await dir.create(recursive: true);
-    }
-    return dir;
+  /// The session is gone from the desktop: a later handover with its id
+  /// gets its draft sent again.
+  Future<void> forget(String id) async {
+    final reported = _prefs.getStringList(reportedKey) ?? const [];
+    if (!reported.contains(id)) return;
+    await _prefs.setStringList(reportedKey, [
+      for (final r in reported)
+        if (r != id) r,
+    ]);
   }
 
-  Future<void> resendPendingResults() async {
-    for (final entry in _pendingResults.entries) {
-      try {
-        await _tcpService.sendData(entry.value.type, entry.value.payload);
-      } catch (_) {}
-    }
-  }
+  Future<void> sendFailed(String id, HandoverFailure failure) =>
+      _outbox.add(HandoverMessage.failed, {
+        'session_id': id,
+        'reason': (failure.wire ?? HandoverFailure.failed.wire)!,
+      });
 
-  void stopListening() {
-    _offerSub?.cancel();
-    _offerSub = null;
-    _fileSub?.cancel();
-    _fileSub = null;
-    _processingBlocSub?.cancel();
-    _processingBlocSub = null;
-  }
+  /// The records were saved on the desktop.
+  Future<void> sendSaved(String id) =>
+      _outbox.add(HandoverMessage.saved, {'session_id': id});
 
-  void dispose() {
-    stopListening();
-    _sessionUpdateController.close();
-  }
+  /// The desktop's user deleted the document.
+  Future<void> sendCancelled(String id) =>
+      _outbox.add(HandoverMessage.cancel, {'session_id': id});
+
+  /// Deletes the received files once processing has its own copies.
+  Future<void> discardFiles(String id) async => _deleteDir(
+    Directory(p.join((await temporaryDirectory()).path, 'handover', _safe(id))),
+  );
+
+  Future<void> _acknowledge(String id, String type) =>
+      _sendQuietly(HandoverMessage.ack, {'session_id': id, 'type': type});
 
   /// Sends a message nobody waits for; a dropped link is logged, not thrown.
-  void _sendQuietly(String type, Map<String, dynamic> payload) {
-    _tcpService.sendData(type, payload).catchError((Object e) {
-      logger.w('[$runtimeType] $type not sent', e);
-    });
+  Future<void> _sendQuietly(String type, Map<String, dynamic> payload) async {
+    try {
+      await _tcp.sendData(type, payload);
+    } on Exception catch (e) {
+      logger.w('[Handover] $type not sent', e);
+    }
+  }
+
+  Future<void> _deleteDir(Directory dir) async {
+    try {
+      if (await dir.exists()) await dir.delete(recursive: true);
+    } on FileSystemException catch (e) {
+      logger.w('[Handover] received files not deleted', e);
+    }
+  }
+
+  /// A name the phone chose, reduced to one safe path segment.
+  static String _safe(String name) {
+    final base = p.basename(name).replaceAll(RegExp(r'[^\w.\-]'), '_');
+    return base.isEmpty || base == '.' || base == '..' ? 'file' : base;
+  }
+
+  Future<void> stop() async {
+    _outbox.stopRetrying();
+    for (final s in _subscriptions) {
+      await s.cancel();
+    }
+    _subscriptions.clear();
+    for (final id in _active.keys.toList()) {
+      await _drop(id);
+    }
+  }
+
+  Future<void> dispose() async {
+    await stop();
+    await _transfers.close();
+    await _events.close();
   }
 }

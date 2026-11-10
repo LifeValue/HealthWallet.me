@@ -61,16 +61,20 @@ sealed class PipelineStatus with _$PipelineStatus {
   }) = SessionCreated;
 
   /// [error] is English diagnostic text for logs and the handover message;
-  /// the UI shows [reason]'s localized message.
+  /// the UI shows [reason]'s localized message. [sessionId] is the session
+  /// that failed, when the failure belongs to one.
   const factory PipelineStatus.failure({
     required String error,
     @Default(PipelineFailureReason.other) PipelineFailureReason reason,
+    String? sessionId,
   }) = Failure;
   const factory PipelineStatus.capacityFailure({required String sessionId}) =
       CapacityFailure;
   const factory PipelineStatus.convertingPdfs() = ConvertingPdfs;
   const factory PipelineStatus.savingResources() = SavingResources;
-  const factory PipelineStatus.success() = Success;
+
+  /// [sessionId] is the session whose records were saved.
+  const factory PipelineStatus.success({String? sessionId}) = Success;
 }
 
 @freezed

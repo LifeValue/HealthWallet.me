@@ -22,6 +22,7 @@ abstract class ProcessingRepository {
   Future<ProcessingSession> createProcessingSession({
     required List<String> filePaths,
     required ProcessingOrigin origin,
+    String? id,
   });
 
   Future<List<ProcessingSession>> getProcessingSessions();

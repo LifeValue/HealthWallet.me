@@ -147,7 +147,11 @@ enum ProcessingStatus {
   patientExtracted,
   processing,
   draft,
-  cancelled;
+  cancelled,
+
+  /// The files are on the paired desktop, which processes the document; the
+  /// draft comes back here to review.
+  handedOver;
 
   factory ProcessingStatus.fromString(String string) {
     switch (string) {
@@ -161,6 +165,8 @@ enum ProcessingStatus {
         return ProcessingStatus.processingPatient;
       case 'Patient Extracted':
         return ProcessingStatus.patientExtracted;
+      case 'Handed Over':
+        return ProcessingStatus.handedOver;
       default:
         return ProcessingStatus.pending;
     }
@@ -181,12 +187,15 @@ enum ProcessingStatus {
         return 'Draft';
       case ProcessingStatus.cancelled:
         return 'Cancelled';
+      case ProcessingStatus.handedOver:
+        return 'Handed Over';
     }
   }
 
   Color getColor(BuildContext context) {
     switch (this) {
       case ProcessingStatus.pending:
+      case ProcessingStatus.handedOver:
         return context.colorScheme.secondary;
       case ProcessingStatus.processing:
       case ProcessingStatus.draft:

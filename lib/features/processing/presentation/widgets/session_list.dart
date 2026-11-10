@@ -121,6 +121,8 @@ class SessionList extends StatelessWidget {
                                   ),
                                   if (!isThisSessionDeleting) ...[
                                     if (session.filePaths.isNotEmpty &&
+                                        session.status !=
+                                            ProcessingStatus.handedOver &&
                                         !getIt<AppPlatform>().isDesktop)
                                       IconButton(
                                         onPressed: () {

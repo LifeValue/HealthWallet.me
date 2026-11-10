@@ -45,10 +45,15 @@ class _FakeProcessingRepository extends Fake implements ProcessingRepository {
   Future<ProcessingSession> createProcessingSession({
     required List<String> filePaths,
     required ProcessingOrigin origin,
+    String? id,
   }) async {
     if (createError != null) throw createError!;
     created.add(filePaths);
-    return ProcessingSession(id: 'new', filePaths: filePaths, origin: origin);
+    return ProcessingSession(
+      id: id ?? 'new',
+      filePaths: filePaths,
+      origin: origin,
+    );
   }
 
   List<ProcessingSession> stored = const [ProcessingSession(id: 'saved')];
@@ -425,6 +430,7 @@ void main() {
         const PipelineStatus.failure(
           error: 'No images were generated from the document',
           reason: PipelineFailureReason.noImagesGenerated,
+          sessionId: 's1',
         ),
       );
       expect(bloc.state.sessions.single.status, ProcessingStatus.pending);
@@ -486,6 +492,7 @@ void main() {
         const PipelineStatus.failure(
           error: 'Exception: boom',
           reason: PipelineFailureReason.other,
+          sessionId: 's1',
         ),
       );
       expect(
