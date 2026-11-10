@@ -63,9 +63,6 @@ class FhirFieldExtractor {
   static String? extractDosageInstructions(List<dynamic>? dosages) =>
       FhirCommonExtractor.extractDosageInstructions(dosages);
 
-  static String? extractDosage(List<fhir_r4.Dosage>? dosages) =>
-      FhirCommonExtractor.extractDosage(dosages);
-
   static String? extractReasonCodes(List<dynamic>? reasonCodes) =>
       FhirCommonExtractor.extractReasonCodes(reasonCodes);
 
