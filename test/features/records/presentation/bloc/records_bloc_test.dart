@@ -5,12 +5,12 @@ import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 
-/// One `getResources` call as the bloc made it.
+/// One `getResourcePage` call for the list, as the bloc made it.
 typedef _Query = ({
   List<FhirType> types,
   String? sourceId,
   List<String>? sourceIds,
-  int limit,
+  int? limit,
   int offset,
   DateFilter? dateFilter,
 });
@@ -27,6 +27,7 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
   bool demoLoaded = false;
   final queries = <_Query>[];
   final searches = <String>[];
+  final searchTypes = <List<FhirType>>[];
   final deletes = <String>[];
 
   @override
@@ -36,12 +37,23 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
     List<String>? sourceIds,
     int limit = 20,
     int offset = 0,
+  }) async => patients;
+
+  /// [page] (or [unfiltered]) filtered by [where], as one page that ends the
+  /// list unless it is full. Reading every encounter for the specialty index
+  /// (no limit) isn't recorded.
+  @override
+  Future<ResourcePage> getResourcePage({
+    List<FhirType> resourceTypes = const [],
+    String? sourceId,
+    List<String>? sourceIds,
     DateFilter? dateFilter,
+    bool Function(IFhirResource resource)? where,
+    int? limit = 20,
+    int offset = 0,
   }) async {
-    if (resourceTypes.length == 1 && resourceTypes.single == FhirType.Patient) {
-      return patients;
-    }
     if (error != null) throw error!;
+    if (limit == null) return (resources: page, nextOffset: 0, hasMore: false);
     queries.add((
       types: resourceTypes,
       sourceId: sourceId,
@@ -50,8 +62,15 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
       offset: offset,
       dateFilter: dateFilter,
     ));
-    if (resourceTypes.isEmpty && unfiltered != null) return unfiltered!;
-    return page;
+    final rows = resourceTypes.isEmpty && unfiltered != null
+        ? unfiltered!
+        : page;
+    final matches = rows.where((r) => where?.call(r) ?? true).toList();
+    return (
+      resources: matches,
+      nextOffset: offset + rows.length,
+      hasMore: rows.length == limit,
+    );
   }
 
   @override
@@ -60,9 +79,12 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
     List<FhirType> resourceTypes = const [],
     String? sourceId,
     List<String>? sourceIds,
+    DateFilter? dateFilter,
+    bool Function(IFhirResource resource)? where,
     int limit = 50,
   }) async {
     searches.add(query);
+    searchTypes.add(resourceTypes);
     return searchResults;
   }
 
@@ -113,12 +135,13 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
 /// Classifies a resource as cardiology when its title says so.
 class _FakeSpecialtyClassifier extends Fake implements SpecialtyClassifier {
   @override
-  void buildEncounterIndex(List<IFhirResource> allResources) {}
+  EncounterSpecialties indexEncounters(Iterable<IFhirResource> resources) => {};
 
   @override
   Set<MedicalSpecialty> classify(
     IFhirResource resource, {
     MedicalSpecialty? override,
+    EncounterSpecialties? encounterSpecialties,
   }) => {
     ?override,
     if (resource.title.contains('heart')) MedicalSpecialty.cardiology,
@@ -407,7 +430,7 @@ void main() {
         const RecordsSpecialtyApplied([MedicalSpecialty.cardiology]),
       );
 
-      expect(state.activeFilters, isEmpty);
+      expect(state.activeFilters, [FhirType.Encounter]);
       expect(state.resources.map((r) => r.id), ['a', 'c']);
     });
 

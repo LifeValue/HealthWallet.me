@@ -207,8 +207,9 @@ class HomeDashboardSections extends StatelessWidget {
               );
             },
             onTapCard: (specialty) {
+              // Only this specialty: no type or date filter hides part of it.
               context.read<RecordsBloc>().add(
-                RecordsSpecialtyApplied([specialty]),
+                RecordsFiltersApplied(const [], specialties: [specialty]),
               );
               pageController.animateToPage(
                 1,
@@ -230,9 +231,6 @@ class HomeDashboardSections extends StatelessWidget {
               );
             },
             onTapCard: (card) {
-              context.read<RecordsBloc>().add(
-                const RecordsSpecialtyApplied([]),
-              );
               context.read<RecordsBloc>().add(
                 RecordsFiltersApplied(card.category.resourceTypes),
               );

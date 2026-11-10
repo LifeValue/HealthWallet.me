@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/services/attachment_browse_service.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
@@ -10,13 +10,17 @@ import 'package:health_wallet/features/records/presentation/bloc/attachment_brow
 /// completes that load.
 class _ControlledBrowseService extends Fake implements AttachmentBrowseService {
   final pending = <String, Completer<void>>{};
+  final filters = <(DateFilter?, MedicalSpecialty?)>[];
 
   @override
   Future<List<AttachmentBrowseEntry>> loadEntries({
     String? sourceId,
     List<String>? sourceIds,
     List<FhirType> resourceTypes = const [],
+    DateFilter? dateFilter,
+    MedicalSpecialty? specialty,
   }) async {
+    filters.add((dateFilter, specialty));
     final scope = sourceId ?? sourceIds?.join(',') ?? 'all';
     await (pending[scope] = Completer<void>()).future;
     return [
@@ -31,12 +35,10 @@ class _ControlledBrowseService extends Fake implements AttachmentBrowseService {
   }) async => AttachmentBrowseDetail(record: record);
 }
 
-class _FakeSpecialtyClassifier extends Fake implements SpecialtyClassifier {}
-
 void main() {
   test('the latest scope wins when an earlier load finishes last', () async {
     final service = _ControlledBrowseService();
-    final bloc = AttachmentBrowseBloc(service, _FakeSpecialtyClassifier());
+    final bloc = AttachmentBrowseBloc(service);
     addTearDown(bloc.close);
 
     // First an unscoped load, then the patient's scope.
@@ -51,5 +53,23 @@ void main() {
     await pumpEventQueue();
 
     expect(bloc.state.records.map((e) => e.record.id), ['s1,s2']);
+  });
+
+  test('passes the date and specialty filters to the service', () async {
+    final service = _ControlledBrowseService();
+    final bloc = AttachmentBrowseBloc(service);
+    addTearDown(bloc.close);
+
+    bloc.add(
+      const AttachmentBrowseInitialised(
+        dateFilter: DateFilter(fromYear: 2024),
+        specialty: MedicalSpecialty.cardiology,
+      ),
+    );
+    await pumpEventQueue();
+
+    expect(service.filters, [
+      (const DateFilter(fromYear: 2024), MedicalSpecialty.cardiology),
+    ]);
   });
 }

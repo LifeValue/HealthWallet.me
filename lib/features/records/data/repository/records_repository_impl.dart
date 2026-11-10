@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:drift/drift.dart';
 import 'package:fhir_ips_export/fhir_ips_export.dart';
@@ -45,6 +46,9 @@ class RecordsRepositoryImpl implements RecordsRepository {
     this._pathResolver,
   ) : _datasource = FhirResourceDatasource(_database);
 
+  /// Rows read at a time while a filter skips some of them.
+  static const _filteredBatchSize = 100;
+
   @override
   Future<List<IFhirResource>> getResources({
     List<FhirType> resourceTypes = const [],
@@ -52,7 +56,6 @@ class RecordsRepositoryImpl implements RecordsRepository {
     List<String>? sourceIds,
     int limit = 20,
     int offset = 0,
-    DateFilter? dateFilter,
   }) async {
     final localDtos = await _datasource.getResources(
       resourceTypes: resourceTypes.map((fhirType) => fhirType.name).toList(),
@@ -61,27 +64,83 @@ class RecordsRepositoryImpl implements RecordsRepository {
       limit: limit,
       offset: offset,
     );
+    return localDtos.map(_parse).nonNulls.toList();
+  }
 
-    final validResources = <IFhirResource>[];
-    for (final dto in localDtos) {
-      try {
-        final resource = IFhirResource.fromLocalDto(dto);
+  @override
+  Future<ResourcePage> getResourcePage({
+    List<FhirType> resourceTypes = const [],
+    String? sourceId,
+    List<String>? sourceIds,
+    DateFilter? dateFilter,
+    bool Function(IFhirResource resource)? where,
+    int? limit = 20,
+    int offset = 0,
+  }) async {
+    final matches = _matcher(dateFilter, where);
+    final batchSize = limit == null
+        ? null
+        : matches == null
+        ? limit
+        : max(limit, _filteredBatchSize);
+    final types = resourceTypes.map((fhirType) => fhirType.name).toList();
+    final page = <IFhirResource>[];
+    var next = offset;
 
-        if (dateFilter != null && dateFilter.hasValue) {
-          final resourceDate = resource.date;
-          if (resourceDate != null && !dateFilter.matches(resourceDate)) {
-            continue;
-          }
+    while (true) {
+      final rows = await _datasource.getResources(
+        resourceTypes: types,
+        sourceId: sourceId,
+        sourceIds: sourceIds,
+        limit: batchSize,
+        offset: next,
+      );
+      for (final row in rows) {
+        next++;
+        final resource = _parse(row);
+        if (resource == null || !(matches?.call(resource) ?? true)) continue;
+        page.add(resource);
+        if (page.length == limit) {
+          return (resources: page, nextOffset: next, hasMore: true);
         }
-
-        validResources.add(resource);
-      } catch (e) {
-        logger.w(
-          'Failed to parse resource ${dto.id} of type ${dto.resourceType}: $e',
-        );
+      }
+      if (batchSize == null || rows.length < batchSize) {
+        return (resources: page, nextOffset: next, hasMore: false);
       }
     }
-    return validResources;
+  }
+
+  @override
+  Future<List<IFhirResource>> getResourcesByIds(Iterable<String> ids) async {
+    final rows = await _datasource.getResourcesByIds(ids.toSet().toList());
+    return rows.map(_parse).nonNulls.toList();
+  }
+
+  /// [dateFilter] and [where] as one test, or null when neither filters.
+  static bool Function(IFhirResource)? _matcher(
+    DateFilter? dateFilter,
+    bool Function(IFhirResource resource)? where,
+  ) {
+    final dates = dateFilter != null && dateFilter.hasValue ? dateFilter : null;
+    if (dates == null && where == null) return null;
+    return (resource) {
+      final date = resource.date;
+      if (dates != null && date != null && !dates.matches(date)) return false;
+      return where?.call(resource) ?? true;
+    };
+  }
+
+  /// The stored row as a record, or null (logged) when it can't be read, so
+  /// one bad row doesn't hide the others.
+  static IFhirResource? _parse(FhirResourceLocalDto dto) {
+    try {
+      return IFhirResource.fromLocalDto(dto);
+    } catch (e) {
+      logger.w(
+        'Failed to parse resource ${dto.id} of type ${dto.resourceType}: $e',
+      );
+      return null;
+    }
   }
 
   /// Get related resources for an encounter
@@ -854,17 +913,24 @@ class RecordsRepositoryImpl implements RecordsRepository {
     List<FhirType> resourceTypes = const [],
     String? sourceId,
     List<String>? sourceIds,
+    DateFilter? dateFilter,
+    bool Function(IFhirResource resource)? where,
     int limit = 50,
   }) async {
+    final matches = _matcher(dateFilter, where);
     final localDtos = await _datasource.searchResources(
       query: query,
       resourceTypes: resourceTypes.map((fhirType) => fhirType.name).toList(),
       sourceId: sourceId,
       sourceIds: sourceIds,
-      limit: limit,
+      // A filter applied here would otherwise leave fewer than [limit].
+      limit: matches == null ? limit : null,
     );
 
-    return localDtos.map(IFhirResource.fromLocalDto).toList();
+    final resources = localDtos.map(_parse).nonNulls;
+    return (matches == null ? resources : resources.where(matches))
+        .take(limit)
+        .toList();
   }
 
   @override

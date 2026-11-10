@@ -24,6 +24,7 @@ import 'package:health_wallet/features/records/presentation/bloc/attachment_brow
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/pages/records_page.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_view_toggle.dart';
+import 'package:health_wallet/features/records/presentation/widgets/timeline_entry.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
@@ -204,6 +205,9 @@ void main() {
     RecordsRepository? repository,
     RegionPreset region = RegionPreset.europe,
     AppPlatform platform = AppPlatform.mobile,
+    RecordsState recordsState = const RecordsState(
+      status: RecordsStatus.success(),
+    ),
   }) async {
     tester.view.physicalSize = screen;
     tester.view.devicePixelRatio = 1;
@@ -249,7 +253,7 @@ void main() {
     whenListen(
       recordsBloc,
       const Stream<RecordsState>.empty(),
-      initialState: const RecordsState(status: RecordsStatus.success()),
+      initialState: recordsState,
     );
     final syncBloc = _MockSyncBloc();
     whenListen(
@@ -312,6 +316,35 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 750));
   }
+
+  group('the records list while loading', () {
+    testWidgets('a refresh keeps the records on screen', (tester) async {
+      await pumpPage(
+        tester,
+        screen: const Size(390, 844),
+        viewMode: RecordsViewMode.recordsList,
+        recordsState: RecordsState(
+          status: const RecordsStatus.loading(),
+          resources: [weight('obs-1', 70, 'kg')],
+        ),
+      );
+
+      expect(find.byType(TimelineEntry), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
+
+    testWidgets('an empty list shows the spinner', (tester) async {
+      await pumpPage(
+        tester,
+        screen: const Size(390, 844),
+        viewMode: RecordsViewMode.recordsList,
+        recordsState: const RecordsState(status: RecordsStatus.loading()),
+      );
+
+      expect(find.byType(TimelineEntry), findsNothing);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    });
+  });
 
   group('importing from the empty records list', () {
     Future<void> openList(WidgetTester tester) => pumpPage(

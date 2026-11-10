@@ -2003,6 +2003,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addIpsToGoogleWallet => 'Add IPS to Google Wallet';
 
   @override
+  String get shareSelectedRecordsFailed =>
+      'Couldn\'t read the selected records. Please try again.';
+
+  @override
   String get ipsExportFailed =>
       'Couldn\'t export your health summary. Please try again.';
 

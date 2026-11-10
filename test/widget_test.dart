@@ -90,8 +90,22 @@ class FakeRecordsRepository extends Fake implements RecordsRepository {
     List<String>? sourceIds,
     int limit = 20,
     int offset = 0,
-    DateFilter? dateFilter,
   }) async => [];
+
+  @override
+  Future<ResourcePage> getResourcePage({
+    List<FhirType> resourceTypes = const [],
+    String? sourceId,
+    List<String>? sourceIds,
+    DateFilter? dateFilter,
+    bool Function(IFhirResource resource)? where,
+    int? limit = 20,
+    int offset = 0,
+  }) async => (resources: <IFhirResource>[], nextOffset: 0, hasMore: false);
+
+  @override
+  Future<List<IFhirResource>> getResourcesByIds(Iterable<String> ids) async =>
+      [];
 
   @override
   Future<List<IFhirResource>> getRelatedResourcesForEncounter({
@@ -155,6 +169,8 @@ class FakeRecordsRepository extends Fake implements RecordsRepository {
     List<FhirType> resourceTypes = const [],
     String? sourceId,
     List<String>? sourceIds,
+    DateFilter? dateFilter,
+    bool Function(IFhirResource resource)? where,
     int limit = 50,
   }) async => [];
 

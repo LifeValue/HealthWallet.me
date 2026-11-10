@@ -934,6 +934,7 @@
   "exportIpsPdf": "Export IPS (PDF)",
   "addIpsToAppleWallet": "Add IPS to Apple Wallet",
   "addIpsToGoogleWallet": "Add IPS to Google Wallet",
+  "shareSelectedRecordsFailed": "Couldn't read the selected records. Please try again.",
   "ipsExportFailed": "Couldn't export your health summary. Please try again.",
   "walletPassFailed": "Couldn't add the pass to your wallet. Please try again.",
   "sourcesTitle": "Sources",

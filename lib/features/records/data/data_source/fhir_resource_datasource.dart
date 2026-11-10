@@ -23,7 +23,7 @@ class FhirResourceDatasource {
     final SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query =
         db.select(db.fhirResource)
           ..where((f) => f.deletedAt.isNull())
-          ..orderBy([(f) => OrderingTerm.desc(f.date)]);
+          ..orderBy(_newestFirst);
 
     _whereScope(query, sourceId: sourceId, sourceIds: sourceIds);
 
@@ -33,9 +33,21 @@ class FhirResourceDatasource {
 
     if (limit != null) {
       query.limit(limit, offset: offset);
+    } else if (offset != null && offset > 0) {
+      // SQLite needs a LIMIT for an OFFSET; -1 means no limit.
+      query.limit(-1, offset: offset);
     }
 
     return await query.get();
+  }
+
+  /// The records [ids] that aren't deleted, newest first.
+  Future<List<FhirResourceLocalDto>> getResourcesByIds(List<String> ids) {
+    if (ids.isEmpty) return Future.value([]);
+    return (db.select(db.fhirResource)
+          ..where((f) => f.id.isIn(ids) & f.deletedAt.isNull())
+          ..orderBy(_newestFirst))
+        .get();
   }
 
   Future<List<FhirResourceLocalDto>> getResourcesByEncounterId({
@@ -175,7 +187,7 @@ class FhirResourceDatasource {
     final SimpleSelectStatement<FhirResource, FhirResourceLocalDto>
     selectQuery = db.select(db.fhirResource)
       ..where((f) => f.deletedAt.isNull())
-      ..orderBy([(f) => OrderingTerm.desc(f.date)]);
+      ..orderBy(_newestFirst);
 
     _whereScope(selectQuery, sourceId: sourceId, sourceIds: sourceIds);
 
@@ -234,6 +246,12 @@ class FhirResourceDatasource {
 
     return results;
   }
+
+  /// Newest first; the id breaks ties so pages never overlap or skip rows.
+  static final _newestFirst = <OrderClauseGenerator<FhirResource>>[
+    (f) => OrderingTerm.desc(f.date),
+    (f) => OrderingTerm.asc(f.id),
+  ];
 
   void _whereScope(
     SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query, {

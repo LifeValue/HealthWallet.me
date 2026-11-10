@@ -896,6 +896,7 @@
   "exportIpsPdf": "Exportă IPS (PDF)",
   "addIpsToAppleWallet": "Adaugă IPS în Apple Wallet",
   "addIpsToGoogleWallet": "Adaugă IPS în Google Wallet",
+  "shareSelectedRecordsFailed": "Înregistrările selectate nu au putut fi citite. Încearcă din nou.",
   "ipsExportFailed": "Rezumatul medical nu a putut fi exportat. Încearcă din nou.",
   "walletPassFailed": "Cardul nu a putut fi adăugat în portofel. Încearcă din nou.",
   "sourcesTitle": "Surse",

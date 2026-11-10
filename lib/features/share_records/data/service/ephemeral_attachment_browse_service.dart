@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/services/attachment_browse_service.dart';
 import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
+import 'package:health_wallet/features/records/domain/services/specialty_matcher.dart';
 
 class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
   final List<IFhirResource> _records;
@@ -17,6 +19,8 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
     String? sourceId,
     List<String>? sourceIds,
     List<FhirType> resourceTypes = const [],
+    DateFilter? dateFilter,
+    MedicalSpecialty? specialty,
   }) async {
     debugPrint(
       '[EPHEMERAL_BROWSE] loadEntries resourceTypes=$resourceTypes, records=${_records.length}',
@@ -27,6 +31,18 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
       filtered = filtered
           .where((r) => resourceTypes.contains(r.fhirType))
           .toList();
+    }
+    if (dateFilter != null && dateFilter.hasValue) {
+      filtered = filtered.where((r) {
+        final date = r.date;
+        return date == null || dateFilter.matches(date);
+      }).toList();
+    }
+    if (specialty != null) {
+      final matcher = SpecialtyMatcher(_specialtyClassifier, [
+        specialty,
+      ], _records);
+      filtered = filtered.where(matcher.matches).toList();
     }
 
     filtered.sort((a, b) {

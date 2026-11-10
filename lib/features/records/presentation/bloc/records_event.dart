@@ -38,9 +38,11 @@ abstract class RecordsFiltersApplied extends RecordsEvent
     with _$RecordsFiltersApplied {
   const RecordsFiltersApplied._();
 
+  /// Sets every filter at once: the types, the dates and the specialties.
   const factory RecordsFiltersApplied(
     List<FhirType> filters, {
     DateFilter? dateFilter,
+    @Default([]) List<MedicalSpecialty> specialties,
   }) = _RecordsFiltersApplied;
 }
 
@@ -155,6 +157,7 @@ abstract class RecordsSpecialtyApplied extends RecordsEvent
     with _$RecordsSpecialtyApplied {
   const RecordsSpecialtyApplied._();
 
+  /// Sets the specialties and keeps the type and date filters.
   const factory RecordsSpecialtyApplied(List<MedicalSpecialty> specialties) =
       _RecordsSpecialtyApplied;
 }

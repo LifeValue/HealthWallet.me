@@ -3695,6 +3695,12 @@ abstract class AppLocalizations {
   /// **'Add IPS to Google Wallet'**
   String get addIpsToGoogleWallet;
 
+  /// No description provided for @shareSelectedRecordsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read the selected records. Please try again.'**
+  String get shareSelectedRecordsFailed;
+
   /// No description provided for @ipsExportFailed.
   ///
   /// In en, this message translates to:

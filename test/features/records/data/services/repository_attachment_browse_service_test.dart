@@ -80,6 +80,7 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
   Error? relatedError;
   Error? documentsError;
   Error? referenceError;
+  int encounterReads = 0;
 
   @override
   Future<List<IFhirResource>> getResources({
@@ -88,7 +89,6 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
     List<String>? sourceIds,
     int limit = 20,
     int offset = 0,
-    DateFilter? dateFilter,
   }) async {
     if (resourceTypes.length == 1 &&
         resourceTypes.single == FhirType.DocumentReference) {
@@ -96,6 +96,32 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
       return List.of(documents);
     }
     return List.of(records);
+  }
+
+  /// [records] (or their encounters, read without a limit for the
+  /// specialty index) through the date filter and [where].
+  @override
+  Future<ResourcePage> getResourcePage({
+    List<FhirType> resourceTypes = const [],
+    String? sourceId,
+    List<String>? sourceIds,
+    DateFilter? dateFilter,
+    bool Function(IFhirResource resource)? where,
+    int? limit = 20,
+    int offset = 0,
+  }) async {
+    if (limit == null) encounterReads++;
+    final matches = records.where((r) {
+      final date = r.date;
+      if (resourceTypes.isNotEmpty && !resourceTypes.contains(r.fhirType)) {
+        return false;
+      }
+      if (dateFilter != null && date != null && !dateFilter.matches(date)) {
+        return false;
+      }
+      return where?.call(r) ?? true;
+    }).toList();
+    return (resources: matches, nextOffset: records.length, hasMore: false);
   }
 
   @override
@@ -130,11 +156,18 @@ class _FakePathResolver extends Fake implements PathResolver {
 class _FakeSpecialtyClassifier extends Fake implements SpecialtyClassifier {
   Set<MedicalSpecialty> result = {};
 
+  /// When set, the specialties of each record by id instead of [result].
+  Map<String, Set<MedicalSpecialty>>? byId;
+
+  @override
+  EncounterSpecialties indexEncounters(Iterable<IFhirResource> resources) => {};
+
   @override
   Set<MedicalSpecialty> classify(
     IFhirResource resource, {
     MedicalSpecialty? override,
-  }) => result;
+    EncounterSpecialties? encounterSpecialties,
+  }) => byId?[resource.id] ?? result;
 }
 
 void main() {
@@ -186,6 +219,51 @@ void main() {
         'undated',
         'undated-2',
       ]);
+    });
+
+    test('keeps to the date filter, with undated records', () async {
+      repository.records = [
+        _resource({
+          'resourceType': 'Condition',
+          'id': 'in',
+        }, date: DateTime(2024, 5)),
+        _resource({
+          'resourceType': 'Condition',
+          'id': 'out',
+        }, date: DateTime(2023, 5)),
+        _resource({'resourceType': 'Condition', 'id': 'undated'}),
+      ];
+
+      final entries = await service.loadEntries(
+        dateFilter: const DateFilter(fromYear: 2024),
+      );
+
+      expect(entries.map((e) => e.record.id), ['in', 'undated']);
+    });
+
+    test('keeps to the specialty, classified with every encounter in '
+        'scope', () async {
+      repository.records = [
+        _resource({
+          'resourceType': 'Condition',
+          'id': 'heart',
+        }, date: DateTime(2024)),
+        _resource({
+          'resourceType': 'Condition',
+          'id': 'skin',
+        }, date: DateTime(2023)),
+      ];
+      classifier.byId = {
+        'heart': {MedicalSpecialty.cardiology},
+        'skin': {MedicalSpecialty.dermatology},
+      };
+
+      final entries = await service.loadEntries(
+        specialty: MedicalSpecialty.cardiology,
+      );
+
+      expect(entries.map((e) => e.record.id), ['heart']);
+      expect(repository.encounterReads, 1);
     });
 
     test('counts linked documents and finds a thumbnail', () async {

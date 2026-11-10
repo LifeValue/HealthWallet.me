@@ -893,6 +893,7 @@
   "exportIpsPdf": "IPS exportieren (PDF)",
   "addIpsToAppleWallet": "IPS zu Apple Wallet hinzufügen",
   "addIpsToGoogleWallet": "IPS zu Google Wallet hinzufügen",
+  "shareSelectedRecordsFailed": "Die ausgewählten Aufzeichnungen konnten nicht gelesen werden. Bitte versuche es erneut.",
   "ipsExportFailed": "Deine Gesundheitsübersicht konnte nicht exportiert werden. Bitte versuche es erneut.",
   "walletPassFailed": "Der Pass konnte nicht zu deinem Wallet hinzugefügt werden. Bitte versuche es erneut.",
   "sourcesTitle": "Quellen",

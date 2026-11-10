@@ -34,9 +34,13 @@ class _RecordsToolbarState extends State<RecordsToolbar>
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
 
+  /// Kept to clear the search on dispose, when the context can't be read.
+  late final RecordsBloc _recordsBloc;
+
   @override
   void initState() {
     super.initState();
+    _recordsBloc = context.read<RecordsBloc>();
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 250),
@@ -50,6 +54,11 @@ class _RecordsToolbarState extends State<RecordsToolbar>
 
   @override
   void dispose() {
+    // The search lives in this box: once the box is gone (another view or
+    // tab), the list mustn't stay filtered by a search nobody can see.
+    if (_recordsBloc.state.searchQuery.isNotEmpty && !_recordsBloc.isClosed) {
+      _recordsBloc.add(const RecordsSearch(''));
+    }
     _searchFocusNode.removeListener(_onFocusChanged);
     _animController.dispose();
     _searchController.dispose();
@@ -58,7 +67,10 @@ class _RecordsToolbarState extends State<RecordsToolbar>
   }
 
   void _onFocusChanged() {
-    if (!_searchFocusNode.hasFocus && _isSearchExpanded) {
+    // A box holding a search stays open, so the search stays visible.
+    if (!_searchFocusNode.hasFocus &&
+        _isSearchExpanded &&
+        _searchController.text.isEmpty) {
       _collapseSearch();
     }
   }

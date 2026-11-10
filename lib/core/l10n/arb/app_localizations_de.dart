@@ -2027,6 +2027,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get addIpsToGoogleWallet => 'IPS zu Google Wallet hinzufügen';
 
   @override
+  String get shareSelectedRecordsFailed =>
+      'Die ausgewählten Aufzeichnungen konnten nicht gelesen werden. Bitte versuche es erneut.';
+
+  @override
   String get ipsExportFailed =>
       'Deine Gesundheitsübersicht konnte nicht exportiert werden. Bitte versuche es erneut.';
 

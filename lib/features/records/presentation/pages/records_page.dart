@@ -98,22 +98,13 @@ class _RecordsViewState extends State<RecordsView> {
       RecordsSourceChanged(scope.sourceId, sourceIds: scope.sourceIds),
     );
 
-    final currentFilters = context.read<RecordsBloc>().state.activeFilters;
-    final currentSpecialties = context
-        .read<RecordsBloc>()
-        .state
-        .activeSpecialties;
-    final attachmentFilters =
-        widget.initFilters ??
-        (currentSpecialties.isNotEmpty ? <FhirType>[] : currentFilters);
+    final records = context.read<RecordsBloc>().state;
     context.read<AttachmentBrowseBloc>().add(
-      AttachmentBrowseInitialised(
+      _attachmentBrowseLoad(
+        records,
         sourceId: scope.sourceId,
         sourceIds: scope.sourceIds,
-        resourceTypes: attachmentFilters,
-        specialty: currentSpecialties.isNotEmpty
-            ? currentSpecialties.first
-            : null,
+        resourceTypes: widget.initFilters,
       ),
     );
 
@@ -149,18 +140,30 @@ class _RecordsViewState extends State<RecordsView> {
         !isOnRecords || _viewMode == RecordsViewMode.recordsList;
   }
 
-  void _reloadAttachmentBrowse(
-    BuildContext context, {
-    List<FhirType> resourceTypes = const [],
+  /// Loads the Attachments view of [sourceId] or [sourceIds] with the
+  /// Records list's filters.
+  static AttachmentBrowseInitialised _attachmentBrowseLoad(
+    RecordsState records, {
+    required String? sourceId,
+    required List<String>? sourceIds,
+    List<FhirType>? resourceTypes,
   }) {
+    return AttachmentBrowseInitialised(
+      sourceId: sourceId,
+      sourceIds: sourceIds,
+      resourceTypes: resourceTypes ?? records.activeFilters,
+      dateFilter: records.dateFilter,
+      specialty: records.activeSpecialties.firstOrNull,
+    );
+  }
+
+  void _reloadAttachmentBrowse(BuildContext context) {
     final scope = _scope(context);
-    final specialties = context.read<RecordsBloc>().state.activeSpecialties;
     context.read<AttachmentBrowseBloc>().add(
-      AttachmentBrowseInitialised(
+      _attachmentBrowseLoad(
+        context.read<RecordsBloc>().state,
         sourceId: scope.sourceId,
         sourceIds: scope.sourceIds,
-        resourceTypes: resourceTypes,
-        specialty: specialties.firstOrNull,
       ),
     );
   }
@@ -179,12 +182,7 @@ class _RecordsViewState extends State<RecordsView> {
     context.read<RecordsBloc>().add(
       RecordsSourceChanged(scope.sourceId, sourceIds: scope.sourceIds),
     );
-    if (attachments) {
-      _reloadAttachmentBrowse(
-        context,
-        resourceTypes: context.read<RecordsBloc>().state.activeFilters,
-      );
-    }
+    if (attachments) _reloadAttachmentBrowse(context);
   }
 
   void _onScroll() {
@@ -211,6 +209,7 @@ class _RecordsViewState extends State<RecordsView> {
       if (mounted) {
         final state = context.read<RecordsBloc>().state;
         if (state.status != const RecordsStatus.loading() &&
+            !state.isLoadingMore &&
             state.hasMorePages) {
           context.read<RecordsBloc>().add(const RecordsLoadMore());
         }
@@ -386,12 +385,7 @@ class _RecordsViewState extends State<RecordsView> {
             listenWhen: (previous, current) =>
                 current.status == const RecordsStatus.deleted(),
             // The people are read again app-wide (see App).
-            listener: (context, state) {
-              _reloadAttachmentBrowse(
-                context,
-                resourceTypes: state.activeFilters,
-              );
-            },
+            listener: (context, _) => _reloadAttachmentBrowse(context),
           ),
           BlocListener<RecordsBloc, RecordsState>(
             listenWhen: (previous, current) =>
@@ -400,18 +394,14 @@ class _RecordsViewState extends State<RecordsView> {
                 previous.activeFilters != current.activeFilters ||
                 previous.activeSpecialties != current.activeSpecialties ||
                 previous.dateFilter != current.dateFilter,
-            listener: (context, state) {
-              context.read<AttachmentBrowseBloc>().add(
-                AttachmentBrowseInitialised(
-                  sourceId: state.sourceId,
-                  sourceIds: state.sourceIds,
-                  resourceTypes: state.activeFilters,
-                  specialty: state.activeSpecialties.isNotEmpty
-                      ? state.activeSpecialties.first
-                      : null,
+            listener: (context, state) =>
+                context.read<AttachmentBrowseBloc>().add(
+                  _attachmentBrowseLoad(
+                    state,
+                    sourceId: state.sourceId,
+                    sourceIds: state.sourceIds,
+                  ),
                 ),
-              );
-            },
           ),
         ],
         child: BlocBuilder<RecordsBloc, RecordsState>(
@@ -568,9 +558,23 @@ class _RecordsViewState extends State<RecordsView> {
 
     CustomArrowTooltip.dismiss();
 
-    final selectedResources = recordsState.resources
-        .where((r) => recordsState.selectedResourceIds.contains(r.id))
-        .toList();
+    final List<IFhirResource> selectedResources;
+    try {
+      selectedResources = await context
+          .read<RecordsBloc>()
+          .loadSelectedResources();
+    } catch (e, s) {
+      logger.e('Could not read the selected records', e, s);
+      if (context.mounted) {
+        AppSnackBar.show(
+          context,
+          message: context.l10n.shareSelectedRecordsFailed,
+          type: AppSnackBarType.error,
+        );
+      }
+      return;
+    }
+    if (!context.mounted) return;
     final activeFilters = recordsState.activeFilters;
 
     unawaited(
@@ -593,15 +597,13 @@ class _RecordsViewState extends State<RecordsView> {
         activeFilters: recordsState.activeFilters,
         currentDateFilter: recordsState.dateFilter,
         currentSpecialties: recordsState.activeSpecialties,
-        onApply: (filters, dateFilter, specialties) {
-          recordsBloc.add(
-            RecordsFiltersApplied(
-              filters,
-              dateFilter: dateFilter,
-            ),
-          );
-          recordsBloc.add(RecordsSpecialtyApplied(specialties));
-        },
+        onApply: (filters, dateFilter, specialties) => recordsBloc.add(
+          RecordsFiltersApplied(
+            filters,
+            dateFilter: dateFilter,
+            specialties: specialties,
+          ),
+        ),
       ),
       isScrollControlled: true,
     );
@@ -618,8 +620,7 @@ class _RecordsViewState extends State<RecordsView> {
           onViewModeChanged: (mode) {
             _setViewMode(mode);
             if (mode == RecordsViewMode.attachments) {
-              final filters = context.read<RecordsBloc>().state.activeFilters;
-              _reloadAttachmentBrowse(context, resourceTypes: filters);
+              _reloadAttachmentBrowse(context);
             }
           },
           onFilterTap: () => _showFilterSheet(context),
@@ -654,9 +655,13 @@ class _RecordsViewState extends State<RecordsView> {
                   previous.searchQuery != current.searchQuery ||
                   previous.activeSpecialties != current.activeSpecialties ||
                   previous.selectedResourceIds != current.selectedResourceIds ||
-                  previous.isSelectionMode != current.isSelectionMode,
+                  previous.isSelectionMode != current.isSelectionMode ||
+                  previous.hasMorePages != current.hasMorePages,
               builder: (context, state) {
-                if (state.status == const RecordsStatus.loading()) {
+                // A refresh or the next page keeps the list on screen, so the
+                // scroll position stays.
+                if (state.status == const RecordsStatus.loading() &&
+                    state.resources.isEmpty) {
                   return Center(
                     child: CircularProgressIndicator(
                       strokeWidth: 4,
@@ -691,11 +696,7 @@ class _RecordsViewState extends State<RecordsView> {
                 onViewModeChanged: (mode) {
                   _setViewMode(mode);
                   if (mode == RecordsViewMode.attachments) {
-                    final filters = context
-                        .read<RecordsBloc>()
-                        .state
-                        .activeFilters;
-                    _reloadAttachmentBrowse(context, resourceTypes: filters);
+                    _reloadAttachmentBrowse(context);
                   }
                 },
                 onFilterTap: () => _showFilterSheet(context),

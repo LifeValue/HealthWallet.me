@@ -194,11 +194,15 @@ class RecordsListBody extends StatelessWidget {
                 date: resource.date,
                 onTypeTap: state.isSelectionMode
                     ? null
-                    : () {
-                        context.read<RecordsBloc>().add(
-                          RecordsFiltersApplied([resource.fhirType]),
-                        );
-                      },
+                    // Narrows the list to this type; the dates and
+                    // specialties stay.
+                    : () => context.read<RecordsBloc>().add(
+                        RecordsFiltersApplied(
+                          [resource.fhirType],
+                          dateFilter: state.dateFilter,
+                          specialties: state.activeSpecialties,
+                        ),
+                      ),
               ),
               const SizedBox(height: Insets.small),
               ResourceCard(resource: resource),
