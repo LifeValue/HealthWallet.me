@@ -11,6 +11,7 @@ import 'package:health_wallet/features/processing/domain/entity/staged_resource.
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../../helpers/eventually.dart';
 import '../../../desktop_test_fakes.dart';
 import '../../handover_test_fakes.dart';
 
@@ -29,15 +30,6 @@ void main() {
   Future<void> settle([int turns = 30]) async {
     for (var i = 0; i < turns; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 2));
-    }
-  }
-
-  /// Waits until [done] holds; fails after a few seconds.
-  Future<void> until(bool Function() done) async {
-    final deadline = DateTime.now().add(const Duration(seconds: 5));
-    while (!done()) {
-      if (DateTime.now().isAfter(deadline)) fail('timed out waiting');
-      await Future<void>.delayed(const Duration(milliseconds: 5));
     }
   }
 
@@ -81,7 +73,7 @@ void main() {
         'offset': 0,
         'data': base64Encode([1, 2]),
       });
-    await until(
+    await eventually(
       () => processing.events.whereType<DocumentImported>().any(
         (e) => e.sessionId == id,
       ),
@@ -124,7 +116,7 @@ void main() {
       processing.push(
         withSessions([handover('s1', ProcessingStatus.patientExtracted)]),
       );
-      await until(() => !File(imported.filePaths.single).existsSync());
+      await eventually(() => !File(imported.filePaths.single).existsSync());
     },
   );
 
@@ -147,7 +139,8 @@ void main() {
         )
         // The review closes and the session goes: not a delete.
         ..push(withSessions([]));
-      await settle();
+      // Received files are deleted first, so the messages wait on real I/O.
+      await eventually(() => tcp.sentOf(HandoverMessage.saved).isNotEmpty);
 
       expect(tcp.sentOf(HandoverMessage.progress).single['progress'], 0.5);
       expect(tcp.sentOf(HandoverMessage.result).single['session_id'], 's1');
@@ -198,6 +191,7 @@ void main() {
           ),
         ),
       );
+    await eventually(() => tcp.sentOf(HandoverMessage.failed).isNotEmpty);
     await settle();
 
     expect(tcp.sentOf(HandoverMessage.failed), [
@@ -210,7 +204,7 @@ void main() {
     processing
       ..push(withSessions([handover('s1', ProcessingStatus.draft)]))
       ..push(withSessions([]));
-    await settle();
+    await eventually(() => tcp.sentOf(HandoverMessage.cancel).isNotEmpty);
 
     expect(tcp.sentOf(HandoverMessage.cancel).single['session_id'], 's1');
   });
@@ -249,7 +243,7 @@ void main() {
         {'name': 'page.jpg', 'size': 2},
       ],
     });
-    await settle();
+    await eventually(() => bloc.state.transfers.isNotEmpty);
     expect(bloc.state.transfers.keys, ['s1']);
 
     tcp.deliver(HandoverMessage.chunk, {
@@ -258,6 +252,6 @@ void main() {
       'offset': 0,
       'data': base64Encode([1, 2]),
     });
-    await until(() => bloc.state.transfers.isEmpty);
+    await eventually(() => bloc.state.transfers.isEmpty);
   });
 }

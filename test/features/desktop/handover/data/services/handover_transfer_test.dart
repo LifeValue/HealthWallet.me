@@ -17,6 +17,7 @@ import 'package:health_wallet/features/processing/domain/entity/staged_resource.
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../../helpers/eventually.dart';
 import '../../../desktop_test_fakes.dart';
 import '../../handover_test_fakes.dart';
 
@@ -78,15 +79,6 @@ void main() {
     }
   }
 
-  /// Waits until [done] holds; fails after a few seconds.
-  Future<void> until(bool Function() done) async {
-    final deadline = DateTime.now().add(const Duration(seconds: 5));
-    while (!done()) {
-      if (DateTime.now().isAfter(deadline)) fail('timed out waiting');
-      await Future<void>.delayed(const Duration(milliseconds: 5));
-    }
-  }
-
   String writeFile(String path, List<int> bytes) {
     final file = File(p.join(dir.path, path))
       ..createSync(recursive: true)
@@ -116,7 +108,7 @@ void main() {
           paths,
           phase1Data: {'patient': <String, dynamic>{}},
         );
-        await until(() => received.isNotEmpty);
+        await eventually(() => received.isNotEmpty);
 
         expect(result.status, HandoverStatus.sent);
         expect(result.progress, 1);
@@ -135,7 +127,7 @@ void main() {
       await sender.send('s', [
         writeFile('x.jpg', const [7]),
       ]);
-      await settle();
+      await eventually(() => received.isNotEmpty);
       final path = (received.single as IncomingHandoverReceived).filePaths[0];
       expect(File(path).existsSync(), isTrue);
 
@@ -261,12 +253,12 @@ void main() {
         };
 
         final result = await sender.send('s', [path]);
-        await settle();
         expect(result.failure, HandoverFailure.connectionLost);
+        await eventually(() => desktopTransfers.isNotEmpty);
         expect(tmp.listSync(recursive: true), isNotEmpty);
 
         setLinkUp(pair, true);
-        await settle();
+        await eventually(() => received.isNotEmpty);
 
         expect(tmp.listSync(recursive: true).whereType<File>(), isEmpty);
         expect(received.single, isA<IncomingHandoverCancelled>());
@@ -287,7 +279,7 @@ void main() {
       };
 
       final result = await sender.send('s', [path]);
-      await until(
+      await eventually(
         () =>
             received.isNotEmpty &&
             tmp.listSync(recursive: true).whereType<File>().isEmpty,
@@ -315,7 +307,7 @@ void main() {
           'offset': 5,
           'data': base64Encode(List.filled(5, 1)),
         });
-        await settle();
+        await eventually(() => fromDesktop.isNotEmpty);
 
         expect(received, isEmpty);
         expect(desktopTransfers.last.failure, HandoverFailure.failed);
@@ -336,8 +328,7 @@ void main() {
           {'name': 'a.jpg', 'size': 10},
         ],
       });
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-      await settle();
+      await eventually(() => fromDesktop.isNotEmpty);
 
       expect(desktopTransfers.last.failure, HandoverFailure.timeout);
       expect(

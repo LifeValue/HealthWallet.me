@@ -26,6 +26,7 @@ import 'package:health_wallet/features/records/domain/repository/records_reposit
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../helpers/eventually.dart';
 import '../../../share_records/share_test_helpers.dart';
 
 const _docScanner = MethodChannel('flutter_doc_scanner');
@@ -756,15 +757,12 @@ void main() {
             phase1Patient: patient,
           ),
         );
-        // The import copies a real file: wait for the outcome, not a number
-        // of event-loop turns.
-        final deadline = DateTime.now().add(const Duration(seconds: 5));
-        while (bloc.state.sessions.every(
-          (s) => s.id != 'phone-id' || s.status != ProcessingStatus.draft,
-        )) {
-          if (DateTime.now().isAfter(deadline)) fail('no draft');
-          await Future<void>.delayed(const Duration(milliseconds: 5));
-        }
+        // The import copies a real file.
+        await eventually(
+          () => bloc.state.sessions.any(
+            (s) => s.id == 'phone-id' && s.status == ProcessingStatus.draft,
+          ),
+        );
 
         expect(session('phone-id').status, ProcessingStatus.draft);
         expect(session('phone-id').resources.single.id, 'obs-1');

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/message_router.dart';
 import 'package:health_wallet/features/desktop/handover/data/services/handover_sender_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_protocol.dart';
+import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/bloc/phone_handover_bloc.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
@@ -12,6 +13,7 @@ import 'package:health_wallet/features/processing/presentation/bloc/processing_b
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../../helpers/eventually.dart';
 import '../../../desktop_test_fakes.dart';
 import '../../handover_test_fakes.dart';
 
@@ -280,7 +282,10 @@ void main() {
         };
 
         bloc.add(const PhoneHandoverSendRequested(sessionId: 'new'));
-        await settle(60);
+        // The sender reads a real file.
+        await eventually(
+          () => processing.events.whereType<SessionHandedOver>().isNotEmpty,
+        );
 
         expect(
           processing.events.whereType<SessionHandedOver>().single.sessionId,
@@ -313,7 +318,9 @@ void main() {
       };
 
       bloc.add(const PhoneHandoverSendRequested(sessionId: 'new'));
-      await settle(60);
+      await eventually(
+        () => bloc.state.transfers['new']?.status == HandoverStatus.error,
+      );
 
       expect(processing.events.whereType<SessionHandedOver>(), isEmpty);
     });
