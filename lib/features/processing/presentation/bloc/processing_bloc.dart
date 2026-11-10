@@ -416,7 +416,6 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
       emit,
       session.copyWith(
         status: ProcessingStatus.draft,
-        origin: ProcessingOrigin.handover,
         progress: 1,
         patient: event.patient,
         encounter: event.encounter,

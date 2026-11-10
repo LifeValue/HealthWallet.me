@@ -36,7 +36,10 @@ void main() {
 
   setUp(() async {
     dir = await Directory.systemTemp.createTemp('phone_handover_bloc_test');
-    SharedPreferences.setMockInitialValues({});
+    // 'sent' was handed over in an earlier run of the app.
+    SharedPreferences.setMockInitialValues({
+      HandoverSenderService.handedOverKey: ['sent'],
+    });
     tcp = FakeTcpService();
     router = MessageRouter(tcp);
     sender = HandoverSenderService(
@@ -203,10 +206,10 @@ void main() {
     });
 
     test('saving the desktop\'s draft here tells the desktop', () async {
+      // Still a scan: it's the handed-over list that says where it went.
       const session = ProcessingSession(
         id: 'sent',
         status: ProcessingStatus.draft,
-        origin: ProcessingOrigin.handover,
       );
       processing.push(const ProcessingState(sessions: [session]));
       await settle();
@@ -223,7 +226,36 @@ void main() {
 
       expect(tcp.sentOf(HandoverMessage.saved).single['session_id'], 'sent');
       expect(tcp.sentOf(HandoverMessage.cancel), isEmpty);
+      expect(bloc.state.handedOver, isEmpty);
     });
+
+    test(
+      'sessions not loaded yet at start-up are not taken for deleted ones',
+      () async {
+        final starting = FakeProcessingBloc();
+        final restarted = PhoneHandoverBloc(sender, starting)
+          ..add(const PhoneHandoverInitialised());
+        await settle();
+        expect(restarted.state.handedOver, {'sent'});
+
+        starting.push(
+          const ProcessingState(
+            sessions: [
+              ProcessingSession(
+                id: 'sent',
+                status: ProcessingStatus.handedOver,
+              ),
+            ],
+          ),
+        );
+        await settle();
+        expect(tcp.sentOf(HandoverMessage.cancel), isEmpty);
+        expect(restarted.state.handedOver, {'sent'});
+
+        await restarted.close();
+        await starting.close();
+      },
+    );
 
     test(
       'a session is marked handed over once every file arrived, not before',
@@ -255,6 +287,9 @@ void main() {
           'new',
         );
         expect(bloc.state.transfers['new']!.progress, 1);
+        // ('sent' isn't in this list any more, so it counts as deleted.)
+        expect(bloc.state.handedOver, {'new'});
+        expect(sender.handedOver, {'new'});
       },
     );
 

@@ -844,7 +844,8 @@ void main() {
         await settle();
 
         expect(session('s').status, ProcessingStatus.draft);
-        expect(session('s').origin, ProcessingOrigin.handover);
+        // Still a scan: the Scan tab lists it.
+        expect(session('s').origin, ProcessingOrigin.scan);
         expect(session('s').resources.single.id, 'from-desktop');
         expect(bloc.state.notification!.text, 'Scan: ready to review');
         expect(repository.edited.last.status, ProcessingStatus.draft);

@@ -56,12 +56,13 @@ class PhoneHandoverBloc extends Bloc<PhoneHandoverEvent, PhoneHandoverState> {
   final ProcessingBloc _processing;
   final List<StreamSubscription<Object?>> _subscriptions = [];
 
-  /// Handed-over sessions seen, so a delete on this phone is noticed.
-  final Set<String> _handedOver = {};
-
   /// Sessions removed because of the desktop (its save): not a delete to
   /// report back.
   final Set<String> _quiet = {};
+
+  /// Sessions seen in the processing list this run: one missing from it is
+  /// deleted only if it was seen, not because the list hasn't loaded yet.
+  final Set<String> _seen = {};
   PipelineStatus? _lastStatus;
 
   void _onInitialised(
@@ -70,6 +71,7 @@ class PhoneHandoverBloc extends Bloc<PhoneHandoverEvent, PhoneHandoverState> {
   ) {
     if (_subscriptions.isNotEmpty) return;
     _sender.start();
+    emit(state.copyWith(handedOver: _sender.handedOver));
     _subscriptions
       ..add(
         _sender.transfers.listen(
@@ -115,6 +117,8 @@ class PhoneHandoverBloc extends Bloc<PhoneHandoverEvent, PhoneHandoverState> {
       phase1Data: phase1DataOf(session),
     );
     if (result.status == HandoverStatus.sent) {
+      await _sender.markHandedOver(session.id);
+      emit(state.copyWith(handedOver: _sender.handedOver));
       _processing.add(SessionHandedOver(sessionId: session.id));
     }
   }
@@ -138,6 +142,7 @@ class PhoneHandoverBloc extends Bloc<PhoneHandoverEvent, PhoneHandoverState> {
     Emitter<PhoneHandoverState> emit,
   ) async {
     await _sender.withdraw(event.sessionId);
+    await _forget(event.sessionId, emit);
     _processing.add(
       HandoverReturned(
         sessionId: event.sessionId,
@@ -188,6 +193,7 @@ class PhoneHandoverBloc extends Bloc<PhoneHandoverEvent, PhoneHandoverState> {
             SessionSavedElsewhere(sessionId: sessionId, byDesktop: true),
           );
         }
+        await _forget(sessionId, emit);
         await _sender.acknowledge(sessionId, HandoverMessage.saved);
       case DesktopHandoverCancelled(:final sessionId):
         _processing.add(
@@ -196,6 +202,7 @@ class PhoneHandoverBloc extends Bloc<PhoneHandoverEvent, PhoneHandoverState> {
             reason: HandoverReturnReason.deletedOnDesktop,
           ),
         );
+        await _forget(sessionId, emit);
         await _sender.acknowledge(sessionId, HandoverMessage.cancel);
     }
     emit(
@@ -216,37 +223,37 @@ class PhoneHandoverBloc extends Bloc<PhoneHandoverEvent, PhoneHandoverState> {
     resources: draft.resources,
   );
 
+  Future<void> _forget(String id, Emitter<PhoneHandoverState> emit) async {
+    await _sender.forgetHandedOver(id);
+    emit(state.copyWith(handedOver: _sender.handedOver));
+  }
+
   Future<void> _onProcessingChanged(
     PhoneHandoverProcessingChanged event,
     Emitter<PhoneHandoverState> emit,
   ) async {
     final processing = event.processing;
-    final sessions = {for (final s in processing.sessions) s.id: s};
+    final ids = {for (final s in processing.sessions) s.id};
+    final handedOver = _sender.handedOver;
+    _seen.addAll(ids.intersection(handedOver));
 
     final status = processing.status;
     if (!identical(status, _lastStatus)) {
       _lastStatus = status;
       // Saved here first: the desktop drops its draft.
       if (status case Success(:final sessionId?)
-          when sessions[sessionId]?.origin == ProcessingOrigin.handover) {
+          when handedOver.contains(sessionId)) {
         _quiet.add(sessionId);
         await _sender.reportSaved(sessionId);
+        await _forget(sessionId, emit);
       }
     }
 
-    for (final s in sessions.values) {
-      if (s.status == ProcessingStatus.handedOver ||
-          s.origin == ProcessingOrigin.handover) {
-        _handedOver.add(s.id);
-      } else {
-        // Taken back or returned: no longer the desktop's.
-        _handedOver.remove(s.id);
-      }
-    }
-    for (final id in _handedOver.difference(sessions.keys.toSet())) {
-      _handedOver.remove(id);
+    for (final id in _seen.intersection(handedOver).difference(ids)) {
+      _seen.remove(id);
       // Deleted on this phone: the desktop drops its copy too.
       if (!_quiet.remove(id)) await _sender.withdraw(id);
+      await _forget(id, emit);
     }
   }
 

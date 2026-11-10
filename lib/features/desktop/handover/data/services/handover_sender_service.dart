@@ -48,12 +48,17 @@ sealed class DesktopHandoverEvent with _$DesktopHandoverEvent {
 /// receive wait in an outbox until it acknowledges them.
 @lazySingleton
 class HandoverSenderService {
-  HandoverSenderService(this._tcp, this._router, SharedPreferences prefs)
-    : _outbox = HandoverOutbox(prefs, _tcp, key: outboxKey);
+  HandoverSenderService(this._tcp, this._router, this._prefs)
+    : _outbox = HandoverOutbox(_prefs, _tcp, key: outboxKey);
 
   static const outboxKey = 'handover_outbox_phone';
 
+  /// Processing sessions whose files are on the desktop, which also holds
+  /// their draft until one of the two saves or deletes it.
+  static const handedOverKey = 'handover_sessions_phone';
+
   final TcpService _tcp;
+  final SharedPreferences _prefs;
   final MessageRouter _router;
   final HandoverOutbox _outbox;
 
@@ -284,6 +289,20 @@ class HandoverSenderService {
     );
     return session;
   }
+
+  Set<String> get handedOver =>
+      (_prefs.getStringList(handedOverKey) ?? const []).toSet();
+
+  Future<void> markHandedOver(String sessionId) => _prefs.setStringList(
+    handedOverKey,
+    {...handedOver, sessionId}.toList(),
+  );
+
+  /// The desktop no longer holds the session.
+  Future<void> forgetHandedOver(String sessionId) => _prefs.setStringList(
+    handedOverKey,
+    (handedOver..remove(sessionId)).toList(),
+  );
 
   /// Stops a transfer in progress; [send] then ends as cancelled.
   void cancelTransfer(String sessionId) => _cancelled.add(sessionId);

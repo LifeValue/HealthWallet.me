@@ -8,5 +8,9 @@ abstract class PhoneHandoverState with _$PhoneHandoverState {
 
     /// How far the desktop is with each handed-over session, 0 to 1.
     @Default({}) Map<String, double> desktopProgress,
+
+    /// Sessions the desktop also holds, until one of the two saves or
+    /// deletes them.
+    @Default({}) Set<String> handedOver,
   }) = _PhoneHandoverState;
 }
