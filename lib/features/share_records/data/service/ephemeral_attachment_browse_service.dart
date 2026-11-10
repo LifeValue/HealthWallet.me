@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
@@ -164,7 +165,9 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
           default:
             break;
         }
-      } catch (_) {}
+      } catch (e) {
+        logger.w('Could not read the related resource ${resource.id}', e);
+      }
     }
     debugPrint(
       '[EPHEMERAL_DETAIL] after encounter lookup: ${attachments.length} attachments',
@@ -197,7 +200,9 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
           attachments.addAll(docAttachments);
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Could not load the documents linked to ${record.id}', e);
+    }
     debugPrint(
       '[EPHEMERAL_DETAIL] final attachments: ${attachments.length} (titles: ${attachments.map((a) => a.title).toList()})',
     );
@@ -260,7 +265,10 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
           return tag['display'] as String?;
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      // Shown without a specialty name.
+      logger.w('Could not read the specialty tag', e);
+    }
     return null;
   }
 
@@ -285,7 +293,10 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
           if (File(rawPath).existsSync()) {
             resolvedPath = rawPath;
           }
-        } catch (_) {}
+        } catch (e) {
+          // Listed without a preview.
+          logger.w('Could not check the attachment file $rawPath', e);
+        }
       }
 
       result.add(
@@ -321,7 +332,10 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
       if (given != null && family != null) return '$given $family';
       if (given != null) return given.toString();
       if (family != null) return family;
-    } catch (_) {}
+    } catch (e) {
+      // The name stays unknown.
+      logger.w('Could not read a person name', e);
+    }
     return null;
   }
 
@@ -364,6 +378,9 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
       }
 
       callback(patient, org, practitioner);
-    } catch (_) {}
+    } catch (e) {
+      // The names stay unknown.
+      logger.w('Could not read the names in the record context', e);
+    }
   }
 }
