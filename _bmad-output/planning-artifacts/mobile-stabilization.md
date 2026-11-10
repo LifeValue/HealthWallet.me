@@ -64,11 +64,11 @@ Batch 1, in this order (specs in `_bmad-output/implementation-artifacts/`). **Do
 
 Batch 2:
 
-5. **Records filters and paging (B4).**
-   - Choosing a specialty clears the type filter.
-   - Specialty is filtered after paging, so pages come up empty and load-more duplicates rows.
-   - Search ignores the type and date filters.
-   - The Attachments view ignores the date filter.
+5. **Records filters and paging (B4).** _Done on `feature/mobile-stabilization-batch-2`; the scroll position (A26) still needs a device._
+   - Choosing a specialty clears the type filter. _Kept now; a specialty tapped on Home still shows every type._
+   - Specialty is filtered after paging, so pages come up empty and load-more duplicates rows. _Pages are filled past skipped rows, and the date filter too; specialties are classified with every encounter in scope._
+   - Search ignores the type and date filters. _It keeps to the types, dates and specialties._
+   - The Attachments view ignores the date filter. _It uses it._
    - A25–A28 in `records-audit.md`.
 6. **Cleanup and logging.**
    - Section 5 dead code: `PdfStorageService` (two copies), `ClearDemoData`, `deleteResourceWithRelated`, the old model download methods, `CaptureMode.pdf`, the `add-document` intent filter, the `build.yaml` exclude.
