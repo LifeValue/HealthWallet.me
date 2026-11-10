@@ -581,6 +581,31 @@ void main() {
       },
     );
 
+    test('an encounter\'s own document read before a record\'s document '
+        'stays first', () async {
+      await storeDocument(
+        _documentJson(id: 'doc-1', title: 'direct.pdf'),
+        encounterId: 'enc-1',
+      );
+      await storeDocument(
+        _documentJson(
+          id: 'doc-2',
+          title: 'lab.pdf',
+          related: ['Observation/obs-1'],
+          encounters: ['Encounter/enc-1'],
+        ),
+      );
+      repository.encounterRecords.add(
+        _observation(encounter: 'Encounter/enc-1'),
+      );
+
+      final state = await open(_encounter());
+
+      expect(state.attachments.map((a) => a.title), ['direct.pdf', 'lab.pdf']);
+      expect(state.attachments.first.sourceRecordTitle, isNull);
+      expect(state.attachments.last.sourceRecordTitle, 'Glucose');
+    });
+
     test('records shown from a share are related in memory', () async {
       final document = _record(
         _documentJson(id: 'doc-1', title: 'shared.pdf'),

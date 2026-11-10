@@ -339,6 +339,53 @@ void main() {
       expect(logs, isEmpty);
     });
 
+    test('an organization named in a list and a practitioner with only a '
+        'given name are still named', () async {
+      // An organization name list can't go through fhir_r4, so build it.
+      repository.related = [
+        const Organization(
+          id: 'org-1',
+          rawResource: {
+            'name': ['Riverside Hospital', 'Riverside'],
+          },
+        ),
+        _resource({
+          'resourceType': 'Practitioner',
+          'id': 'pr-1',
+          'name': [
+            {
+              'given': ['Gregory'],
+            },
+          ],
+        }),
+      ];
+
+      final detail = await service.loadDetail(encounter);
+
+      expect(detail.organizationName, 'Riverside Hospital');
+      expect(detail.practitionerName, 'Gregory');
+    });
+
+    test('an encounter document that belongs to another record of the visit '
+        'is not shown as the encounter\'s own', () async {
+      repository.related = [
+        _document(
+          'doc-own',
+          encounterId: 'enc-1',
+          related: ['Encounter/enc-1'],
+        ),
+        _document(
+          'doc-of-condition',
+          encounterId: 'enc-1',
+          related: ['Condition/cond-1'],
+        ),
+      ];
+
+      final detail = await service.loadDetail(encounter);
+
+      expect(detail.attachments.map((a) => a.id), ['doc-own']);
+    });
+
     test(
       'takes the specialty from the record tag, else classifies it',
       () async {

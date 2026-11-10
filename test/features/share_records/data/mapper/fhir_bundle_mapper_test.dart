@@ -452,6 +452,25 @@ void main() {
           diagnosticReportJson(),
           'CBC panel - Blood by Automated count',
         ),
+        (
+          'VisionPrescription lens product text',
+          {
+            ...visionPrescriptionJson(),
+            'lensSpecification': [
+              {
+                'product': codeableConcept(text: 'Progressive lenses'),
+                'eye': 'right',
+              },
+            ],
+          },
+          'Progressive lenses',
+        ),
+        // The coded lens type is not the title the document printed.
+        (
+          'VisionPrescription lens product without text',
+          visionPrescriptionJson(),
+          '',
+        ),
         // No title of its own: the record names itself (displayTitle).
         ('other types', allergyJson(), ''),
       ];
@@ -543,6 +562,16 @@ void main() {
           'DocumentReference date',
           documentReferenceJson(),
           DateTime.utc(2024, 2, 2, 14),
+        ),
+        (
+          'VisionPrescription dateWritten',
+          {...visionPrescriptionJson(), 'dateWritten': '2024-03-15'},
+          DateTime(2024, 3, 15),
+        ),
+        (
+          'VisionPrescription created',
+          visionPrescriptionJson()..remove('dateWritten'),
+          DateTime(2024, 3, 14),
         ),
         ('AllergyIntolerance recordedDate', allergyJson(), DateTime(2015, 6)),
         (
