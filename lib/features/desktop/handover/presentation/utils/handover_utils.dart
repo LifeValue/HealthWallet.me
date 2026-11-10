@@ -15,10 +15,7 @@ class HandoverUtils {
     BuildContext context, {
     required ProcessingSession session,
   }) async {
-    if (session.filePaths.isEmpty ||
-        session.status == ProcessingStatus.handedOver) {
-      return;
-    }
+    if (!session.canHandOver) return;
 
     if (session.isProcessing) {
       final confirmed = await AppSimpleDialog.showDestructiveConfirmation(

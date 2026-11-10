@@ -139,6 +139,13 @@ abstract class ProcessingSession
   bool get isProcessing =>
       status == ProcessingStatus.processingPatient ||
       status == ProcessingStatus.processing;
+
+  /// Whether the document can still be sent to the desktop to process: not
+  /// once it has its records to review, nor while the desktop has it.
+  bool get canHandOver =>
+      filePaths.isNotEmpty &&
+      status != ProcessingStatus.draft &&
+      status != ProcessingStatus.handedOver;
 }
 
 enum ProcessingStatus {
