@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:auto_route/auto_route.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
@@ -10,14 +11,10 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
-import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
-import 'package:health_wallet/features/desktop/handover/presentation/widgets/handover_send_dialog.dart';
-import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
-import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/utils/handover_utils.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
@@ -27,9 +24,17 @@ import 'package:health_wallet/gen/assets.gen.dart';
 
 @RoutePage()
 class LoadModelPage extends StatefulWidget {
-  const LoadModelPage({this.canAttachToEncounter = false, super.key});
+  const LoadModelPage({
+    this.canAttachToEncounter = false,
+    this.sessionId,
+    super.key,
+  });
 
   final bool canAttachToEncounter;
+
+  /// The document waiting for the model; without one the page offers no
+  /// handover to the desktop.
+  final String? sessionId;
 
   @override
   State<LoadModelPage> createState() => _LoadModelPageState();
@@ -225,14 +230,16 @@ class _LoadModelPageState extends State<LoadModelPage> {
             ),
           ] else ...[
             if (state.deviceCapability == DeviceAiCapability.unsupported) ...[
-              AppButton(
-                label: context.l10n.processOnDesktop,
-                icon: const Icon(Icons.computer),
-                variant: AppButtonVariant.primary,
-                height: 48,
-                onPressed: () => _handleProcessOnDesktop(context),
-              ),
-              const SizedBox(height: Insets.small),
+              if (widget.sessionId != null) ...[
+                AppButton(
+                  label: context.l10n.processOnDesktop,
+                  icon: const Icon(Icons.computer),
+                  variant: AppButtonVariant.primary,
+                  height: 48,
+                  onPressed: () => _handleProcessOnDesktop(context),
+                ),
+                const SizedBox(height: Insets.small),
+              ],
               Center(
                 child: TextButton(
                   onPressed: () => context.router.maybePop(false),
@@ -326,29 +333,31 @@ class _LoadModelPageState extends State<LoadModelPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: Insets.medium),
-              GestureDetector(
-                onTap: () => _handleProcessOnDesktop(context),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.computer,
-                      size: 22,
-                      color: context.colorScheme.primary,
-                    ),
-                    const SizedBox(width: Insets.small),
-                    Text(
-                      context.l10n.processOnDesktop,
-                      style: AppTextStyle.bodyMedium.copyWith(
+              if (widget.sessionId != null) ...[
+                const SizedBox(height: Insets.medium),
+                GestureDetector(
+                  onTap: () => _handleProcessOnDesktop(context),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.computer,
+                        size: 22,
                         color: context.colorScheme.primary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: Insets.small),
+                      Text(
+                        context.l10n.processOnDesktop,
+                        style: AppTextStyle.bodyMedium.copyWith(
+                          color: context.colorScheme.primary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ],
           ],
           const SizedBox(height: Insets.large),
@@ -357,51 +366,21 @@ class _LoadModelPageState extends State<LoadModelPage> {
     );
   }
 
+  /// Hands the document this page was opened for to the desktop, the same
+  /// way the processing screen does.
   void _handleProcessOnDesktop(BuildContext context) {
-    if (_isDesktopConnected()) {
-      _sendToDesktop(context);
-    } else {
-      DeviceSyncDialog.show(context);
-    }
-  }
-
-  bool _isDesktopConnected() {
-    try {
-      final commBloc = getIt<CommunicationBloc>();
-      return commBloc.state.connectionStatus == ConnectionStatus.connected;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  void _sendToDesktop(BuildContext context) {
-    try {
-      final processingBloc = getIt<ProcessingBloc>();
-      final sessions = processingBloc.state.sessions;
-      final pending = sessions.where(
-        (s) => s.status == ProcessingStatus.pending && s.filePaths.isNotEmpty,
-      );
-      if (pending.isEmpty) return;
-
-      final session = pending.first;
-      context.router.maybePop();
-      HandoverSendDialog.show(
-        context,
-        session.filePaths,
-        sourceSessionId: session.id,
-        continueLabel: session.origin == ProcessingOrigin.import
-            ? context.l10n.continueImporting
-            : null,
-      );
-    } catch (e) {
-      logger.e('Could not send the pending document to the desktop', e);
-      if (!context.mounted) return;
+    final session = getIt<ProcessingBloc>().state.sessions.firstWhereOrNull(
+      (s) => s.id == widget.sessionId,
+    );
+    if (session == null) {
       AppSnackBar.show(
         context,
         message: context.l10n.handoverSendFailed,
         type: AppSnackBarType.error,
       );
+      return;
     }
+    HandoverUtils.initiateHandover(context, session: session);
   }
 
   Widget _buildRichDescription(BuildContext context, String description) {

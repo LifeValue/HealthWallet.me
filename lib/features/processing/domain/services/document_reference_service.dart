@@ -11,6 +11,7 @@ import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/processing/data/services/pdf_generation_service.dart';
 import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
 import 'package:injectable/injectable.dart';
+import 'package:uuid/uuid.dart';
 
 @injectable
 class DocumentReferenceService {
@@ -107,6 +108,7 @@ class DocumentReferenceService {
               encounter: encounter,
               title: group.title,
               sessionId: sessionId,
+              index: i,
             );
 
         final resourceId = await _saveFhirDocumentReferenceToDatabase(
@@ -133,13 +135,19 @@ class DocumentReferenceService {
     Encounter? encounter,
     required String title,
     String? sessionId,
+    int index = 0,
   }) async {
     final file = File(pdfPath);
     final bytes = await file.readAsBytes();
     final timestamp = DateTime.now();
     final relativePdfPath = await _pathResolver.toRelative(pdfPath);
 
-    final documentReferenceId = _generateId();
+    // A scan's documents get the same ids every time its session is saved,
+    // on either device: a handed-over document saved on the phone and on the
+    // desktop is one record, not two.
+    final documentReferenceId = sessionId == null
+        ? _generateId()
+        : sessionDocumentId(sessionId, index);
 
     final List<fhir_r4.Reference>? encounterReferences = encounter != null
         ? [
@@ -351,6 +359,13 @@ class DocumentReferenceService {
       throw Exception('Failed to link DocumentReference to Encounter: $e');
     }
   }
+
+  /// The id of document [index] of processing session [sessionId].
+  static String sessionDocumentId(String sessionId, int index) =>
+      const Uuid().v5(
+        Namespace.url.value,
+        'http://healthwallet.me/session/$sessionId/document/$index',
+      );
 
   String _generateId() {
     return DateTime.now().millisecondsSinceEpoch.toString();

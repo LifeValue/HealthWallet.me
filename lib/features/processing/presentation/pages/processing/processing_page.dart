@@ -205,7 +205,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
         );
         if (displayedSession == null) return;
 
-        if (state.status == const PipelineStatus.success()) {
+        if (state.status is Success) {
           try {
             getIt<LwwSyncBloc>().add(const SyncTriggered());
           } catch (e) {
@@ -284,7 +284,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
                     final sessionImages =
                         state.sessionImagePaths[widget.sessionId] ??
-                        state.allImagePathsForOCR;
+                        const <String>[];
 
                     final isConverting =
                         state.status == const PipelineStatus.convertingPdfs() &&

@@ -1,9 +1,5 @@
-import 'dart:async';
-import 'dart:ui';
-
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
@@ -12,157 +8,76 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
-import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
-import 'package:health_wallet/features/desktop/handover/data/services/handover_sender_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
-import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/bloc/phone_handover_bloc.dart';
 
+/// Sends a processing session to the desktop and shows the transfer. Once
+/// the files are there the session waits on the phone as handed over, and
+/// its draft comes back to review.
 class HandoverSendDialog extends StatefulWidget {
-  final List<String> filePaths;
-  final String? continueLabel;
-  final String? sourceSessionId;
-  final Map<String, dynamic>? phase1Data;
-
   const HandoverSendDialog({
     super.key,
-    required this.filePaths,
+    required this.sessionId,
+    required this.fileCount,
     this.continueLabel,
-    this.sourceSessionId,
-    this.phase1Data,
   });
 
-  static void show(
-    BuildContext context,
-    List<String> filePaths, {
+  final String sessionId;
+  final int fileCount;
+
+  /// The button that leaves the processing screen once the files are sent;
+  /// "Continue scanning" when null.
+  final String? continueLabel;
+
+  static Future<void> show(
+    BuildContext context, {
+    required String sessionId,
+    required int fileCount,
     String? continueLabel,
-    String? sourceSessionId,
-    Map<String, dynamic>? phase1Data,
-  }) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Dialog(
-          backgroundColor: Colors.transparent,
-          child: HandoverSendDialog(
-            filePaths: filePaths,
-            continueLabel: continueLabel,
-            sourceSessionId: sourceSessionId,
-            phase1Data: phase1Data,
-          ),
-        ),
+  }) => showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => Dialog(
+      backgroundColor: context.colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Insets.smallNormal),
       ),
-    );
-  }
+      child: HandoverSendDialog(
+        sessionId: sessionId,
+        fileCount: fileCount,
+        continueLabel: continueLabel,
+      ),
+    ),
+  );
 
   @override
   State<HandoverSendDialog> createState() => _HandoverSendDialogState();
 }
 
 class _HandoverSendDialogState extends State<HandoverSendDialog> {
-  final HandoverSenderService _senderService = getIt<HandoverSenderService>();
-  StreamSubscription<HandoverSession>? _subscription;
-  HandoverSession? _session;
-  bool _started = false;
-  bool _processingCancelled = false;
+  final _bloc = getIt<PhoneHandoverBloc>();
 
   @override
   void initState() {
     super.initState();
-    _subscription = _senderService.sessionUpdates.listen((session) {
-      if (mounted) {
-        debugPrint(
-          '[Handover] session update: ${session.status}, isSent=$_isSent',
-        );
-        setState(() => _session = session);
-        if (_isSent && !_processingCancelled) {
-          _processingCancelled = true;
-          _cancelMobileProcessing();
-        }
-      }
-    });
-    _startSending();
+    _bloc.add(PhoneHandoverSendRequested(sessionId: widget.sessionId));
   }
-
-  void _cancelMobileProcessing() {
-    debugPrint(
-      '[Handover] _cancelMobileProcessing called, sourceId=${widget.sourceSessionId}',
-    );
-    if (widget.sourceSessionId == null) return;
-    try {
-      final processingBloc = getIt<ProcessingBloc>();
-      final session = processingBloc.state.sessions.firstWhereOrNull(
-        (s) => s.id == widget.sourceSessionId,
-      );
-      debugPrint(
-        '[Handover] found session: ${session?.id}, status=${session?.status}, isProcessing=${session?.isProcessing}',
-      );
-      if (session != null && session.isProcessing) {
-        debugPrint(
-          '[Handover] calling cancelGeneration + disposeModel + MappingCancelled',
-        );
-        getIt<ProcessingRepository>().cancelGeneration();
-        getIt<ProcessingRepository>().disposeModel();
-        processingBloc.add(MappingCancelled(sessionId: session.id));
-      }
-    } catch (e) {
-      debugPrint('[Handover] cancel error: $e');
-    }
-  }
-
-  void _clearSourceSession() {
-    if (widget.sourceSessionId == null) return;
-    try {
-      final processingBloc = getIt<ProcessingBloc>();
-      final session = processingBloc.state.sessions.firstWhereOrNull(
-        (s) => s.id == widget.sourceSessionId,
-      );
-      if (session != null) {
-        processingBloc.add(SessionCleared(session: session));
-      }
-    } catch (_) {}
-  }
-
-  Future<void> _startSending() async {
-    if (_started) return;
-    _started = true;
-    await _senderService.sendHandover(
-      widget.filePaths,
-      phase1Data: widget.phase1Data,
-    );
-  }
-
-  @override
-  void dispose() {
-    _subscription?.cancel();
-    super.dispose();
-  }
-
-  bool get _isTerminal =>
-      _session?.status == HandoverStatus.complete ||
-      _session?.status == HandoverStatus.waitingForResults ||
-      _session?.status == HandoverStatus.error;
-
-  bool get _isSent =>
-      _session?.status == HandoverStatus.complete ||
-      _session?.status == HandoverStatus.waitingForResults;
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 400),
-      child: Container(
-        decoration: BoxDecoration(
-          color: context.colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        padding: const EdgeInsets.all(Insets.medium),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
+    return BlocBuilder<PhoneHandoverBloc, PhoneHandoverState>(
+      bloc: _bloc,
+      buildWhen: (a, b) =>
+          a.transfers[widget.sessionId] != b.transfers[widget.sessionId],
+      builder: (context, state) {
+        final transfer = state.transfers[widget.sessionId];
+        final status = transfer?.status;
+        return ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Padding(
+            padding: const EdgeInsets.all(Insets.medium),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   context.l10n.desktopHandoverSendingToDesktop,
@@ -171,115 +86,88 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const Spacer(),
-                if (_isTerminal)
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Icon(
-                      Icons.close,
-                      size: 20,
-                      color: context.colorScheme.onSurface.withValues(
-                        alpha: 0.4,
-                      ),
-                    ),
+                const SizedBox(height: Insets.small),
+                Text(
+                  context.l10n.desktopHandoverFileCount(widget.fileCount),
+                  style: AppTextStyle.labelLarge.copyWith(
+                    color: context.secondaryTextColor,
                   ),
+                ),
+                const SizedBox(height: Insets.normal),
+                switch (status) {
+                  HandoverStatus.sent => const Icon(
+                    Icons.check_circle_outline,
+                    size: Insets.extraLarge,
+                    color: AppColors.success,
+                  ),
+                  HandoverStatus.error => const Icon(
+                    Icons.error_outline,
+                    size: Insets.extraLarge,
+                    color: AppColors.error,
+                  ),
+                  _ => LinearProgressIndicator(
+                    value: status == HandoverStatus.sending
+                        ? transfer?.progress
+                        : null,
+                    backgroundColor: context.borderColor,
+                  ),
+                },
+                const SizedBox(height: Insets.small),
+                Text(
+                  phoneHandoverStatusText(transfer, context.l10n),
+                  style: AppTextStyle.labelSmall.copyWith(
+                    color: status == HandoverStatus.error
+                        ? AppColors.error
+                        : context.secondaryTextColor,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: Insets.normal),
+                ..._buttons(context, status),
               ],
             ),
-            const SizedBox(height: Insets.normal),
-            if (_session?.status != HandoverStatus.error)
-              Text(
-                context.l10n.desktopHandoverFileCount(widget.filePaths.length),
-                style: AppTextStyle.labelLarge.copyWith(
-                  color: context.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-              ),
-            const SizedBox(height: Insets.normal),
-            if (_isSent) ...[
-              const Icon(
-                Icons.check_circle_outline,
-                size: 48,
-                color: AppColors.success,
-              ),
-              const SizedBox(height: Insets.small),
-              Text(
-                context.l10n.desktopHandoverSuccess,
-                style: AppTextStyle.bodySmall.copyWith(
-                  color: AppColors.success,
-                ),
-              ),
-            ] else if (_session?.status != HandoverStatus.error) ...[
-              LinearProgressIndicator(
-                value: _session?.progress,
-                backgroundColor: context.colorScheme.onSurface.withValues(
-                  alpha: 0.08,
-                ),
-              ),
-            ],
-            const SizedBox(height: Insets.small),
-            if (_session?.status != HandoverStatus.complete)
-              Text(
-                phoneHandoverStatusText(_session, context.l10n),
-                style: AppTextStyle.labelSmall.copyWith(
-                  color: _session?.status == HandoverStatus.error
-                      ? AppColors.error
-                      : AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 4,
-                overflow: TextOverflow.ellipsis,
-              ),
-            const SizedBox(height: Insets.normal),
-            if (!_isTerminal)
-              SizedBox(
-                width: 160,
-                child: AppButton(
-                  label: context.l10n.cancel,
-                  onPressed: () {
-                    if (_session != null) {
-                      _senderService.cancelHandover(_session!.sessionId);
-                    }
-                    Navigator.of(context).pop();
-                  },
-                  height: 36,
-                ),
-              ),
-            if (_isTerminal && _isSent) ...[
-              if (!getIt<AppPlatform>().isDesktop) ...[
-                AppButton(
-                  label: widget.continueLabel ?? context.l10n.continueScanning,
-                  variant: AppButtonVariant.outlined,
-                  height: 36,
-                  onPressed: () {
-                    _clearSourceSession();
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  },
-                ),
-                const SizedBox(height: Insets.small),
-              ],
-              AppButton(
-                label: context.l10n.goToRecords,
-                variant: AppButtonVariant.primary,
-                height: 36,
-                onPressed: () {
-                  _clearSourceSession();
-                  final navController = getIt<PageViewNavigationController>();
-                  navController.jumpToPage(1);
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-              ),
-            ] else if (_isTerminal) ...[
-              SizedBox(
-                width: 160,
-                child: AppButton(
-                  label: context.l10n.desktopClose,
-                  onPressed: () => Navigator.of(context).pop(),
-                  height: 36,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
+
+  List<Widget> _buttons(BuildContext context, HandoverStatus? status) =>
+      switch (status) {
+        HandoverStatus.sent => [
+          AppButton(
+            label: widget.continueLabel ?? context.l10n.continueScanning,
+            height: Insets.large,
+            onPressed: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
+          ),
+          const SizedBox(height: Insets.small),
+          AppButton(
+            label: context.l10n.desktopClose,
+            variant: AppButtonVariant.outlined,
+            height: Insets.large,
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+        HandoverStatus.error => [
+          AppButton(
+            label: context.l10n.desktopClose,
+            height: Insets.large,
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+        _ => [
+          AppButton(
+            label: context.l10n.cancel,
+            variant: AppButtonVariant.outlined,
+            height: Insets.large,
+            onPressed: () {
+              _bloc.add(
+                PhoneHandoverCancelRequested(sessionId: widget.sessionId),
+              );
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      };
 }

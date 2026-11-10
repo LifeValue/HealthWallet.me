@@ -15,6 +15,7 @@ import 'package:health_wallet/features/desktop/communication/data/services/disco
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/bloc/phone_handover_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_linking_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
@@ -57,6 +58,9 @@ void main() async {
   unawaited(getIt<ShareIntentService>().initialize());
   unawaited(getIt<DeepLinkService>().initialize());
   getIt<ProcessingBloc>().add(const ProcessingInitialised());
+  // Listening from the start, so what the desktop sends about a handed-over
+  // document (sent again on every connection until acknowledged) is applied.
+  getIt<PhoneHandoverBloc>().add(const PhoneHandoverInitialised());
 
   getIt<LwwSyncBloc>().add(const LwwSyncInitialised());
 

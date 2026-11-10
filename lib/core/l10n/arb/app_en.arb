@@ -699,9 +699,6 @@
   "desktopCurrentDevice": "current device",
   "desktopHandoverPreparing": "Preparing...",
   "desktopHandoverSendingFiles": "Sending files...",
-  "desktopHandoverProcessingOnDesktop": "Processing on desktop...",
-  "desktopHandoverComplete": "Complete!",
-  "desktopHandoverError": "Error occurred",
   "desktopHandoverSending": "Sending...",
   "desktopHandoverSendingToDesktop": "Sending to Desktop",
   "desktopHandoverFileCount": "{count} files",
@@ -712,7 +709,6 @@
       }
     }
   },
-  "desktopHandoverSuccess": "Handed over to Desktop",
   "desktopClose": "Close",
   "desktopContinueImporting": "Continue Importing",
   "desktopHandoverToDesktop": "Handover to Desktop",
@@ -1116,7 +1112,6 @@
   "areYouSure": "Are you sure?",
   "resourceNotViewable": "This resource is not a viewable file",
   "noFilePathFound": "No file path found",
-  "handoverPatientMatched": "Handover patient matched",
   "desktopDiscovering": "Discovering...",
   "desktopTransportWifi": "WiFi",
   "desktopTransportDirect": "Direct",
@@ -1163,12 +1158,8 @@
   },
   "desktopHandoverTransferComplete": "Transfer complete",
   "desktopHandoverReceivingFiles": "Receiving files...",
-  "desktopHandoverProcessingStatus": "Processing...",
-  "desktopHandoverSendingResults": "Sending results...",
-  "desktopHandoverDone": "Complete",
   "desktopHandoverStatusError": "Error",
-  "desktopHandoverWaitingForResults": "Waiting for results...",
-  "desktopHandoverNotAccepted": "The desktop did not accept the documents.",
+  "desktopHandoverNotAccepted": "The desktop did not answer. Make sure HealthWallet is open and up to date on it.",
   "desktopHandoverFileMissing": "A document could not be found on this device.",
   "desktopHandoverCancelled": "Cancelled",
   "desktopHandoverFailed": "Processing failed. Please try again.",
@@ -1192,7 +1183,6 @@
       }
     }
   },
-  "desktopFinishedProcessing": "Desktop finished processing",
   "biometricAuthReason": "Please authenticate to access your HealthWallet.me",
   "sourceUploadedOn": "Uploaded {date}",
   "@sourceUploadedOn": {
@@ -2399,5 +2389,77 @@
   "documentAlreadyInWallet": "Everything in this document is already in your wallet",
   "@documentAlreadyInWallet": {
     "description": "Shown above Done when saving a document would add nothing to the wallet."
+  },
+  "processingStatusHandedOver": "On the desktop",
+  "desktopHandoverSent": "Sent to the desktop. You'll be told when it's ready to review, here or on the desktop.",
+  "desktopHandoverConnectionLost": "The connection to the desktop was lost. Try again.",
+  "desktopHandoverTooLarge": "The document is too large to send to the desktop (over 200 MB).",
+  "desktopHandoverTimedOut": "The desktop stopped receiving the document. Try again.",
+  "handoverOnDesktopTitle": "Being processed on the desktop",
+  "handoverOnDesktopMessage": "The draft comes back here to review when the desktop is done. You can also review and save it on the desktop.",
+  "handoverTakeBack": "Process on this phone instead",
+  "handoverReadyToReview": "{origin}: ready to review",
+  "@handoverReadyToReview": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverFailedOnDesktop": "{origin}: the desktop could not process it. It's back on this phone.",
+  "@handoverFailedOnDesktop": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverNoModelOnDesktop": "{origin}: there is no AI model on the desktop. It's back on this phone.",
+  "@handoverNoModelOnDesktop": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverDeletedOnDesktop": "{origin} was deleted on the desktop. It's back on this phone.",
+  "@handoverDeletedOnDesktop": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverSavedOnDesktop": "{origin} was saved on the desktop. The records reach this phone with the next sync.",
+  "@handoverSavedOnDesktop": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverSavedOnPhone": "{origin} was saved on the phone.",
+  "@handoverSavedOnPhone": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverDraftSavedOnDesktop": "{origin} was saved on the desktop. Any changes made here to its draft were not kept.",
+  "@handoverDraftSavedOnDesktop": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverDraftSavedOnPhone": "{origin} was saved on the phone. Any changes made here to its draft were not kept.",
+  "@handoverDraftSavedOnPhone": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
   }
 }

@@ -49,14 +49,23 @@ void main() {
   setUp(() {
     (senderEnd, receiverEnd) = _link();
     sender = SecureShareSession(senderEnd);
+    // The default waits: the key exchange is real crypto, slow on a busy
+    // runner. Tests that expect a wait to run out shorten it.
+    receiver = SecureShareSession(receiverEnd);
+    addTearDown(sender.dispose);
+    addTearDown(receiver.dispose);
+  });
+
+  /// [receiver] again, giving up after 300 ms.
+  Future<void> impatientReceiver() async {
+    await receiver.dispose();
     receiver = SecureShareSession(
       receiverEnd,
       keyTimeout: const Duration(milliseconds: 300),
       confirmationTimeout: const Duration(milliseconds: 300),
     );
-    addTearDown(sender.dispose);
     addTearDown(receiver.dispose);
-  });
+  }
 
   test('the receiver opens the records after the sender confirms', () async {
     final envelope = await sender.seal(_records);
@@ -80,6 +89,7 @@ void main() {
   });
 
   test('the payload key is not sent before the sender confirms', () async {
+    await impatientReceiver();
     final envelope = await sender.seal(_records);
     final senderCode = sender.awaitReceiver();
     await receiver.open(envelope);
@@ -142,6 +152,7 @@ void main() {
   });
 
   test('the receiver times out without a sender key', () async {
+    await impatientReceiver();
     final envelope = await sender.seal(_records);
     receiverEnd.intercept = (_) => null;
 

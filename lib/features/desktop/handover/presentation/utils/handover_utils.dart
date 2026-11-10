@@ -9,14 +9,13 @@ import 'package:health_wallet/features/desktop/communication/presentation/bloc/c
 import 'package:health_wallet/features/desktop/handover/presentation/widgets/handover_send_dialog.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/connection_dialog.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 
 class HandoverUtils {
   static Future<void> initiateHandover(
     BuildContext context, {
     required ProcessingSession session,
   }) async {
-    if (session.filePaths.isEmpty) return;
+    if (!session.canHandOver) return;
 
     if (session.isProcessing) {
       final confirmed = await AppSimpleDialog.showDestructiveConfirmation(
@@ -97,24 +96,10 @@ class HandoverUtils {
     BuildContext context,
     ProcessingSession session,
   ) {
-    Map<String, dynamic>? phase1Data;
-    if (session.patient.hasSelection) {
-      phase1Data = {
-        'patient': stagedPatientToJson(session.patient),
-        if (session.encounter.draft != null)
-          'encounter': stagedEncounterToJson(session.encounter),
-        if (session.diagnosticReport != null)
-          'diagnosticReport': stagedDiagnosticReportToJson(
-            session.diagnosticReport!,
-          ),
-      };
-    }
-
     HandoverSendDialog.show(
       context,
-      session.filePaths,
-      sourceSessionId: session.id,
-      phase1Data: phase1Data,
+      sessionId: session.id,
+      fileCount: session.filePaths.length,
       continueLabel:
           session.origin == ProcessingOrigin.import ||
               session.origin == ProcessingOrigin.handover

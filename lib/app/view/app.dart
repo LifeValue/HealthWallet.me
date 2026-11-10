@@ -170,8 +170,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           ),
           BlocListener<ProcessingBloc, ProcessingState>(
             listenWhen: (previous, current) =>
-                previous.status != current.status &&
-                current.status == const PipelineStatus.success(),
+                previous.status != current.status && current.status is Success,
             listener: (context, state) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (!context.mounted) return;

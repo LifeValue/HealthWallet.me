@@ -2736,24 +2736,6 @@ abstract class AppLocalizations {
   /// **'Sending files...'**
   String get desktopHandoverSendingFiles;
 
-  /// No description provided for @desktopHandoverProcessingOnDesktop.
-  ///
-  /// In en, this message translates to:
-  /// **'Processing on desktop...'**
-  String get desktopHandoverProcessingOnDesktop;
-
-  /// No description provided for @desktopHandoverComplete.
-  ///
-  /// In en, this message translates to:
-  /// **'Complete!'**
-  String get desktopHandoverComplete;
-
-  /// No description provided for @desktopHandoverError.
-  ///
-  /// In en, this message translates to:
-  /// **'Error occurred'**
-  String get desktopHandoverError;
-
   /// No description provided for @desktopHandoverSending.
   ///
   /// In en, this message translates to:
@@ -2771,12 +2753,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} files'**
   String desktopHandoverFileCount(int count);
-
-  /// No description provided for @desktopHandoverSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Handed over to Desktop'**
-  String get desktopHandoverSuccess;
 
   /// No description provided for @desktopClose.
   ///
@@ -4625,12 +4601,6 @@ abstract class AppLocalizations {
   /// **'No file path found'**
   String get noFilePathFound;
 
-  /// No description provided for @handoverPatientMatched.
-  ///
-  /// In en, this message translates to:
-  /// **'Handover patient matched'**
-  String get handoverPatientMatched;
-
   /// No description provided for @desktopDiscovering.
   ///
   /// In en, this message translates to:
@@ -4763,40 +4733,16 @@ abstract class AppLocalizations {
   /// **'Receiving files...'**
   String get desktopHandoverReceivingFiles;
 
-  /// No description provided for @desktopHandoverProcessingStatus.
-  ///
-  /// In en, this message translates to:
-  /// **'Processing...'**
-  String get desktopHandoverProcessingStatus;
-
-  /// No description provided for @desktopHandoverSendingResults.
-  ///
-  /// In en, this message translates to:
-  /// **'Sending results...'**
-  String get desktopHandoverSendingResults;
-
-  /// No description provided for @desktopHandoverDone.
-  ///
-  /// In en, this message translates to:
-  /// **'Complete'**
-  String get desktopHandoverDone;
-
   /// No description provided for @desktopHandoverStatusError.
   ///
   /// In en, this message translates to:
   /// **'Error'**
   String get desktopHandoverStatusError;
 
-  /// No description provided for @desktopHandoverWaitingForResults.
-  ///
-  /// In en, this message translates to:
-  /// **'Waiting for results...'**
-  String get desktopHandoverWaitingForResults;
-
   /// No description provided for @desktopHandoverNotAccepted.
   ///
   /// In en, this message translates to:
-  /// **'The desktop did not accept the documents.'**
+  /// **'The desktop did not answer. Make sure HealthWallet is open and up to date on it.'**
   String get desktopHandoverNotAccepted;
 
   /// No description provided for @desktopHandoverFileMissing.
@@ -4852,12 +4798,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Quit {appName}'**
   String trayQuit(String appName);
-
-  /// No description provided for @desktopFinishedProcessing.
-  ///
-  /// In en, this message translates to:
-  /// **'Desktop finished processing'**
-  String get desktopFinishedProcessing;
 
   /// No description provided for @biometricAuthReason.
   ///
@@ -8296,6 +8236,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Everything in this document is already in your wallet'**
   String get documentAlreadyInWallet;
+
+  /// No description provided for @processingStatusHandedOver.
+  ///
+  /// In en, this message translates to:
+  /// **'On the desktop'**
+  String get processingStatusHandedOver;
+
+  /// No description provided for @desktopHandoverSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent to the desktop. You\'ll be told when it\'s ready to review, here or on the desktop.'**
+  String get desktopHandoverSent;
+
+  /// No description provided for @desktopHandoverConnectionLost.
+  ///
+  /// In en, this message translates to:
+  /// **'The connection to the desktop was lost. Try again.'**
+  String get desktopHandoverConnectionLost;
+
+  /// No description provided for @desktopHandoverTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'The document is too large to send to the desktop (over 200 MB).'**
+  String get desktopHandoverTooLarge;
+
+  /// No description provided for @desktopHandoverTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'The desktop stopped receiving the document. Try again.'**
+  String get desktopHandoverTimedOut;
+
+  /// No description provided for @handoverOnDesktopTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Being processed on the desktop'**
+  String get handoverOnDesktopTitle;
+
+  /// No description provided for @handoverOnDesktopMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The draft comes back here to review when the desktop is done. You can also review and save it on the desktop.'**
+  String get handoverOnDesktopMessage;
+
+  /// No description provided for @handoverTakeBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Process on this phone instead'**
+  String get handoverTakeBack;
+
+  /// No description provided for @handoverReadyToReview.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin}: ready to review'**
+  String handoverReadyToReview(String origin);
+
+  /// No description provided for @handoverFailedOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin}: the desktop could not process it. It\'s back on this phone.'**
+  String handoverFailedOnDesktop(String origin);
+
+  /// No description provided for @handoverNoModelOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin}: there is no AI model on the desktop. It\'s back on this phone.'**
+  String handoverNoModelOnDesktop(String origin);
+
+  /// No description provided for @handoverDeletedOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} was deleted on the desktop. It\'s back on this phone.'**
+  String handoverDeletedOnDesktop(String origin);
+
+  /// No description provided for @handoverSavedOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} was saved on the desktop. The records reach this phone with the next sync.'**
+  String handoverSavedOnDesktop(String origin);
+
+  /// No description provided for @handoverSavedOnPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} was saved on the phone.'**
+  String handoverSavedOnPhone(String origin);
+
+  /// No description provided for @handoverDraftSavedOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} was saved on the desktop. Any changes made here to its draft were not kept.'**
+  String handoverDraftSavedOnDesktop(String origin);
+
+  /// No description provided for @handoverDraftSavedOnPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} was saved on the phone. Any changes made here to its draft were not kept.'**
+  String handoverDraftSavedOnPhone(String origin);
 }
 
 class _AppLocalizationsDelegate

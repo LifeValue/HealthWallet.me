@@ -295,13 +295,13 @@ class _ScannedBasicButtons extends StatelessWidget {
                 Icon(
                   Icons.computer,
                   size: 20,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: context.colorScheme.primary,
                 ),
                 const SizedBox(width: Insets.small),
                 Text(
                   context.l10n.continueProcessingOnDesktop,
                   style: AppTextStyle.bodySmall.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
+                    color: context.colorScheme.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

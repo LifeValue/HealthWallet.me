@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:collection/collection.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
@@ -108,6 +110,27 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
   ) async {
     emit(state.copyWith(status: const PipelineStatus.loading()));
     try {
+      // The same document sent again (a handover retried after a failure)
+      // replaces the earlier attempt and its files.
+      final previous = state.sessions.firstWhereOrNull(
+        (s) => event.sessionId != null && s.id == event.sessionId,
+      );
+      if (previous != null) {
+        if (previous.isProcessing) {
+          await processingRepository.cancelGeneration();
+          await processingRepository.waitForStreamCompletion();
+        }
+        layoutExtraction.forget(previous.id);
+        emit(
+          state.copyWith(
+            sessions: [...state.sessions]..remove(previous),
+            sessionImagePaths: {...state.sessionImagePaths}
+              ..remove(previous.id),
+          ),
+        );
+        await processingRepository.deleteProcessingSession(previous);
+      }
+
       final persistedPaths = <String>[];
 
       for (final filePath in event.filePaths) {
@@ -121,9 +144,10 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
       if (persistedPaths.isEmpty) {
         emit(
           state.copyWith(
-            status: const PipelineStatus.failure(
+            status: PipelineStatus.failure(
               error: 'No valid files found',
               reason: PipelineFailureReason.noValidFiles,
+              sessionId: event.sessionId,
             ),
           ),
         );
@@ -134,7 +158,12 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
           ? await _autoReorderByPageNumber(persistedPaths)
           : persistedPaths;
 
-      await createSession(emit, filePaths: orderedPaths, origin: event.origin);
+      await createSession(
+        emit,
+        filePaths: orderedPaths,
+        origin: event.origin,
+        id: event.sessionId,
+      );
 
       if (event.phase1Patient != null) {
         final session = state.sessions.first;
@@ -148,6 +177,13 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
           updateDb: true,
         );
       }
+
+      // A handover is processed through to its draft without anyone at the
+      // desktop; when another session is running it waits its turn.
+      if (event.origin == ProcessingOrigin.handover &&
+          !state.sessions.any((s) => s.isProcessing)) {
+        startNextPendingSession();
+      }
     } catch (e, s) {
       logger.e('[ProcessingBloc] import failed', e, s);
       emit(
@@ -155,6 +191,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
           status: PipelineStatus.failure(
             error: 'Failed to import document: $e',
             reason: PipelineFailureReason.importFailed,
+            sessionId: event.sessionId,
           ),
         ),
       );
@@ -165,16 +202,21 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     Emitter<ProcessingState> emit, {
     required List<String> filePaths,
     required ProcessingOrigin origin,
+    String? id,
   }) async {
     final session = await processingRepository.createProcessingSession(
       filePaths: filePaths,
       origin: origin,
+      id: id,
     );
 
     emit(
       state.copyWith(
         status: PipelineStatus.sessionCreated(session: session),
-        sessions: [session, ...state.sessions],
+        sessions: [
+          session,
+          ...state.sessions.where((s) => s.id != session.id),
+        ],
       ),
     );
   }
@@ -287,12 +329,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         state.sessionImagePaths,
       )..[event.sessionId] = allImages;
 
-      emit(
-        state.copyWith(
-          allImagePathsForOCR: allImages,
-          sessionImagePaths: updatedImageMap,
-        ),
-      );
+      emit(state.copyWith(sessionImagePaths: updatedImageMap));
 
       if (anotherSessionProcessing &&
           session.status != ProcessingStatus.draft) {
@@ -324,6 +361,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
                   // what a desktop sends to the phone as the handover error.
                   error: const ModelNotFoundException().toString(),
                   reason: PipelineFailureReason.modelNotFound,
+                  sessionId: event.sessionId,
                 ),
               ),
             );
@@ -341,6 +379,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
           status: PipelineStatus.failure(
             error: e.toString(),
             reason: PipelineFailureReason.of(e),
+            sessionId: event.sessionId,
           ),
         ),
       );

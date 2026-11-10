@@ -45,16 +45,23 @@ class _FakeProcessingRepository extends Fake implements ProcessingRepository {
   Future<ProcessingSession> createProcessingSession({
     required List<String> filePaths,
     required ProcessingOrigin origin,
+    String? id,
   }) async {
     if (createError != null) throw createError!;
     created.add(filePaths);
-    return ProcessingSession(id: 'new', filePaths: filePaths, origin: origin);
+    return ProcessingSession(
+      id: id ?? 'new',
+      filePaths: filePaths,
+      origin: origin,
+    );
   }
+
+  List<ProcessingSession> stored = const [ProcessingSession(id: 'saved')];
 
   @override
   Future<List<ProcessingSession>> getProcessingSessions() async {
     if (loadError != null) throw loadError!;
-    return const [ProcessingSession(id: 'saved')];
+    return stored;
   }
 
   @override
@@ -90,6 +97,12 @@ class _FakeProcessingRepository extends Fake implements ProcessingRepository {
 
 class _FakeOcrProcessingHelper extends Fake implements OcrProcessingHelper {
   Exception? ocrError;
+
+  /// A document whose pages produced no images.
+  @override
+  Future<List<String>> prepareAllImages({
+    required List<String> filePaths,
+  }) async => const [];
 
   @override
   Future<String> processOcrForImages(List<String> imagePaths) async {
@@ -329,6 +342,38 @@ void main() {
       expect(bloc.state.sessions.single.id, 'saved');
     });
 
+    test(
+      'a step the app was closed in the middle of starts again, so it '
+      'doesn\'t hold up every other session',
+      () async {
+        repository.stored = const [
+          ProcessingSession(
+            id: 'patient-step',
+            status: ProcessingStatus.processingPatient,
+            progress: 0.4,
+          ),
+          ProcessingSession(
+            id: 'records-step',
+            status: ProcessingStatus.processing,
+            progress: 0.7,
+          ),
+          ProcessingSession(id: 'draft', status: ProcessingStatus.draft),
+        ];
+
+        await endStatus(const ProcessingInitialised());
+
+        expect(
+          bloc.state.sessions.map((s) => (s.id, s.status, s.progress)),
+          [
+            ('patient-step', ProcessingStatus.pending, 0.0),
+            ('records-step', ProcessingStatus.patientExtracted, 0.0),
+            ('draft', ProcessingStatus.draft, 0.0),
+          ],
+        );
+        expect(bloc.state.sessions.any((s) => s.isProcessing), isFalse);
+      },
+    );
+
     test('a failed delete fails and clears the deleting marker', () async {
       repository.deleteError = Exception('db locked');
       const session = ProcessingSession(id: 's1');
@@ -385,6 +430,7 @@ void main() {
         const PipelineStatus.failure(
           error: 'No images were generated from the document',
           reason: PipelineFailureReason.noImagesGenerated,
+          sessionId: 's1',
         ),
       );
       expect(bloc.state.sessions.single.status, ProcessingStatus.pending);
@@ -446,6 +492,7 @@ void main() {
         const PipelineStatus.failure(
           error: 'Exception: boom',
           reason: PipelineFailureReason.other,
+          sessionId: 's1',
         ),
       );
       expect(

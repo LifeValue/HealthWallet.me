@@ -83,14 +83,41 @@ void main() {
         sourceId: 'wallet-pat',
       );
 
-  test('saving a session again replaces its own documents', () async {
+  test('saving a session again rewrites its documents in place', () async {
     await saveSession('session-1', ['scan-a']);
     await saveSession('session-1', ['scan-a', 'scan-b']);
 
     expect(await documentTitles(), unorderedEquals(['scan-a', 'scan-b']));
-    // Tombstoned, so the paired device drops it too.
-    expect(await documentTitles(deleted: true), ['scan-a']);
+    expect(await documentTitles(deleted: true), isEmpty);
   });
+
+  test('a save with fewer documents removes the rest', () async {
+    await saveSession('session-1', ['scan-a', 'scan-b']);
+    await saveSession('session-1', ['scan-a']);
+
+    expect(await documentTitles(), ['scan-a']);
+    // Tombstoned, so the paired device drops it too.
+    expect(await documentTitles(deleted: true), ['scan-b']);
+  });
+
+  test(
+    'a session gets the same document ids on every device, so a handover '
+    'saved on the phone and on the desktop is one record',
+    () {
+      expect(
+        DocumentReferenceService.sessionDocumentId('session-1', 0),
+        DocumentReferenceService.sessionDocumentId('session-1', 0),
+      );
+      expect(
+        DocumentReferenceService.sessionDocumentId('session-1', 0),
+        isNot(DocumentReferenceService.sessionDocumentId('session-1', 1)),
+      );
+      expect(
+        DocumentReferenceService.sessionDocumentId('session-1', 0),
+        isNot(DocumentReferenceService.sessionDocumentId('session-2', 0)),
+      );
+    },
+  );
 
   test('another session\'s documents on the same encounter stay', () async {
     await saveSession('session-1', ['first visit scan']);

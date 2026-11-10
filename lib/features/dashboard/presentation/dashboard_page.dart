@@ -9,20 +9,15 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/capture/import/presentation/pages/import_page.dart';
 import 'package:health_wallet/features/capture/scan/presentation/pages/scan_page.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/dashboard/presentation/widgets/dashboard_nav_item.dart';
-import 'package:health_wallet/features/desktop/handover/data/services/handover_sender_service.dart';
-import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/bloc/handover_bloc.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/pages/handover_page.dart';
 import 'package:health_wallet/features/home/presentation/home_page.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
-import 'package:health_wallet/features/notifications/domain/entities/notification.dart'
-    as notification_entity;
 import 'package:health_wallet/features/notifications/utils/notification_utils.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
@@ -45,7 +40,7 @@ class _DashboardPageState extends State<DashboardPage> {
   final bool _isDesktop = getIt<AppPlatform>().isDesktop;
   bool _isKeyboardVisible = false;
   StreamSubscription? _handoverSub;
-  StreamSubscription? _handoverResultSub;
+  StreamSubscription? _processingSub;
   bool _hasHandover = false;
 
   @override
@@ -54,51 +49,6 @@ class _DashboardPageState extends State<DashboardPage> {
     _navigationController = getIt<PageViewNavigationController>();
     _navigationController.currentPageNotifier.addListener(_onPageChanged);
     if (_isDesktop) _listenForHandover();
-    _listenForHandoverResults();
-  }
-
-  void _listenForHandoverResults() {
-    if (_isDesktop) {
-      try {
-        final handoverBloc = getIt<HandoverBloc>();
-        var lastCompletedCount = 0;
-        handoverBloc.stream.listen((state) {
-          final completedCount = state.activeSessions.values
-              .where((s) => s.status == HandoverStatus.complete)
-              .length;
-          if (completedCount > lastCompletedCount && mounted) {
-            lastCompletedCount = completedCount;
-            _showHandoverNotification(context.l10n.handoverPatientMatched);
-          }
-        });
-      } catch (e) {
-        logger.w('Could not listen for finished handovers', e);
-      }
-    } else {
-      try {
-        final senderService = getIt<HandoverSenderService>();
-        _handoverResultSub = senderService.resultReceived.listen((_) {
-          if (!mounted) return;
-          _showHandoverNotification(context.l10n.desktopFinishedProcessing);
-        });
-      } catch (e) {
-        logger.w('Could not listen for handover results from the desktop', e);
-      }
-    }
-  }
-
-  void _showHandoverNotification(String text) {
-    final notification = notification_entity.Notification(
-      id: 'handover_${DateTime.now().millisecondsSinceEpoch}',
-      text: text,
-      type: notification_entity.NotificationType.success,
-      time: DateTime.now(),
-    );
-
-    getIt<NotificationBloc>().add(
-      NotificationAdded(notification: notification),
-    );
-    showProcessingDoneNotification(context, notification);
   }
 
   void _listenForHandover() {
@@ -107,7 +57,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateHandoverVisibility(
-        handoverBloc.state.activeSessions.isNotEmpty,
+        handoverBloc.state.transfers.isNotEmpty,
         processingBloc.state.sessions.any(
           (s) => s.origin == ProcessingOrigin.handover,
         ),
@@ -116,19 +66,19 @@ class _DashboardPageState extends State<DashboardPage> {
 
     _handoverSub = handoverBloc.stream.listen((state) {
       _updateHandoverVisibility(
-        state.activeSessions.isNotEmpty,
+        state.transfers.isNotEmpty,
         processingBloc.state.sessions.any(
           (s) => s.origin == ProcessingOrigin.handover,
         ),
       );
     });
 
-    processingBloc.stream.listen((state) {
+    _processingSub = processingBloc.stream.listen((state) {
       final hasHandoverSessions = state.sessions.any(
         (s) => s.origin == ProcessingOrigin.handover,
       );
       _updateHandoverVisibility(
-        handoverBloc.state.activeSessions.isNotEmpty,
+        handoverBloc.state.transfers.isNotEmpty,
         hasHandoverSessions,
       );
     });
@@ -157,7 +107,7 @@ class _DashboardPageState extends State<DashboardPage> {
   void dispose() {
     _navigationController.currentPageNotifier.removeListener(_onPageChanged);
     _handoverSub?.cancel();
-    _handoverResultSub?.cancel();
+    _processingSub?.cancel();
     super.dispose();
   }
 

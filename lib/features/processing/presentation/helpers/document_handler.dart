@@ -52,7 +52,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
     ProcessingSession session,
   ) async {
     final result = await context.router.push<bool>(
-      LoadModelRoute(canAttachToEncounter: true),
+      LoadModelRoute(canAttachToEncounter: true, sessionId: session.id),
     );
     if (!context.mounted) return;
 

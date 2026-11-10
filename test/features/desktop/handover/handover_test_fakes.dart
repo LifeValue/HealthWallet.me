@@ -2,8 +2,12 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart'
+    as link;
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+
+import '../desktop_test_fakes.dart';
 
 /// Records added events and lets the test push states.
 class FakeProcessingBloc extends Fake implements ProcessingBloc {
@@ -46,4 +50,31 @@ class FakeLwwSyncBloc extends Fake implements LwwSyncBloc {
 
   @override
   void add(LwwSyncEvent event) => events.add(event);
+}
+
+/// Two fake links joined like the real one: what one end sends, the other
+/// receives, unless that end is down.
+({FakeTcpService phone, FakeTcpService desktop}) linkedPair() {
+  final phone = FakeTcpService();
+  final desktop = FakeTcpService();
+  phone.onSend = (type, payload) async {
+    if (desktop.isConnected) desktop.deliver(type, payload);
+  };
+  desktop.onSend = (type, payload) async {
+    if (phone.isConnected) phone.deliver(type, payload);
+  };
+  return (phone: phone, desktop: desktop);
+}
+
+/// Takes both ends of [link] down or up, with the state events the
+/// services listen to.
+void setLinkUp(
+  ({FakeTcpService phone, FakeTcpService desktop}) pair,
+  bool up,
+) {
+  final state = up
+      ? link.ConnectionState.connected
+      : link.ConnectionState.disconnected;
+  pair.phone.emitState(state);
+  pair.desktop.emitState(state);
 }

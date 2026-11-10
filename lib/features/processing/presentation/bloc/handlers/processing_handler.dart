@@ -61,6 +61,35 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
   bool isCapacityError(String errorString);
   void startNextPendingSession();
 
+  /// Handovers whose extraction failed: the queue leaves them alone until
+  /// the user retries, so a failure isn't repeated after every other
+  /// document.
+  Set<String> get haltedHandovers;
+
+  /// The pages of [sessionId] itself, prepared when no step has prepared them
+  /// yet. Never another session's pages: a step that starts before the
+  /// session was opened (a handover's phase 2) would read the wrong document.
+  Future<List<String>> sessionImagesFor(
+    String sessionId,
+    Emitter<ProcessingState> emit,
+  ) async {
+    final cached = state.sessionImagePaths[sessionId];
+    if (cached != null && cached.isNotEmpty) return cached;
+    final session = state.sessions.firstWhereOrNull((s) => s.id == sessionId);
+    if (session == null) return const [];
+    final images = await ocrProcessingHelper.prepareAllImages(
+      filePaths: session.filePaths,
+    );
+    if (!emit.isDone) {
+      emit(
+        state.copyWith(
+          sessionImagePaths: {...state.sessionImagePaths, sessionId: images},
+        ),
+      );
+    }
+    return images;
+  }
+
   void onMappingInitiated(
     MappingInitiated event,
     Emitter<ProcessingState> emit,
@@ -71,9 +100,11 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     if (session == null) return;
     if (session.isProcessing ||
         session.status == ProcessingStatus.draft ||
-        session.status == ProcessingStatus.patientExtracted) {
+        session.status == ProcessingStatus.patientExtracted ||
+        session.status == ProcessingStatus.handedOver) {
       return;
     }
+    haltedHandovers.remove(event.sessionId);
     emit(state.copyWith(status: const PipelineStatus.loading()));
     final anotherSessionProcessing = state.sessions.any(
       (s) => s.id != event.sessionId && s.isProcessing,
@@ -88,8 +119,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       );
       final isDesktop =
           Platform.isMacOS || Platform.isLinux || Platform.isWindows;
-      final sessionImages =
-          state.sessionImagePaths[event.sessionId] ?? state.allImagePathsForOCR;
+      final sessionImages = await sessionImagesFor(event.sessionId, emit);
       if (sessionImages.isEmpty) {
         updateSession(
           emit,
@@ -99,9 +129,10 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         );
         emit(
           state.copyWith(
-            status: const PipelineStatus.failure(
+            status: PipelineStatus.failure(
               error: 'No images were generated from the document',
               reason: PipelineFailureReason.noImagesGenerated,
+              sessionId: event.sessionId,
             ),
           ),
         );
@@ -281,6 +312,9 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       startNextPendingSession();
     } on Exception catch (e, s) {
       logger.e('[ProcessingBloc] patient extraction failed', e, s);
+      if (session.origin == ProcessingOrigin.handover) {
+        haltedHandovers.add(event.sessionId);
+      }
       updateSession(
         emit,
         sessionId: event.sessionId,
@@ -302,6 +336,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
               status: PipelineStatus.failure(
                 error: e.toString(),
                 reason: PipelineFailureReason.of(e),
+                sessionId: event.sessionId,
               ),
             ),
           );
@@ -372,11 +407,25 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     ProcessRemainingResources event,
     Emitter<ProcessingState> emit,
   ) async {
-    emit(state.copyWith(status: const PipelineStatus.loading()));
     final session = state.sessions.firstWhereOrNull(
       (s) => s.id == event.sessionId,
     );
-    if (session == null) return;
+    if (event.automatic) {
+      // The queue continues a handover only from its patient step, once.
+      if (session?.status != ProcessingStatus.patientExtracted ||
+          haltedHandovers.contains(event.sessionId)) {
+        return;
+      }
+    } else {
+      haltedHandovers.remove(event.sessionId);
+    }
+    emit(state.copyWith(status: const PipelineStatus.loading()));
+    // Already running: a second run would extract the records twice.
+    if (session == null ||
+        session.isProcessing ||
+        session.status == ProcessingStatus.handedOver) {
+      return;
+    }
     final anotherSessionProcessing = state.sessions.any(
       (s) => s.id != event.sessionId && s.isProcessing,
     );
@@ -388,8 +437,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         sessionId: event.sessionId,
         status: ProcessingStatus.processing,
       );
-      final sessionImages =
-          state.sessionImagePaths[event.sessionId] ?? state.allImagePathsForOCR;
+      final sessionImages = await sessionImagesFor(event.sessionId, emit);
       final activeSession = state.sessions.firstWhereOrNull(
         (s) => s.id == event.sessionId,
       );
@@ -470,6 +518,9 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       final failedSession = state.sessions.firstWhereOrNull(
         (s) => s.id == event.sessionId,
       );
+      if (failedSession?.origin == ProcessingOrigin.handover) {
+        haltedHandovers.add(event.sessionId);
+      }
       updateSession(
         emit,
         sessionId: event.sessionId,
@@ -492,6 +543,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
               status: PipelineStatus.failure(
                 error: e.toString(),
                 reason: PipelineFailureReason.of(e),
+                sessionId: event.sessionId,
               ),
             ),
           );
@@ -588,7 +640,11 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           activeSession.patient.existing!.id,
         );
         if (holder != null) await holderSelection.select(holder.id);
-        emit(state.copyWith(status: const PipelineStatus.success()));
+        emit(
+          state.copyWith(
+            status: PipelineStatus.success(sessionId: activeSession.id),
+          ),
+        );
         return;
       }
 
@@ -621,7 +677,11 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       );
       // Shows the person the scan was filed under, once it is all saved.
       await holderSelection.select(holderId);
-      emit(state.copyWith(status: const PipelineStatus.success()));
+      emit(
+        state.copyWith(
+          status: PipelineStatus.success(sessionId: activeSession.id),
+        ),
+      );
     } catch (e, s) {
       logger.e('[ProcessingBloc] resource creation failed', e, s);
       emit(
@@ -629,6 +689,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           status: PipelineStatus.failure(
             error: e.toString(),
             reason: PipelineFailureReason.of(e),
+            sessionId: event.sessionId,
           ),
         ),
       );

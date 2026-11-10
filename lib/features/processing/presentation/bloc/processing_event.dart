@@ -28,9 +28,12 @@ abstract class DocumentImported extends ProcessingEvent
     with _$DocumentImported {
   const DocumentImported._();
 
+  /// [sessionId] names the new session (a handover keeps the phone's id);
+  /// otherwise one is made.
   const factory DocumentImported({
     required List<String> filePaths,
     @Default(ProcessingOrigin.import) ProcessingOrigin origin,
+    String? sessionId,
     StagedPatient? phase1Patient,
     StagedEncounter? phase1Encounter,
     StagedDiagnosticReport? phase1DiagnosticReport,
@@ -165,8 +168,11 @@ abstract class ProcessRemainingResources extends ProcessingEvent
     with _$ProcessRemainingResources {
   const ProcessRemainingResources._();
 
+  /// [automatic]: started by the queue, not the user; a handover whose
+  /// extraction failed is then not tried again until the user retries.
   const factory ProcessRemainingResources({
     required String sessionId,
+    @Default(false) bool automatic,
   }) = _ProcessRemainingResources;
 }
 
@@ -216,4 +222,72 @@ abstract class ContainerTypeSwitched extends ProcessingEvent
   const factory ContainerTypeSwitched({
     required String sessionId,
   }) = _ContainerTypeSwitched;
+}
+
+/// The session's files reached the desktop, which processes it now: local
+/// processing stops and the session waits as [ProcessingStatus.handedOver].
+@freezed
+abstract class SessionHandedOver extends ProcessingEvent
+    with _$SessionHandedOver {
+  const SessionHandedOver._();
+
+  const factory SessionHandedOver({required String sessionId}) =
+      _SessionHandedOver;
+}
+
+/// The desktop's draft of a handed-over session, to review on this device.
+@freezed
+abstract class HandoverDraftReceived extends ProcessingEvent
+    with _$HandoverDraftReceived {
+  const HandoverDraftReceived._();
+
+  const factory HandoverDraftReceived({
+    required String sessionId,
+    required StagedPatient patient,
+    @Default(StagedEncounter()) StagedEncounter encounter,
+    StagedDiagnosticReport? diagnosticReport,
+    @Default([]) List<MappingResource> resources,
+  }) = _HandoverDraftReceived;
+}
+
+/// Why a handed-over session came back to this device.
+enum HandoverReturnReason {
+  /// The user took it back.
+  withdrawn,
+
+  /// The desktop could not process it.
+  failedOnDesktop,
+
+  /// The desktop has no AI model.
+  noModelOnDesktop,
+
+  /// The desktop's user deleted it there.
+  deletedOnDesktop,
+}
+
+/// A handed-over session is this device's to process again.
+@freezed
+abstract class HandoverReturned extends ProcessingEvent
+    with _$HandoverReturned {
+  const HandoverReturned._();
+
+  const factory HandoverReturned({
+    required String sessionId,
+    required HandoverReturnReason reason,
+  }) = _HandoverReturned;
+}
+
+/// The records of a handover were saved on the paired device, so this
+/// device's copy of the session is removed.
+@freezed
+abstract class SessionSavedElsewhere extends ProcessingEvent
+    with _$SessionSavedElsewhere {
+  const SessionSavedElsewhere._();
+
+  const factory SessionSavedElsewhere({
+    required String sessionId,
+
+    /// Whether the paired device is the desktop (else the phone).
+    required bool byDesktop,
+  }) = _SessionSavedElsewhere;
 }
