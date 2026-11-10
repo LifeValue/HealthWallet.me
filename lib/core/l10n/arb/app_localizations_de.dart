@@ -4101,6 +4101,7 @@ class AppLocalizationsDe extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count Behälter',
+      one: '$count Behälter',
     );
     return '$_temp0';
   }

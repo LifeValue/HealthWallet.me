@@ -7454,7 +7454,7 @@ abstract class AppLocalizations {
   /// No description provided for @containerCount.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, other{{count} container(s)}}'**
+  /// **'{count, plural, one{{count} container} other{{count} containers}}'**
   String containerCount(int count);
 
   /// No description provided for @coverageOrderPrimary.

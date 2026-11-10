@@ -2029,7 +2029,7 @@
       }
     }
   },
-  "containerCount": "{count, plural, other{{count} container(s)}}",
+  "containerCount": "{count, plural, one{{count} container} other{{count} containers}}",
   "@containerCount": {
     "placeholders": {
       "count": {

@@ -1543,7 +1543,7 @@
   "doNotPerformRequest": "Diese Anforderung NICHT durchführen",
   "complicationsNone": "Keine",
   "fastedFor": "Nüchtern seit {duration}",
-  "containerCount": "{count, plural, other{{count} Behälter}}",
+  "containerCount": "{count, plural, one{{count} Behälter} other{{count} Behälter}}",
   "coverageOrderPrimary": "Primär (1)",
   "coverageOrderSecondary": "Sekundär (2)",
   "coverageOrderTertiary": "Tertiär (3)",
