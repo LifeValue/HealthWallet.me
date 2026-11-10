@@ -2913,7 +2913,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get aiModelDownloadFailedMessage =>
-      'Der Download des KI-Modells ist fehlgeschlagen. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.';
+      'Der Download des KI-Modells ist fehlgeschlagen. Bitte prüfe deine Verbindung und versuche es erneut.';
 
   @override
   String get aiModelDownloadFailed => 'Download fehlgeschlagen';
@@ -2962,7 +2962,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get couldNotOpenLink =>
-      'Der Link konnte nicht geöffnet werden. Bitte versuchen Sie es erneut.';
+      'Der Link konnte nicht geöffnet werden. Bitte versuche es erneut.';
 
   @override
   String get importFilesFailed =>
