@@ -100,7 +100,9 @@ void main() {
     await Directory(desktopDocs).create(recursive: true);
     phone = await _Device.create('phone-a', dirs, phoneDocs);
     desktop = await _Device.create('desktop-z', dirs, desktopDocs);
-    LwwSyncBloc.ackTimeout = const Duration(seconds: 2);
+    // Generous, so a slow runner never times out a real ack; the test that
+    // drops acks shortens it.
+    LwwSyncBloc.ackTimeout = const Duration(seconds: 10);
     LwwSyncBloc.settleDelay = const Duration(milliseconds: 200);
     LwwSyncBloc.settleFallback = const Duration(seconds: 10);
   });
@@ -114,8 +116,7 @@ void main() {
   Future<void> start() async {
     phone.bloc.add(const LwwSyncInitialised());
     desktop.bloc.add(const LwwSyncInitialised());
-    await until(() => true);
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+    await Future.wait([phone.bloc.initialised, desktop.bloc.initialised]);
   }
 
   Future<void> connect() async {
@@ -195,6 +196,7 @@ void main() {
   });
 
   test('a check the other device never answers ends with an error', () async {
+    LwwSyncBloc.ackTimeout = const Duration(milliseconds: 500);
     await start();
     await connect();
     desktop.link.dropTypes.add('sync.digest');
@@ -273,6 +275,7 @@ void main() {
     await start();
     await connect();
 
+    LwwSyncBloc.ackTimeout = const Duration(milliseconds: 500);
     desktop.link.dropTypes.add('sync.ack');
     await insertFhir(phone.db, id: 'unacked');
     await until(() => phone.bloc.state.syncStatus == LwwSyncStatus.error);
@@ -328,7 +331,7 @@ void main() {
       '${dirs.root.path}/phone',
     );
     otherDesktop.bloc.add(const LwwSyncInitialised());
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+    await otherDesktop.bloc.initialised;
     LinkedTcpService.link(phone.link, otherDesktop.link);
     await until(
       () => otherDesktop.bloc.state.isSynced && phone.bloc.state.isSynced,

@@ -65,6 +65,7 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
 
   /// Rows were applied since the lists last reloaded.
   bool _recordsUnsettled = false;
+  final _initialised = Completer<void>();
 
   /// Set while this side waits for the peer's answer to its digest, so a
   /// check that moves no rows still shows as running.
@@ -180,7 +181,13 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
     if (_tcpService.isConnected) {
       await _onConnectionChanged(true, emit);
     }
+    if (!_initialised.isCompleted) _initialised.complete();
   }
+
+  /// Completes once the bloc listens to the link, so tests can connect a
+  /// peer without its first messages arriving before anyone listens.
+  @visibleForTesting
+  Future<void> get initialised => _initialised.future;
 
   Future<void> _onTriggered(Emitter<LwwSyncState> emit) async {
     await _refreshPending(emit);
