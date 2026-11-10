@@ -756,7 +756,15 @@ void main() {
             phase1Patient: patient,
           ),
         );
-        await settle();
+        // The import copies a real file: wait for the outcome, not a number
+        // of event-loop turns.
+        final deadline = DateTime.now().add(const Duration(seconds: 5));
+        while (bloc.state.sessions.every(
+          (s) => s.id != 'phone-id' || s.status != ProcessingStatus.draft,
+        )) {
+          if (DateTime.now().isAfter(deadline)) fail('no draft');
+          await Future<void>.delayed(const Duration(milliseconds: 5));
+        }
 
         expect(session('phone-id').status, ProcessingStatus.draft);
         expect(session('phone-id').resources.single.id, 'obs-1');
