@@ -1701,5 +1701,7 @@
   "handoverNoModelOnDesktop": "{origin}: no hay modelo de IA en el escritorio. Ha vuelto a este teléfono.",
   "handoverDeletedOnDesktop": "{origin} se eliminó en el escritorio. Ha vuelto a este teléfono.",
   "handoverSavedOnDesktop": "{origin} se guardó en el escritorio. Los registros llegarán a este teléfono con la próxima sincronización.",
-  "handoverSavedOnPhone": "{origin} se guardó en el teléfono."
+  "handoverSavedOnPhone": "{origin} se guardó en el teléfono.",
+  "handoverDraftSavedOnDesktop": "{origin} se guardó en el escritorio. Los cambios hechos aquí en su borrador no se conservaron.",
+  "handoverDraftSavedOnPhone": "{origin} se guardó en el teléfono. Los cambios hechos aquí en su borrador no se conservaron."
 }

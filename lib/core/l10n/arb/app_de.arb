@@ -1697,5 +1697,7 @@
   "handoverNoModelOnDesktop": "{origin}: Auf dem Desktop gibt es kein KI-Modell. Es ist wieder auf diesem Telefon.",
   "handoverDeletedOnDesktop": "{origin} wurde auf dem Desktop gelöscht. Es ist wieder auf diesem Telefon.",
   "handoverSavedOnDesktop": "{origin} wurde auf dem Desktop gespeichert. Die Einträge kommen mit der nächsten Synchronisierung auf dieses Telefon.",
-  "handoverSavedOnPhone": "{origin} wurde auf dem Telefon gespeichert."
+  "handoverSavedOnPhone": "{origin} wurde auf dem Telefon gespeichert.",
+  "handoverDraftSavedOnDesktop": "{origin} wurde auf dem Desktop gespeichert. Hier gemachte Änderungen am Entwurf wurden nicht übernommen.",
+  "handoverDraftSavedOnPhone": "{origin} wurde auf dem Telefon gespeichert. Hier gemachte Änderungen am Entwurf wurden nicht übernommen."
 }

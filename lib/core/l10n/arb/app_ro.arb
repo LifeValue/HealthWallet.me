@@ -1696,5 +1696,7 @@
   "handoverNoModelOnDesktop": "{origin}: nu există model AI pe desktop. A revenit pe acest telefon.",
   "handoverDeletedOnDesktop": "{origin} a fost șters pe desktop. A revenit pe acest telefon.",
   "handoverSavedOnDesktop": "{origin} a fost salvat pe desktop. Înregistrările ajung pe acest telefon la următoarea sincronizare.",
-  "handoverSavedOnPhone": "{origin} a fost salvat pe telefon."
+  "handoverSavedOnPhone": "{origin} a fost salvat pe telefon.",
+  "handoverDraftSavedOnDesktop": "{origin} a fost salvat pe desktop. Modificările făcute aici ciornei nu au fost păstrate.",
+  "handoverDraftSavedOnPhone": "{origin} a fost salvat pe telefon. Modificările făcute aici ciornei nu au fost păstrate."
 }

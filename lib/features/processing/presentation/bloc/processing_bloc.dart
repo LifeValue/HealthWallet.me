@@ -370,6 +370,24 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     final other => other,
   };
 
+  /// A draft dropped here may have had edits: the text says they weren't
+  /// kept.
+  String _savedElsewhereText(
+    ProcessingSession session, {
+    required bool byDesktop,
+  }) {
+    final name = session.origin.localizedName(_strings.l10n);
+    final l10n = _strings.l10n;
+    if (session.status == ProcessingStatus.draft) {
+      return byDesktop
+          ? l10n.handoverDraftSavedOnDesktop(name)
+          : l10n.handoverDraftSavedOnPhone(name);
+    }
+    return byDesktop
+        ? l10n.handoverSavedOnDesktop(name)
+        : l10n.handoverSavedOnPhone(name);
+  }
+
   void _replaceSession(Emitter<ProcessingState> emit, ProcessingSession next) {
     emit(
       state.copyWith(
@@ -511,13 +529,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
         sessionImagePaths: {...state.sessionImagePaths}..remove(session.id),
         status: _withoutFailureOf(session.id),
         notification: Notification(
-          text: event.byDesktop
-              ? _strings.l10n.handoverSavedOnDesktop(
-                  session.origin.localizedName(_strings.l10n),
-                )
-              : _strings.l10n.handoverSavedOnPhone(
-                  session.origin.localizedName(_strings.l10n),
-                ),
+          text: _savedElsewhereText(session, byDesktop: event.byDesktop),
           time: DateTime.now(),
           type: NotificationType.success,
         ),

@@ -8320,6 +8320,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{origin} was saved on the phone.'**
   String handoverSavedOnPhone(String origin);
+
+  /// No description provided for @handoverDraftSavedOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} was saved on the desktop. Any changes made here to its draft were not kept.'**
+  String handoverDraftSavedOnDesktop(String origin);
+
+  /// No description provided for @handoverDraftSavedOnPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} was saved on the phone. Any changes made here to its draft were not kept.'**
+  String handoverDraftSavedOnPhone(String origin);
 }
 
 class _AppLocalizationsDelegate

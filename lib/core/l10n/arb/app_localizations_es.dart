@@ -4719,4 +4719,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String handoverSavedOnPhone(String origin) {
     return '$origin se guardó en el teléfono.';
   }
+
+  @override
+  String handoverDraftSavedOnDesktop(String origin) {
+    return '$origin se guardó en el escritorio. Los cambios hechos aquí en su borrador no se conservaron.';
+  }
+
+  @override
+  String handoverDraftSavedOnPhone(String origin) {
+    return '$origin se guardó en el teléfono. Los cambios hechos aquí en su borrador no se conservaron.';
+  }
 }

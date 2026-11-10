@@ -4733,4 +4733,14 @@ class AppLocalizationsRo extends AppLocalizations {
   String handoverSavedOnPhone(String origin) {
     return '$origin a fost salvat pe telefon.';
   }
+
+  @override
+  String handoverDraftSavedOnDesktop(String origin) {
+    return '$origin a fost salvat pe desktop. Modificările făcute aici ciornei nu au fost păstrate.';
+  }
+
+  @override
+  String handoverDraftSavedOnPhone(String origin) {
+    return '$origin a fost salvat pe telefon. Modificările făcute aici ciornei nu au fost păstrate.';
+  }
 }

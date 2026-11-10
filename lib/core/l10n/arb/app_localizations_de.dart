@@ -4733,4 +4733,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String handoverSavedOnPhone(String origin) {
     return '$origin wurde auf dem Telefon gespeichert.';
   }
+
+  @override
+  String handoverDraftSavedOnDesktop(String origin) {
+    return '$origin wurde auf dem Desktop gespeichert. Hier gemachte Änderungen am Entwurf wurden nicht übernommen.';
+  }
+
+  @override
+  String handoverDraftSavedOnPhone(String origin) {
+    return '$origin wurde auf dem Telefon gespeichert. Hier gemachte Änderungen am Entwurf wurden nicht übernommen.';
+  }
 }

@@ -4662,4 +4662,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String handoverSavedOnPhone(String origin) {
     return '$origin was saved on the phone.';
   }
+
+  @override
+  String handoverDraftSavedOnDesktop(String origin) {
+    return '$origin was saved on the desktop. Any changes made here to its draft were not kept.';
+  }
+
+  @override
+  String handoverDraftSavedOnPhone(String origin) {
+    return '$origin was saved on the phone. Any changes made here to its draft were not kept.';
+  }
 }

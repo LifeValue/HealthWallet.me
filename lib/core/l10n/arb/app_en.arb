@@ -2445,5 +2445,21 @@
         "type": "String"
       }
     }
+  },
+  "handoverDraftSavedOnDesktop": "{origin} was saved on the desktop. Any changes made here to its draft were not kept.",
+  "@handoverDraftSavedOnDesktop": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverDraftSavedOnPhone": "{origin} was saved on the phone. Any changes made here to its draft were not kept.",
+  "@handoverDraftSavedOnPhone": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
   }
 }
