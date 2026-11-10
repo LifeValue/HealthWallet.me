@@ -186,7 +186,22 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     emit(state.copyWith(status: const PipelineStatus.loading()));
 
     try {
-      final sessions = await _repository.getProcessingSessions();
+      final sessions = [
+        for (final s in await _repository.getProcessingSessions())
+          // A step the app was closed in the middle of starts again; left
+          // "processing", the session would hold up every other one.
+          switch (s.status) {
+            ProcessingStatus.processingPatient => s.copyWith(
+              status: ProcessingStatus.pending,
+              progress: 0,
+            ),
+            ProcessingStatus.processing => s.copyWith(
+              status: ProcessingStatus.patientExtracted,
+              progress: 0,
+            ),
+            _ => s,
+          },
+      ];
 
       final isDesktop =
           Platform.isMacOS || Platform.isLinux || Platform.isWindows;
