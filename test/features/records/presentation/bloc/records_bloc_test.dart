@@ -24,7 +24,6 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
   List<IFhirResource> searchResults = [];
   List<IFhirResource> related = [];
   Exception? error;
-  bool demoLoaded = false;
   final queries = <_Query>[];
   final searches = <String>[];
   final searchTypes = <List<FhirType>>[];
@@ -101,21 +100,6 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
   Future<List<IFhirResource>> getRelatedResources({
     required IFhirResource resource,
   }) async => related;
-
-  @override
-  Future<void> loadDemoData() async {
-    if (error != null) throw error!;
-    demoLoaded = true;
-  }
-
-  @override
-  Future<void> clearDemoData() async {
-    if (error != null) throw error!;
-    demoLoaded = false;
-  }
-
-  @override
-  Future<bool> hasDemoData() async => demoLoaded;
 
   @override
   Future<void> deleteResource(String resourceId) async {
@@ -523,22 +507,6 @@ void main() {
         state.recordDetailStatus,
         isNot(const RecordDetailStatus.success()),
       );
-    });
-  });
-
-  group('demo data', () {
-    test('loading marks it present and reloads', () async {
-      final state = await run(const LoadDemoData());
-
-      expect(state.hasDemoData, isTrue);
-      expect(state.isLoadingDemoData, isFalse);
-      expect(repository.queries, hasLength(1));
-    });
-
-    test('a failed load keeps the error', () async {
-      repository.error = Exception('asset');
-
-      expect((await run(const LoadDemoData())).demoDataError, isNotNull);
     });
   });
 

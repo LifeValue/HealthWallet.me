@@ -69,7 +69,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     on<RecordsFiltersApplied>(_onFiltersApplied);
     on<RecordsFilterRemoved>(_onFilterRemoved);
     on<RecordDetailLoaded>(_onRecordDetailLoaded);
-    on<LoadDemoData>(_onLoadDemoData);
     on<RecordsSearch>(_onSearch);
     on<RecordsSearchExecuted>(_onSearchExecuted);
     on<RecordsSharePressed>(_onRecordsSharePressed, transformer: droppable());
@@ -318,41 +317,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       emit(
         state.copyWith(
           recordDetailStatus: RecordDetailStatus.failure(e),
-        ),
-      );
-    }
-  }
-
-  Future<void> _onLoadDemoData(
-    LoadDemoData event,
-    Emitter<RecordsState> emit,
-  ) async {
-    emit(
-      state.copyWith(
-        isLoadingDemoData: true,
-        demoDataError: null,
-      ),
-    );
-
-    try {
-      await _recordsRepository.loadDemoData();
-
-      final hasDemoData = await _recordsRepository.hasDemoData();
-
-      emit(
-        state.copyWith(
-          isLoadingDemoData: false,
-          hasDemoData: hasDemoData,
-          demoDataError: null,
-        ),
-      );
-
-      await _loadResources(emit);
-    } catch (e) {
-      emit(
-        state.copyWith(
-          isLoadingDemoData: false,
-          demoDataError: e.toString(),
         ),
       );
     }

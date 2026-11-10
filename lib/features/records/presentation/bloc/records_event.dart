@@ -64,13 +64,6 @@ abstract class RecordDetailLoaded extends RecordsEvent
 }
 
 @freezed
-abstract class LoadDemoData extends RecordsEvent with _$LoadDemoData {
-  const LoadDemoData._();
-
-  const factory LoadDemoData() = _LoadDemoData;
-}
-
-@freezed
 abstract class RecordsSearch extends RecordsEvent with _$RecordsSearch {
   const RecordsSearch._();
 
