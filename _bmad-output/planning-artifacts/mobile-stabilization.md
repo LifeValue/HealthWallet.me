@@ -134,6 +134,7 @@ Batch 2:
 | B8  | **Every profile update waits one extra second:** `MockUserRemoteDataSource` adds a 1-second delay to theme, name and Share Proximity changes.                                                                                                                                                  | `user_remote_data_source.dart`                                |
 | B9  | **A document with no patient name fails when the vision projector is missing.** The text pass finds nothing, the vision fallback logs `mmproj file not found, vision disabled`, sends images anyway and ends in `LlamaException` and "Processing failed". |
 | B10 | **Continue after cancelling step 2 can fail.** The cancelled generation was still running, so the retry ended with `llama.cpp generation is already in progress` and "Processing failed". Seen once, on the simulator. |
+| B11 | **Attaching a document without processing shows no preview and no confirmation.** With no AI model, the import goes from the model screen straight to the encounter picker, then back to the app without a message. `DialogHelper`'s attachment success dialog is never shown. | `document_handler.dart`, `dialog_helper.dart` |
 
 ## 4. Record display bugs pinned by skipped tests
 
