@@ -70,12 +70,12 @@ Batch 2:
    - Search ignores the type and date filters. _It keeps to the types, dates and specialties._
    - The Attachments view ignores the date filter. _It uses it._
    - A25–A28 in `records-audit.md`.
-6. **Cleanup and logging.**
-   - Section 5 dead code: `PdfStorageService` (two copies), `ClearDemoData`, `deleteResourceWithRelated`, the old model download methods, `CaptureMode.pdf`, the `add-document` intent filter, the `build.yaml` exclude.
-   - `extractDosage`.
-   - Model sizes written in two places.
-   - The Spanish-only key `counterAppBarTitle`.
-   - 18 empty `catch (_) {}` (11 in `desktop/`, 7 in `share_records/`); the backup ones (`backup_service.dart`, `backup_bloc.dart`, `backup_card.dart`) are fixed in item 3.
+6. **Cleanup and logging.** _Done on `feature/mobile-stabilization-batch-2`._
+   - Section 5 dead code: `PdfStorageService` (two copies), `ClearDemoData`, `deleteResourceWithRelated`, the old model download methods, `CaptureMode.pdf`, the `add-document` intent filter, the `build.yaml` exclude. _All removed, with the repository's scan and saved-document methods, which only tests called (scanning calls the plugin from `session_handler.dart`)._
+   - `extractDosage`. _Removed._
+   - Model sizes written in two places. _The size shown is now worked out from `modelSizeMB`; the Ultra model reads "~4.6 GB" instead of "~5 GB"._
+   - The Spanish-only key `counterAppBarTitle`. _Removed._
+   - 18 empty `catch (_) {}` (11 in `desktop/`, 7 in `share_records/`); the backup ones (`backup_service.dart`, `backup_bloc.dart`, `backup_card.dart`) are fixed in item 3. _The `desktop/` ones were already gone; the 7 in `share_records/` now log. No empty `catch` is left in `lib/`._
 7. **Tests and CI (section 6).**
    - No BLoC tests for Home, Onboarding, Notifications, Focus Mode, Preview; Load Model and Attach to Encounter are only partly covered.
    - No widget tests for the review form, scanning and the Preferences toggles (the patient dialog and Preferences modal tests come with item 1).
