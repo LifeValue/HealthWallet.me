@@ -70,9 +70,20 @@ void main() {
     await dir.delete(recursive: true);
   });
 
+  /// Lets messages and file writes run; the files are real, so this waits a
+  /// little real time, not just event-loop turns.
   Future<void> settle([int turns = 20]) async {
     for (var i = 0; i < turns; i++) {
-      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(const Duration(milliseconds: 2));
+    }
+  }
+
+  /// Waits until [done] holds; fails after a few seconds.
+  Future<void> until(bool Function() done) async {
+    final deadline = DateTime.now().add(const Duration(seconds: 5));
+    while (!done()) {
+      if (DateTime.now().isAfter(deadline)) fail('timed out waiting');
+      await Future<void>.delayed(const Duration(milliseconds: 5));
     }
   }
 
@@ -105,7 +116,7 @@ void main() {
           paths,
           phase1Data: {'patient': <String, dynamic>{}},
         );
-        await settle();
+        await until(() => received.isNotEmpty);
 
         expect(result.status, HandoverStatus.sent);
         expect(result.progress, 1);
@@ -276,7 +287,11 @@ void main() {
       };
 
       final result = await sender.send('s', [path]);
-      await settle();
+      await until(
+        () =>
+            received.isNotEmpty &&
+            tmp.listSync(recursive: true).whereType<File>().isEmpty,
+      );
 
       expect(result.failure, HandoverFailure.cancelled);
       expect(pair.phone.sentOf(HandoverMessage.chunk), hasLength(1));

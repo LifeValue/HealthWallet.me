@@ -24,9 +24,20 @@ void main() {
   late FakeProcessingBloc processing;
   late HandoverBloc bloc;
 
+  /// Lets messages and file writes run; the files are real, so this waits a
+  /// little real time, not just event-loop turns.
   Future<void> settle([int turns = 30]) async {
     for (var i = 0; i < turns; i++) {
-      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(const Duration(milliseconds: 2));
+    }
+  }
+
+  /// Waits until [done] holds; fails after a few seconds.
+  Future<void> until(bool Function() done) async {
+    final deadline = DateTime.now().add(const Duration(seconds: 5));
+    while (!done()) {
+      if (DateTime.now().isAfter(deadline)) fail('timed out waiting');
+      await Future<void>.delayed(const Duration(milliseconds: 5));
     }
   }
 
@@ -70,7 +81,11 @@ void main() {
         'offset': 0,
         'data': base64Encode([1, 2]),
       });
-    await settle();
+    await until(
+      () => processing.events.whereType<DocumentImported>().any(
+        (e) => e.sessionId == id,
+      ),
+    );
   }
 
   ProcessingState withSessions(
@@ -109,8 +124,7 @@ void main() {
       processing.push(
         withSessions([handover('s1', ProcessingStatus.patientExtracted)]),
       );
-      await settle();
-      expect(File(imported.filePaths.single).existsSync(), isFalse);
+      await until(() => !File(imported.filePaths.single).existsSync());
     },
   );
 
@@ -244,7 +258,6 @@ void main() {
       'offset': 0,
       'data': base64Encode([1, 2]),
     });
-    await settle();
-    expect(bloc.state.transfers, isEmpty);
+    await until(() => bloc.state.transfers.isEmpty);
   });
 }
