@@ -102,6 +102,7 @@ void main() {
     desktop = await _Device.create('desktop-z', dirs, desktopDocs);
     LwwSyncBloc.ackTimeout = const Duration(seconds: 2);
     LwwSyncBloc.settleDelay = const Duration(milliseconds: 200);
+    LwwSyncBloc.settleFallback = const Duration(seconds: 10);
   });
 
   tearDown(() async {
@@ -348,21 +349,53 @@ void main() {
     );
   });
 
-  test('lists reload once per burst of received rows', () async {
+  Future<void> insertBulk(int count) => phone.db.transaction(() async {
+    for (var i = 0; i < count; i++) {
+      await insertFhir(phone.db, id: 'bulk-$i');
+    }
+  });
+
+  test('lists reload once per burst of received rows, however long the '
+      'batches take', () async {
     await start();
     await connect();
     final before = desktop.bloc.state.recordsVersion;
-    for (var i = 0; i < LwwSyncService.maxBatchRows * 2; i++) {
-      await insertFhir(phone.db, id: 'bulk-$i');
-    }
+    // Each way slower than the quiet window, like a busy device: the second
+    // batch arrives well after the desktop applied the first.
+    phone.link.latency = LwwSyncBloc.settleDelay * 2;
+    desktop.link.latency = LwwSyncBloc.settleDelay * 2;
+    // One write of two batches' worth: the first says more follow, so the
+    // desktop waits for the second.
+    await insertBulk(LwwSyncService.maxBatchRows * 2);
     await untilAsync(
       () async =>
           await countRows(desktop.db, 'fhir_resource') ==
           LwwSyncService.maxBatchRows * 2,
     );
+    await until(() => desktop.bloc.state.recordsVersion > before);
     await Future<void>.delayed(LwwSyncBloc.settleDelay * 3);
     expect(desktop.bloc.state.recordsVersion, before + 1);
   });
+
+  test(
+    'lists still reload when the batches said to follow never come',
+    () async {
+      LwwSyncBloc.settleFallback = const Duration(milliseconds: 500);
+      await start();
+      await connect();
+      final before = desktop.bloc.state.recordsVersion;
+      // The phone waits for an ack that never comes, so it never sends the
+      // second batch.
+      desktop.link.dropTypes.add('sync.ack');
+      await insertBulk(LwwSyncService.maxBatchRows * 2);
+      await untilAsync(
+        () async =>
+            await countRows(desktop.db, 'fhir_resource') ==
+            LwwSyncService.maxBatchRows,
+      );
+      await until(() => desktop.bloc.state.recordsVersion == before + 1);
+    },
+  );
 
   test('a peer that sends something unreadable gets a failed ack, and '
       'nothing is stuck syncing', () async {

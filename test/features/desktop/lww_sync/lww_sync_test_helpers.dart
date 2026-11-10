@@ -43,6 +43,10 @@ class LinkedTcpService extends Fake implements tcp.TcpService {
 
   /// While set, sent messages of these types are lost on the way.
   final dropTypes = <String>{};
+
+  /// How long a sent message takes to arrive, like a slow link or a busy
+  /// device; by default it arrives on the next event-loop turn.
+  Duration latency = Duration.zero;
   final sent = <SentMessage>[];
 
   final _messages = StreamController<tcp.TcpMessage>.broadcast();
@@ -101,7 +105,7 @@ class LinkedTcpService extends Fake implements tcp.TcpService {
     if (dropTypes.contains(type)) return;
     final other = _other!;
     // Delivered later, like bytes off a socket.
-    Timer.run(() {
+    Timer(latency, () {
       if (other.connected && !other._messages.isClosed) {
         other._messages.add(
           tcp.TcpMessage.fromString(type: tcp.MessageType.data, data: json),

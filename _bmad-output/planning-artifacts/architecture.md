@@ -212,7 +212,7 @@ Either side drops a link it heard nothing from for 25 s (phone) or 35 s (desktop
 
 | Type                | Direction | Meaning                                                                                                   |
 | ------------------- | --------- | --------------------------------------------------------------------------------------------------------- |
-| `sync.batch`        | both      | Up to 200 rows (about 2 MB) from the outbox, by table (`SyncBatch`: `id`, `deviceId`, `tables`)           |
+| `sync.batch`        | both      | Up to 200 rows (about 2 MB) from the outbox, by table (`SyncBatch`: `id`, `deviceId`, `tables`, `more`)   |
 | `sync.ack`          | both      | `{id, ok}` after the batch was applied in one transaction                                                 |
 | `sync.digest`       | both      | Per table, the row count and a SHA-256 of every key with its `updated_at`; `reply` marks the answer      |
 | `sync.manifest`     | both      | For a table whose digests differ: every key with its `updated_at`                                         |
@@ -220,7 +220,7 @@ Either side drops a link it heard nothing from for 25 s (phone) or 35 s (desktop
 | `sync.file_chunk`   | both      | `{path, offset, total, data}`, 256 KiB of base64 at a time                                                |
 | `sync.file_missing` | both      | The requested file can't be sent                                                                          |
 
-Sending: one batch at a time, the next after the `sync.ack`. The outbox position the peer acknowledged (`ackedSeq`, per peer in `lww_sync_state`) is the only thing that moves, so nothing is lost to a dropped link, a crash or a rejected write, and nothing depends on either device's clock. A batch not acknowledged within 60 s is sent again on the next trigger. The receiver applies a batch in one transaction (row by row when one row fails), and the writes don't go back into the outbox.
+Sending: one batch at a time, the next after the `sync.ack`. The outbox position the peer acknowledged (`ackedSeq`, per peer in `lww_sync_state`) is the only thing that moves, so nothing is lost to a dropped link, a crash or a rejected write, and nothing depends on either device's clock. A batch not acknowledged within 60 s is sent again on the next trigger. The receiver applies a batch in one transaction (row by row when one row fails), and the writes don't go back into the outbox. `more` says the sender's outbox held further changes when it sent the batch; the receiver reloads its lists 1 s after the last batch of a run, or 10 s after one marked `more` if nothing follows (a dropped link, or only deleted rows left). A batch without `more`, from an older version, counts as the last one.
 
 Reconciliation: on connecting both sides send `sync.digest`; for each table that differs they exchange `sync.manifest` once per connection and queue the rows the other lacks or holds older. After a round of sending, the sender compares digests again; "in sync" means connected, nothing waiting, nothing in flight and the digests matching. A new peer (another desktop, a new phone) starts with a fresh outbox position and reconciles; a desktop restore resets the position.
 

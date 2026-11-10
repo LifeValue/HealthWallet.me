@@ -117,7 +117,8 @@ void main() {
       },
     );
 
-    test('a batch stops at the row limit and continues from there', () async {
+    test('a batch stops at the row limit and continues from there, saying '
+        'whether more follow', () async {
       for (var i = 0; i < LwwSyncService.maxBatchRows + 5; i++) {
         await insertFhir(db, id: 'r$i');
       }
@@ -126,8 +127,23 @@ void main() {
         first.tables['fhir_resource'],
         hasLength(LwwSyncService.maxBatchRows),
       );
+      expect(first.more, isTrue);
       final second = (await service.nextBatch(first.id))!;
       expect(second.tables['fhir_resource'], hasLength(5));
+      expect(second.more, isFalse);
+    });
+
+    test('a batch from a sender without the more flag is the last one', () {
+      final batch = SyncBatch.fromJson({
+        'id': 3,
+        'deviceId': 'old-phone',
+        'tables': <String, dynamic>{},
+      });
+      expect(batch.more, isFalse);
+      expect(
+        SyncBatch.fromJson(batch.copyWith(more: true).toJson()).more,
+        isTrue,
+      );
     });
 
     test('rows deleted since they were logged make an empty batch', () async {
