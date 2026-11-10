@@ -38,68 +38,151 @@ void main() {
     }
   });
 
-  // The following template shows how to write tests ensuring your migrations
-  // preserve existing data.
-  // Testing this can be useful for migrations that change existing columns
-  // (e.g. by alterating their type or constraints). Migrations that only add
-  // tables or columns typically don't need these advanced tests. For more
-  // information, see https://drift.simonbinder.eu/migrations/tests/#verifying-data-integrity
-  // TODO: This generated template shows how these tests could be written. Adopt
-  // it to your own needs when testing migrations with data integrity.
-  test('migration from v1 to v2 does not corrupt data', () async {
-    // Add data to insert into the old database, and the expected rows after the
-    // migration.
-    // TODO: Fill these lists
-    final oldFhirResourceData = <v1.FhirResourceData>[];
-    final expectedNewFhirResourceData = <v2.FhirResourceData>[];
+  // Production opens the database with foreign keys enabled.
+  final fkVerifier = SchemaVerifier(
+    GeneratedHelper(),
+    setup: (raw) => raw.execute('PRAGMA foreign_keys = ON'),
+  );
 
-    final oldSourcesData = <v1.SourcesData>[];
-    final expectedNewSourcesData = <v2.SourcesData>[];
+  Future<AppDatabase> migrateFrom(
+    int fromVersion,
+    void Function(InitializedSchema schema) seed,
+  ) async {
+    final schema = await fkVerifier.schemaAt(fromVersion);
+    seed(schema);
+    final db = AppDatabase(schema.newConnection());
+    await fkVerifier.migrateAndValidate(db, db.schemaVersion);
+    return db;
+  }
 
-    await verifier.testWithDataIntegrity(
-      oldVersion: 1,
-      newVersion: 2,
-      createOld: v1.DatabaseAtV1.new,
-      createNew: v2.DatabaseAtV2.new,
-      openTestedDatabase: AppDatabase.new,
-      createItems: (batch, oldDb) {
-        batch.insertAll(oldDb.fhirResource, oldFhirResourceData);
-        batch.insertAll(oldDb.sources, oldSourcesData);
-      },
-      validateItems: (newDb) async {
-        expect(
-          expectedNewFhirResourceData,
-          await newDb.select(newDb.fhirResource).get(),
+  Future<List<QueryRow>> rows(AppDatabase db, String sql) =>
+      db.customSelect(sql).get();
+
+  // Steps 1 → 8 run on drift's stepByStep; each must keep the rows users
+  // already had. Seeded with raw rows at the old version, then migrated to
+  // the current schema, as production does.
+  group('v1–v8 data migrations', () {
+    test('1 → current keeps records and sources, renaming the source '
+        'name', () async {
+      final db = await migrateFrom(1, (schema) {
+        final raw = schema.rawDatabase;
+        raw.execute(
+          "INSERT INTO sources (id, name, logo) VALUES ('src-1', 'Epic', "
+          "'epic.png')",
         );
-        expect(expectedNewSourcesData, await newDb.select(newDb.sources).get());
-      },
-    );
+        raw.execute(
+          'INSERT INTO fhir_resource (id, source_id, resource_type, '
+          'resource_id, title, date, resource_raw, encounter_id, subject_id) '
+          "VALUES ('obs-1', 'src-1', 'Observation', 'obs-1', 'Glucose', "
+          "1700000000, '{\"resourceType\":\"Observation\",\"id\":\"obs-1\"}', "
+          "'enc-1', 'pat-1')",
+        );
+      });
+
+      final source = (await rows(
+        db,
+        "SELECT platform_name, logo FROM sources WHERE id = 'src-1'",
+      )).single;
+      expect(source.read<String?>('platform_name'), 'Epic');
+      expect(source.read<String?>('logo'), 'epic.png');
+
+      final record = (await rows(
+        db,
+        'SELECT source_id, title, date, encounter_id, subject_id, '
+        "resource_raw, deleted_at FROM fhir_resource WHERE id = 'obs-1'",
+      )).single;
+      expect(record.read<String?>('source_id'), 'src-1');
+      expect(record.read<String?>('title'), 'Glucose');
+      expect(record.read<int?>('date'), 1700000000);
+      expect(record.read<String?>('encounter_id'), 'enc-1');
+      expect(record.read<String?>('subject_id'), 'pat-1');
+      expect(jsonDecode(record.read<String>('resource_raw'))['id'], 'obs-1');
+      expect(record.read<int?>('deleted_at'), isNull);
+      await db.close();
+    });
+
+    test('3 → current keeps notes and drops the old attachments '
+        'table', () async {
+      final db = await migrateFrom(3, (schema) {
+        final raw = schema.rawDatabase;
+        raw.execute(
+          "INSERT INTO sources (id, name) VALUES ('src-1', 'Epic')",
+        );
+        raw.execute(
+          'INSERT INTO fhir_resource (id, source_id, resource_type, '
+          'resource_raw) '
+          "VALUES ('obs-1', 'src-1', 'Observation', '{}')",
+        );
+        raw.execute(
+          'INSERT INTO record_notes (resource_id, content, timestamp) '
+          "VALUES ('obs-1', 'Take with food', 1700000000)",
+        );
+        raw.execute(
+          'INSERT INTO record_attachments (resource_id, file_path, timestamp) '
+          "VALUES ('obs-1', '/old/scan.jpg', 1700000000)",
+        );
+      });
+
+      final note = (await rows(
+        db,
+        'SELECT resource_id, content, timestamp, deleted_at FROM record_notes',
+      )).single;
+      expect(note.read<String>('resource_id'), 'obs-1');
+      expect(note.read<String>('content'), 'Take with food');
+      expect(note.read<int>('timestamp'), 1700000000);
+      expect(note.read<int?>('deleted_at'), isNull);
+      expect(
+        await rows(
+          db,
+          "SELECT name FROM sqlite_master WHERE name = 'record_attachments'",
+        ),
+        isEmpty,
+      );
+      await db.close();
+    });
+
+    test('5 → current keeps the sources\' labels and the processing '
+        'sessions', () async {
+      final db = await migrateFrom(5, (schema) {
+        final raw = schema.rawDatabase;
+        raw.execute(
+          'INSERT INTO sources (id, platform_name, label_source, '
+          "platform_type) VALUES ('src-1', 'Epic', 'My clinic', 'ehr')",
+        );
+        raw.execute(
+          'INSERT INTO processing_sessions (id, file_paths, resources, '
+          'status, origin, created_at) '
+          "VALUES ('session-1', '[\"scan.jpg\"]', '[]', 'draft', 'scan', "
+          '1700000000)',
+        );
+      });
+
+      final source = (await rows(
+        db,
+        "SELECT label_source, platform_type FROM sources WHERE id = 'src-1'",
+      )).single;
+      expect(source.read<String?>('label_source'), 'My clinic');
+      expect(source.read<String?>('platform_type'), 'ehr');
+
+      final session = (await rows(
+        db,
+        'SELECT file_paths, status, origin, created_at, patient, encounter '
+        'FROM processing_sessions',
+      )).single;
+      expect(session.read<String>('file_paths'), '["scan.jpg"]');
+      expect(session.read<String>('status'), 'draft');
+      expect(session.read<String>('origin'), 'scan');
+      expect(session.read<int>('created_at'), 1700000000);
+      expect(session.read<String?>('patient'), isNull);
+      expect(session.read<String?>('encounter'), isNull);
+      await db.close();
+    });
   });
 
   // Data migrations for v9 (production 1.2.x) → v11. These steps are
   // hand-written SQL in AppDatabase, so they are seeded with raw rows at the
   // old version and checked after migrating to the current schema.
   group('v8+ data migrations', () {
-    // Production opens the database with foreign keys enabled.
-    final fkVerifier = SchemaVerifier(
-      GeneratedHelper(),
-      setup: (raw) => raw.execute('PRAGMA foreign_keys = ON'),
-    );
-
-    Future<AppDatabase> migrateFrom(
-      int fromVersion,
-      void Function(InitializedSchema schema) seed,
-    ) async {
-      final schema = await fkVerifier.schemaAt(fromVersion);
-      seed(schema);
-      final db = AppDatabase(schema.newConnection());
-      await fkVerifier.migrateAndValidate(db, db.schemaVersion);
-      return db;
-    }
-
-    Future<List<QueryRow>> rows(AppDatabase db, String sql) =>
-        db.customSelect(sql).get();
-
     String fhirJson(String id, {List<Map<String, String>>? tags}) =>
         jsonEncode({
           'resourceType': 'Observation',
