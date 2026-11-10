@@ -669,6 +669,7 @@
   "desktopHandoverProcessingMessage": "Verarbeitung läuft. Die Übergabe wird die aktuelle Verarbeitung abbrechen und Dateien an den Desktop senden.",
   "desktopHandover": "Übergabe",
   "attachedDocuments": "Angehängte Dokumente",
+  "documentAttachedTo": "An {visit} angehängt.",
   "cameraPermissionRequired": "Kamerazugriff erforderlich",
   "cameraPermissionRequiredMessage": "Diese App benötigt Kamerazugriff zum Scannen. Bitte erteile die Berechtigung.",
   "cameraPermissionDenied": "Kamerazugriff verweigert",

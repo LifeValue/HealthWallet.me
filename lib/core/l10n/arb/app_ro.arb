@@ -672,6 +672,7 @@
   "desktopHandoverProcessingMessage": "Procesarea este în curs. Predarea va anula procesarea curentă și va trimite fișierele pe desktop.",
   "desktopHandover": "Predare",
   "attachedDocuments": "Documente atașate",
+  "documentAttachedTo": "Atașat la {visit}.",
   "cameraPermissionRequired": "Permisiune cameră necesară",
   "cameraPermissionRequiredMessage": "Această aplicație necesită acces la cameră pentru scanare. Te rugăm să acorzi permisiunea.",
   "cameraPermissionDenied": "Permisiune cameră refuzată",

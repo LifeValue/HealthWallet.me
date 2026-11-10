@@ -2778,6 +2778,12 @@ abstract class AppLocalizations {
   /// **'Attached Documents'**
   String get attachedDocuments;
 
+  /// Says which visit a document attached without the AI was filed under, for example "Checkup, 03/11/2026".
+  ///
+  /// In en, this message translates to:
+  /// **'Attached to {visit}.'**
+  String documentAttachedTo(String visit);
+
   /// No description provided for @cameraPermissionRequired.
   ///
   /// In en, this message translates to:

@@ -1526,6 +1526,11 @@ class AppLocalizationsRo extends AppLocalizations {
   String get attachedDocuments => 'Documente atașate';
 
   @override
+  String documentAttachedTo(String visit) {
+    return 'Atașat la $visit.';
+  }
+
+  @override
   String get cameraPermissionRequired => 'Permisiune cameră necesară';
 
   @override

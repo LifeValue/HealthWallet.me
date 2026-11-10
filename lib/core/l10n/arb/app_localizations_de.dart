@@ -1527,6 +1527,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get attachedDocuments => 'Angehängte Dokumente';
 
   @override
+  String documentAttachedTo(String visit) {
+    return 'An $visit angehängt.';
+  }
+
+  @override
   String get cameraPermissionRequired => 'Kamerazugriff erforderlich';
 
   @override

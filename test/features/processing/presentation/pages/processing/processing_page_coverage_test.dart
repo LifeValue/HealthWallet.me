@@ -9,6 +9,9 @@ import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
+import 'package:health_wallet/core/utils/date_format_utils.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/core/widgets/app_message_card.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
@@ -21,6 +24,7 @@ import 'package:health_wallet/features/processing/domain/services/layout_extract
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/processing_page.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/processing_mapping_section.dart';
+import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/processing_resources_section.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/bloc/attach_to_encounter_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/preview_card.dart';
@@ -115,6 +119,7 @@ void main() {
     WidgetTester tester,
     ProcessingState initial, {
     AppPlatform platform = AppPlatform.mobile,
+    bool attachOnly = false,
   }) async {
     tester.view.physicalSize = const Size(800, 2400);
     tester.view.devicePixelRatio = 1;
@@ -160,7 +165,7 @@ void main() {
             BlocProvider<ProcessingBloc>.value(value: bloc),
             BlocProvider<UserBloc>.value(value: userBloc),
           ],
-          child: ProcessingPage(sessionId: sessionId),
+          child: ProcessingPage(sessionId: sessionId, attachOnly: attachOnly),
         ),
       ),
     );
@@ -668,6 +673,231 @@ void main() {
       await frames(tester);
 
       expect(find.text(_en.recordsSavedTitle), findsNothing);
+    });
+  });
+
+  group('attach without the AI', () {
+    // Why the user is here: the session was found to have no model.
+    const noModel = PipelineStatus.failure(
+      error: 'no model',
+      reason: PipelineFailureReason.modelNotFound,
+      sessionId: 's1',
+    );
+    const pending = ProcessingSession(
+      id: 's1',
+      origin: ProcessingOrigin.import,
+    );
+
+    testPage('shows the pages and the attach action, nothing of the AI', (
+      tester,
+    ) async {
+      await pumpPage(
+        tester,
+        stateWith(pending, status: noModel),
+        attachOnly: true,
+      );
+
+      expect(find.byType(PreviewCard), findsOne);
+      expect(find.text(_en.attachToEncounter), findsNWidgets(2));
+      expect(find.byType(SummaryCard), findsNothing);
+      expect(find.byType(ProcessingMappingSection), findsNothing);
+      expect(find.byType(ProcessingResourcesSection), findsNothing);
+      expect(find.byType(AppMessageCard), findsNothing);
+      expect(find.widgetWithIcon(IconButton, Icons.tune), findsNothing);
+      expect(retryButton(), findsNothing);
+    });
+
+    testPage('asks where the document goes, then saves it there', (
+      tester,
+    ) async {
+      await pumpPage(
+        tester,
+        stateWith(pending, status: noModel),
+        attachOnly: true,
+      );
+
+      await tester.tap(find.widgetWithText(AppButton, _en.attachToEncounter));
+      await frames(tester);
+      expect(find.byType(AttachToEncounterWidget), findsOne);
+      await tapText(tester, _en.save);
+
+      expect(bloc.events, [
+        EncounterAttached(
+          sessionId: 's1',
+          patient: _picked.$1,
+          encounter: _picked.$2,
+        ),
+        const ResourceCreationInitiated(sessionId: 's1'),
+      ]);
+    });
+
+    testPage('closing the picker saves nothing', (tester) async {
+      await pumpPage(
+        tester,
+        stateWith(pending, status: noModel),
+        attachOnly: true,
+      );
+
+      await tester.tap(find.widgetWithText(AppButton, _en.attachToEncounter));
+      await frames(tester);
+      await tapText(tester, _en.cancel);
+
+      expect(bloc.events, isEmpty);
+    });
+
+    testPage('cannot be tapped again while saving', (tester) async {
+      await pumpPage(
+        tester,
+        stateWith(pending, status: const PipelineStatus.savingResources()),
+        attachOnly: true,
+      );
+
+      final button = tester.widget<AppButton>(
+        find.widgetWithText(AppButton, _en.attachToEncounter),
+      );
+      expect(button.enabled, isFalse);
+    });
+
+    testPage('a failed save says why, in plain words, and can be tried '
+        'again', (tester) async {
+      await pumpPage(
+        tester,
+        stateWith(pending, status: noModel),
+        attachOnly: true,
+      );
+
+      states.add(
+        stateWith(
+          pending,
+          status: const PipelineStatus.failure(
+            error: 'Exception: Not enough memory',
+            reason: PipelineFailureReason.notEnoughMemory,
+            sessionId: 's1',
+          ),
+        ),
+      );
+      await frames(tester);
+
+      expect(
+        find.text(PipelineFailureReason.notEnoughMemory.localizedMessage(_en)),
+        findsOne,
+      );
+      expect(find.textContaining('Exception'), findsNothing);
+      final button = tester.widget<AppButton>(
+        find.widgetWithText(AppButton, _en.attachToEncounter),
+      );
+      expect(button.enabled, isTrue);
+    });
+
+    testPage('another session\'s failure is not shown', (tester) async {
+      await pumpPage(
+        tester,
+        stateWith(
+          pending,
+          status: const PipelineStatus.failure(
+            error: 'boom',
+            reason: PipelineFailureReason.other,
+            sessionId: 'other',
+          ),
+        ),
+        attachOnly: true,
+      );
+
+      expect(find.byType(AppMessageCard), findsNothing);
+    });
+
+    group('once saved', () {
+      Future<void> savedUnder(
+        WidgetTester tester,
+        StagedEncounter encounter,
+      ) async {
+        final session = pending.copyWith(encounter: encounter);
+        await pumpPage(
+          tester,
+          stateWith(session, status: noModel),
+          attachOnly: true,
+        );
+        states.add(
+          stateWith(
+            session,
+            status: const PipelineStatus.success(sessionId: 's1'),
+          ),
+        );
+        await frames(tester);
+        expect(find.text(_en.recordsSavedTitle), findsOne);
+        expect(find.text(_en.whatNextQuestion), findsOne);
+      }
+
+      final region = const UserState().regionPreset;
+
+      testPage('says the visit it went to, with its date', (tester) async {
+        final date = DateTime(2026, 11, 3);
+        await savedUnder(
+          tester,
+          StagedEncounter(
+            existing: Encounter(id: 'e1', title: 'Checkup', date: date),
+          ),
+        );
+
+        expect(
+          find.text(
+            _en.documentAttachedTo(
+              'Checkup, ${DateFormatUtils.formatDate(date, region)}',
+            ),
+          ),
+          findsOne,
+        );
+      });
+
+      testPage('names a new visit by its type and start', (tester) async {
+        await savedUnder(
+          tester,
+          const StagedEncounter(
+            draft: MappingEncounter(
+              id: 'e-new',
+              encounterType: MappedProperty(value: 'Dental visit'),
+              periodStart: MappedProperty(value: '2026-11-03'),
+            ),
+          ),
+        );
+
+        expect(
+          find.text(
+            _en.documentAttachedTo(
+              'Dental visit, '
+              '${DateFormatUtils.formatIsoForDisplay('2026-11-03', region)}',
+            ),
+          ),
+          findsOne,
+        );
+      });
+
+      testPage('a visit without a date is named alone', (tester) async {
+        await savedUnder(
+          tester,
+          const StagedEncounter(
+            existing: Encounter(id: 'e1', title: 'Checkup'),
+          ),
+        );
+
+        expect(find.text(_en.documentAttachedTo('Checkup')), findsOne);
+      });
+
+      testPage('lets the user continue importing or go to the records', (
+        tester,
+      ) async {
+        await savedUnder(
+          tester,
+          const StagedEncounter(
+            existing: Encounter(id: 'e1', title: 'Checkup'),
+          ),
+        );
+
+        await tapText(tester, _en.goToRecords);
+
+        expect(bloc.events.single, isA<SessionCleared>());
+        expect(navigation.jumps, [1]);
+      });
     });
   });
 }

@@ -673,6 +673,7 @@
   "desktopHandoverProcessingMessage": "El procesamiento está en curso. La entrega cancelará el procesamiento actual y enviará los archivos al escritorio.",
   "desktopHandover": "Entrega",
   "attachedDocuments": "Documentos adjuntos",
+  "documentAttachedTo": "Adjuntado a {visit}.",
   "cameraPermissionRequired": "Permiso de cámara requerido",
   "cameraPermissionRequiredMessage": "Esta app necesita acceso a la cámara para escanear. Por favor, otorga el permiso.",
   "cameraPermissionDenied": "Permiso de cámara denegado",

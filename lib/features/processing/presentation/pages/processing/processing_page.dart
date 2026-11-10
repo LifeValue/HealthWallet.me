@@ -9,13 +9,17 @@ import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/core/widgets/app_message_card.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/utils/handover_utils.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/processing_mapping_section.dart';
@@ -25,16 +29,22 @@ import 'package:health_wallet/features/processing/presentation/widgets/attach_to
 import 'package:health_wallet/features/processing/presentation/widgets/debug_log_button.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/preview_card.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/summary_card.dart';
+import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 @RoutePage()
 class ProcessingPage extends StatefulWidget {
   const ProcessingPage({
     required this.sessionId,
+    this.attachOnly = false,
     super.key,
   });
 
   final String sessionId;
+
+  /// The user chose to attach the document without the AI: only its pages
+  /// and the attach action are shown, nothing is read.
+  final bool attachOnly;
 
   @override
   State<ProcessingPage> createState() => _ProcessingPageState();
@@ -66,6 +76,44 @@ class _ProcessingPageState extends State<ProcessingPage> {
     _encounterNameController.dispose();
     _pageController.dispose();
     super.dispose();
+  }
+
+  /// Asks where the document goes, then files it there without reading it.
+  Future<void> _attachWithoutProcessing() async {
+    final result = await showDialog<AttachToEncounterResult>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const AttachToEncounterWidget(),
+    );
+    if (result == null || !mounted) return;
+    final (patient, encounter) = result;
+    context.read<ProcessingBloc>()
+      ..add(
+        EncounterAttached(
+          sessionId: widget.sessionId,
+          patient: patient,
+          encounter: encounter,
+        ),
+      )
+      ..add(ResourceCreationInitiated(sessionId: widget.sessionId));
+  }
+
+  /// The visit a document was attached to, as the user picked it: its name
+  /// and, when known, its date.
+  String _visitLabel(StagedEncounter encounter) {
+    final region = context.read<UserBloc>().state.regionPreset;
+    final (name, date) = switch (encounter) {
+      StagedEncounter(:final existing?) => (
+        existing.displayTitle,
+        DateFormatUtils.formatDate(existing.date, region),
+      ),
+      StagedEncounter(:final draft?) => (
+        draft.encounterType.value,
+        DateFormatUtils.formatIsoForDisplay(draft.periodStart.value, region),
+      ),
+      _ => ('', ''),
+    };
+    return [name, date].where((part) => part.isNotEmpty).join(', ');
   }
 
   void _scrollToFormErrors() {
@@ -196,9 +244,15 @@ class _ProcessingPageState extends State<ProcessingPage> {
           final scanBloc = context.read<ProcessingBloc>();
           final navController = getIt<PageViewNavigationController>();
           final isDesktop = getIt<AppPlatform>().isDesktop;
+          final visit = widget.attachOnly
+              ? _visitLabel(displayedSession.encounter)
+              : '';
           final dialogResult = await AppSimpleDialog.showConfirmation(
             context: context,
             title: context.l10n.recordsSavedTitle,
+            message: visit.isEmpty
+                ? null
+                : context.l10n.documentAttachedTo(visit),
             subtitle: context.l10n.whatNextQuestion,
             confirmText: isDesktop
                 ? context.l10n.goToRecords
@@ -290,10 +344,12 @@ class _ProcessingPageState extends State<ProcessingPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                SummaryCard(
-                                  totalPagesForOcr: sessionImages.length,
-                                ),
-                                const SizedBox(height: Insets.normal),
+                                if (!widget.attachOnly) ...[
+                                  SummaryCard(
+                                    totalPagesForOcr: sessionImages.length,
+                                  ),
+                                  const SizedBox(height: Insets.normal),
+                                ],
                                 if (sessionImages.isNotEmpty) ...[
                                   PreviewCard(
                                     imagePaths: sessionImages,
@@ -320,83 +376,67 @@ class _ProcessingPageState extends State<ProcessingPage> {
                                   const SizedBox(height: Insets.small),
                                 ],
                                 const SizedBox(height: Insets.large),
-                                ProcessingMappingSection(
-                                  state: state,
-                                  displayedSession: displayedSession,
-                                  sessionId: widget.sessionId,
-                                  onShowAiSettings: _showAiSettingsDialog,
-                                  onRetryStep1: () =>
-                                      context.read<ProcessingBloc>().add(
-                                        MappingInitiated(
-                                          sessionId: widget.sessionId,
-                                        ),
-                                      ),
-                                  onRetryStep2: () =>
-                                      context.read<ProcessingBloc>().add(
-                                        ProcessRemainingResources(
-                                          sessionId: widget.sessionId,
-                                        ),
-                                      ),
-                                  onCancel: () =>
-                                      context.read<ProcessingBloc>().add(
-                                        MappingCancelled(
-                                          sessionId: widget.sessionId,
-                                        ),
-                                      ),
-                                  checkModelExistence: () =>
-                                      getIt<LayoutExtractionService>()
-                                          .canProcess(
-                                            widget.sessionId,
-                                            filePaths:
-                                                displayedSession.filePaths,
-                                            imagePaths: state.ocrPagesFor(
-                                              widget.sessionId,
-                                            ),
+                                if (widget.attachOnly)
+                                  _AttachSection(
+                                    state: state,
+                                    sessionId: widget.sessionId,
+                                    onAttach: _attachWithoutProcessing,
+                                  )
+                                else ...[
+                                  ProcessingMappingSection(
+                                    state: state,
+                                    displayedSession: displayedSession,
+                                    sessionId: widget.sessionId,
+                                    onShowAiSettings: _showAiSettingsDialog,
+                                    onRetryStep1: () =>
+                                        context.read<ProcessingBloc>().add(
+                                          MappingInitiated(
+                                            sessionId: widget.sessionId,
                                           ),
-                                  onProcessOnDesktop: () {
-                                    HandoverUtils.initiateHandover(
-                                      context,
-                                      session: displayedSession,
-                                    );
-                                  },
-                                  onAttachWithoutProcessing: () async {
-                                    final result =
-                                        await showDialog<
-                                          AttachToEncounterResult
-                                        >(
-                                          context: context,
-                                          barrierDismissible: false,
-                                          builder: (ctx) =>
-                                              const AttachToEncounterWidget(),
-                                        );
-                                    if (result == null || !context.mounted) {
-                                      return;
-                                    }
-                                    final (patient, encounter) = result;
-                                    context.read<ProcessingBloc>().add(
-                                      EncounterAttached(
-                                        sessionId: widget.sessionId,
-                                        patient: patient,
-                                        encounter: encounter,
-                                      ),
-                                    );
-                                    context.read<ProcessingBloc>().add(
-                                      ResourceCreationInitiated(
-                                        sessionId: widget.sessionId,
-                                      ),
-                                    );
-                                  },
-                                ),
-                                ProcessingResourcesSection(
-                                  state: state,
-                                  displayedSession: displayedSession,
-                                  sessionId: widget.sessionId,
-                                  formKey: _formKey,
-                                  encounterSectionKey: _encounterSectionKey,
-                                  deviceCapability: _deviceCapability,
-                                  onScrollToFormErrors: _scrollToFormErrors,
-                                  onSaveResources: () => _saveResources(state),
-                                ),
+                                        ),
+                                    onRetryStep2: () =>
+                                        context.read<ProcessingBloc>().add(
+                                          ProcessRemainingResources(
+                                            sessionId: widget.sessionId,
+                                          ),
+                                        ),
+                                    onCancel: () =>
+                                        context.read<ProcessingBloc>().add(
+                                          MappingCancelled(
+                                            sessionId: widget.sessionId,
+                                          ),
+                                        ),
+                                    checkModelExistence: () =>
+                                        getIt<LayoutExtractionService>()
+                                            .canProcess(
+                                              widget.sessionId,
+                                              filePaths:
+                                                  displayedSession.filePaths,
+                                              imagePaths: state.ocrPagesFor(
+                                                widget.sessionId,
+                                              ),
+                                            ),
+                                    onProcessOnDesktop: () {
+                                      HandoverUtils.initiateHandover(
+                                        context,
+                                        session: displayedSession,
+                                      );
+                                    },
+                                    onAttachWithoutProcessing:
+                                        _attachWithoutProcessing,
+                                  ),
+                                  ProcessingResourcesSection(
+                                    state: state,
+                                    displayedSession: displayedSession,
+                                    sessionId: widget.sessionId,
+                                    formKey: _formKey,
+                                    encounterSectionKey: _encounterSectionKey,
+                                    deviceCapability: _deviceCapability,
+                                    onScrollToFormErrors: _scrollToFormErrors,
+                                    onSaveResources: () =>
+                                        _saveResources(state),
+                                  ),
+                                ],
                                 const SizedBox(height: Insets.large),
                               ],
                             ),
@@ -421,14 +461,19 @@ class _ProcessingPageState extends State<ProcessingPage> {
     bool isStep2Retry,
   ) {
     return AppBar(
-      title: Text(context.l10n.processing, style: AppTextStyle.titleMedium),
+      title: Text(
+        widget.attachOnly
+            ? context.l10n.attachToEncounter
+            : context.l10n.processing,
+        style: AppTextStyle.titleMedium,
+      ),
       centerTitle: true,
       backgroundColor: context.colorScheme.surface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
       actions: [
-        if (canRetry)
+        if (canRetry && !widget.attachOnly)
           IconButton(
             visualDensity: VisualDensity.compact,
             icon: Icon(
@@ -453,19 +498,20 @@ class _ProcessingPageState extends State<ProcessingPage> {
               }
             },
           ),
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          icon: Icon(
-            Icons.tune,
-            size: 20,
-            color: displayedSession != null && displayedSession.isProcessing
-                ? context.colorScheme.onSurface.withValues(alpha: 0.3)
-                : context.colorScheme.onSurface,
+        if (!widget.attachOnly)
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: Icon(
+              Icons.tune,
+              size: 20,
+              color: displayedSession != null && displayedSession.isProcessing
+                  ? context.colorScheme.onSurface.withValues(alpha: 0.3)
+                  : context.colorScheme.onSurface,
+            ),
+            onPressed: displayedSession != null && displayedSession.isProcessing
+                ? null
+                : _showAiSettingsDialog,
           ),
-          onPressed: displayedSession != null && displayedSession.isProcessing
-              ? null
-              : _showAiSettingsDialog,
-        ),
         const DebugLogButton(),
       ],
     );
@@ -481,6 +527,52 @@ class _ProcessingPageState extends State<ProcessingPage> {
           Text(message),
         ],
       ),
+    );
+  }
+}
+
+/// Attaching without the AI: why the last save failed, if it did, and the
+/// action that asks where the document goes and saves it.
+class _AttachSection extends StatelessWidget {
+  const _AttachSection({
+    required this.state,
+    required this.sessionId,
+    required this.onAttach,
+  });
+
+  final ProcessingState state;
+  final String sessionId;
+  final VoidCallback onAttach;
+
+  @override
+  Widget build(BuildContext context) {
+    final isSaving = state.status is SavingResources;
+    // Only a failed save: that no model is on the device is why the user is
+    // here, not an error.
+    final failure = switch (state.status) {
+      final Failure f
+          when f.sessionId == sessionId &&
+              f.reason != PipelineFailureReason.modelNotFound =>
+        f,
+      _ => null,
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (failure != null) ...[
+          AppMessageCard(
+            message: failure.reason.localizedMessage(context.l10n),
+            type: AppMessageType.error,
+          ),
+          const SizedBox(height: Insets.normal),
+        ],
+        AppButton(
+          label: context.l10n.attachToEncounter,
+          enabled: !isSaving,
+          onPressed: onAttach,
+        ),
+      ],
     );
   }
 }

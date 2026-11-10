@@ -703,6 +703,15 @@
   "desktopHandoverProcessingMessage": "Processing is in progress. Handover will cancel the current processing and send files to desktop.",
   "desktopHandover": "Handover",
   "attachedDocuments": "Attached Documents",
+  "documentAttachedTo": "Attached to {visit}.",
+  "@documentAttachedTo": {
+    "description": "Says which visit a document attached without the AI was filed under, for example \"Checkup, 03/11/2026\".",
+    "placeholders": {
+      "visit": {
+        "type": "String"
+      }
+    }
+  },
   "cameraPermissionRequired": "Camera Permission Required",
   "cameraPermissionRequiredMessage": "This app needs camera access to scan. Please grant permission to continue.",
   "cameraPermissionDenied": "Camera Permission Denied",
