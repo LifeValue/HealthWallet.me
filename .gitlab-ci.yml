@@ -193,17 +193,26 @@ checks:
     # Same exclusions as .pre-commit-config.yaml: generated files are never formatted.
     - git ls-files '*.dart' | grep -vE '\.(g|freezed|gr|config|gen)\.dart$|/app_localizations[^/]*\.dart$|^test/drift/my_database/generated/' | xargs dart format --output=none --set-exit-if-changed
     # Analyze (errors, warnings and infos all fail, as in scripts/check.sh) and test run in
-    # parallel; the job fails if either fails.
+    # parallel; the job fails if either fails. The tests run with coverage, and a critical area
+    # below its floor in tool/coverage_floors.json fails the job too (see tool/coverage_report.dart).
+    # The coverage helper is written after analyze has started reading the files, and analyze
+    # ignores it anyway (analysis_options.yaml).
     - |
       flutter analyze --no-pub > analyze.log 2>&1 &
       analyze_pid=$!
+      scripts/write_coverage_helper.sh
       test_status=0
-      flutter test --no-pub || test_status=$?
+      flutter test --no-pub --coverage || test_status=$?
+      rm -f test/coverage_all_files_test.dart
+      coverage_status=0
+      if [ "$test_status" -eq 0 ]; then
+        dart run tool/coverage_report.dart --check || coverage_status=$?
+      fi
       analyze_status=0
       wait "$analyze_pid" || analyze_status=$?
       echo "==> flutter analyze"
       cat analyze.log
-      [ "$analyze_status" -eq 0 ] && [ "$test_status" -eq 0 ]
+      [ "$analyze_status" -eq 0 ] && [ "$test_status" -eq 0 ] && [ "$coverage_status" -eq 0 ]
 
 # BASE = where this branch left its Gitflow parent (develop, or master for hotfix/*); on develop
 # and master, the previous push. Only that parent is fetched, only as deep as needed, instead of the

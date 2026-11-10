@@ -4,6 +4,13 @@
 //
 //   dart run tool/coverage_report.dart                 summary
 //   dart run tool/coverage_report.dart --files <dir>   per-file lines for one directory
+//   dart run tool/coverage_report.dart --check         also fail if a critical area is
+//                                                      below its floor (CI runs this)
+//   dart run tool/coverage_report.dart --ratchet       raise the floors to today's coverage
+//
+// The floors in tool/coverage_floors.json only go up: after adding tests, run --ratchet and
+// commit the file. A merge request that lowers an area's coverage fails `checks`.
+import 'dart:convert';
 import 'dart:io';
 
 /// Areas where a regression loses or corrupts user data, or breaks a contract with something
@@ -18,6 +25,10 @@ const criticalAreas = <String, String>{
   'FHIR record extractors': 'lib/features/records/domain/utils/',
   'Records data': 'lib/features/records/data/',
   'Records BLoCs': 'lib/features/records/presentation/bloc/',
+  'Processing BLoC': 'lib/features/processing/presentation/bloc/',
+  'Sync BLoC': 'lib/features/sync/presentation/bloc/',
+  'Onboarding': 'lib/features/onboarding/',
+  'Notifications BLoC': 'lib/features/notifications/bloc/',
   'Scan → FHIR mapping':
       'lib/features/processing/domain/entity/mapping_resources/',
   'Patient services': 'lib/features/user/domain/services/',
@@ -33,9 +44,17 @@ final _generated = RegExp(
   r'\.(g|freezed|gr|config|gen)\.dart$|/app_localizations[^/]*\.dart$',
 );
 
+const _floorsPath = 'tool/coverage_floors.json';
+
+/// Coverage may dip this far below a floor before `--check` fails, so a
+/// refactor that removes a few covered lines doesn't break the build.
+const _tolerance = 0.2;
+
 class Coverage {
   int hit = 0;
   int found = 0;
+
+  double get ratio => found == 0 ? 100 : 100 * hit / found;
 
   void add(Coverage other) {
     hit += other.hit;
@@ -128,16 +147,63 @@ Future<void> main(List<String> args) async {
     );
   }
 
+  final floorsFile = File(_floorsPath);
+  final floors = floorsFile.existsSync()
+      ? (jsonDecode(floorsFile.readAsStringSync()) as Map<String, dynamic>).map(
+          (k, v) => MapEntry(k, (v as num).toDouble()),
+        )
+      : <String, double>{};
+
   stdout
     ..writeln()
-    ..writeln('${'Critical area'.padRight(28)}  Cover     Lines');
+    ..writeln('${'Critical area'.padRight(28)}  Cover     Lines       Floor');
+  final critical = <String, Coverage>{};
   for (final MapEntry(key: name, value: prefix) in criticalAreas.entries) {
-    final c = Coverage();
+    final c = critical[name] = Coverage();
     for (final file in files.where((f) => f.startsWith(prefix))) {
       c.add(of(file));
     }
+    final floor = floors[name];
     stdout.writeln(
-      '${name.padRight(28)}  ${c.percent}  ${'${c.hit}/${c.found}'.padLeft(11)}',
+      '${name.padRight(28)}  ${c.percent}  ${'${c.hit}/${c.found}'.padLeft(11)}  '
+      '${floor == null ? '' : '${floor.toStringAsFixed(1)}%'.padLeft(6)}',
     );
+  }
+
+  if (args.contains('--ratchet')) {
+    final raised = {
+      for (final MapEntry(key: name, value: c) in critical.entries)
+        // Rounded down to 0.1, and never below the floor already set.
+        name: [
+          (c.ratio * 10).floorToDouble() / 10,
+          floors[name] ?? 0.0,
+        ].reduce((a, b) => a > b ? a : b),
+    };
+    floorsFile.writeAsStringSync(
+      '${const JsonEncoder.withIndent('  ').convert(raised)}\n',
+    );
+    stdout.writeln('\nWrote the floors to $_floorsPath');
+  }
+
+  if (args.contains('--check')) {
+    final below = [
+      for (final MapEntry(key: name, value: c) in critical.entries)
+        if (floors[name] case final floor? when c.ratio < floor - _tolerance)
+          '$name: ${c.percent.trim()} is below its floor of '
+              '${floor.toStringAsFixed(1)}%',
+      for (final name in criticalAreas.keys)
+        if (!floors.containsKey(name)) '$name has no floor in $_floorsPath',
+    ];
+    if (below.isNotEmpty) {
+      stderr
+        ..writeln()
+        ..writeln('Coverage fell in a critical area:')
+        ..writeAll(below.map((line) => '  $line\n'))
+        ..writeln(
+          'Add tests for the code you changed. After adding tests, raise the '
+          'floors with `scripts/coverage.sh --ratchet`.',
+        );
+      exit(1);
+    }
   }
 }
