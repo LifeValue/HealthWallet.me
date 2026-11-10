@@ -76,15 +76,17 @@ Batch 2:
    - Model sizes written in two places. _The size shown is now worked out from `modelSizeMB`; the Ultra model reads "~4.6 GB" instead of "~5 GB"._
    - The Spanish-only key `counterAppBarTitle`. _Removed._
    - 18 empty `catch (_) {}` (11 in `desktop/`, 7 in `share_records/`); the backup ones (`backup_service.dart`, `backup_bloc.dart`, `backup_card.dart`) are fixed in item 3. _The `desktop/` ones were already gone; the 7 in `share_records/` now log. No empty `catch` is left in `lib/`._
-7. **Tests and CI (section 6).**
-   - No BLoC tests for Home, Onboarding, Notifications, Focus Mode, Preview; Load Model and Attach to Encounter are only partly covered.
-   - No widget tests for the review form, scanning and the Preferences toggles (the patient dialog and Preferences modal tests come with item 1).
-   - No data tests for migrations 1→8.
-   - `integration_test/` (including `app_l10n_test.dart`) isn't run in CI.
-   - No coverage gate.
-   - The translation tests don't catch dropped plurals or outdated translations.
+7. **Tests and CI (section 6).** _Done on `feature/mobile-stabilization-batch-2`, except where noted. The whole app's coverage went from 54.0% to 63.6%. The CI changes haven't run on GitLab yet._
+   - No BLoC tests for Home, Onboarding, Notifications, Focus Mode, Preview; Load Model and Attach to Encounter are only partly covered. _Onboarding, Notifications, Focus Mode and Attach to Encounter now have BLoC tests; Preview already had them and Load Model is at 99%. Home is left out: holders rewrote it and B3 is still open. The tests found four bugs, now fixed: an onboarding link that couldn't open failed silently and its error came back on every page change; Focus Mode emitted after its start handler had returned; the attach dialog showed raw exception text; unreadable saved notifications were dropped without a log. B6 (notification routes) is pinned by a skipped `BUG:` test._
+   - No widget tests for the review form, scanning and the Preferences toggles (the patient dialog and Preferences modal tests come with item 1). _The scan page and the region and language dialog have tests; the review form (73%) and the other toggles already had them. Still open: the Share Proximity row (46%), whose permission and Bluetooth polling sits in the widget and should move to a service first, and the biometrics setup dialog._
+   - No data tests for migrations 1→8. _Added: records, sources (with the renamed name column), notes and processing sessions survive from v1, v3 and v5._
+   - `integration_test/` (including `app_l10n_test.dart`) isn't run in CI. _`test:integration` runs it on a fresh iOS simulator on the Mac mini: automatically on `develop`, `release/*` and `master`, by hand elsewhere._
+   - No coverage gate. _Each critical area has a floor in `tool/coverage_floors.json`; `checks` fails below it, and `scripts/coverage.sh --ratchet` raises the floors. The mobile Processing, Sync, Onboarding and Notifications BLoCs are now critical areas._
+   - The translation tests don't catch dropped plurals or outdated translations. _`arb_parity_test.dart` now fails when a translated plural lacks a form its language needs (Romanian `few`) or when an English text changed after it was translated (`tool/update_translation_baseline.dart`)._
 
 **Also open, not in a batch:**
+
+- Found during batch 2: Home never shows a failed load (`HomeStatus.failure` is set but nothing reads it); the scan flow calls the scanner plugin from `session_handler.dart`, not through the repository.
 
 - Notifications: routes aren't stored, so taps do nothing after a restart, and handover notifications have no route (B6).
 - Untitled records show the English "Resource", and other types fall back to the English type name.
