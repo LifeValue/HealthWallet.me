@@ -1159,6 +1159,7 @@
   "loadingRelatedResources": "Cargando recursos relacionados...",
   "noRelatedResourcesForEncounter": "No se encontraron recursos relacionados con este encuentro",
   "cannotAttachToDocumentReference": "No se pueden adjuntar archivos a un documento",
+  "attachToEncounterLoadFailed": "No se pudieron cargar los pacientes y encuentros. Inténtalo de nuevo.",
   "attachFileFailed": "No se pudo adjuntar el archivo. Inténtalo de nuevo.",
   "attachmentDeleteFailed": "No se pudo eliminar el archivo adjunto. Inténtalo de nuevo.",
   "deleteRecordOfType": "Eliminar {type}",

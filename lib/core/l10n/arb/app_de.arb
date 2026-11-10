@@ -1159,6 +1159,7 @@
   "loadingRelatedResources": "Zugehörige Einträge werden geladen...",
   "noRelatedResourcesForEncounter": "Keine zugehörigen Einträge zu diesem Termin gefunden",
   "cannotAttachToDocumentReference": "An ein Dokument können keine Dateien angehängt werden",
+  "attachToEncounterLoadFailed": "Patienten und Termine konnten nicht geladen werden. Bitte versuche es erneut.",
   "attachFileFailed": "Die Datei konnte nicht angehängt werden. Bitte versuche es erneut.",
   "attachmentDeleteFailed": "Der Anhang konnte nicht gelöscht werden. Bitte versuche es erneut.",
   "deleteRecordOfType": "{type} löschen",

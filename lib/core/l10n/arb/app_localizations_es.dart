@@ -2853,6 +2853,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'No se pueden adjuntar archivos a un documento';
 
   @override
+  String get attachToEncounterLoadFailed =>
+      'No se pudieron cargar los pacientes y encuentros. Inténtalo de nuevo.';
+
+  @override
   String get attachFileFailed =>
       'No se pudo adjuntar el archivo. Inténtalo de nuevo.';
 

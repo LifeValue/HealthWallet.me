@@ -2861,6 +2861,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'An ein Dokument können keine Dateien angehängt werden';
 
   @override
+  String get attachToEncounterLoadFailed =>
+      'Patienten und Termine konnten nicht geladen werden. Bitte versuche es erneut.';
+
+  @override
   String get attachFileFailed =>
       'Die Datei konnte nicht angehängt werden. Bitte versuche es erneut.';
 

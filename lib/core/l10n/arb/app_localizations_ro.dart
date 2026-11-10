@@ -2856,6 +2856,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'Nu se pot atașa fișiere la un document';
 
   @override
+  String get attachToEncounterLoadFailed =>
+      'Pacienții și consultațiile nu au putut fi încărcate. Încearcă din nou.';
+
+  @override
   String get attachFileFailed =>
       'Fișierul nu a putut fi atașat. Încearcă din nou.';
 

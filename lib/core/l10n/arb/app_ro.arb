@@ -1158,6 +1158,7 @@
   "loadingRelatedResources": "Se încarcă resursele asociate...",
   "noRelatedResourcesForEncounter": "Nu s-au găsit resurse asociate acestei consultații",
   "cannotAttachToDocumentReference": "Nu se pot atașa fișiere la un document",
+  "attachToEncounterLoadFailed": "Pacienții și consultațiile nu au putut fi încărcate. Încearcă din nou.",
   "attachFileFailed": "Fișierul nu a putut fi atașat. Încearcă din nou.",
   "attachmentDeleteFailed": "Atașamentul nu a putut fi șters. Încearcă din nou.",
   "deleteRecordOfType": "Șterge {type}",

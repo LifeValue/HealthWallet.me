@@ -1314,6 +1314,7 @@
   "loadingRelatedResources": "Loading related resources...",
   "noRelatedResourcesForEncounter": "No related resources found for this encounter",
   "cannotAttachToDocumentReference": "Cannot attach files to DocumentReference resources",
+  "attachToEncounterLoadFailed": "Couldn't load the patients and encounters. Please try again.",
   "attachFileFailed": "The file could not be attached. Please try again.",
   "attachmentDeleteFailed": "The attachment could not be deleted. Please try again.",
   "deleteRecordOfType": "Delete {type}",

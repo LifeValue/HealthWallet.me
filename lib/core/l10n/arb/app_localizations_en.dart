@@ -2819,6 +2819,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Cannot attach files to DocumentReference resources';
 
   @override
+  String get attachToEncounterLoadFailed =>
+      'Couldn\'t load the patients and encounters. Please try again.';
+
+  @override
   String get attachFileFailed =>
       'The file could not be attached. Please try again.';
 

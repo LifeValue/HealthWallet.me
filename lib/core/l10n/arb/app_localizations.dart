@@ -5147,6 +5147,12 @@ abstract class AppLocalizations {
   /// **'Cannot attach files to DocumentReference resources'**
   String get cannotAttachToDocumentReference;
 
+  /// No description provided for @attachToEncounterLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the patients and encounters. Please try again.'**
+  String get attachToEncounterLoadFailed;
+
   /// No description provided for @attachFileFailed.
   ///
   /// In en, this message translates to:
