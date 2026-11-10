@@ -91,7 +91,6 @@ class _Transfer {
 }
 
 class _FakeNetwork extends Fake implements AiInferenceDataSource {
-  final legacy = _Transfer();
   final model = _Transfer();
   final mmproj = _Transfer();
   final modelCancels = <AiModelVariant>[];
@@ -104,10 +103,6 @@ class _FakeNetwork extends Fake implements AiInferenceDataSource {
   var disposes = 0;
   var textPrompts = 0;
   var visionPrompts = 0;
-
-  @override
-  Future<void> downloadModel({required void Function(int) onProgress}) =>
-      legacy.start(onProgress);
 
   @override
   Future<bool> checkModelExistence() async => modelExists;
@@ -723,39 +718,6 @@ void main() {
         ['imports/a.pdf', 'imports/b.jpg'],
       );
       expect(companion.status.value, ProcessingStatus.processing.toString());
-    });
-  });
-
-  group('downloadModel', () {
-    test('reports progress as doubles and closes when the download '
-        'ends', () async {
-      final events = <double>[];
-      final done = Completer<void>();
-      repository.downloadModel().listen(events.add, onDone: done.complete);
-
-      network.legacy.onProgress!(10);
-      network.legacy.onProgress!(55);
-      network.legacy.done.complete();
-      await done.future;
-
-      expect(events, [10.0, 55.0]);
-    });
-
-    test('a failed download is reported as an error, then the stream '
-        'closes', () async {
-      final stream = repository.downloadModel();
-      final expectation = expectLater(
-        stream,
-        emitsInOrder([
-          1.0,
-          emitsError(isA<StateError>()),
-          emitsDone,
-        ]),
-      );
-
-      network.legacy.onProgress!(1);
-      network.legacy.done.completeError(StateError('offline'));
-      await expectation;
     });
   });
 

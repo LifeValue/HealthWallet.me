@@ -324,29 +324,6 @@ class ProcessingRepositoryImpl extends Object
   }
 
   @override
-  Stream<double> downloadModel() {
-    final controller = StreamController<double>();
-
-    _networkDataSource
-        .downloadModel(
-          onProgress: (progress) {
-            if (!controller.isClosed) {
-              controller.add(progress.toDouble());
-            }
-          },
-        )
-        .then((_) {
-          controller.close();
-        })
-        .catchError((error) {
-          controller.addError(error);
-          controller.close();
-        });
-
-    return controller.stream;
-  }
-
-  @override
   Future<bool> checkModelExistence() async {
     return _networkDataSource.checkModelExistence();
   }

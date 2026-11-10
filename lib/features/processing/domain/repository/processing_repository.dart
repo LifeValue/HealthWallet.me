@@ -31,8 +31,6 @@ abstract class ProcessingRepository {
 
   Future<int> deleteProcessingSession(ProcessingSession session);
 
-  Stream<double> downloadModel();
-
   Stream<double> downloadModelForVariant(AiModelVariant variant);
 
   Future<bool> checkModelExistence();

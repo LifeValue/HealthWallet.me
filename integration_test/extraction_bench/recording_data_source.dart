@@ -237,9 +237,6 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
   Future<bool> checkModelExistence() => _inner.checkModelExistence();
 
   @override
-  Future<bool> checkMmprojExistence() => _inner.checkMmprojExistence();
-
-  @override
   Future<bool> checkModelExistenceForVariant(AiModelVariant variant) =>
       _inner.checkModelExistenceForVariant(variant);
 
@@ -258,14 +255,6 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
   @override
   Future<void> cancelMmprojDownloadForVariant(AiModelVariant variant) =>
       _inner.cancelMmprojDownloadForVariant(variant);
-
-  @override
-  Future<void> downloadModel({required void Function(int) onProgress}) =>
-      _inner.downloadModel(onProgress: onProgress);
-
-  @override
-  Future<void> downloadMmproj({required void Function(int) onProgress}) =>
-      _inner.downloadMmproj(onProgress: onProgress);
 
   @override
   Future<void> downloadModelForVariant(
