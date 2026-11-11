@@ -422,10 +422,12 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
               ),
             ),
           ),
-          if (Platform.isWindows) ...[
+          if (Platform.isWindows || Platform.isLinux) ...[
             const SizedBox(height: Insets.small),
             Text(
-              context.l10n.desktopFirewallHint,
+              Platform.isWindows
+                  ? context.l10n.desktopFirewallHint
+                  : context.l10n.desktopFirewallHintLinux,
               textAlign: TextAlign.center,
               style: AppTextStyle.labelSmall.copyWith(
                 color: context.colorScheme.onSurface.withValues(alpha: 0.5),

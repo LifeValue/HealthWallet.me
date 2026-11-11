@@ -1604,6 +1604,7 @@
   "desktopQrInvalid": "Dieser QR-Code kann nicht zum Koppeln verwendet werden. Zeige auf dem Desktop einen neuen an.",
   "desktopNoNetwork": "Dieser Desktop ist mit keinem Netzwerk verbunden. Verbinde ihn mit einem WLAN, um ein Telefon zu koppeln.",
   "desktopFirewallHint": "Wenn dein Telefon diesen Desktop nicht findet, erlaube HealthWallet in der Windows-Firewall für private Netzwerke.",
+  "desktopFirewallHintLinux": "Wenn dein Telefon diesen Desktop nicht findet, prüfe, ob der Avahi-Dienst läuft und deine Firewall (ufw oder firewalld) HealthWallet im lokalen Netzwerk erlaubt.",
   "desktopApprovePhoneMessage": "„{phone}“ möchte sich mit diesem Desktop verbinden.\n\nEs ersetzt „{current}“ und erhält die hier gespeicherten Gesundheitsdaten.\n\nZulassen?",
   "desktopPairedPhone": "Gekoppeltes Telefon",
   "desktopNewQrUnpairsHint": "Ein neuer QR-Code entkoppelt dieses Telefon; damit koppelst du ein anderes.",

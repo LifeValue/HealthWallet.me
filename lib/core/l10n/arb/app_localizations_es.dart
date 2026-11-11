@@ -4502,6 +4502,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Si tu teléfono no encuentra este escritorio, permite HealthWallet en el Firewall de Windows para redes privadas.';
 
   @override
+  String get desktopFirewallHintLinux =>
+      'Si tu teléfono no encuentra este escritorio, comprueba que el servicio Avahi está en ejecución y que tu cortafuegos (ufw o firewalld) permite HealthWallet en tu red local.';
+
+  @override
   String desktopApprovePhoneMessage(String phone, String current) {
     return '\"$phone\" quiere conectarse a este escritorio.\n\nSustituirá a \"$current\" y recibirá los historiales médicos guardados aquí.\n\n¿Lo permites?';
   }

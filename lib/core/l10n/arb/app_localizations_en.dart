@@ -4448,6 +4448,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'If your phone can\'t find this desktop, allow HealthWallet through Windows Firewall on private networks.';
 
   @override
+  String get desktopFirewallHintLinux =>
+      'If your phone can\'t find this desktop, check that the Avahi daemon is running and that your firewall (ufw or firewalld) allows HealthWallet on your local network.';
+
+  @override
   String desktopApprovePhoneMessage(String phone, String current) {
     return '\"$phone\" wants to connect to this desktop.\n\nIt will replace \"$current\" and receive the health records stored here.\n\nAllow it?';
   }

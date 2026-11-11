@@ -4517,6 +4517,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Wenn dein Telefon diesen Desktop nicht findet, erlaube HealthWallet in der Windows-Firewall für private Netzwerke.';
 
   @override
+  String get desktopFirewallHintLinux =>
+      'Wenn dein Telefon diesen Desktop nicht findet, prüfe, ob der Avahi-Dienst läuft und deine Firewall (ufw oder firewalld) HealthWallet im lokalen Netzwerk erlaubt.';
+
+  @override
   String desktopApprovePhoneMessage(String phone, String current) {
     return '„$phone“ möchte sich mit diesem Desktop verbinden.\n\nEs ersetzt „$current“ und erhält die hier gespeicherten Gesundheitsdaten.\n\nZulassen?';
   }

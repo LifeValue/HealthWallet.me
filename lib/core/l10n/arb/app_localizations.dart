@@ -7961,6 +7961,12 @@ abstract class AppLocalizations {
   /// **'If your phone can\'t find this desktop, allow HealthWallet through Windows Firewall on private networks.'**
   String get desktopFirewallHint;
 
+  /// No description provided for @desktopFirewallHintLinux.
+  ///
+  /// In en, this message translates to:
+  /// **'If your phone can\'t find this desktop, check that the Avahi daemon is running and that your firewall (ufw or firewalld) allows HealthWallet on your local network.'**
+  String get desktopFirewallHintLinux;
+
   /// No description provided for @desktopApprovePhoneMessage.
   ///
   /// In en, this message translates to:

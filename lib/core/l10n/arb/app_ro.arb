@@ -1603,6 +1603,7 @@
   "desktopQrInvalid": "Acest cod QR nu poate fi folosit pentru asociere. Afișează unul nou pe desktop.",
   "desktopNoNetwork": "Acest desktop nu este conectat la o rețea. Conectează-l la Wi-Fi pentru a asocia un telefon.",
   "desktopFirewallHint": "Dacă telefonul nu găsește acest desktop, permite HealthWallet în Windows Firewall pentru rețelele private.",
+  "desktopFirewallHintLinux": "Dacă telefonul nu găsește acest desktop, verifică dacă serviciul Avahi rulează și dacă firewall-ul (ufw sau firewalld) permite HealthWallet în rețeaua locală.",
   "desktopApprovePhoneMessage": "„{phone}” vrea să se conecteze la acest desktop.\n\nVa înlocui „{current}” și va primi fișele medicale stocate aici.\n\nPermiți?",
   "desktopPairedPhone": "Telefon asociat",
   "desktopNewQrUnpairsHint": "Un cod QR nou dezasociază acest telefon; folosește-l pentru a asocia altul.",

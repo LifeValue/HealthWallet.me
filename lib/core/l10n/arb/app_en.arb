@@ -2256,6 +2256,7 @@
   "desktopQrInvalid": "This QR code can't be used for pairing. Show a new one on the desktop.",
   "desktopNoNetwork": "This desktop isn't connected to a network. Connect it to Wi-Fi to pair a phone.",
   "desktopFirewallHint": "If your phone can't find this desktop, allow HealthWallet through Windows Firewall on private networks.",
+  "desktopFirewallHintLinux": "If your phone can't find this desktop, check that the Avahi daemon is running and that your firewall (ufw or firewalld) allows HealthWallet on your local network.",
   "desktopApprovePhoneMessage": "\"{phone}\" wants to connect to this desktop.\n\nIt will replace \"{current}\" and receive the health records stored here.\n\nAllow it?",
   "@desktopApprovePhoneMessage": {
     "placeholders": {
