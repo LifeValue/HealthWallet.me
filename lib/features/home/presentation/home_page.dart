@@ -498,22 +498,39 @@ class _PatientRowState extends State<_PatientRow> {
   }
 }
 
-class _PeriodicBuilder extends StatelessWidget {
+/// Rebuilds [builder] every 30 seconds, with a tick that counts up from 0,
+/// for as long as it is shown.
+class _PeriodicBuilder extends StatefulWidget {
   final Widget Function(BuildContext context, int tick) builder;
   const _PeriodicBuilder({required this.builder});
 
-  static final _ticker = Stream<int>.periodic(
-    const Duration(seconds: 30),
-    (i) => i,
-  ).asBroadcastStream();
+  static const _period = Duration(seconds: 30);
 
   @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<int>(
-      stream: _ticker,
-      builder: (context, snapshot) => builder(context, snapshot.data ?? 0),
+  State<_PeriodicBuilder> createState() => _PeriodicBuilderState();
+}
+
+class _PeriodicBuilderState extends State<_PeriodicBuilder> {
+  late final Timer _timer;
+  var _tick = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(
+      _PeriodicBuilder._period,
+      (_) => setState(() => _tick++),
     );
   }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(context, _tick);
 }
 
 /// The desktop header's three status cards, laid out as the header does but

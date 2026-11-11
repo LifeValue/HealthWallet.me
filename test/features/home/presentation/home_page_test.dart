@@ -116,40 +116,9 @@ HomeState _loaded({
 /// Home with nothing to show yet.
 const _empty = HomeState(status: HomeStatus.success(), hasDataLoaded: true);
 
-/// The desktop header's cards refresh from one 30-second ticker that the
-/// whole app shares and never stops. The first test to show the header
-/// starts its timer; keeping it here lets that test stop it, since a test
-/// must not leave a timer running.
-final _tickerTimers = <Timer>[];
-
-Future<void> _keepingTimers(Future<void> Function() body) => runZoned(
-  body,
-  zoneSpecification: ZoneSpecification(
-    createPeriodicTimer: (self, parent, zone, period, callback) {
-      final timer = parent.createPeriodicTimer(zone, period, callback);
-      _tickerTimers.add(timer);
-      return timer;
-    },
-  ),
-);
-
 /// A test that shows the desktop header.
-void _desktopTest(
-  String description,
-  WidgetTesterCallback body, {
-  bool? skip,
-}) {
-  testWidgets(description, skip: skip, (tester) async {
-    try {
-      await body(tester);
-    } finally {
-      for (final timer in _tickerTimers) {
-        timer.cancel();
-      }
-      _tickerTimers.clear();
-    }
-  });
-}
+void _desktopTest(String description, WidgetTesterCallback body) =>
+    testWidgets(description, body);
 
 /// The app's Matter font, so text measures as it does in the app rather
 /// than in the test font's square glyphs.
@@ -282,9 +251,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
-    await _keepingTimers(
-      () => tester.pumpWidget(app(HomePage(pageController: pageController))),
-    );
+    await tester.pumpWidget(app(HomePage(pageController: pageController)));
   }
 
   Future<void> pumpDesktop(
@@ -299,10 +266,8 @@ void main() {
 
   Finder textContaining(String text) => find.textContaining(text);
 
-  // Must stay the first test to show the desktop header: the shared ticker
-  // only runs on the fake clock of the test that started it.
   group('desktop status cards', () {
-    _desktopTest('rebuild on each tick of the 30-second ticker', (
+    _desktopTest('rebuild every 30 seconds', (
       tester,
     ) async {
       await pumpDesktop(tester, home: _loaded());
@@ -310,14 +275,16 @@ void main() {
       expect(find.byKey(const ValueKey('sync_0')), findsOneWidget);
       expect(find.byKey(const ValueKey('backup_0')), findsOneWidget);
 
-      // The first tick counts 0, the next 1.
-      await tester.pump(const Duration(seconds: 30));
+      await tester.pump(const Duration(seconds: 29));
       expect(find.byKey(const ValueKey('sync_0')), findsOneWidget);
-      await tester.pump(const Duration(seconds: 30));
+      await tester.pump(const Duration(seconds: 1));
 
       expect(find.byKey(const ValueKey('sync_1')), findsOneWidget);
       expect(find.byKey(const ValueKey('backup_1')), findsOneWidget);
       expect(find.byKey(const ValueKey('sync_0')), findsNothing);
+
+      await tester.pump(const Duration(seconds: 30));
+      expect(find.byKey(const ValueKey('sync_2')), findsOneWidget);
     });
   });
 
