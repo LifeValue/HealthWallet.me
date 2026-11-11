@@ -44,6 +44,14 @@ class LinkedTcpService extends Fake implements tcp.TcpService {
   /// While set, sent messages of these types are lost on the way.
   final dropTypes = <String>{};
 
+  /// While set, sent messages of these types wait until [releaseHeld].
+  final holdTypes = <String>{};
+  final _held = <void Function()>[];
+
+  /// Sent messages not yet delivered (held ones included).
+  int get inFlight => _inFlight;
+  int _inFlight = 0;
+
   /// How long a sent message takes to arrive, like a slow link or a busy
   /// device; by default it arrives on the next event-loop turn.
   Duration latency = Duration.zero;
@@ -104,19 +112,54 @@ class LinkedTcpService extends Fake implements tcp.TcpService {
     sent.add((type: type, payload: payload));
     if (dropTypes.contains(type)) return;
     final other = _other!;
-    // Delivered later, like bytes off a socket.
-    Timer(latency, () {
-      if (other.connected && !other._messages.isClosed) {
-        other._messages.add(
-          tcp.TcpMessage.fromString(type: tcp.MessageType.data, data: json),
-        );
-      }
-    });
+    _inFlight++;
+    void deliver() {
+      // Delivered later, like bytes off a socket.
+      Timer(latency, () {
+        _inFlight--;
+        if (other.connected && !other._messages.isClosed) {
+          other._messages.add(
+            tcp.TcpMessage.fromString(type: tcp.MessageType.data, data: json),
+          );
+        }
+      });
+    }
+
+    if (holdTypes.contains(type)) {
+      _held.add(deliver);
+    } else {
+      deliver();
+    }
+  }
+
+  /// Delivers the messages held so far, in order, and stops holding.
+  void releaseHeld() {
+    holdTypes.clear();
+    final held = [..._held];
+    _held.clear();
+    for (final deliver in held) {
+      deliver();
+    }
   }
 
   Future<void> close() async {
     await _messages.close();
     await _states.close();
+  }
+}
+
+/// Waits until [condition] holds, checking again every few milliseconds.
+///
+/// It has no deadline of its own: only the test's timeout bounds it, so a
+/// busy machine makes a test slower but never fails it. [reason] is printed
+/// if the test then fails.
+Future<void> eventually(
+  FutureOr<bool> Function() condition, {
+  String? reason,
+}) async {
+  if (reason != null) printOnFailure('waiting for $reason');
+  while (!await condition()) {
+    await Future<void>.delayed(const Duration(milliseconds: 5));
   }
 }
 
@@ -251,6 +294,15 @@ Future<void> insertProcessingSession(
   'INSERT INTO processing_sessions (id, status, updated_at) VALUES (?, ?, ?)',
   [id, 'pending', updatedAt],
 );
+
+/// Tells drift's listeners, the sync's change watcher among them, that the
+/// synced tables were written, as the app's own writes do. The raw inserts
+/// above don't: without it, an edit made after the sync started reaches it
+/// only if the watcher's first run after starting hasn't happened yet.
+void notifySyncedTablesWritten(AppDatabase db) => db.notifyUpdates({
+  for (final table in ['fhir_resource', 'sources', 'record_notes'])
+    TableUpdate(table, kind: UpdateKind.insert),
+});
 
 Future<Map<String, Object?>?> fetchRow(
   AppDatabase db,
