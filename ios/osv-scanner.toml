@@ -1,0 +1,11 @@
+# osv-scanner reads the config next to each lockfile it scans; this one covers ios/Gemfile.lock.
+# Ignore an advisory here only when no fixed version can be installed, with the reason and an
+# expiry date after which the scan fails again and the fix is looked for anew.
+
+# Active Support DoS in safe_constantize. Fixed only in 8.0.5.2 and 8.1.4.1 (7.2 is end of life),
+# but every CocoaPods release up to 1.17.0 requires activesupport < 8. CocoaPods only runs on
+# developer Macs and the Mac mini against our own Podfile, so nothing untrusted reaches it.
+[[IgnoredVulns]]
+id = "GHSA-8474-xrp6-wh69"
+ignoreUntil = 2027-02-01T00:00:00Z
+reason = "No CocoaPods release accepts activesupport 8; build-time tool with trusted input only"
