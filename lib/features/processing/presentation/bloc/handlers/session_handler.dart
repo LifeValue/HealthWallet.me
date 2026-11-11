@@ -557,6 +557,23 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     if (missing) await _prepareOcrPages(emit, state.sessions[index], previews);
   }
 
+  /// Takes the pages of [session], already removed, out of the state, then
+  /// deletes them and its files, as deleting it here does.
+  Future<void> discardPagesOf(
+    Emitter<ProcessingState> emit,
+    ProcessingSession session,
+  ) async {
+    final previews = state.sessionImagePaths[session.id] ?? const <String>[];
+    final ocrPages = _ocrPagesOf(previews);
+    emit(
+      state.copyWith(
+        sessionImagePaths: {...state.sessionImagePaths}..remove(session.id),
+        ocrPageByPreviewPath: _withoutOcrPages(previews),
+      ),
+    );
+    await _discardSessionPages(session, pages: [...previews, ...ocrPages]);
+  }
+
   bool _isGone(String sessionId) =>
       state.sessions.every((s) => s.id != sessionId);
 

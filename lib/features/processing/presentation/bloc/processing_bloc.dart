@@ -572,24 +572,14 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
       (s) => s.id == event.sessionId,
     );
     if (session == null) return;
-    await _stopLocalProcessing(session);
-    _layoutExtraction.forget(session.id);
-    _haltedHandovers.remove(session.id);
-    emit(
-      state.copyWith(
-        sessions: [
-          for (final s in state.sessions)
-            if (s.id != session.id) s,
-        ],
-        sessionImagePaths: {...state.sessionImagePaths}..remove(session.id),
-        status: _withoutFailureOf(session.id),
-        notification: Notification(
-          text: _strings.l10n.handoverTakenBack,
-          time: DateTime.now(),
-        ),
+    await _removeForOtherDevice(
+      emit,
+      session,
+      Notification(
+        text: _strings.l10n.handoverTakenBack,
+        time: DateTime.now(),
       ),
     );
-    await _repository.deleteProcessingSession(session);
   }
 
   Future<void> _onSessionSavedElsewhere(
@@ -600,7 +590,45 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
       (s) => s.id == event.sessionId,
     );
     if (session == null) return;
-    await _stopLocalProcessing(session);
+    // The records come through the sync; this copy and its files go.
+    await _removeForOtherDevice(
+      emit,
+      session,
+      Notification(
+        text: _savedElsewhereText(session, byDesktop: event.byDesktop),
+        time: DateTime.now(),
+        type: NotificationType.success,
+      ),
+    );
+  }
+
+  /// Removes [session], which the other device took back or saved, with its
+  /// pages and files, and says so with [notification].
+  Future<void> _removeForOtherDevice(
+    Emitter<ProcessingState> emit,
+    ProcessingSession session,
+    Notification notification,
+  ) async {
+    final wasProcessing = session.isProcessing;
+    if (wasProcessing) {
+      // Marked first, so the step being stopped stages and announces
+      // nothing; stopping, so it can't be retried meanwhile.
+      _replaceSession(
+        emit,
+        session.copyWith(status: ProcessingStatus.cancelled, progress: 0),
+      );
+      emit(
+        state.copyWith(
+          stoppingSessionIds: {...state.stoppingSessionIds, session.id},
+        ),
+      );
+    }
+    try {
+      await _stopLocalProcessing(session);
+    } on Exception catch (e, s) {
+      // The session goes anyway; the next run waits for the AI to end.
+      logger.e('[ProcessingBloc] stopping the AI for a removal failed', e, s);
+    }
     _layoutExtraction.forget(session.id);
     _haltedHandovers.remove(session.id);
     emit(
@@ -609,16 +637,14 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
           for (final s in state.sessions)
             if (s.id != session.id) s,
         ],
-        sessionImagePaths: {...state.sessionImagePaths}..remove(session.id),
+        stoppingSessionIds: {...state.stoppingSessionIds}..remove(session.id),
         status: _withoutFailureOf(session.id),
-        notification: Notification(
-          text: _savedElsewhereText(session, byDesktop: event.byDesktop),
-          time: DateTime.now(),
-          type: NotificationType.success,
-        ),
+        notification: notification,
       ),
     );
-    // The records come through the sync; this copy and its files go.
     await _repository.deleteProcessingSession(session);
+    await discardPagesOf(emit, session);
+    // It held the queue: the next document goes on.
+    if (wasProcessing) startNextPendingSession();
   }
 }
