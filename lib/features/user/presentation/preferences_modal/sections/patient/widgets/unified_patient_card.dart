@@ -69,7 +69,7 @@ class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
                 : context.l10n.loading;
 
             return AnimatedContainer(
-              duration: const Duration(milliseconds: 800),
+              duration: const Duration(milliseconds: 200),
               curve: Curves.easeInOutCubic,
               padding: const EdgeInsets.all(Insets.small),
               margin: const EdgeInsets.only(bottom: Insets.small),
@@ -152,7 +152,7 @@ class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
           ],
         ),
         AnimatedRotation(
-          duration: const Duration(milliseconds: 600),
+          duration: const Duration(milliseconds: 150),
           curve: Curves.easeInOut,
           turns: _getRotationTurns(context, currentPatient),
           child: Icon(
