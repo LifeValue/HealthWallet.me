@@ -4,9 +4,24 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/attachment_sync_service.dart';
 
+import '../../../../../helpers/log_capture.dart';
 import '../../lww_sync_test_helpers.dart';
 
+/// A documents directory whose links can't be followed, as when it is
+/// removed or its permissions change while a request is answered.
+class _UnresolvableDirectory extends Fake implements Directory {
+  _UnresolvableDirectory(this.path);
+
+  @override
+  final String path;
+
+  @override
+  Future<String> resolveSymbolicLinks() async =>
+      throw FileSystemException('Cannot resolve symbolic links', path);
+}
+
 void main() {
+  final logs = captureLogs();
   late TestDirs dirs;
   late AttachmentSyncService service;
 
@@ -18,6 +33,10 @@ void main() {
   });
 
   tearDown(() => dirs.dispose());
+
+  test('documentsPath is the resolver\'s documents directory', () async {
+    expect(await service.documentsPath(), dirs.docs.path);
+  });
 
   group('resolveFile', () {
     // resolveFile returns the real path; on macOS the temp directory sits
@@ -238,6 +257,19 @@ void main() {
         ),
         isNull,
       );
+    });
+
+    test('a path whose links cannot be followed is logged and not '
+        'resolved', () async {
+      await dirs.writeDoc('report.pdf', pdfBytes);
+
+      final resolved = await IOOverrides.runZoned(
+        () => service.resolveFile('report.pdf'),
+        createDirectory: _UnresolvableDirectory.new,
+      );
+
+      expect(resolved, isNull);
+      expect(logs, loggedWarning('Attachment path could not be resolved'));
     });
   });
 }
