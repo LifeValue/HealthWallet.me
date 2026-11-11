@@ -1,36 +1,22 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/features/holders/domain/entity/holder_patient.dart';
-import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
-import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/features/user/domain/services/default_patient_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class _FakeRecords extends Fake implements RecordsRepository {
-  final updated = <Patient>[];
-
-  @override
-  Future<void> updatePatient(IFhirResource patient) async {
-    updated.add(patient as Patient);
-  }
-}
-
-class _FakeSyncLocalDataSource extends Fake implements SyncLocalDataSource {}
-
-class _FakeHolders extends Fake implements HolderService {}
+import 'patient_edit_service_fakes.dart';
 
 const _walletSource = Source(id: 'wallet-default_patient');
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late _FakeRecords records;
+  late FakeEditRecords records;
   late PatientEditService service;
 
   /// The unnamed "Health Wallet Holder", made while [country] was chosen.
@@ -40,8 +26,8 @@ void main() {
     });
     return DefaultPatientService(
       records,
-      _FakeSyncLocalDataSource(),
-      _FakeHolders(),
+      FakeEditSyncLocalDataSource(),
+      FakeEditHolders(),
     ).createDefaultWalletHolder();
   }
 
@@ -60,11 +46,11 @@ void main() {
       ((identifier['type'] as Map)['coding'] as List).first['code'] as String?;
 
   setUp(() {
-    records = _FakeRecords();
+    records = FakeEditRecords();
     service = PatientEditService(
       records,
       const SourceTypeService(),
-      _FakeHolders(),
+      FakeEditHolders(),
     );
   });
 
