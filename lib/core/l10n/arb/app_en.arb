@@ -2548,7 +2548,7 @@
       }
     }
   },
-  "backupSafetyRetention": "{count, plural, =1{Keep the copy made before a restore: 1 day} other{Keep the copy made before a restore: {count} days}}",
+  "backupSafetyRetention": "{count, plural, =1{Kept for 1 day} other{Kept for {count} days}}",
   "@backupSafetyRetention": {
     "description": "Desktop Backup card, under the backup folder: how many days the automatic copy made before every restore is kept.",
     "placeholders": {
@@ -2557,9 +2557,9 @@
       }
     }
   },
-  "backupSafetyRetentionEditLabel": "Days to keep the copy made before a restore",
-  "@backupSafetyRetentionEditLabel": {
-    "description": "Desktop Backup card: label above the field where the user types how many days the copy made before a restore is kept."
+  "backupSafetyRetentionTitle": "Copy made before a restore",
+  "@backupSafetyRetentionTitle": {
+    "description": "Desktop Backup card: heading of the section with how long the copy made before a restore is kept, like the Location heading above it."
   },
   "backupSafetyRetentionDaysUnit": "{count, plural, =1{day} other{days}}",
   "@backupSafetyRetentionDaysUnit": {

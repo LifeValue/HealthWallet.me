@@ -8432,14 +8432,14 @@ abstract class AppLocalizations {
   /// Desktop Backup card, under the backup folder: how many days the automatic copy made before every restore is kept.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{Keep the copy made before a restore: 1 day} other{Keep the copy made before a restore: {count} days}}'**
+  /// **'{count, plural, =1{Kept for 1 day} other{Kept for {count} days}}'**
   String backupSafetyRetention(int count);
 
-  /// Desktop Backup card: label above the field where the user types how many days the copy made before a restore is kept.
+  /// Desktop Backup card: heading of the section with how long the copy made before a restore is kept, like the Location heading above it.
   ///
   /// In en, this message translates to:
-  /// **'Days to keep the copy made before a restore'**
-  String get backupSafetyRetentionEditLabel;
+  /// **'Copy made before a restore'**
+  String get backupSafetyRetentionTitle;
 
   /// The word after the number of days in the safety copy retention field.
   ///

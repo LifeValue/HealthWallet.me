@@ -4831,16 +4831,15 @@ class AppLocalizationsRo extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Păstrează copia făcută înainte de restaurare: $count de zile',
-      few: 'Păstrează copia făcută înainte de restaurare: $count zile',
-      one: 'Păstrează copia făcută înainte de restaurare: 1 zi',
+      other: 'Se păstrează $count de zile',
+      few: 'Se păstrează $count zile',
+      one: 'Se păstrează 1 zi',
     );
     return '$_temp0';
   }
 
   @override
-  String get backupSafetyRetentionEditLabel =>
-      'Zile de păstrare a copiei făcute înainte de restaurare';
+  String get backupSafetyRetentionTitle => 'Copia făcută înainte de restaurare';
 
   @override
   String backupSafetyRetentionDaysUnit(int count) {

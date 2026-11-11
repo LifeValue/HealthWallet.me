@@ -4814,15 +4814,14 @@ class AppLocalizationsEs extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Conservar la copia previa a una restauración: $count días',
-      one: 'Conservar la copia previa a una restauración: 1 día',
+      other: 'Se conserva $count días',
+      one: 'Se conserva 1 día',
     );
     return '$_temp0';
   }
 
   @override
-  String get backupSafetyRetentionEditLabel =>
-      'Días que se conserva la copia previa a una restauración';
+  String get backupSafetyRetentionTitle => 'Copia previa a una restauración';
 
   @override
   String backupSafetyRetentionDaysUnit(int count) {
