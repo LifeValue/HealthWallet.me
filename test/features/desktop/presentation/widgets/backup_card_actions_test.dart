@@ -76,6 +76,8 @@ void main() {
     whenListen(bloc, states.stream, initialState: const BackupState());
     pickerCalls = [];
     picked = null;
+    // The macOS picker, whatever the host: CI runs these tests on Linux.
+    BackupCard.useMacOsFolderPicker = true;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_fsChannel, (call) async {
           if (call.method != 'pickDirectory') return null;
@@ -85,6 +87,7 @@ void main() {
   });
 
   tearDown(() {
+    BackupCard.useMacOsFolderPicker = null;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_fsChannel, null);
     return states.close();

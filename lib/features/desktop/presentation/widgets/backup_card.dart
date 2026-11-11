@@ -23,6 +23,11 @@ import 'package:health_wallet/features/desktop/presentation/widgets/info_row.dar
 import 'package:intl/intl.dart';
 
 class BackupCard extends StatefulWidget {
+  /// Which folder picker to use: the app's own macOS one (null: on macOS).
+  /// Tests set it, so the picker they check is the same on every host.
+  @visibleForTesting
+  static bool? useMacOsFolderPicker;
+
   final DesktopSyncState syncState;
   final BackupState backupState;
 
@@ -849,7 +854,7 @@ class _BackupLocationRow extends StatelessWidget {
     String? initialPath,
   }) async {
     String? result;
-    if (Platform.isMacOS) {
+    if (BackupCard.useMacOsFolderPicker ?? Platform.isMacOS) {
       result = await _fsChannel.invokeMethod<String>('pickDirectory', {
         'initialDirectory': ?initialPath,
         'title': context.l10n.desktopChooseBackupLocation,
