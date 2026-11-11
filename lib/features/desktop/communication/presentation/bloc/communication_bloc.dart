@@ -51,8 +51,13 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   static Duration connectionAttemptTimeout = const Duration(seconds: 60);
 
   /// Counts connection attempts; an attempt that is no longer the current
-  /// one (given up, or the bloc closed) tries nothing more.
+  /// one (given up, replaced by a new pairing, or the bloc closed) tries
+  /// nothing more.
   int _attempt = 0;
+
+  /// Completed when a new QR code is scanned, so the running attempt ends at
+  /// once instead of when the step it waits on returns.
+  Completer<void> _attemptReplaced = Completer<void>();
   static const _networkCheckInterval = Duration(seconds: 30);
   int _reconnectAttempts = 0;
 
@@ -366,8 +371,12 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
         previous.deviceId != event.pairing.deviceId ||
         previous.pairingKey != event.pairing.pairingKey;
     if (changed) {
-      // Still on the old desktop otherwise, until that link drops.
+      // A running attempt uses the old key: it ends now, tries nothing more
+      // and reports nothing.
+      _attempt++;
+      if (!_attemptReplaced.isCompleted) _attemptReplaced.complete();
       _reconnectTimer?.cancel();
+      // Still on the old desktop otherwise, until that link drops.
       await _tcpService.disconnect();
       await _mpcTransport?.disconnect();
     }
@@ -375,7 +384,12 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     _reconnectAttempts = 0;
     _stayDisconnected = false;
     emit(state.copyWith(pairedDevice: event.pairing, issue: null));
-    if (!_platform.isDesktop) add(const CommunicationConnectionRequested());
+    if (_platform.isDesktop) return;
+    // Added once the microtasks that end the replaced attempt's handler have
+    // run; while that handler runs, droppable() would drop the request.
+    Timer.run(() {
+      if (!isClosed) add(const CommunicationConnectionRequested());
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -402,18 +416,22 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     );
 
     final attempt = ++_attempt;
-    final ({bool connected, LinkFailure? failure}) outcome;
+    final replaced = _attemptReplaced = Completer<void>();
+    final ({bool connected, LinkFailure? failure})? outcome;
     try {
-      outcome = await _connect(
-        pairing,
-        attempt,
-      ).timeout(connectionAttemptTimeout);
+      outcome = await Future.any([
+        _connect(pairing, attempt).timeout(connectionAttemptTimeout),
+        replaced.future.then((_) => null),
+      ]);
     } on TimeoutException {
       logger.w('[Communication] no desktop found in time; trying again later');
       _attempt++;
       _stopMpcClient();
       return _failed(emit, null);
     }
+    // Replaced by a new pairing, which gets an attempt of its own, or the
+    // bloc closed: nothing to report.
+    if (outcome == null || attempt != _attempt) return;
     if (!outcome.connected) _failed(emit, outcome.failure);
   }
 
