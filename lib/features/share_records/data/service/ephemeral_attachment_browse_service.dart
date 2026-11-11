@@ -22,7 +22,7 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
     List<String>? sourceIds,
     List<FhirType> resourceTypes = const [],
     DateFilter? dateFilter,
-    MedicalSpecialty? specialty,
+    List<MedicalSpecialty> specialties = const [],
   }) async {
     debugPrint(
       '[EPHEMERAL_BROWSE] loadEntries resourceTypes=$resourceTypes, records=${_records.length}',
@@ -40,10 +40,12 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
         return date == null || dateFilter.matches(date);
       }).toList();
     }
-    if (specialty != null) {
-      final matcher = SpecialtyMatcher(_specialtyClassifier, [
-        specialty,
-      ], _records);
+    if (specialties.isNotEmpty) {
+      final matcher = SpecialtyMatcher(
+        _specialtyClassifier,
+        specialties,
+        _records,
+      );
       filtered = filtered.where(matcher.matches).toList();
     }
 

@@ -46,7 +46,7 @@ class AttachmentBrowseBloc
         sourceIds: event.sourceIds,
         resourceTypes: event.resourceTypes,
         dateFilter: event.dateFilter,
-        specialty: event.specialty,
+        specialties: event.specialties,
       );
 
       final timelineYears = _buildTimeline(entries);

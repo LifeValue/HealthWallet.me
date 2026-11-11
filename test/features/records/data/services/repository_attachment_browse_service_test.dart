@@ -241,7 +241,7 @@ void main() {
       expect(entries.map((e) => e.record.id), ['in', 'undated']);
     });
 
-    test('keeps to the specialty, classified with every encounter in '
+    test('keeps to the specialties, classified with every encounter in '
         'scope', () async {
       repository.records = [
         _resource({
@@ -252,17 +252,22 @@ void main() {
           'resourceType': 'Condition',
           'id': 'skin',
         }, date: DateTime(2023)),
+        _resource({
+          'resourceType': 'Condition',
+          'id': 'tooth',
+        }, date: DateTime(2022)),
       ];
       classifier.byId = {
         'heart': {MedicalSpecialty.cardiology},
         'skin': {MedicalSpecialty.dermatology},
+        'tooth': {MedicalSpecialty.dental},
       };
 
       final entries = await service.loadEntries(
-        specialty: MedicalSpecialty.cardiology,
+        specialties: [MedicalSpecialty.cardiology, MedicalSpecialty.dental],
       );
 
-      expect(entries.map((e) => e.record.id), ['heart']);
+      expect(entries.map((e) => e.record.id), ['heart', 'tooth']);
       expect(repository.encounterReads, 1);
     });
 

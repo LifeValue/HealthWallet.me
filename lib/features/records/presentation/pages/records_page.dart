@@ -164,7 +164,7 @@ class _RecordsViewState extends State<RecordsView> {
       sourceIds: sourceIds,
       resourceTypes: resourceTypes ?? records.activeFilters,
       dateFilter: records.dateFilter,
-      specialty: records.activeSpecialties.firstOrNull,
+      specialties: records.activeSpecialties,
     );
   }
 

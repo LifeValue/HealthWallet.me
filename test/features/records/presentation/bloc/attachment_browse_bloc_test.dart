@@ -10,7 +10,7 @@ import 'package:health_wallet/features/records/presentation/bloc/attachment_brow
 /// completes that load.
 class _ControlledBrowseService extends Fake implements AttachmentBrowseService {
   final pending = <String, Completer<void>>{};
-  final filters = <(DateFilter?, MedicalSpecialty?)>[];
+  final filters = <(DateFilter?, List<MedicalSpecialty>)>[];
 
   @override
   Future<List<AttachmentBrowseEntry>> loadEntries({
@@ -18,9 +18,9 @@ class _ControlledBrowseService extends Fake implements AttachmentBrowseService {
     List<String>? sourceIds,
     List<FhirType> resourceTypes = const [],
     DateFilter? dateFilter,
-    MedicalSpecialty? specialty,
+    List<MedicalSpecialty> specialties = const [],
   }) async {
-    filters.add((dateFilter, specialty));
+    filters.add((dateFilter, specialties));
     final scope = sourceId ?? sourceIds?.join(',') ?? 'all';
     await (pending[scope] = Completer<void>()).future;
     return [
@@ -63,13 +63,13 @@ void main() {
     bloc.add(
       const AttachmentBrowseInitialised(
         dateFilter: DateFilter(fromYear: 2024),
-        specialty: MedicalSpecialty.cardiology,
+        specialties: [MedicalSpecialty.cardiology, MedicalSpecialty.dental],
       ),
     );
     await pumpEventQueue();
 
-    expect(service.filters, [
-      (const DateFilter(fromYear: 2024), MedicalSpecialty.cardiology),
-    ]);
+    final (dateFilter, specialties) = service.filters.single;
+    expect(dateFilter, const DateFilter(fromYear: 2024));
+    expect(specialties, [MedicalSpecialty.cardiology, MedicalSpecialty.dental]);
   });
 }

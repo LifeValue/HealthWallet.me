@@ -749,7 +749,7 @@ class _EmptyAttachmentContentState extends State<_EmptyAttachmentContent> {
                         sourceIds: recordsState.sourceIds,
                         resourceTypes: recordsState.activeFilters,
                         dateFilter: recordsState.dateFilter,
-                        specialty: recordsState.activeSpecialties.firstOrNull,
+                        specialties: recordsState.activeSpecialties,
                       ),
                     );
 

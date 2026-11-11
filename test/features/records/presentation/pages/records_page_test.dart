@@ -252,17 +252,17 @@ Matcher _sourceChanged({
     .having((e) => e.personId, 'personId', personId);
 
 /// The attachments of [sourceIds] (or [sourceId]) of [resourceTypes], for
-/// [specialty] if one is chosen.
+/// [specialties] if any are chosen.
 Matcher _browseOpened({
   String? sourceId,
   List<String>? sourceIds,
   List<FhirType> resourceTypes = const [],
-  MedicalSpecialty? specialty,
+  List<MedicalSpecialty> specialties = const [],
 }) => isA<AttachmentBrowseInitialised>()
     .having((e) => e.sourceId, 'sourceId', sourceId)
     .having((e) => e.sourceIds, 'sourceIds', sourceIds)
     .having((e) => e.resourceTypes, 'resourceTypes', resourceTypes)
-    .having((e) => e.specialty, 'specialty', specialty);
+    .having((e) => e.specialties, 'specialties', specialties);
 
 /// The icon drawn from [icon].
 Finder _icon(SvgGenImage icon) => find.byWidgetPredicate(
@@ -983,15 +983,18 @@ void main() {
       expect(recordsBloc.added.whereType<RecordsFiltersApplied>(), isEmpty);
     });
 
-    testWidgets('with a specialty chosen too, the attachments open for that '
-        'specialty within the chosen record types', (tester) async {
+    testWidgets('with specialties chosen too, the attachments open for every '
+        'one of them within the chosen record types', (tester) async {
       await pumpPage(
         tester,
         screen: phone,
         recordsState: const RecordsState(
           status: RecordsStatus.success(),
           activeFilters: [FhirType.Observation],
-          activeSpecialties: [MedicalSpecialty.cardiology],
+          activeSpecialties: [
+            MedicalSpecialty.cardiology,
+            MedicalSpecialty.dermatology,
+          ],
         ),
       );
 
@@ -1000,7 +1003,10 @@ void main() {
         _browseOpened(
           sourceIds: const [],
           resourceTypes: [FhirType.Observation],
-          specialty: MedicalSpecialty.cardiology,
+          specialties: [
+            MedicalSpecialty.cardiology,
+            MedicalSpecialty.dermatology,
+          ],
         ),
       );
     });
@@ -1109,7 +1115,7 @@ void main() {
         _browseOpened(
           sourceIds: ['epic'],
           resourceTypes: [FhirType.Observation],
-          specialty: MedicalSpecialty.cardiology,
+          specialties: [MedicalSpecialty.cardiology],
         ),
       ]);
     });

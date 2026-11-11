@@ -29,19 +29,21 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
     List<String>? sourceIds,
     List<FhirType> resourceTypes = const [],
     DateFilter? dateFilter,
-    MedicalSpecialty? specialty,
+    List<MedicalSpecialty> specialties = const [],
   }) async {
     SpecialtyMatcher? specialtyMatcher;
-    if (specialty != null) {
+    if (specialties.isNotEmpty) {
       final encounters = await _repository.getResourcePage(
         resourceTypes: [FhirType.Encounter],
         sourceId: sourceId,
         sourceIds: sourceIds,
         limit: null,
       );
-      specialtyMatcher = SpecialtyMatcher(_specialtyClassifier, [
-        specialty,
-      ], encounters.resources);
+      specialtyMatcher = SpecialtyMatcher(
+        _specialtyClassifier,
+        specialties,
+        encounters.resources,
+      );
     }
 
     final records = (await _repository.getResourcePage(

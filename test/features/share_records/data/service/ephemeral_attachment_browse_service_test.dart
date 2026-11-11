@@ -51,7 +51,7 @@ void main() {
       ]);
 
       final entries = await service.loadEntries(
-        specialty: MedicalSpecialty.cardiology,
+        specialties: [MedicalSpecialty.cardiology],
       );
 
       expect(entries.map((e) => e.record.id), ['heart']);
