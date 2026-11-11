@@ -251,22 +251,29 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     await _resetMistakenAiSettingsOnce(isDesktop: isDesktop);
 
     try {
-      final sessions = [
-        for (final s in await _repository.getProcessingSessions())
-          // A step the app was closed in the middle of starts again; left
-          // "processing", the session would hold up every other one.
-          switch (s.status) {
-            ProcessingStatus.processingPatient => s.copyWith(
-              status: ProcessingStatus.pending,
-              progress: 0,
-            ),
-            ProcessingStatus.processing => s.copyWith(
+      final sessions = <ProcessingSession>[];
+      for (final s in await _repository.getProcessingSessions()) {
+        // A step the app was closed in the middle of starts again; left
+        // "processing", the session would hold up every other one.
+        switch (s.status) {
+          case ProcessingStatus.processingPatient:
+            sessions.add(
+              s.copyWith(status: ProcessingStatus.pending, progress: 0),
+            );
+          case ProcessingStatus.processing:
+            // As after a cancel: step two saved each result as it went, and
+            // Done would save the partial ones, or its next run add to them.
+            final restarted = s.copyWith(
               status: ProcessingStatus.patientExtracted,
               progress: 0,
-            ),
-            _ => s,
-          },
-      ];
+              resources: const [],
+            );
+            sessions.add(restarted);
+            await _saveRestarted(restarted);
+          default:
+            sessions.add(s);
+        }
+      }
 
       final useVision =
           _prefs.getBool(SharedPrefsConstants.aiUseVision) ??
@@ -292,6 +299,16 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
           ),
         ),
       );
+    }
+  }
+
+  /// A failed save is logged: the session still loads at step one, and the
+  /// next start clears its results again.
+  Future<void> _saveRestarted(ProcessingSession session) async {
+    try {
+      await _repository.editProcessingSession(session);
+    } on Exception catch (e, s) {
+      logger.e('Saving a session restarted at step one failed', e, s);
     }
   }
 
