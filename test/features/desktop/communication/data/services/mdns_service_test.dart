@@ -176,17 +176,6 @@ void main() {
       },
     );
 
-    test('waits the whole timeout for answers', () async {
-      bonsoir.onDiscoveryStarted = (d) {
-        d.answers['late'] = _desktop('late', host: '10.0.0.5', port: 49152);
-        Timer(timeout ~/ 2, () => d.found('late'));
-      };
-
-      expect(await mdns.search(token: 'tok', timeout: timeout), [
-        (ip: '10.0.0.5', port: 49152),
-      ]);
-    });
-
     test('skips other desktops, unusable answers and repeats', () async {
       bonsoir.onDiscoveryStarted = (d) {
         d

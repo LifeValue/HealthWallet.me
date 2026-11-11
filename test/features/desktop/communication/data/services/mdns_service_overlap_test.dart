@@ -102,6 +102,24 @@ void main() {
 
   const timeout = Duration(seconds: 3);
 
+  // On fake time: with real timers a slow machine can deliver the answer
+  // after the search has already given up.
+  test('a search waits the whole timeout for answers', () {
+    fakeAsync((async) {
+      List<({String ip, int port})>? result;
+      unawaited(
+        mdns.search(token: 'tok', timeout: timeout).then((r) => result = r),
+      );
+      async.elapse(timeout ~/ 2);
+      bonsoir.discoveries.single.resolved('10.0.0.5', 49152);
+      async.flushMicrotasks();
+      expect(result, isNull, reason: 'still listening');
+
+      async.elapse(timeout);
+      expect(result, [(ip: '10.0.0.5', port: 49152)]);
+    });
+  });
+
   group('overlapping searches', () {
     test('a search whose start returns late stops only its own browse, not '
         'the newer one', () {
