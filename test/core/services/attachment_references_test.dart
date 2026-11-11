@@ -340,4 +340,82 @@ void main() {
     expect(AttachmentReferences.isDatabase('/docs/DB.sqlite-wal'), isTrue);
     expect(AttachmentReferences.isDatabase('/docs/report.pdf'), isFalse);
   });
+
+  group('scan sessions', () {
+    test(
+      'an unreadable session still names the files its text holds',
+      () async {
+        await insertSession(
+          's',
+          filePaths: '["file://half%20page.jpg", "file://other.jpg"',
+        );
+
+        final names = await refs.referencedBasenames();
+
+        expect(names, containsAll(['half page.jpg', 'other.jpg']));
+        expect(
+          await refs.referencedBasenames(includeSessions: false),
+          isEmpty,
+        );
+      },
+    );
+
+    test('an unreadable session keeps a file its text names, and only that '
+        'one', () async {
+      await insertSession('s', resources: '{"url": "file://Kept.pdf"');
+
+      expect(await refs.isReferenced('kept.pdf'), isTrue);
+      expect(
+        await refs.isReferenced('kept.pdf', includeSessions: false),
+        isFalse,
+      );
+      // The SQL pre-filter picks the row for "pdf", but its text doesn't
+      // name this file.
+      expect(await refs.isReferenced('gone.pdf'), isFalse);
+    });
+
+    test(
+      'a session resource stored as one object names its file urls',
+      () async {
+        await insertSession(
+          's',
+          resources: jsonEncode({
+            'resourceType': 'Media',
+            'content': {'url': 'file://single.jpg'},
+          }),
+        );
+
+        expect(await refs.referencedBasenames(), contains('single.jpg'));
+        expect(await refs.isReferenced('single.jpg'), isTrue);
+      },
+    );
+  });
+
+  group('AttachmentRef', () {
+    test('a name with bytes that are not UTF-8 is kept as written', () {
+      final ref = AttachmentRef('file://scan%FF.pdf');
+
+      expect(ref.path, 'scan%FF.pdf');
+      expect(ref.basename, 'scan%FF.pdf');
+      expect(ref.refersTo('scan%ff.pdf'), isTrue);
+    });
+
+    test('a url without the scheme is taken as a path', () {
+      final ref = AttachmentRef('My%20Scan.pdf');
+
+      expect(ref.path, 'My Scan.pdf');
+      expect(ref.isRawText, isFalse);
+    });
+
+    test('names its url, or that it holds raw text, never the text', () {
+      expect(
+        AttachmentRef('file://scan.pdf').toString(),
+        'AttachmentRef(file://scan.pdf)',
+      );
+      final raw = AttachmentRef.rawText('secret diagnosis.pdf');
+      expect(raw.toString(), 'AttachmentRef.rawText');
+      expect(raw.isRawText, isTrue);
+      expect(raw.url, isEmpty);
+    });
+  });
 }

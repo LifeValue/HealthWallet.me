@@ -275,6 +275,32 @@ void main() {
       );
     });
 
+    test('a cache that can\'t be listed is left alone and the temp files '
+        'still go', () async {
+      final page = tempFile('healthwallet_pdf_page_1700000000000_0.png');
+      final created = <String>[];
+
+      await IOOverrides.runZoned(
+        () => expectLater(
+          TempFileSweeper(
+            temporaryDirectory: () async => temp,
+            documentsDirectory: () async => docs,
+            deleteDebugLogs: false,
+            includeProcessingCache: true,
+          ).sweep(),
+          completes,
+        ),
+        // The sweep builds only the cache's Directory itself.
+        createDirectory: (path) {
+          created.add(path);
+          return _UnlistableDirectory(path);
+        },
+      );
+
+      expect(created, ['${docs.path}/${TempFileSweeper.ocrCacheDirName}']);
+      expect(page.existsSync(), isFalse);
+    });
+
     test('completes without a cache directory', () async {
       await expectLater(
         TempFileSweeper(
@@ -352,6 +378,24 @@ class _ListedDirectory extends Fake implements Directory {
     bool recursive = false,
     bool followLinks = true,
   }) => Stream.fromIterable(entries);
+}
+
+/// A directory that exists but can't be listed, as one the app lost access
+/// to would.
+class _UnlistableDirectory extends Fake implements Directory {
+  _UnlistableDirectory(this.path);
+
+  @override
+  final String path;
+
+  @override
+  Future<bool> exists() async => true;
+
+  @override
+  Stream<FileSystemEntity> list({
+    bool recursive = false,
+    bool followLinks = true,
+  }) => Stream.error(FileSystemException('Permission denied', path));
 }
 
 /// A directory whose delete fails, as a locked or busy one would.
