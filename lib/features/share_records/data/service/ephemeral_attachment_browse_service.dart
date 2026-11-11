@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:health_wallet/core/utils/file_url.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
@@ -89,9 +90,7 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
               (contentType.startsWith('image/') ||
                   contentType == 'application/pdf')) {
             if (url != null && url.isNotEmpty) {
-              final rawPath = Uri.decodeComponent(
-                url.startsWith('file://') ? url.substring(7) : url,
-              );
+              final rawPath = filePathOfUrl(url);
               final exists = File(rawPath).existsSync();
               debugPrint(
                 '[EPHEMERAL_BROWSE]   rawPath=$rawPath exists=$exists',
@@ -286,9 +285,7 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
       String? resolvedPath;
 
       if (url != null && url.isNotEmpty) {
-        final rawPath = Uri.decodeComponent(
-          url.startsWith('file://') ? url.substring(7) : url,
-        );
+        final rawPath = filePathOfUrl(url);
         try {
           if (File(rawPath).existsSync()) {
             resolvedPath = rawPath;

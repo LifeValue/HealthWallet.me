@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
@@ -53,6 +55,44 @@ void main() {
       );
 
       expect(entries.map((e) => e.record.id), ['heart']);
+    });
+  });
+
+  group('a received file whose name has unencoded accents', () {
+    late Directory dir;
+    setUp(() => dir = Directory.systemTemp.createTempSync('ephemeral_browse'));
+    tearDown(() => dir.deleteSync(recursive: true));
+
+    test('still gives the thumbnail and the detail', () async {
+      final path = '${dir.path}/Scrisoare medicală_1a2b3c4d.pdf';
+      File(path).writeAsStringSync('%PDF');
+      const encounter = Encounter(id: 'e1', resourceId: 'enc-1');
+      final service = serviceOf([
+        encounter,
+        DocumentReference(
+          id: 'd1',
+          resourceId: 'doc-1',
+          encounterId: 'enc-1',
+          rawResource: {
+            'resourceType': 'DocumentReference',
+            'content': [
+              {
+                'attachment': {
+                  'contentType': 'application/pdf',
+                  'url': 'file://$path',
+                },
+              },
+            ],
+          },
+        ),
+      ]);
+
+      final entries = await service.loadEntries();
+      final detail = await service.loadDetail(encounter);
+
+      expect(entries.single.thumbnailPath, path);
+      expect(detail.attachments.map((a) => a.filePath), [path]);
+      expect(logs, isEmpty);
     });
   });
 
