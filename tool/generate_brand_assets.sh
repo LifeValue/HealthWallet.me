@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Regenerates every icon and launch screen from the masters in branding/:
 #   branding/app_icon_square.png              iOS and Android icons (full bleed)
-#   branding/app_icon_rounded.png             macOS and Windows icons, launch screens
+#   branding/app_icon_rounded.png             macOS, Windows and Linux icons, launch screens
 #   branding/android_adaptive_foreground.png  Android adaptive icon foreground
 # Replace a master, run this script from anywhere, review and commit the result.
 # Needs ImageMagick (`brew install imagemagick`) and FVM.
@@ -70,6 +70,10 @@ sed -i '' 's/ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = AppI
 echo "==> Windows icon (windows/runner/resources/app_icon.ico)"
 magick "$rounded" -define icon:auto-resize=256,128,64,48,32,24,16 \
   windows/runner/resources/app_icon.ico
+
+echo "==> Linux icon (linux/runner/resources/app_icon.png)"
+magick "$rounded" -resize 256x256 -depth 8 -strip \
+  PNG32:linux/runner/resources/app_icon.png
 
 # iOS keeps a snapshot of the launch screen, and after an app update it can
 # keep showing the old one while the image keeps the same name. The iOS launch

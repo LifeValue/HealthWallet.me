@@ -37,6 +37,7 @@ analyzer:
     - ios/**
     - windows/**
     - macos/**
+    - linux/**
 
 formatter:
   page_width: 80
