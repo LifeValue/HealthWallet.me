@@ -481,18 +481,17 @@ void main() {
       expect(logs, loggedWarning('deleting the original imports/report.pdf'));
     });
 
-    test('a page map that cannot be deleted is logged, and the OCR pages '
-        'still deleted', () async {
+    test('a page map that cannot be deleted is logged, and the pages still '
+        'deleted', () async {
       final (_, previews, pages) = await prepared();
       final mapPath = pageMap('s').path;
 
       await IOOverrides.runWithIOOverrides(
-        () => helper.discardOcrPages(sessionId: 's'),
+        () => helper.discardSessionPages(sessionId: 's'),
         _FailingIo(cacheDir: cacheDir.path, undeletable: {mapPath}),
       );
 
-      expect(pages.values.any(_exists), isFalse);
-      expect(previews.every(_exists), isTrue);
+      expect([...previews, ...pages.values].any(_exists), isFalse);
       expect(pageMap('s').existsSync(), isTrue);
       expect(logs, loggedWarning('deleting the page map of s failed'));
     });
@@ -509,7 +508,8 @@ void main() {
 
       expect(File(stuck).existsSync(), isTrue);
       expect(File(other).existsSync(), isFalse);
-      expect(pageMap('s').existsSync(), isFalse);
+      // Kept for the preview pages, which go when the session does.
+      expect(pageMap('s').existsSync(), isTrue);
       expect(logs, loggedWarning('deleting ${stuck.split('/').last} failed'));
     });
 
@@ -518,7 +518,7 @@ void main() {
       final (_, _, pages) = await prepared();
 
       await IOOverrides.runWithIOOverrides(
-        () => helper.discardOcrPages(sessionId: 's'),
+        () => helper.discardSessionPages(sessionId: 's'),
         _FailingIo(cacheDir: cacheDir.path, unlistable: true),
       );
 
