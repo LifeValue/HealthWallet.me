@@ -39,13 +39,13 @@ class _FakeSsdp extends Fake implements SsdpService {
 }
 
 class _FakeMdns extends Fake implements MdnsService {
-  ({String ip, int port})? result;
+  List<({String ip, int port})> result = const [];
   Exception? error;
   String? lastToken;
   final calls = <String>[];
 
   @override
-  Future<({String ip, int port})?> search({
+  Future<List<({String ip, int port})>> search({
     required String token,
     Duration timeout = const Duration(seconds: 3),
   }) async {
@@ -89,7 +89,7 @@ void main() {
   );
 
   test('returns every candidate, Bonjour first, without duplicates', () async {
-    mdns.result = (ip: '10.0.0.2', port: 49152);
+    mdns.result = [(ip: '10.0.0.2', port: 49152)];
     ssdp.result = (ip: '10.0.0.3', port: 49152, deviceId: 'desk-1');
     expect(
       (await search()).map((r) => '${r.method} ${r.ip}'),
@@ -98,6 +98,21 @@ void main() {
 
     ssdp.result = (ip: '10.0.0.2', port: 49152, deviceId: 'desk-1');
     expect((await search()).map((r) => r.method), ['mdns']);
+  });
+
+  test('every Bonjour answer is a candidate, so a desktop that restarted '
+      'on a new port is found next to its stale entry', () async {
+    mdns.result = [
+      (ip: 'desk.local.', port: 49152),
+      (ip: 'desk.local.', port: 50123),
+    ];
+    ssdp.result = (ip: '10.0.0.3', port: 50123, deviceId: 'desk-1');
+
+    expect((await search()).map((r) => '${r.method} ${r.ip}:${r.port}'), [
+      'mdns desk.local.:49152',
+      'mdns desk.local.:50123',
+      if (!Platform.isIOS) 'ssdp 10.0.0.3:50123',
+    ]);
   });
 
   test('a failing search method is skipped, not fatal', () async {
