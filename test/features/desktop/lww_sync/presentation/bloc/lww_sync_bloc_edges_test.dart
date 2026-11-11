@@ -78,6 +78,9 @@ class _FakeSync extends Fake implements LwwSyncService {
   };
 
   @override
+  Future<Map<String, int>> manifest(String table) async => {};
+
+  @override
   Future<List<String>> missingAttachmentPaths([
     Iterable<String>? documentIds,
   ]) async => missing;
@@ -305,23 +308,132 @@ void main() {
     });
   });
 
-  test('an ack saying the peer could not apply the batch records the error '
-      'and moves on past it', () {
-    run((async) {
-      sync.batches.add(const SyncBatch(id: 5, deviceId: 'me', tables: _rows));
+  group('an ack saying the peer could not apply the batch', () {
+    const rejected = 'the other device could not save some changes';
+
+    /// The peer's digest: the same tables as this side's, or with
+    /// `fhir_resource` differing.
+    Map<String, dynamic> peerDigest({required bool matching}) => {
+      'reply': true,
+      'tables': {
+        for (final table in LwwSyncService.syncedTables)
+          table: matching || table != 'fhir_resource'
+              ? {'count': 0, 'hash': 'empty'}
+              : {'count': 1, 'hash': 'theirs'},
+      },
+    };
+
+    /// Connects with batch 5 in flight, which the peer then fails to save,
+    /// and with [later] batches waiting behind it.
+    void peerRejectsBatch5(
+      FakeAsync async, {
+      List<SyncBatch> later = const [],
+    }) {
+      sync.batches
+        ..add(const SyncBatch(id: 5, deviceId: 'me', tables: _rows))
+        ..addAll(later);
       startConnected(async);
       expect(link.sentOfType('sync.batch'), hasLength(1));
-      final statuses = <LwwSyncStatus>[];
-      final sub = bloc.stream.listen((s) => statuses.add(s.syncStatus));
-
       receive(async, 'sync.ack', {'id': 5, 'ok': false});
-      unawaited(sub.cancel());
+    }
 
-      expect(logs, loggedWarning('could not apply batch 5'));
-      expect(statuses, contains(LwwSyncStatus.error));
-      expect(bloc.state.error, 'the other device could not save some changes');
-      expect(sync.pruned, [5]);
-      expect(sync.stored?.ackedSeq, 5);
+    void expectRejectedShown() {
+      expect(bloc.state.syncStatus, LwwSyncStatus.error);
+      expect(bloc.state.error, rejected);
+    }
+
+    test('shows the error, moves on past the batch and checks again with '
+        'the peer', () {
+      run((async) {
+        peerRejectsBatch5(async);
+
+        expect(logs, loggedWarning('could not apply batch 5'));
+        expectRejectedShown();
+        expect(sync.pruned, [5]);
+        expect(sync.stored?.ackedSeq, 5);
+        // The one sent on connecting, then the check after sending.
+        expect(link.sentOfType('sync.digest'), [
+          containsPair('reply', false),
+          containsPair('reply', false),
+        ]);
+      });
+    });
+
+    test('keeps the error when the peer answers the check with tables that '
+        'still differ, and clears it once they match', () {
+      run((async) {
+        peerRejectsBatch5(async);
+
+        receive(async, 'sync.digest', peerDigest(matching: false));
+        expectRejectedShown();
+        expect(bloc.state.tablesMatch, isFalse);
+        // The rows go back and forth again all the same.
+        expect(link.sentOfType('sync.manifest'), [
+          containsPair('table', 'fhir_resource'),
+        ]);
+
+        receive(async, 'sync.digest', peerDigest(matching: true));
+        expect(bloc.state.syncStatus, LwwSyncStatus.idle);
+        expect(bloc.state.error, isNull);
+        expect(bloc.state.tablesMatch, isTrue);
+      });
+    });
+
+    test('keeps the error when a later batch is saved', () {
+      run((async) {
+        peerRejectsBatch5(
+          async,
+          later: const [SyncBatch(id: 6, deviceId: 'me', tables: _rows)],
+        );
+        expect(link.sentOfType('sync.batch'), hasLength(2));
+        expectRejectedShown();
+
+        receive(async, 'sync.ack', {'id': 6, 'ok': true});
+        expectRejectedShown();
+        expect(sync.stored?.ackedSeq, 6);
+      });
+    });
+
+    test('keeps the error through a reconnect, as long as the tables were '
+        'not compared', () {
+      run((async) {
+        peerRejectsBatch5(async);
+
+        link.connected = false;
+        bloc.add(const ConnectionChanged(isConnected: false));
+        async.flushMicrotasks();
+        expectRejectedShown();
+
+        link.connected = true;
+        bloc.add(const ConnectionChanged(isConnected: true));
+        async.flushMicrotasks();
+        expectRejectedShown();
+
+        receive(async, 'sync.digest', peerDigest(matching: true));
+        expect(bloc.state.syncStatus, LwwSyncStatus.idle);
+        expect(bloc.state.error, isNull);
+      });
+    });
+
+    test('Sync Now clears the error and checks again; a sync started by the '
+        'app keeps it', () {
+      run((async) {
+        peerRejectsBatch5(async);
+
+        bloc.add(const SyncTriggered());
+        async.flushMicrotasks();
+        expectRejectedShown();
+
+        final digests = link.sentOfType('sync.digest').length;
+        bloc.add(const SyncTriggered(userRequested: true));
+        async.flushMicrotasks();
+        expect(bloc.state.syncStatus, LwwSyncStatus.syncing);
+        expect(bloc.state.error, isNull);
+        expect(link.sentOfType('sync.digest'), hasLength(digests + 1));
+
+        receive(async, 'sync.digest', peerDigest(matching: true));
+        expect(bloc.state.syncStatus, LwwSyncStatus.idle);
+      });
     });
   });
 

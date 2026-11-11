@@ -164,7 +164,9 @@ class SyncSection extends StatelessWidget {
                   : context.l10n.desktopSyncNow,
               onPressed: isConnected && !isSyncing
                   ? () {
-                      getIt<LwwSyncBloc>().add(const SyncTriggered());
+                      getIt<LwwSyncBloc>().add(
+                        const SyncTriggered(userRequested: true),
+                      );
                     }
                   : null,
               height: 36,
