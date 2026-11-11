@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:health_wallet/core/utils/stored_file_name.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/message_router.dart';
 import 'package:health_wallet/features/desktop/handover/data/services/handover_sender_service.dart';
 import 'package:health_wallet/features/desktop/handover/data/services/handover_service.dart';
@@ -134,6 +135,62 @@ void main() {
       await receiver.discardFiles('s');
 
       expect(File(path).existsSync(), isFalse);
+    });
+
+    test('a document keeps its name, accents and spaces included, and the '
+        'title processing reads from it is that name', () async {
+      // The phone sends its stored copy, named as imports name it.
+      await sender.send('s', [
+        writeFile('imports/Scrisoare medicală_1a2b3c4d.pdf', const [1]),
+        writeFile('imports/Befund Größe (2).pdf', const [2]),
+      ]);
+      await eventually(() => received.isNotEmpty);
+      final paths = (received.single as IncomingHandoverReceived).filePaths;
+
+      expect(paths.map(p.basename), [
+        'Scrisoare medicală.pdf',
+        'Befund Größe (2).pdf',
+      ]);
+      expect(File(paths[0]).readAsBytesSync(), [1]);
+      // What processing does with an imported file: a unique stored name,
+      // whose stem is the document's title.
+      final imports = Directory(p.join(dir.path, 'desktop-imports'))
+        ..createSync();
+      final stored = await uniqueStoredFileName(
+        imports.path,
+        p.basename(paths[0]),
+      );
+      expect(
+        originalFileStem(p.join(imports.path, stored)),
+        'Scrisoare medicală',
+      );
+    });
+
+    test('names the phone sends are stored safely inside the transfer '
+        'folder', () async {
+      pair.desktop.deliver(HandoverMessage.offer, {
+        'session_id': 's',
+        'v': HandoverProtocol.version,
+        'files': [
+          {'name': '../../evil.pdf', 'size': 0},
+          {'name': r'a:b\c?.jpg', 'size': 0},
+          {'name': '..', 'size': 0},
+          {'name': 'scan.jpg', 'size': 0},
+          {'name': 'scan.jpg', 'size': 0},
+        ],
+      });
+      await eventually(() => received.isNotEmpty);
+      final paths = (received.single as IncomingHandoverReceived).filePaths;
+
+      final root = p.join(tmp.path, 'handover', 's');
+      expect(paths.map((path) => p.relative(path, from: root)), [
+        p.join('0', 'evil.pdf'),
+        p.join('1', 'a_b_c_.jpg'),
+        p.join('2', 'file'),
+        p.join('3', 'scan.jpg'),
+        p.join('4', 'scan.jpg'),
+      ]);
+      expect(paths.every((path) => File(path).existsSync()), isTrue);
     });
 
     test('a missing file fails before anything is sent', () async {

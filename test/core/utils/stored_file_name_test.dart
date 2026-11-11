@@ -114,6 +114,34 @@ void main() {
     });
   });
 
+  group('safeFileName', () {
+    test('keeps the name as the user gave it, without a suffix', () {
+      expect(safeFileName('Scrisoare medicală.pdf'), 'Scrisoare medicală.pdf');
+      expect(safeFileName('Befund Größe (2).pdf'), 'Befund Größe (2).pdf');
+      expect(safeFileName('notes'), 'notes');
+    });
+
+    test('follows the rules of a stored name', () {
+      expect(safeFileName('a:b*c?d.pdf'), 'a_b_c_d.pdf');
+      expect(safeFileName('../../etc/passwd'), isNot(contains('/')));
+      expect(safeFileName('../../etc/passwd'), isNot(startsWith('.')));
+      expect(safeFileName('..report.pdf'), 'report.pdf');
+      expect(safeFileName('.pdf'), 'file.pdf');
+      expect(safeFileName('..'), 'file');
+      expect(safeFileName(''), 'file');
+      expect(safeFileName('${'a' * 300}.pdf'), '${'a' * 100}.pdf');
+    });
+
+    test('a unique name made from it carries a single suffix, so the title '
+        'is the original name', () async {
+      final stored = await uniqueStoredFileName(
+        docs.path,
+        safeFileName('Scrisoare medicală.pdf'),
+      );
+      expect(originalFileStem(p.join(docs.path, stored)), 'Scrisoare medicală');
+    });
+  });
+
   group('originalFileStem', () {
     test('drops the extension and the unique suffix', () async {
       final stored = await uniqueStoredFileName(

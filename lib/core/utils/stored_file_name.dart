@@ -5,17 +5,38 @@ import 'package:path/path.dart';
 import 'package:uuid/uuid.dart';
 
 /// A file name for [originalName] in [directory] that no file has yet: the
-/// sanitised name with an 8-character unique suffix, so two attachments
-/// with the same name never replace each other. The original name stays
-/// the attachment's title.
-///
-/// Letters and digits of any script, accents, spaces, `_`, `.`, `-`, `(` and
-/// `)` are kept, so a title read back from the name ([originalFileStem])
-/// stays readable; path separators and every other character become `_`.
+/// sanitised name ([safeFileName]) with an 8-character unique suffix, so two
+/// attachments with the same name never replace each other. The original
+/// name stays the attachment's title.
 Future<String> uniqueStoredFileName(
   String directory,
   String originalName,
 ) async {
+  final (:stem, :extension) = _safeParts(originalName);
+  while (true) {
+    final name = '${stem}_${const Uuid().v4().substring(0, 8)}$extension';
+    final type = await FileSystemEntity.type(
+      join(directory, name),
+      followLinks: false,
+    );
+    if (type == FileSystemEntityType.notFound) return name;
+  }
+}
+
+/// [originalName] reduced to one path segment that is safe to store, without
+/// the unique suffix: for a file that gets a folder of its own, so the name
+/// a later [uniqueStoredFileName] gives it carries a single suffix.
+///
+/// Letters and digits of any script, accents, spaces, `_`, `.`, `-`, `(` and
+/// `)` are kept, so a title read back from the name ([originalFileStem])
+/// stays readable; path separators and every other character become `_`.
+/// The name never starts with a dot or a space and is never empty.
+String safeFileName(String originalName) {
+  final (:stem, :extension) = _safeParts(originalName);
+  return '$stem$extension';
+}
+
+({String stem, String extension}) _safeParts(String originalName) {
   final base = originalName.replaceAll(_unsafeCharacter, '_');
   final dot = base.lastIndexOf('.');
   final hasExtension =
@@ -25,15 +46,7 @@ Future<String> uniqueStoredFileName(
       .trimRight();
   if (!stem.contains(RegExp(r'[\p{L}\p{N}]', unicode: true))) stem = 'file';
   if (stem.length > 100) stem = stem.substring(0, 100);
-  final extension = hasExtension ? base.substring(dot) : '';
-  while (true) {
-    final name = '${stem}_${const Uuid().v4().substring(0, 8)}$extension';
-    final type = await FileSystemEntity.type(
-      join(directory, name),
-      followLinks: false,
-    );
-    if (type == FileSystemEntityType.notFound) return name;
-  }
+  return (stem: stem, extension: hasExtension ? base.substring(dot) : '');
 }
 
 final _unsafeCharacter = RegExp(r'[^\p{L}\p{M}\p{N}_.\- ()]', unicode: true);

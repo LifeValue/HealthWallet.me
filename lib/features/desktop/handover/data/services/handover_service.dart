@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/core/utils/stored_file_name.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/message_router.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/handover/data/services/handover_outbox.dart';
@@ -168,16 +169,18 @@ class HandoverService {
       dir,
       [
         for (var i = 0; i < files.length; i++)
-          // The index keeps pages in order and same-named pages apart.
+          // A folder per page keeps same-named pages apart, so the file
+          // keeps the document's own name: processing stores it under a
+          // unique name and reads the title back from it.
           _File(
-            p.join(dir.path, '${i}_${_safe(files[i].name)}'),
+            p.join(dir.path, '$i', _originalName(files[i].name)),
             files[i].size,
           ),
       ],
       (m['phase1_data'] as Map?)?.cast<String, dynamic>(),
     );
     for (final f in transfer.files) {
-      await File(f.path).writeAsBytes(const [], flush: true);
+      await File(f.path).create(recursive: true);
     }
     _active[id] = transfer;
     _touch(id);
@@ -358,7 +361,14 @@ class HandoverService {
     }
   }
 
-  /// A name the phone chose, reduced to one safe path segment.
+  /// The name the user gave the document, safe to store. The phone sends the
+  /// name of its stored copy, which carries a unique suffix
+  /// ([uniqueStoredFileName]); it is dropped, as the phone drops it for the
+  /// title, so the desktop's copy doesn't get a second one.
+  static String _originalName(String sent) =>
+      safeFileName('${originalFileStem(sent)}${p.extension(sent)}');
+
+  /// A session id reduced to one safe path segment.
   static String _safe(String name) {
     final base = p.basename(name).replaceAll(RegExp(r'[^\w.\-]'), '_');
     return base.isEmpty || base == '.' || base == '..' ? 'file' : base;
