@@ -120,6 +120,83 @@ void main() {
     },
   );
 
+  test('the phone\'s visit and report come with its patient step', () async {
+    await receive(
+      's1',
+      phase1: {
+        'patient': stagedPatientToJson(const StagedPatient()),
+        'encounter': stagedEncounterToJson(const StagedEncounter()),
+        'diagnosticReport': stagedDiagnosticReportToJson(
+          const StagedDiagnosticReport(),
+        ),
+      },
+    );
+
+    final imported = processing.events.whereType<DocumentImported>().single;
+    expect(imported.phase1Patient, isNotNull);
+    expect(imported.phase1Encounter, isNotNull);
+    expect(imported.phase1DiagnosticReport, isNotNull);
+  });
+
+  test('an unreadable patient step is read again from the document', () async {
+    await receive(
+      's1',
+      phase1: {
+        'patient': {'draft': 'not a patient'},
+      },
+    );
+
+    final imported = processing.events.whereType<DocumentImported>().single;
+    expect(imported.sessionId, 's1');
+    expect(imported.phase1Patient, isNull);
+    expect(imported.phase1Encounter, isNull);
+  });
+
+  test('a document that fails before its session exists reaches the phone '
+      'as failed, and its files go', () async {
+    await receive('s1');
+    final imported = processing.events.whereType<DocumentImported>().single;
+
+    processing.push(
+      withSessions(
+        [],
+        const PipelineStatus.failure(error: 'x', sessionId: 's1'),
+      ),
+    );
+    await eventually(() => tcp.sentOf(HandoverMessage.failed).isNotEmpty);
+
+    expect(tcp.sentOf(HandoverMessage.failed), [
+      {'session_id': 's1', 'reason': 'failed'},
+    ]);
+    await eventually(() => !File(imported.filePaths.single).existsSync());
+  });
+
+  test('a handover with no room to process reaches the phone as failed, '
+      'others don\'t', () async {
+    await receive('s1');
+    final sessions = [handover('s1', ProcessingStatus.pending)];
+    processing
+      ..push(withSessions(sessions))
+      ..push(
+        withSessions(
+          sessions,
+          const PipelineStatus.capacityFailure(sessionId: 'mine'),
+        ),
+      )
+      ..push(
+        withSessions(
+          sessions,
+          const PipelineStatus.capacityFailure(sessionId: 's1'),
+        ),
+      );
+    await eventually(() => tcp.sentOf(HandoverMessage.failed).isNotEmpty);
+    await settle();
+
+    expect(tcp.sentOf(HandoverMessage.failed), [
+      {'session_id': 's1', 'reason': 'failed'},
+    ]);
+  });
+
   test(
     'progress, the draft and a save on the desktop reach the phone',
     () async {
