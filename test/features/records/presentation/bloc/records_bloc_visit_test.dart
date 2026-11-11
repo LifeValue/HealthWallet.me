@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
@@ -8,8 +10,12 @@ import 'package:health_wallet/features/records/presentation/bloc/records_bloc.da
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Answers every query with no records and keeps the types each asked for.
+/// While [hold] is set, a query answers only once its entry in [held] is
+/// completed.
 class _FakeRecordsRepository extends Fake implements RecordsRepository {
   final queries = <List<FhirType>>[];
+  bool hold = false;
+  final held = <Completer<void>>[];
 
   @override
   Future<List<IFhirResource>> getResources({
@@ -21,6 +27,11 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
     DateFilter? dateFilter,
   }) async {
     queries.add(resourceTypes);
+    if (hold) {
+      final answer = Completer<void>();
+      held.add(answer);
+      await answer.future;
+    }
     return const [];
   }
 }
@@ -151,5 +162,37 @@ void main() {
       expect(after.activeFilters, [FhirType.Media]);
       expect(repository.queries, hasLength(queries));
     });
+  });
+
+  group('leaving Records again while the last leave still reloads', () {
+    test(
+      'waits for that reload, then shows the person\'s own filters',
+      () async {
+        await run([_reload('jane')]);
+        await run(_recordsCard([FhirType.Observation], 'jane'));
+        repository.hold = true;
+        await run([RecordsVisitEnded()]);
+        final firstLeave = repository.held.single;
+
+        // Back on a card and away again before the first reload answered.
+        await run(_recordsCard([FhirType.Encounter], 'jane'));
+        final queries = repository.queries.length;
+        await run([RecordsVisitEnded()]);
+
+        expect(repository.queries, hasLength(queries));
+        expect(bloc.state.activeFilters, [FhirType.Encounter]);
+
+        repository.hold = false;
+        firstLeave.complete();
+        for (final answer in repository.held.skip(1)) {
+          answer.complete();
+        }
+        await pumpEventQueue();
+
+        expect(bloc.state.activeFilters, [FhirType.Condition]);
+        expect(repository.queries, hasLength(queries + 1));
+        expect(repository.queries.last, [FhirType.Condition]);
+      },
+    );
   });
 }

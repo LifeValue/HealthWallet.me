@@ -67,7 +67,8 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     on<RecordsSpecialtyApplied>(_onSpecialtyApplied);
     on<RecordsRefreshRequested>(_onRefreshRequested);
     on<RecordsClearAllFilters>(_onClearAllFilters);
-    on<RecordsVisitEnded>(_onVisitEnded);
+    // One leave at a time: the next waits for the reload the last started.
+    on<RecordsVisitEnded>(_onVisitEnded, transformer: sequential());
   }
 
   @override
