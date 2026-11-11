@@ -38,6 +38,9 @@ assets/certs/android/*
 .swiftpm/
 migrate_working_dir/
 
+# Bundler's local settings and the plugins it installs from the Gemfiles
+**/.bundle/
+
 # exclude the API key from version control
 env.g.dart
 *.env

@@ -5,4 +5,15 @@ gem "dotenv"
 
 # Pinned instead of the runner's Homebrew CocoaPods: the Share Extension uses Xcode's
 # synchronized folder groups, which CocoaPods < 1.16 (xcodeproj < 1.27) cannot read.
-gem "cocoapods", "~> 1.16"
+gem "cocoapods", "~> 1.17"
+
+# cocoapods-core caps activesupport below 8, and every 7.x has GHSA-8474-xrp6-wh69 (fixed in
+# 8.0.5.2 and 8.1.4.1); CocoaPods 1.17 installs pods unchanged on 8.1. bundler-override raises the
+# cap at resolution time; Bundler installs it into .bundle/plugin on `bundle install`. Remove it
+# once a CocoaPods release allows activesupport 8 (https://github.com/CocoaPods/Core/issues/786).
+plugin "bundler-override", "0.4.0"
+require File.join(Bundler::Plugin.index.load_paths("bundler-override")[0], "bundler-override") rescue nil
+if Bundler::Plugin.installed?("bundler-override")
+  override "cocoapods-core", requirements: { "activesupport" => [">= 5.0", "< 9"] }
+end
+gem "activesupport", ">= 8.1.4.1"
