@@ -43,6 +43,26 @@ class FixedLegacyFolders extends LegacyAttachmentFolders {
   Future<List<String>> roots() async => folders;
 }
 
+/// The app's database in memory, running [beforeStatement] before each
+/// custom statement, so a test can act at a given step of a backup or a
+/// restore.
+class HookedDatabase extends AppDatabase {
+  HookedDatabase()
+    : super(
+        NativeDatabase.memory(
+          setup: (raw) => raw.execute('PRAGMA foreign_keys = ON'),
+        ),
+      );
+
+  Future<void> Function(String statement)? beforeStatement;
+
+  @override
+  Future<void> customStatement(String statement, [List<dynamic>? args]) async {
+    await beforeStatement?.call(statement);
+    return super.customStatement(statement, args);
+  }
+}
+
 /// A backup folder, a documents folder and an in-memory database, in a real
 /// temporary directory, with helpers for records and their files.
 class BackupFixture {
@@ -53,7 +73,7 @@ class BackupFixture {
 
   /// The app's documents folder, where attachments live.
   late Directory docs;
-  late AppDatabase db;
+  late HookedDatabase db;
 
   Future<void> setUp() async {
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -61,11 +81,7 @@ class BackupFixture {
     backups = Directory(p.join(root.path, 'backups'))..createSync();
     docs = Directory(p.join(root.path, 'docs'))..createSync();
     SharedPreferences.setMockInitialValues({'backupDirectory': backups.path});
-    db = AppDatabase(
-      NativeDatabase.memory(
-        setup: (raw) => raw.execute('PRAGMA foreign_keys = ON'),
-      ),
-    );
+    db = HookedDatabase();
   }
 
   Future<void> tearDown() async {

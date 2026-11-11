@@ -58,6 +58,19 @@ class BackupService {
   static const _stagingPrefix = '.restore-';
   static const _metaSuffix = '.meta.json';
 
+  /// How long the parts of a backup without metadata must have been left
+  /// alone before [removeBackupLeftovers] takes them for an interrupted one.
+  static const leftoverMinAge = Duration(minutes: 10);
+
+  /// A part of a backup as [createSnapshot] names it: `<prefix><ms>` and
+  /// `.db`, `.files` or the metadata's `.tmp`. Group 1 is the base name.
+  static final _backupPart = RegExp(
+    r'^(.*_\d{13})(\.db|\.files|\.db\.meta\.json\.tmp)$',
+  );
+
+  /// The base names of the backups this run is writing.
+  final _writing = <String>{};
+
   /// Whether this run has already reopened the chosen folder from its
   /// bookmark (macOS only; see [FolderAccessService]).
   bool _folderAccessRestored = false;
@@ -175,6 +188,7 @@ class BackupService {
     final filesDir = Directory(_filesPathFor(dbPath));
 
     final BackupEntry entry;
+    _writing.add(p.basename(base));
     try {
       await _database.customStatement('VACUUM INTO ?', [dbPath]);
       final snapshot = await _readSnapshot(dbPath);
@@ -201,6 +215,8 @@ class BackupService {
       await _deleteQuietly(File(dbPath));
       await _deleteQuietly(filesDir);
       rethrow;
+    } finally {
+      _writing.remove(p.basename(base));
     }
 
     if (entry.missing.isNotEmpty) {
@@ -917,10 +933,68 @@ class BackupService {
     return removed;
   }
 
-  /// Start-up housekeeping: restore leftovers and expired safety copies.
-  /// Never throws.
+  /// Removes what an interrupted backup (the app killed while writing it)
+  /// left in the backup folder, and returns how many backups. A backup's
+  /// `.db`, `.files/` and metadata `.tmp` are removed together, only when it
+  /// has no metadata (it was never complete, so never listed), this run
+  /// isn't writing it, and none of its parts (nor a file in `.files/`) was
+  /// modified in the last [leftoverMinAge]. Names that aren't a backup's
+  /// parts are never touched. Failures are logged.
+  Future<int> removeBackupLeftovers({DateTime? now}) async {
+    final cutoff = (now ?? DateTime.now()).subtract(leftoverMinAge);
+    var removed = 0;
+    try {
+      final backupDir = await getBackupDirectory();
+      final parts = <String, List<FileSystemEntity>>{};
+      await for (final entity in backupDir.list(followLinks: false)) {
+        final match = _backupPart.firstMatch(p.basename(entity.path));
+        if (match == null) continue;
+        final isDir = match[2] == '.files';
+        if (isDir ? entity is! Directory : entity is! File) continue;
+        (parts[match[1]!] ??= []).add(entity);
+      }
+      for (final MapEntry(key: base, value: entities) in parts.entries) {
+        if (_writing.contains(base)) continue;
+        final meta = p.join(backupDir.path, '$base.db$_metaSuffix');
+        if (await _exists(meta)) continue;
+        if (!await _untouchedSince(entities, cutoff)) continue;
+        for (final entity in entities) {
+          await _deleteQuietly(entity);
+        }
+        removed++;
+        logger.i('[Backup] removed the interrupted backup $base');
+      }
+    } catch (e, s) {
+      logger.e('[Backup] could not look for interrupted backups', e, s);
+    }
+    return removed;
+  }
+
+  /// Whether [entities], and the entries directly in those that are folders,
+  /// were last modified before [cutoff]. A folder's own time moves with each
+  /// file added to it, which matters because a copy may keep its source's
+  /// modified time.
+  static Future<bool> _untouchedSince(
+    List<FileSystemEntity> entities,
+    DateTime cutoff,
+  ) async {
+    for (final entity in entities) {
+      final inside = entity is Directory
+          ? await entity.list(followLinks: false).toList()
+          : const <FileSystemEntity>[];
+      for (final e in [entity, ...inside]) {
+        final stat = await e.stat();
+        if (!stat.modified.isBefore(cutoff)) return false;
+      }
+    }
+    return true;
+  }
+
+  /// Start-up housekeeping: restore and backup leftovers and expired safety
+  /// copies. Never throws.
   Future<void> cleanUpOnStartup() async {
     await removeRestoreLeftovers();
+    await removeBackupLeftovers();
     await deleteExpiredSafetyCopies();
   }
 
