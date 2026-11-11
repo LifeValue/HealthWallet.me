@@ -3,9 +3,8 @@ import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/logger.dart';
-import 'package:health_wallet/core/utils/pdf_open.dart';
+import 'package:health_wallet/core/utils/pdf_pages.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
-import 'package:pdfx/pdfx.dart' as pdfx;
 
 /// Opens [filePath] as a PDF before [builder] shows it. The full-screen PDF
 /// viewer draws a blank page for a file it cannot read and does not report
@@ -26,26 +25,11 @@ class CheckedPdfView extends StatefulWidget {
   /// [defaultCanOpen] when null.
   final Future<bool> Function(String filePath)? canOpen;
 
-  /// The check the viewers use. pdfx refuses to open files on hosts it does
-  /// not support (Linux, where CI runs), so tests replace it.
+  /// The check the viewers use. Neither PDF plugin runs in tests, so they
+  /// replace it.
   @visibleForTesting
-  static Future<bool> Function(String filePath) defaultCanOpen = canOpenPdf;
-
-  static Future<bool> canOpenPdf(
-    String filePath, {
-    @visibleForTesting
-    Future<pdfx.PdfDocument> Function(String filePath) open = openPdfDocument,
-  }) async {
-    try {
-      final document = await open(filePath);
-      final readable = document.pagesCount > 0;
-      await document.close();
-      return readable;
-    } catch (e, s) {
-      logger.w('Could not open the PDF $filePath', e, s);
-      return false;
-    }
-  }
+  static Future<bool> Function(String filePath) defaultCanOpen =
+      PdfPages.hasPages;
 
   /// For the PDF view's own `onError` and `onPageError`: their text is
   /// technical English, so it is only logged and the user reads the

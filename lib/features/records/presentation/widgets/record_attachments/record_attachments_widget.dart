@@ -13,16 +13,15 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/logger.dart';
-import 'package:health_wallet/core/utils/pdf_open.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/checked_pdf_view.dart';
+import 'package:health_wallet/core/widgets/desktop_pdf_view.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/bloc/record_attachments_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path/path.dart';
-import 'package:pdfx/pdfx.dart' as pdfx;
 import 'package:share_plus/share_plus.dart';
 
 class RecordAttachmentsWidget extends StatefulWidget {
@@ -465,7 +464,7 @@ class _PdfViewer extends StatelessWidget {
       body: CheckedPdfView(
         filePath: filePath,
         builder: (context) => _isDesktop
-            ? _DesktopPdfBody(filePath: filePath)
+            ? DesktopPdfView(filePath: filePath)
             : PDFView(
                 filePath: filePath,
                 enableSwipe: true,
@@ -481,36 +480,5 @@ class _PdfViewer extends StatelessWidget {
               ),
       ),
     );
-  }
-}
-
-class _DesktopPdfBody extends StatefulWidget {
-  final String filePath;
-  const _DesktopPdfBody({required this.filePath});
-
-  @override
-  State<_DesktopPdfBody> createState() => _DesktopPdfBodyState();
-}
-
-class _DesktopPdfBodyState extends State<_DesktopPdfBody> {
-  late final pdfx.PdfController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = pdfx.PdfController(
-      document: openPdfDocument(widget.filePath),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return pdfx.PdfView(controller: _controller);
   }
 }

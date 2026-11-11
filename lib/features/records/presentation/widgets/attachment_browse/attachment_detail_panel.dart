@@ -16,7 +16,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/logger.dart';
-import 'package:health_wallet/core/utils/pdf_open.dart';
+import 'package:health_wallet/core/utils/pdf_pages.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
@@ -27,7 +27,6 @@ import 'package:health_wallet/features/records/presentation/widgets/record_attac
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/record_attachments_widget.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_notes/record_notes_widget.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:pdfx/pdfx.dart' as pdfx;
 
 double _panelHPad(double width) {
   if (width >= 1024) return 48.0;
@@ -339,35 +338,22 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
           ct == 'application/pdf' || path.toLowerCase().endsWith('.pdf');
 
       if (isPdf) {
-        pdfx.PdfDocument? doc;
         try {
-          doc = await openPdfDocument(path);
-          final pageCount = doc.pagesCount;
-          for (int i = 1; i <= pageCount; i++) {
-            final page = await doc.getPage(i);
-            final img = await page.render(
-              width: page.width * 2,
-              height: page.height * 2,
-              backgroundColor: '#FFFFFF',
+          final rendered = await PdfPages.renderAll(path, scale: 2);
+          for (final (index, page) in rendered.indexed) {
+            pages.add(
+              _PreviewPage(
+                bytes: page.bytes,
+                title: attachment.title,
+                resource: attachment.resource,
+                pageInDoc: index + 1,
+                totalPagesInDoc: rendered.length,
+              ),
             );
-            await page.close();
-            if (img != null) {
-              pages.add(
-                _PreviewPage(
-                  bytes: img.bytes,
-                  title: attachment.title,
-                  resource: attachment.resource,
-                  pageInDoc: i,
-                  totalPagesInDoc: pageCount,
-                ),
-              );
-            }
           }
         } catch (e) {
           logger.w('Could not open the PDF attachment ${attachment.title}', e);
           failedPdfs++;
-        } finally {
-          await doc?.close();
         }
       } else {
         pages.add(

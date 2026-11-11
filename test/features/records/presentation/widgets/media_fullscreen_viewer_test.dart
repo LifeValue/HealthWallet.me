@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:flutter/foundation.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/utils/pdf_pages.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/checked_pdf_view.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
@@ -155,6 +157,9 @@ void main() {
     await getIt.unregister<AppPlatform>();
     getIt.registerSingleton<AppPlatform>(AppPlatform.desktop);
     CheckedPdfView.defaultCanOpen = (_) async => true;
+    // The pdfx view, whatever the host (CI runs on Linux).
+    PdfPages.usePdfx = true;
+    addTearDown(() => PdfPages.usePdfx = !Platform.isLinux);
 
     await open(tester, _media(contentType: 'application/pdf', data: pdf));
 

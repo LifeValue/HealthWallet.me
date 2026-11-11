@@ -11,15 +11,14 @@ import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/services/temp_file_sweeper.dart';
 import 'package:health_wallet/core/utils/logger.dart';
-import 'package:health_wallet/core/utils/pdf_open.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/checked_pdf_view.dart';
+import 'package:health_wallet/core/widgets/desktop_pdf_view.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart'
     as entities;
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:pdfx/pdfx.dart' as pdfx;
 
 class MediaFullscreenViewer extends StatefulWidget {
   final entities.Media media;
@@ -133,7 +132,7 @@ class _MediaFullscreenViewerState extends State<MediaFullscreenViewer> {
             return CheckedPdfView(
               filePath: pdfPath,
               builder: (context) => isDesktop
-                  ? _DesktopPdfBody(filePath: pdfPath)
+                  ? DesktopPdfView(filePath: pdfPath)
                   : PDFView(
                       filePath: pdfPath,
                       enableSwipe: true,
@@ -356,36 +355,5 @@ class _MediaFullscreenViewerState extends State<MediaFullscreenViewer> {
         ],
       ),
     );
-  }
-}
-
-class _DesktopPdfBody extends StatefulWidget {
-  final String filePath;
-  const _DesktopPdfBody({required this.filePath});
-
-  @override
-  State<_DesktopPdfBody> createState() => _DesktopPdfBodyState();
-}
-
-class _DesktopPdfBodyState extends State<_DesktopPdfBody> {
-  late final pdfx.PdfController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = pdfx.PdfController(
-      document: openPdfDocument(widget.filePath),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return pdfx.PdfView(controller: _controller);
   }
 }
