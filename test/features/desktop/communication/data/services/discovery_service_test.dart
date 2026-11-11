@@ -5,6 +5,8 @@ import 'package:health_wallet/features/desktop/communication/data/services/disco
 import 'package:health_wallet/features/desktop/communication/data/services/mdns_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/ssdp_service.dart';
 
+import '../../../../../helpers/log_capture.dart';
+
 class _FakeSsdp extends Fake implements SsdpService {
   ({String ip, int port, String deviceId})? result;
   Exception? error;
@@ -59,13 +61,19 @@ class _FakeMdns extends Fake implements MdnsService {
   Future<void> startAdvertising({
     required int port,
     required String token,
-  }) async => calls.add('advertise $port $token');
+  }) async {
+    calls.add('advertise $port $token');
+    if (advertiseError != null) throw advertiseError!;
+  }
+
+  Exception? advertiseError;
 
   @override
   Future<void> stopAdvertising() async => calls.add('stop');
 }
 
 void main() {
+  final logs = captureLogs();
   late _FakeSsdp ssdp;
   late _FakeMdns mdns;
   late DiscoveryService discovery;
@@ -154,6 +162,20 @@ void main() {
       token: 'tok',
     );
     expect(mdns.calls, hasLength(2));
+  });
+
+  test('Bonjour failing to advertise is logged, not fatal', () async {
+    mdns.advertiseError = Exception('no Bonjour');
+
+    await discovery.startDesktopAdvertising(
+      ip: '10.0.0.9',
+      port: 50000,
+      deviceId: 'desk-1',
+      token: 'tok',
+    );
+
+    expect(ssdp.calls, ['advertise 10.0.0.9:50000 desk-1']);
+    expect(logs, loggedWarning('mDNS advertising failed'));
   });
 
   test('stopping stops both', () async {
