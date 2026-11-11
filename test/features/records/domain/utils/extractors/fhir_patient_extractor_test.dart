@@ -221,6 +221,21 @@ void main() {
       }
     });
 
+    test('a partial birth date has no age, localized when l10n is given', () {
+      final ro = lookupAppLocalizations(const Locale('ro'));
+
+      for (final birthDate in ['1985', '1985-07']) {
+        expect(
+          FhirPatientExtractor.extractPatientAge(
+            _patient(patientJson(birthDate: birthDate)),
+            l10n: ro,
+          ),
+          ro.homeNA,
+          reason: 'birthDate $birthDate',
+        );
+      }
+    });
+
     test('counts full years, before and after the birthday', () {
       final today = DateTime.now();
       final hadBirthday = DateTime(today.year - 30, today.month, today.day);
@@ -492,6 +507,46 @@ void main() {
       });
     }
 
+    test('the fallback label is localized when l10n is given', () {
+      final ro = lookupAppLocalizations(const Locale('ro'));
+
+      for (final ids in [
+        // An unknown national id in an en_US locale, whose profile is MRN.
+        [
+          identifier(
+            value: '123-45-6789',
+            typeCode: 'SS',
+            typeText: 'Social Security Number',
+          ),
+        ],
+        // No identifier has a type.
+        [
+          {'value': 'x'},
+        ],
+      ]) {
+        expect(
+          FhirPatientExtractor.extractPatientIdentifierLabel(
+            _withIds(ids),
+            l10n: ro,
+          ),
+          ro.id,
+          reason: '$ids',
+        );
+      }
+    });
+
+    test('the passport label is localized when l10n is given', () {
+      final ro = lookupAppLocalizations(const Locale('ro'));
+
+      expect(
+        FhirPatientExtractor.extractPatientIdentifierLabel(
+          _withIds([identifier(value: '1', typeCode: 'PPN')]),
+          l10n: ro,
+        ),
+        ro.identifierPassport,
+      );
+    });
+
     testWidgets('unknown SS identifiers use the locale profile', (
       tester,
     ) async {
@@ -616,6 +671,32 @@ void main() {
           multipleBirth({'multipleBirthInteger': 2}),
         ),
         'Yes (Birth order: 2)',
+      );
+    });
+
+    test('is localized when l10n is given', () {
+      final ro = lookupAppLocalizations(const Locale('ro'));
+
+      expect(
+        FhirPatientExtractor.extractMultipleBirth(
+          multipleBirth({'multipleBirthBoolean': true}),
+          l10n: ro,
+        ),
+        ro.yes,
+      );
+      expect(
+        FhirPatientExtractor.extractMultipleBirth(
+          multipleBirth({'multipleBirthBoolean': false}),
+          l10n: ro,
+        ),
+        ro.no,
+      );
+      expect(
+        FhirPatientExtractor.extractMultipleBirth(
+          multipleBirth({'multipleBirthInteger': 2}),
+          l10n: ro,
+        ),
+        ro.multipleBirthOrder('2'),
       );
     });
 
