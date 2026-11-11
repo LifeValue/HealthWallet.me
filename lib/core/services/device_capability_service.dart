@@ -66,6 +66,17 @@ class DeviceCapabilityService {
   static const int _minRamForVisionIosMB = 6144;
   static const int _minRamForVisionAndroidMB = 11264;
 
+  /// The Advanced model needs about 3.6 GB for text and 4.3 GB with Deep
+  /// Scan, more than iOS lets one app use on a 6 GB iPhone.
+  static const int _minRamForAdvancedIosMB = 8192;
+
+  /// Whether the Advanced model is offered: on a device with
+  /// [DeviceAiCapability.full], and on an iPhone or iPad only from 8 GB.
+  Future<bool> supportsAdvancedModel() async => supportsAdvancedModelFor(
+    await getDeviceRamMB(),
+    platform: Platform.operatingSystem,
+  );
+
   /// What [ramMB] of memory allows on [platform] (as
   /// [Platform.operatingSystem] names it); desktops can run every model.
   static DeviceAiCapability classifyCapability(
@@ -85,6 +96,15 @@ class DeviceCapabilityService {
       return DeviceAiCapability.full;
     }
     return DeviceAiCapability.full;
+  }
+
+  /// [supportsAdvancedModel] for [ramMB] of memory on [platform].
+  static bool supportsAdvancedModelFor(int ramMB, {required String platform}) {
+    if (classifyCapability(ramMB, platform: platform) !=
+        DeviceAiCapability.full) {
+      return false;
+    }
+    return platform != 'ios' || ramMB >= _minRamForAdvancedIosMB;
   }
 
   static Future<int?> readAndroidRamMB() async {

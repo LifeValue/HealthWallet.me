@@ -80,9 +80,13 @@ class _FakeNotificationBloc extends Fake implements NotificationBloc {
 class _FakeDeviceCapabilityService extends Fake
     implements DeviceCapabilityService {
   DeviceAiCapability capability = DeviceAiCapability.full;
+  bool advancedModel = false;
 
   @override
   Future<DeviceAiCapability> getCapability() async => capability;
+
+  @override
+  Future<bool> supportsAdvancedModel() async => advancedModel;
 }
 
 final _en = lookupAppLocalizations(const Locale('en'));
@@ -190,6 +194,14 @@ void main() {
         expect(prefs.getString(SharedPrefsConstants.aiSelectedModel), isNull);
         expect(service.resetCalls, 0);
       },
+    );
+
+    blocTest<LoadModelBloc, LoadModelState>(
+      'says whether the device has the memory for the Advanced model',
+      setUp: () => capability.advancedModel = true,
+      build: build,
+      act: (bloc) => bloc.add(const LoadModelInitialized()),
+      verify: (bloc) => expect(bloc.state.advancedModelSupported, isTrue),
     );
 
     blocTest<LoadModelBloc, LoadModelState>(

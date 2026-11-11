@@ -60,23 +60,26 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
     AiModelVariant.medGemma,
   };
 
-  bool _isIncompatible(AiModelConfig config, DeviceAiCapability capability) {
+  bool _isIncompatible(AiModelConfig config, LoadModelState state) {
     if (_advancedVariants.contains(config.variant)) {
-      return capability != DeviceAiCapability.full;
+      return !state.advancedModelSupported;
     }
     if (config.variant == AiModelVariant.qwen) {
-      return capability == DeviceAiCapability.unsupported;
+      return state.deviceCapability == DeviceAiCapability.unsupported;
     }
     return false;
   }
 
+  /// Why an Advanced model can't be used. Not on an unsupported device: the
+  /// notice above the models already says that no model fits.
   String? _incompatibleMessage(
     BuildContext context,
     AiModelConfig config,
-    DeviceAiCapability capability,
+    LoadModelState state,
   ) {
     if (_advancedVariants.contains(config.variant) &&
-        capability == DeviceAiCapability.basicOnly) {
+        !state.advancedModelSupported &&
+        state.deviceCapability != DeviceAiCapability.unsupported) {
       return context.l10n.medGemmaIncompatibleDevice;
     }
     return null;
@@ -179,10 +182,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                         state.isVariantDownloaded,
                       ).map((config) {
                         final variant = config.variant;
-                        final incompatible = _isIncompatible(
-                          config,
-                          state.deviceCapability,
-                        );
+                        final incompatible = _isIncompatible(config, state);
                         return Padding(
                           padding: const EdgeInsets.only(bottom: Insets.small),
                           child: _buildModelCard(
@@ -198,7 +198,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                             incompatibleMessage: _incompatibleMessage(
                               context,
                               config,
-                              state.deviceCapability,
+                              state,
                             ),
                           ),
                         );

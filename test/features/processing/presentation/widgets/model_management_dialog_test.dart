@@ -161,4 +161,116 @@ void main() {
       ]);
     });
   });
+
+  group('the Advanced model', () {
+    final advanced = AiModelConfig.fromVariant(AiModelVariant.qwen35x4b);
+
+    Future<void> open(
+      WidgetTester tester, {
+      required DeviceAiCapability capability,
+      required bool advancedModelSupported,
+    }) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await getIt.reset();
+      bloc = _MockLoadModelBloc();
+      whenListen(
+        bloc,
+        const Stream<LoadModelState>.empty(),
+        initialState: LoadModelState(
+          status: LoadModelStatus.modelAbsent,
+          deviceCapability: capability,
+          advancedModelSupported: advancedModelSupported,
+        ),
+      );
+      getIt.registerSingleton<LoadModelBloc>(bloc);
+      await tester.pumpWidget(testApp(const ModelManagementDialog()));
+      await tester.pump();
+    }
+
+    Finder advancedCard() => find.ancestor(
+      of: find.text(advanced.localizedName(_en)),
+      matching: find.byType(GestureDetector),
+    );
+
+    Iterable<LoadModelEvent> downloads() =>
+        bloc.events.whereType<LoadModelDownloadInitiated>();
+
+    testWidgets('is offered on an iPhone with 8 GB', (tester) async {
+      await open(
+        tester,
+        capability: DeviceAiCapability.full,
+        advancedModelSupported: true,
+      );
+
+      expect(find.text(_en.medGemmaIncompatibleDevice), findsNothing);
+      final download = find.descendant(
+        of: advancedCard().first,
+        matching: find.text(_en.download),
+      );
+      expect(download, findsOne);
+      await tester.tap(download);
+      expect(downloads(), [
+        const LoadModelDownloadInitiated(variant: AiModelVariant.qwen35x4b),
+      ]);
+    });
+
+    testWidgets('needs more memory on a 6 GB iPhone, where Lite still '
+        'downloads', (tester) async {
+      await open(
+        tester,
+        capability: DeviceAiCapability.full,
+        advancedModelSupported: false,
+      );
+
+      expect(
+        find.descendant(
+          of: advancedCard().first,
+          matching: find.text(_en.medGemmaIncompatibleDevice),
+        ),
+        findsOne,
+      );
+      expect(
+        find.descendant(
+          of: advancedCard().first,
+          matching: find.text(_en.download),
+        ),
+        findsNothing,
+      );
+      expect(find.text(_en.download), findsWidgets, reason: 'Lite');
+    });
+
+    testWidgets('needs more memory on a phone without Deep Scan', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        capability: DeviceAiCapability.basicOnly,
+        advancedModelSupported: false,
+      );
+
+      expect(find.text(_en.medGemmaIncompatibleDevice), findsOne);
+    });
+
+    testWidgets('on an unsupported device only the notice above explains', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        capability: DeviceAiCapability.unsupported,
+        advancedModelSupported: false,
+      );
+
+      expect(find.text(_en.aiModelNotAvailableForDeviceDescription), findsOne);
+      expect(find.text(_en.medGemmaIncompatibleDevice), findsNothing);
+      expect(
+        find.descendant(
+          of: advancedCard().first,
+          matching: find.text(_en.download),
+        ),
+        findsNothing,
+      );
+    });
+  });
 }

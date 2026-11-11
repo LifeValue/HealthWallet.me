@@ -243,8 +243,9 @@ class AiModelConfig {
   }
 
   static AiModelVariant recommendedVariant(DeviceProfile profile) {
+    // Advanced needs 8 GB on a phone, as the model list offers it.
     if (!profile.isDesktop) {
-      if (profile.ramMB >= 6144) return AiModelVariant.qwen35x4b;
+      if (profile.ramMB >= 8192) return AiModelVariant.qwen35x4b;
       return AiModelVariant.qwen;
     }
 

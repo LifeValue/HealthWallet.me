@@ -90,6 +90,8 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     }
 
     final capability = await _deviceCapabilityService.getCapability();
+    final advancedModelSupported = await _deviceCapabilityService
+        .supportsAdvancedModel();
 
     final autoSelected = selectedVariant ?? _autoSelectSingleModel(downloaded);
 
@@ -105,6 +107,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         selectedVariant: autoSelected,
         downloadedVariants: downloaded,
         deviceCapability: capability,
+        advancedModelSupported: advancedModelSupported,
         downloadingVariants: downloading,
       ),
     );

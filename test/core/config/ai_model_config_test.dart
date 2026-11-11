@@ -45,11 +45,12 @@ void main() {
     ]);
   });
 
-  test('a 6 GB+ phone is recommended Qwen3.5-4B, a smaller one Lite', () {
+  test('an 8 GB+ phone is recommended Qwen3.5-4B, a smaller one Lite', () {
     expect(
       AiModelConfig.recommendedVariant(_phone(8192)),
       AiModelVariant.qwen35x4b,
     );
+    expect(AiModelConfig.recommendedVariant(_phone(6144)), AiModelVariant.qwen);
     expect(AiModelConfig.recommendedVariant(_phone(4096)), AiModelVariant.qwen);
   });
 

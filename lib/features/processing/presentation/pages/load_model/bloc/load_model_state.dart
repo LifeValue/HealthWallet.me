@@ -11,6 +11,9 @@ abstract class LoadModelState with _$LoadModelState {
     @Default(false) bool isBackgroundDownload,
     @Default(DeviceAiCapability.unsupported)
     DeviceAiCapability deviceCapability,
+
+    /// Whether the device has the memory for the Advanced model.
+    @Default(false) bool advancedModelSupported,
     AiModelVariant? selectedVariant,
     AiModelVariant? downloadingVariant,
     @Default({}) Map<AiModelVariant, bool> downloadedVariants,

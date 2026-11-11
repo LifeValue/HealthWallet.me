@@ -100,6 +100,52 @@ void main() {
     });
   });
 
+  group('supportsAdvancedModelFor', () {
+    bool iPhone(String machine) =>
+        DeviceCapabilityService.supportsAdvancedModelFor(
+          DeviceCapabilityService.estimateIosRam(machine),
+          platform: 'ios',
+        );
+
+    test('offers the Advanced model on an iPhone with 8 GB', () {
+      expect(iPhone('iPhone16,1'), isTrue);
+      expect(iPhone('iPhone17,1'), isTrue);
+    });
+
+    test('keeps the Advanced model from a 6 GB iPhone', () {
+      expect(iPhone('iPhone14,3'), isFalse);
+      expect(iPhone('iPhone15,4'), isFalse);
+    });
+
+    test('keeps the Advanced model from a phone without Deep Scan', () {
+      expect(iPhone('iPhone14,5'), isFalse);
+      expect(
+        DeviceCapabilityService.supportsAdvancedModelFor(
+          10240,
+          platform: 'android',
+        ),
+        isFalse,
+      );
+    });
+
+    test('offers it to an Android phone with Deep Scan and to a desktop', () {
+      expect(
+        DeviceCapabilityService.supportsAdvancedModelFor(
+          11264,
+          platform: 'android',
+        ),
+        isTrue,
+      );
+      expect(
+        DeviceCapabilityService.supportsAdvancedModelFor(
+          4096,
+          platform: 'macos',
+        ),
+        isTrue,
+      );
+    });
+  });
+
   group('on a desktop host', () {
     test('reads the RAM once and caches it', () async {
       final service = DeviceCapabilityService();
@@ -122,6 +168,10 @@ void main() {
       expect(profile.isDesktop, isTrue);
       expect(profile.ramMB, await service.getDeviceRamMB());
       expect(identical(await service.getProfile(), profile), isTrue);
+    });
+
+    test('offers the Advanced model', () async {
+      expect(await DeviceCapabilityService().supportsAdvancedModel(), isTrue);
     });
   }, skip: !(Platform.isMacOS || Platform.isLinux || Platform.isWindows));
 
