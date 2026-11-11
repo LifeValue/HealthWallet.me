@@ -144,4 +144,61 @@ void main() {
     );
     expect(edited.familyName, patient.familyName);
   });
+
+  test('an edit of another field keeps the given name and its '
+      'confidence', () {
+    const patient = MappingPatient(
+      id: 'p1',
+      givenName: MappedProperty(value: 'Ana', confidenceLevel: 0.4),
+      familyName: MappedProperty(value: 'Pop', confidenceLevel: 0.5),
+    );
+
+    final edited =
+        patient.copyWithMap({'familyName': 'Popa'}) as MappingPatient;
+
+    expect(edited.givenName, patient.givenName);
+    expect(
+      edited.familyName,
+      const MappedProperty(value: 'Popa', confidenceLevel: 1),
+    );
+  });
+
+  group('a national identifier', () {
+    final dispatcher = TestWidgetsFlutterBinding.instance.platformDispatcher;
+    tearDown(dispatcher.clearLocaleTestValue);
+
+    Map<String, dynamic> savedIdentifier(String label) {
+      final saved = MappingPatient(
+        id: 'p1',
+        patientIdentifier: const MappedProperty(value: '1800203123456'),
+        identifierLabel: label,
+      ).toFhirResource();
+      return (saved.rawResource['identifier'] as List).single
+          as Map<String, dynamic>;
+    }
+
+    test('of the phone\'s country is saved in that country\'s system', () {
+      dispatcher.localeTestValue = const Locale('ro', 'RO');
+
+      final identifier = savedIdentifier('CNP');
+
+      expect(identifier['system'], 'urn:oid:2.16.840.1.113883.4.40');
+      expect(
+        ((identifier['type'] as Map)['coding'] as List).single['code'],
+        'SS',
+      );
+    });
+
+    test('of another country is saved as a Health Wallet number', () {
+      dispatcher.localeTestValue = const Locale('ro', 'RO');
+
+      final identifier = savedIdentifier('NHS');
+
+      expect(identifier['system'], 'http://healthwallet.me/mrn');
+      expect(
+        ((identifier['type'] as Map)['coding'] as List).single['code'],
+        'NH',
+      );
+    });
+  });
 }
