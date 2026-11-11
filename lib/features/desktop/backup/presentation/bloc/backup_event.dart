@@ -20,9 +20,14 @@ sealed class BackupEvent with _$BackupEvent {
   const factory BackupEvent.backupLocationReset() = BackupLocationReset;
 
   /// Desktop: the user set how many whole days "Before restore" copies are
-  /// kept. Copies older than that go at the next start-up, not now.
+  /// kept. Saving it makes `SafetyCopyExpiryScheduler` delete the copies
+  /// older than that at once.
   const factory BackupEvent.safetyCopyRetentionChanged(int days) =
       SafetyCopyRetentionChanged;
+
+  /// Desktop: `SafetyCopyExpiryScheduler` deleted expired safety copies, so
+  /// the list is read again.
+  const factory BackupEvent.safetyCopiesExpired() = SafetyCopiesExpired;
   const factory BackupEvent.remoteBackupRequested() = RemoteBackupRequested;
 
   /// Phone: ask the desktop for a backup, once this phone's changes reached

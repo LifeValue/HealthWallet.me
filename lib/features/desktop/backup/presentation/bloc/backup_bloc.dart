@@ -11,6 +11,7 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/desktop/backup/data/services/backup_service.dart';
+import 'package:health_wallet/features/desktop/backup/data/services/safety_copy_expiry_scheduler.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/restore_result.dart';
 import 'package:health_wallet/features/desktop/backup/domain/utils/backup_name_date.dart';
@@ -44,11 +45,20 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
   /// `backup.error` code sent when the phone asks while a restore runs.
   static const restoreInProgressCode = 'restore_in_progress';
 
+  /// Deletes safety copies as they expire (desktop; started by
+  /// `main_desktop.dart`). Null in tests that don't need it.
+  final SafetyCopyExpiryScheduler? _expiry;
+  StreamSubscription<int>? _expiredSub;
+
   /// Whether the start-up housekeeping already ran.
   bool _cleanedUp = false;
 
-  BackupBloc(this._backupService, this._tcpService, this._strings)
-    : super(BackupState.initial()) {
+  BackupBloc(
+    this._backupService,
+    this._tcpService,
+    this._strings, {
+    this._expiry,
+  }) : super(BackupState.initial()) {
     on<BackupRequested>(_onBackupRequested, transformer: droppable());
     on<RestoreRequested>(_onRestoreRequested, transformer: droppable());
     on<BackupHistoryLoaded>(_onHistoryLoaded);
@@ -60,6 +70,10 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
       _onSafetyCopyRetentionChanged,
       transformer: sequential(),
     );
+    on<SafetyCopiesExpired>(
+      _onSafetyCopiesExpired,
+      transformer: sequential(),
+    );
     on<RemoteBackupRequested>(_onRemoteBackupRequested);
     on<PhoneBackupRequested>(_onPhoneBackupRequested);
     on<RemoteBackupStatusChanged>(_onRemoteBackupStatusChanged);
@@ -67,6 +81,9 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     on<RemoteLinkLost>(_onRemoteLinkLost);
 
     _listenForMessages();
+    _expiredSub = _expiry?.expired.listen(
+      (_) => add(const SafetyCopiesExpired()),
+    );
   }
 
   void _listenForMessages() {
@@ -282,6 +299,17 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
       return;
     }
 
+    // The target may be a safety copy that expires meanwhile: the scheduler
+    // keeps it until the restore is over.
+    final expiry = _expiry;
+    if (expiry == null) {
+      await _restore(target, emit);
+    } else {
+      await expiry.keepWhile(target.id, () => _restore(target, emit));
+    }
+  }
+
+  Future<void> _restore(BackupEntry target, Emitter<BackupState> emit) async {
     final sync = getIt<LwwSyncBloc>();
     var phoneOffline = false;
     if (sync.state.connected) {
@@ -442,7 +470,8 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     }
   }
 
-  /// Saves the retention; the expired copies go at the next start-up.
+  /// Saves the retention. The scheduler then deletes the copies older than
+  /// it at once, and [SafetyCopiesExpired] reloads the list.
   Future<void> _onSafetyCopyRetentionChanged(
     SafetyCopyRetentionChanged event,
     Emitter<BackupState> emit,
@@ -457,6 +486,26 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
         ),
       );
     }
+  }
+
+  /// Shows the list without the copies the scheduler deleted, and drops the
+  /// selection when it was one of them.
+  Future<void> _onSafetyCopiesExpired(
+    SafetyCopiesExpired event,
+    Emitter<BackupState> emit,
+  ) async {
+    final history = await _historyOrCurrent();
+    final selected = state.selectedBackup;
+    emit(
+      state.copyWith(
+        backupHistory: history,
+        selectedBackup:
+            selected != null && history.any((b) => b.id == selected.id)
+            ? selected
+            : null,
+      ),
+    );
+    sendBackupStatus();
   }
 
   Future<void> _onBackupSelected(
@@ -665,6 +714,7 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
   Future<void> close() {
     _messageSub?.cancel();
     _linkSub?.cancel();
+    _expiredSub?.cancel();
     return super.close();
   }
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -76,6 +77,20 @@ class BackupService {
   /// The base names of the backups this run is writing.
   final _writing = <String>{};
 
+  final _changes = StreamController<void>.broadcast();
+
+  /// The last [deleteExpiredSafetyCopies] run queued, so runs never overlap.
+  Future<void> _expiryQueue = Future.value();
+
+  /// Fires after anything that can move the next safety copy expiry: a
+  /// backup written, a backup deleted (expired copies included), the folder
+  /// or the retention changed. `SafetyCopyExpiryScheduler` listens.
+  Stream<void> get changes => _changes.stream;
+
+  void _changed() {
+    if (!_changes.isClosed) _changes.add(null);
+  }
+
   /// Whether this run has already reopened the chosen folder from its
   /// bookmark (macOS only; see [FolderAccessService]).
   bool _folderAccessRestored = false;
@@ -144,12 +159,14 @@ class BackupService {
       await prefs.remove(SharedPrefsConstants.backupDirectoryBookmark);
     }
     _folderAccessRestored = true;
+    _changed();
   }
 
   Future<void> resetBackupDirectory() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(SharedPrefsConstants.backupDirectory);
     await prefs.remove(SharedPrefsConstants.backupDirectoryBookmark);
+    _changed();
   }
 
   /// The whole days a "Before restore" copy is kept, as set on this desktop:
@@ -169,8 +186,8 @@ class BackupService {
   }
 
   /// Saves how many whole days "Before restore" copies are kept on this
-  /// desktop. Nothing is deleted now: copies older than that go at the next
-  /// start-up or backup ([deleteExpiredSafetyCopies]). Throws an
+  /// desktop. It deletes nothing itself: [changes] fires, and the scheduler
+  /// then deletes the copies older than that at once. Throws an
   /// [ArgumentError] for a value outside [SafetyCopyRetention.minDays] to
   /// [SafetyCopyRetention.maxDays], and a [StateError] when it isn't saved.
   Future<void> setSafetyCopyRetentionDays(int days) async {
@@ -188,6 +205,7 @@ class BackupService {
       days,
     );
     if (!saved) throw StateError('The safety copy retention was not saved');
+    _changed();
   }
 
   // ---------------------------------------------------------------------------
@@ -269,6 +287,7 @@ class BackupService {
       );
     }
     await deleteExpiredSafetyCopies(keep: {?keepId});
+    _changed();
     return entry;
   }
 
@@ -902,7 +921,12 @@ class BackupService {
       (b) => b.id == backupId,
       orElse: () => throw StateError('Backup not found: $backupId'),
     );
-    await _deleteEntry(target);
+    try {
+      await _deleteEntry(target);
+    } finally {
+      // Even a delete that failed half-way may have unlisted it.
+      _changed();
+    }
   }
 
   /// Removes the metadata first, so a backup is never listed half deleted,
@@ -933,22 +957,29 @@ class BackupService {
     logger.i('[Backup] deleted ${p.basename(dbPath)}');
   }
 
-  /// Deletes "Before restore" copies made more than
-  /// [getSafetyCopyRetentionDays] days before [now], existing ones included,
-  /// and returns how many. User backups and the ids in [keep] are never
-  /// deleted. Failures are logged; when the setting can't be read nothing is
-  /// deleted.
+  /// Deletes the "Before restore" copies expired at [now] (default: the
+  /// current time), existing ones included, and returns how many. A copy
+  /// expires [getSafetyCopyRetentionDays] days after it was made, at that
+  /// very moment. User backups and the ids in [keep] are never deleted.
+  /// Runs one at a time: a call made while one runs waits for it. Failures
+  /// are logged; when the setting can't be read nothing is deleted.
   Future<int> deleteExpiredSafetyCopies({
     DateTime? now,
     Set<String> keep = const {},
-  }) async {
+  }) {
+    final run = _expiryQueue.then((_) => _deleteExpired(now, keep));
+    _expiryQueue = run;
+    return run;
+  }
+
+  Future<int> _deleteExpired(DateTime? now, Set<String> keep) async {
     var deleted = 0;
     try {
       final retention = Duration(days: await getSafetyCopyRetentionDays());
-      final cutoff = (now ?? DateTime.now()).subtract(retention);
+      final at = now ?? DateTime.now();
       for (final entry in await listBackups()) {
         if (!entry.isSafetyCopy ||
-            !entry.timestamp.isBefore(cutoff) ||
+            entry.timestamp.add(retention).isAfter(at) ||
             keep.contains(entry.id)) {
           continue;
         }
@@ -963,7 +994,22 @@ class BackupService {
     } catch (e, s) {
       logger.e('[Backup] could not look for expired safety copies', e, s);
     }
+    if (deleted > 0) _changed();
     return deleted;
+  }
+
+  /// When each safety copy in the folder expires (made plus
+  /// [getSafetyCopyRetentionDays] days), leaving out the ids in [keep].
+  /// Throws when the folder can't be listed.
+  Future<List<DateTime>> safetyCopyExpiries({
+    Set<String> keep = const {},
+  }) async {
+    final retention = Duration(days: await getSafetyCopyRetentionDays());
+    return [
+      for (final entry in await listBackups())
+        if (entry.isSafetyCopy && !keep.contains(entry.id))
+          entry.timestamp.add(retention),
+    ];
   }
 
   /// Removes `Documents/.restore-*` staging folders a crashed restore left
