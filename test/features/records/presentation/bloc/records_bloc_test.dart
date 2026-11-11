@@ -3,7 +3,9 @@ import 'package:health_wallet/features/home/domain/entities/medical_specialty.da
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/records/domain/services/records_filter_store.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// One `getResources` call as the bloc made it.
 typedef _Query = ({
@@ -148,15 +150,13 @@ void main() {
   ];
 
   group('loading', () {
-    test('starts on encounters and reports', () async {
+    test('starts with no filters, on every record', () async {
       repository.page = encounters(3);
 
       final state = await run(const RecordsInitialised());
 
-      expect(state.activeFilters, [
-        FhirType.Encounter,
-        FhirType.DiagnosticReport,
-      ]);
+      expect(state.activeFilters, isEmpty);
+      expect(repository.queries.single.types, isEmpty);
       expect(state.status, const RecordsStatus.success());
       expect(state.resources, hasLength(3));
       expect(state.hasMorePages, isFalse);
@@ -205,7 +205,7 @@ void main() {
 
       expect(repository.queries.single.sourceId, 's1');
       expect(state.sourceId, 's1');
-      expect(state.activeFilters, isNotEmpty);
+      expect(state.activeFilters, isEmpty);
     });
 
     test('several sources are passed when no single one is chosen', () async {
@@ -232,129 +232,148 @@ void main() {
     });
   });
 
-  group('the default filters', () {
-    const defaults = [FhirType.Encounter, FhirType.DiagnosticReport];
-    final others = <IFhirResource>[
-      const Observation(id: 'o1', title: 'Body weight'),
-      const Condition(id: 'c1', title: 'Asthma'),
-    ];
+  group('each person\'s filters', () {
+    late SharedPreferences prefs;
+    late RecordsFilterStore store;
 
-    test('that match nothing are dropped, so the other records show', () async {
-      repository.unfiltered = others;
-
-      final state = await run(const RecordsInitialised());
-
-      expect(repository.queries.map((q) => q.types), [defaults, isEmpty]);
-      expect(state.activeFilters, isEmpty);
-      expect(state.resources, others);
-      expect(state.status, const RecordsStatus.success());
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      prefs = await SharedPreferences.getInstance();
+      store = RecordsFilterStore(prefs);
+      await bloc.close();
+      bloc = RecordsBloc(repository, _FakeSpecialtyClassifier(), store);
     });
 
-    test('are dropped the same way when the scope changes', () async {
-      repository.unfiltered = others;
+    /// A new bloc on the same device, as after an app restart.
+    RecordsBloc restart() =>
+        bloc = RecordsBloc(repository, _FakeSpecialtyClassifier(), store);
+
+    const range = DateFilter(fromYear: 2024, fromMonth: 3);
+
+    test('a person who never chose a filter sees every record', () async {
+      repository.page = encounters(2);
 
       final state = await run(
-        const RecordsSourceChanged(null, sourceIds: ['demo_data', 'wallet']),
+        const RecordsSourceChanged('s1', personId: 'jane'),
       );
 
-      expect(repository.queries.last.types, isEmpty);
-      expect(repository.queries.last.sourceIds, ['demo_data', 'wallet']);
       expect(state.activeFilters, isEmpty);
-      expect(state.resources, others);
+      expect(state.activeSpecialties, isEmpty);
+      expect(state.dateFilter, isNull);
+      expect(repository.queries.single.types, isEmpty);
     });
 
     test(
-      'are tried once: with no records at all the list stays empty',
+      'the filters a person chose are there again after a restart',
       () async {
-        final state = await run(const RecordsInitialised());
-
-        expect(repository.queries, hasLength(2));
-        expect(state.activeFilters, isEmpty);
-        expect(state.resources, isEmpty);
-        expect(state.status, const RecordsStatus.success());
-      },
-    );
-
-    test('that match records are kept', () async {
-      repository
-        ..page = encounters(2)
-        ..unfiltered = others;
-
-      final state = await run(const RecordsInitialised());
-
-      expect(repository.queries, hasLength(1));
-      expect(state.activeFilters, defaults);
-      expect(state.resources, hasLength(2));
-    });
-
-    test('come back for the next scope, which may have encounters', () async {
-      repository.unfiltered = others;
-      await run(const RecordsInitialised());
-      expect(bloc.state.activeFilters, isEmpty);
-
-      repository.page = encounters(1);
-      final state = await run(const RecordsSourceChanged('s2'));
-
-      expect(state.activeFilters, defaults);
-      expect(state.resources, hasLength(1));
-    });
-
-    test('the same types picked by the user are never dropped', () async {
-      repository.page = encounters(1);
-      await run(const RecordsInitialised());
-      repository
-        ..page = []
-        ..unfiltered = others;
-
-      final state = await run(const RecordsFiltersApplied(defaults));
-
-      expect(repository.queries.last.types, defaults);
-      expect(state.activeFilters, defaults);
-      expect(state.resources, isEmpty);
-    });
-
-    test('a removed default leaves a filter the user chose', () async {
-      repository.page = encounters(1);
-      await run(const RecordsInitialised());
-      repository
-        ..page = []
-        ..unfiltered = others;
-
-      final state = await run(
-        const RecordsFilterRemoved(FhirType.Encounter),
-      );
-
-      expect(state.activeFilters, [FhirType.DiagnosticReport]);
-      expect(state.resources, isEmpty);
-    });
-
-    test(
-      'a specialty the user picked that matches nothing shows nothing',
-      () async {
-        repository.page = encounters(1);
-        await run(const RecordsInitialised());
-
-        final state = await run(
-          const RecordsSpecialtyApplied([MedicalSpecialty.cardiology]),
+        await run(const RecordsSourceChanged('s1', personId: 'jane'));
+        await run(
+          const RecordsFiltersApplied([FhirType.Encounter], dateFilter: range),
         );
 
-        expect(state.activeSpecialties, [MedicalSpecialty.cardiology]);
-        expect(state.resources, isEmpty);
-        expect(repository.queries, hasLength(2));
+        await bloc.close();
+        restart();
+        final state = await run(
+          const RecordsSourceChanged('s1', personId: 'jane'),
+        );
+
+        expect(state.activeFilters, [FhirType.Encounter]);
+        expect(state.dateFilter, range);
+        expect(repository.queries.last.types, [FhirType.Encounter]);
       },
     );
 
-    test('a search that finds nothing does not drop them', () async {
-      repository.page = encounters(1);
-      await run(const RecordsInitialised());
+    test('each person keeps their own filters', () async {
+      await run(const RecordsSourceChanged(null, personId: 'jane'));
+      await run(const RecordsFiltersApplied([FhirType.Condition]));
+
+      final tom = await run(const RecordsSourceChanged(null, personId: 'tom'));
+      expect(tom.activeFilters, isEmpty);
+      await run(
+        const RecordsSpecialtyApplied([MedicalSpecialty.cardiology]),
+      );
+
+      final jane = await run(
+        const RecordsSourceChanged(null, personId: 'jane'),
+      );
+      expect(jane.activeFilters, [FhirType.Condition]);
+      expect(jane.activeSpecialties, isEmpty);
+
+      final tomAgain = await run(
+        const RecordsSourceChanged(null, personId: 'tom'),
+      );
+      expect(tomAgain.activeSpecialties, [MedicalSpecialty.cardiology]);
+    });
+
+    test('reloading the same person keeps the filters on screen', () async {
+      await run(const RecordsSourceChanged('s1', personId: 'jane'));
+      await run(const RecordsFiltersApplied([FhirType.Condition]));
+
+      final state = await run(
+        const RecordsSourceChanged('s2', personId: 'jane'),
+      );
+
+      expect(state.activeFilters, [FhirType.Condition]);
+      expect(state.sourceId, 's2');
+    });
+
+    test('removing a filter, clearing the dates or clearing all is kept '
+        'too', () async {
+      await run(const RecordsSourceChanged(null, personId: 'jane'));
+      await run(
+        const RecordsFiltersApplied([
+          FhirType.Condition,
+          FhirType.Observation,
+        ], dateFilter: range),
+      );
+      await run(const RecordsFilterRemoved(FhirType.Condition));
+      await run(const RecordsDateRangeCleared());
+      expect(store.load('jane').types, [FhirType.Observation]);
+      expect(store.load('jane').dateFilter, isNull);
+
+      await run(RecordsClearAllFilters());
+
+      expect(store.load('jane').isEmpty, isTrue);
+      expect(prefs.getString(RecordsFilterStore.prefsKey), '{}');
+    });
+
+    test('a share shows no saved filters and keeps none', () async {
+      await run(const RecordsSourceChanged(null, personId: 'jane'));
+      await run(const RecordsFiltersApplied([FhirType.Condition]));
+
+      final share = await run(
+        const RecordsSourceChanged(
+          's1',
+          personId: 'jane',
+          isShareContext: true,
+        ),
+      );
+      expect(share.activeFilters, isEmpty);
+      await run(const RecordsFiltersApplied([FhirType.Media]));
+
+      expect(store.load('jane').types, [FhirType.Condition]);
+    });
+
+    test('a search does not change the saved filters', () async {
+      await run(const RecordsSourceChanged(null, personId: 'jane'));
+      await run(const RecordsFiltersApplied([FhirType.Condition]));
 
       bloc.add(const RecordsSearch('zz'));
       await Future<void>.delayed(const Duration(milliseconds: 600));
       await pumpEventQueue();
 
-      expect(bloc.state.activeFilters, defaults);
-      expect(repository.queries, hasLength(1));
+      expect(store.load('jane').types, [FhirType.Condition]);
     });
+  });
+
+  test('without a store, chosen filters last as long as the bloc and stay '
+      'when the person changes', () async {
+    await run(const RecordsSourceChanged(null, personId: 'jane'));
+    await run(const RecordsFiltersApplied([FhirType.Condition]));
+
+    final state = await run(const RecordsSourceChanged(null, personId: 'tom'));
+
+    expect(state.activeFilters, [FhirType.Condition]);
   });
 
   group('filters', () {

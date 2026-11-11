@@ -26,9 +26,12 @@ abstract class RecordsSourceChanged extends RecordsEvent
     with _$RecordsSourceChanged {
   const RecordsSourceChanged._();
 
+  /// [personId] is the holder whose records these are: their own saved
+  /// filters apply. Without one (a share), no filters are kept.
   const factory RecordsSourceChanged(
     String? sourceId, {
     List<String>? sourceIds,
+    String? personId,
     @Default(false) bool isShareContext,
   }) = _RecordsSourceChanged;
 }

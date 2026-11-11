@@ -92,10 +92,14 @@ class _RecordsViewState extends State<RecordsView> {
 
     final scope = _scope(context);
 
-    // One event sets the scope and the default filters together, so the
-    // Attachments view never loads with the filters but not the scope.
+    // One event sets the scope and the person's saved filters together, so
+    // the Attachments view never loads with the filters but not the scope.
     context.read<RecordsBloc>().add(
-      RecordsSourceChanged(scope.sourceId, sourceIds: scope.sourceIds),
+      RecordsSourceChanged(
+        scope.sourceId,
+        sourceIds: scope.sourceIds,
+        personId: scope.personId,
+      ),
     );
 
     final currentFilters = context.read<RecordsBloc>().state.activeFilters;
@@ -167,9 +171,15 @@ class _RecordsViewState extends State<RecordsView> {
 
   /// Whose records to show: the selection's source filter, or the selected
   /// person's sources (see `HolderScope.sourceIds`).
-  ({String? sourceId, List<String>? sourceIds}) _scope(BuildContext context) {
+  ({String? sourceId, List<String>? sourceIds, String? personId}) _scope(
+    BuildContext context,
+  ) {
     final scope = context.read<HomeBloc>().state.scope;
-    return (sourceId: scope.sourceFilter, sourceIds: scope.sourceIds);
+    return (
+      sourceId: scope.sourceFilter,
+      sourceIds: scope.sourceIds,
+      personId: scope.holder?.id,
+    );
   }
 
   /// Shows the records of the current scope again, in both views: after the
@@ -177,7 +187,11 @@ class _RecordsViewState extends State<RecordsView> {
   void _reloadRecords(BuildContext context, {bool attachments = true}) {
     final scope = _scope(context);
     context.read<RecordsBloc>().add(
-      RecordsSourceChanged(scope.sourceId, sourceIds: scope.sourceIds),
+      RecordsSourceChanged(
+        scope.sourceId,
+        sourceIds: scope.sourceIds,
+        personId: scope.personId,
+      ),
     );
     if (attachments) {
       _reloadAttachmentBrowse(

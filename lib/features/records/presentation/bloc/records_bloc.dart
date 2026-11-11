@@ -13,6 +13,7 @@ import 'package:health_wallet/features/home/domain/entities/medical_specialty.da
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/records/domain/services/records_filter_store.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -30,20 +31,19 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   Timer? _searchDebounceTimer;
   bool _isSearching = false;
 
-  /// Whether [RecordsState.activeFilters] are the defaults the bloc chose,
-  /// not filters the user picked. Defaults that match nothing are dropped.
-  bool _onDefaultFilters = false;
-  String? _lastIpsPdfPath;
+  /// Keeps each person's chosen filters; without it (tests, previews) the
+  /// filters last only as long as this bloc.
+  final RecordsFilterStore? _filterStore;
 
-  static const _defaultFilters = [
-    FhirType.Encounter,
-    FhirType.DiagnosticReport,
-  ];
+  /// The person whose filters are shown and saved, or null in a share.
+  String? _personId;
+  String? _lastIpsPdfPath;
 
   RecordsBloc(
     this._recordsRepository,
-    this._specialtyClassifier,
-  ) : super(const RecordsState()) {
+    this._specialtyClassifier, [
+    this._filterStore,
+  ]) : super(const RecordsState()) {
     on<RecordsInitialised>(_onInitialised);
     on<RecordsLoadMore>(_onLoadMore);
     on<RecordsSourceChanged>(_onSourceChanged);
@@ -129,19 +129,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         }).toList();
       }
 
-      // The default filters found nothing for this scope, while it may hold
-      // other records: show everything rather than an empty list.
-      if (_onDefaultFilters &&
-          offset == 0 &&
-          !isSearching &&
-          resources.isEmpty &&
-          state.dateFilter == null &&
-          state.activeSpecialties.isEmpty) {
-        _onDefaultFilters = false;
-        emit(state.copyWith(activeFilters: []));
-        return await _loadResources(emit, limit: limit);
-      }
-
       final List<IFhirResource> updatedResources;
       if (offset == 0) {
         updatedResources = List<IFhirResource>.from(filteredResources);
@@ -166,14 +153,25 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     }
   }
 
+  /// Keeps the filters now shown for this person, for their next visit.
+  Future<void> _saveFilters() async {
+    final personId = _personId;
+    final store = _filterStore;
+    if (personId == null || store == null) return;
+    await store.save(
+      personId,
+      RecordsFilters(
+        types: state.activeFilters,
+        specialties: state.activeSpecialties,
+        dateFilter: state.dateFilter,
+      ),
+    );
+  }
+
   Future<void> _onInitialised(
     RecordsInitialised event,
     Emitter<RecordsState> emit,
   ) async {
-    if (state.activeFilters.isEmpty && !event.isShareContext) {
-      _onDefaultFilters = true;
-      emit(state.copyWith(activeFilters: _defaultFilters));
-    }
     await _loadResources(emit);
   }
 
@@ -201,10 +199,20 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       hasMorePages: true,
     );
 
-    if (nextState.activeFilters.isEmpty && !event.isShareContext) {
-      _onDefaultFilters = true;
-      nextState = nextState.copyWith(activeFilters: _defaultFilters);
+    // Another person: their own filters, or none. The app adds none itself.
+    final personId = event.isShareContext ? null : event.personId;
+    final store = _filterStore;
+    if (personId != _personId && store != null) {
+      final saved = personId == null
+          ? RecordsFilters.none
+          : store.load(personId);
+      nextState = nextState.copyWith(
+        activeFilters: saved.types,
+        activeSpecialties: saved.specialties,
+        dateFilter: saved.dateFilter,
+      );
     }
+    _personId = personId;
 
     emit(nextState);
 
@@ -215,7 +223,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsFiltersApplied event,
     Emitter<RecordsState> emit,
   ) async {
-    _onDefaultFilters = false;
     emit(
       state.copyWith(
         status: const RecordsStatus.loading(),
@@ -225,6 +232,8 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       ),
     );
 
+    await _saveFilters();
+
     await _loadResources(emit);
   }
 
@@ -232,7 +241,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsFilterRemoved event,
     Emitter<RecordsState> emit,
   ) async {
-    _onDefaultFilters = false;
     final updatedFilters = [...state.activeFilters]..remove(event.filter);
     emit(
       state.copyWith(
@@ -240,6 +248,8 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         resources: [],
       ),
     );
+
+    await _saveFilters();
 
     await _loadResources(emit);
   }
@@ -482,6 +492,8 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       ),
     );
 
+    await _saveFilters();
+
     await _loadResources(emit);
   }
 
@@ -533,7 +545,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsSpecialtyApplied event,
     Emitter<RecordsState> emit,
   ) async {
-    _onDefaultFilters = false;
     emit(
       state.copyWith(
         status: const RecordsStatus.loading(),
@@ -542,6 +553,8 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         resources: [],
       ),
     );
+
+    await _saveFilters();
 
     await _loadResources(emit);
   }
@@ -564,7 +577,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsClearAllFilters event,
     Emitter<RecordsState> emit,
   ) async {
-    _onDefaultFilters = false;
     emit(
       state.copyWith(
         status: const RecordsStatus.loading(),
@@ -574,6 +586,8 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         resources: [],
       ),
     );
+
+    await _saveFilters();
 
     await _loadResources(emit);
   }
