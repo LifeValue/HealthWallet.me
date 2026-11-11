@@ -564,9 +564,6 @@ void main() {
         expect(tester.takeException(), isNull);
         expect(find.text(_en.notificationsTitle), findsNothing);
       },
-      // The push is not awaited, so its failure escapes the try/catch
-      // around it as an unhandled error.
-      skip: true,
     );
 
     testWidgets('a download does nothing', (tester) async {
