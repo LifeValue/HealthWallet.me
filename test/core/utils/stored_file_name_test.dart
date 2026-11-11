@@ -199,6 +199,71 @@ void main() {
       expect(File(p.join(docs.path, 'copy.pdf')).existsSync(), isFalse);
     });
   });
+
+  // Names Windows opens as a device or changes, handled the same on every
+  // platform so a name means the same file everywhere.
+  group('safeFileName and names Windows reserves', () {
+    test('a device name, in any case and with any extension, gets a "_" '
+        'after it', () {
+      expect(safeFileName('CON.pdf'), 'CON_.pdf');
+      expect(safeFileName('con.pdf'), 'con_.pdf');
+      expect(safeFileName('Aux.jpg'), 'Aux_.jpg');
+      expect(safeFileName('NUL'), 'NUL_');
+      expect(safeFileName('prn.txt'), 'prn_.txt');
+      expect(safeFileName('COM1.pdf'), 'COM1_.pdf');
+      expect(safeFileName('com9.pdf'), 'com9_.pdf');
+      expect(safeFileName('COM0.pdf'), 'COM0_.pdf');
+      expect(safeFileName('LPT1.pdf'), 'LPT1_.pdf');
+      expect(safeFileName('lpt9.png'), 'lpt9_.png');
+      expect(safeFileName('COM¹.pdf'), 'COM¹_.pdf');
+      expect(safeFileName('LPT³.pdf'), 'LPT³_.pdf');
+      // Windows reads the device name up to the first dot.
+      expect(safeFileName('NUL.tar.gz'), 'NUL_.tar.gz');
+    });
+
+    test('a device name with trailing dots or spaces is one too', () {
+      expect(safeFileName('CON .pdf'), 'CON_.pdf');
+      expect(safeFileName('CON.'), 'CON_');
+      expect(safeFileName('CON. .'), 'CON_');
+      expect(safeFileName('nul  '), 'nul_');
+      expect(safeFileName('AUX .tar.gz'), 'AUX_.tar.gz');
+    });
+
+    test('a name that only looks like one is kept', () {
+      expect(safeFileName('Console.pdf'), 'Console.pdf');
+      expect(safeFileName('COM10.pdf'), 'COM10.pdf');
+      expect(safeFileName('LPT.pdf'), 'LPT.pdf');
+      expect(safeFileName('auxiliary.jpg'), 'auxiliary.jpg');
+      expect(safeFileName('my CON.pdf'), 'my CON.pdf');
+      expect(safeFileName('CON_report.pdf'), 'CON_report.pdf');
+    });
+
+    test('trailing dots and spaces, which Windows drops, are dropped', () {
+      expect(safeFileName('report.'), 'report');
+      expect(safeFileName('report. . '), 'report');
+      expect(safeFileName('scan.pdf.'), 'scan.pdf');
+      expect(safeFileName('scan.pdf '), 'scan.pdf');
+      expect(safeFileName('. .'), 'file');
+    });
+
+    test('the title read back is the device name', () async {
+      Future<String> title(String original) async => originalFileStem(
+        p.join(
+          docs.path,
+          await uniqueStoredFileName(docs.path, safeFileName(original)),
+        ),
+      );
+
+      expect(await title('CON.pdf'), 'CON');
+      expect(await title('aux.jpg'), 'aux');
+      expect(await title('COM1.pdf'), 'COM1');
+      expect(await title('NUL.tar.gz'), 'NUL.tar');
+      expect(await title('Console.pdf'), 'Console');
+      expect(originalFileStem('/in/CON_.pdf'), 'CON');
+      expect(originalFileStem('/in/CON__ab12cd34.pdf'), 'CON');
+      expect(originalFileStem('/in/CON_report.pdf'), 'CON_report');
+    });
+  });
 }
 
 /// A file whose copies refuse a new modification time, as on a file system

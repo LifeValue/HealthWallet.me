@@ -31,10 +31,34 @@ Future<String> uniqueStoredFileName(
 /// `)` are kept, so a title read back from the name ([originalFileStem])
 /// stays readable; path separators and every other character become `_`.
 /// The name never starts with a dot or a space and is never empty.
+///
+/// It is also a name Windows opens as that file, on every platform so a name
+/// means the same file everywhere: trailing dots and spaces, which Windows
+/// drops, are dropped, and a device name (`CON`, `PRN`, `AUX`, `NUL`, `COM0`
+/// to `COM9`, `LPT0` to `LPT9`, with any extension) gets a `_` after it,
+/// which [originalFileStem] removes again.
 String safeFileName(String originalName) {
   final (:stem, :extension) = _safeParts(originalName);
-  return '$stem$extension';
+  // Never empty: the stem holds a letter or a digit.
+  final name = '$stem$extension'.replaceFirst(RegExp(r'[. ]+$'), '');
+  // Windows reads the device name up to the first dot, ignoring trailing
+  // spaces: `CON.pdf`, `con .tar.gz`.
+  final dot = name.indexOf('.');
+  final device = (dot < 0 ? name : name.substring(0, dot)).trimRight();
+  if (!_deviceName.hasMatch(device)) return name;
+  return '${device}_${dot < 0 ? '' : name.substring(dot)}';
 }
+
+final _deviceName = RegExp(
+  r'^(CON|PRN|AUX|NUL|COM[0-9¹²³]|LPT[0-9¹²³])$',
+  caseSensitive: false,
+);
+
+/// A device name as [safeFileName] stores it.
+final _storedDeviceName = RegExp(
+  r'^(CON|PRN|AUX|NUL|COM[0-9¹²³]|LPT[0-9¹²³])_(?=\.|$)',
+  caseSensitive: false,
+);
 
 ({String stem, String extension}) _safeParts(String originalName) {
   final base = originalName.replaceAll(_unsafeCharacter, '_');
@@ -54,9 +78,12 @@ final _unsafeCharacter = RegExp(r'[^\p{L}\p{M}\p{N}_.\- ()]', unicode: true);
 final _uniqueSuffix = RegExp(r'_[0-9a-f]{8}$');
 
 /// The name of the file at [path] without its extension and without the
-/// suffix [uniqueStoredFileName] added, for use as a title.
+/// suffix [uniqueStoredFileName] added, for use as a title. A device name
+/// reads as itself, without the `_` [safeFileName] gave it.
 String originalFileStem(String path) =>
-    basenameWithoutExtension(path).replaceFirst(_uniqueSuffix, '');
+    basenameWithoutExtension(path)
+        .replaceFirst(_uniqueSuffix, '')
+        .replaceFirstMapped(_storedDeviceName, (m) => m[1]!);
 
 /// Copies [source] to [destination] and marks the copy as modified now.
 ///
