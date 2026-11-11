@@ -524,7 +524,7 @@ class ProcessingRepositoryImpl extends Object
       );
     } finally {
       try {
-        await disposeModel();
+        await disposeModelInRun();
       } finally {
         _endRun(run);
       }
@@ -551,8 +551,13 @@ class ProcessingRepositoryImpl extends Object
     _networkDataSource.cancelGeneration();
   }
 
+  /// Waits for the AI runs started so far, so a run that is using the
+  /// engine (another session's, say) keeps it until it ends.
   @override
-  Future disposeModel() => _networkDataSource.disposeModel();
+  Future disposeModel() => _inTurn(_networkDataSource.disposeModel);
+
+  @override
+  Future<void> disposeModelInRun() => _networkDataSource.disposeModel();
 }
 
 /// One call that uses the AI engine: a patient step, a container-only step or

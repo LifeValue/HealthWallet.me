@@ -71,6 +71,11 @@ mixin AiExtractionRepository {
   bool get shouldCancelGeneration;
   Future<void> disposeModel();
 
+  /// Unloads the model from inside the AI run that is using it. A repository
+  /// whose [disposeModel] waits for the runs in progress overrides this to
+  /// unload at once, since the run would otherwise wait for itself.
+  Future<void> disposeModelInRun() => disposeModel();
+
   String get _ts => DateTime.now().toIso8601String().substring(11, 23);
 
   String _stripMarkdownFences(String text) {
@@ -462,7 +467,7 @@ mixin AiExtractionRepository {
           '[$_ts][ScanAI] text-only failed: $e, falling back to vision...',
         );
       } finally {
-        await disposeModel();
+        await disposeModelInRun();
       }
     } else {
       ProcessingLogBuffer.instance.log(
@@ -581,7 +586,7 @@ Rules:
       schemaName: 'container',
     );
 
-    await disposeModel();
+    await disposeModelInRun();
 
     if (response == null || response.isEmpty) {
       ProcessingLogBuffer.instance.log(
@@ -720,7 +725,7 @@ Rules:
           ),
           maxTokens,
         );
-        await disposeModel();
+        await disposeModelInRun();
         await networkDataSource.initModel(
           withVision: false,
           gpuLayers: gpuLayers,
@@ -796,7 +801,7 @@ Rules:
 
       return (postProcessed, container);
     } finally {
-      await disposeModel();
+      await disposeModelInRun();
     }
   }
 
@@ -961,7 +966,7 @@ Rules:
       }
 
       if (drafting && !shouldCancelGeneration) {
-        await disposeModel();
+        await disposeModelInRun();
         final ctx = await _loadRemainingTextModel(
           contextSize,
           gpuLayers,
@@ -1009,7 +1014,7 @@ Rules:
       ProcessingLogBuffer.instance.log(
         '[$_ts][ScanAI] --- TEXT-ONLY FALLBACK ---',
       );
-      await disposeModel();
+      await disposeModelInRun();
 
       try {
         final ctx = await _loadRemainingTextModel(

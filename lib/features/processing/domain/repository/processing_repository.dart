@@ -88,6 +88,9 @@ abstract class ProcessingRepository {
   /// Completes once the AI runs started so far have ended.
   Future<void> waitForStreamCompletion();
 
+  /// Unloads the model in its turn, once the AI runs started so far have
+  /// ended, so it never unloads an engine a run is using; a run started
+  /// afterwards waits for it.
   Future disposeModel();
 }
 
