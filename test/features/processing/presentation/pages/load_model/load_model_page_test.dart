@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:auto_route/auto_route.dart';
 import 'package:bloc_test/bloc_test.dart' show MockBloc, whenListen;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,6 +16,17 @@ import '../../../../desktop/handover/handover_test_fakes.dart';
 
 class _MockLoadModelBloc extends MockBloc<LoadModelEvent, LoadModelState>
     implements LoadModelBloc {}
+
+/// Records the results the page leaves with.
+class _FakeStackRouter extends Fake implements StackRouter {
+  final popped = <Object?>[];
+
+  @override
+  Future<bool> maybePop<T extends Object?>([T? result]) async {
+    popped.add(result);
+    return true;
+  }
+}
 
 class _MockCommunicationBloc
     extends MockBloc<CommunicationEvent, DesktopSyncState>
@@ -59,6 +73,62 @@ void main() {
     );
     await tester.pump();
   }
+
+  testWidgets('a model that finishes downloading while the model list is '
+      'open closes the list and leaves the page ready to read', (
+    tester,
+  ) async {
+    final states = StreamController<LoadModelState>();
+    addTearDown(states.close);
+    final loadModelBloc = _MockLoadModelBloc();
+    whenListen(
+      loadModelBloc,
+      states.stream,
+      initialState: const LoadModelState(
+        status: LoadModelStatus.loading,
+        deviceCapability: DeviceAiCapability.full,
+      ),
+    );
+    getIt
+      ..unregister<LoadModelBloc>()
+      ..registerSingleton<LoadModelBloc>(loadModelBloc);
+    final router = _FakeStackRouter();
+    await tester.binding.setSurfaceSize(const Size(500, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: StackRouterScope(
+          controller: router,
+          stateHash: 0,
+          child: const LoadModelPage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    unawaited(
+      showDialog<void>(
+        context: tester.element(find.byType(LoadModelPage)),
+        builder: (_) => const Dialog(child: Text('model list')),
+      ),
+    );
+    // The page shows a spinner while loading: no settling.
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('model list'), findsOne);
+
+    states.add(
+      const LoadModelState(
+        status: LoadModelStatus.modelLoaded,
+        deviceCapability: DeviceAiCapability.full,
+      ),
+    );
+    // The page shows a spinner while loading: no settling.
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('model list'), findsNothing);
+    expect(router.popped, [true]);
+  });
 
   testWidgets('offers processing on the desktop on an unsupported device', (
     tester,
