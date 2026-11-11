@@ -14,6 +14,7 @@ import 'package:health_wallet/features/desktop/lww_sync/domain/entity/sync_batch
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../../helpers/log_capture.dart';
 import '../../lww_sync_test_helpers.dart';
 
 /// The real sync service, except that while [gate] is set a received batch
@@ -102,30 +103,19 @@ class _MemoryPrefs extends Fake implements SharedPreferences {
   }
 }
 
-Future<void> _until(bool Function() condition, {String? reason}) async {
-  final deadline = DateTime.now().add(const Duration(seconds: 10));
-  while (!condition()) {
-    if (DateTime.now().isAfter(deadline)) {
-      fail('timed out waiting${reason == null ? '' : ' for $reason'}');
-    }
-    await Future<void>.delayed(const Duration(milliseconds: 20));
-  }
-}
-
-Future<void> _untilAsync(
-  Future<bool> Function() condition, {
-  String? reason,
-}) async {
-  final deadline = DateTime.now().add(const Duration(seconds: 10));
-  while (!await condition()) {
-    if (DateTime.now().isAfter(deadline)) {
-      fail('timed out waiting${reason == null ? '' : ' for $reason'}');
-    }
-    await Future<void>.delayed(const Duration(milliseconds: 20));
-  }
-}
+/// Both devices connected, in sync and idle, with nothing on the wire: every
+/// digest sent was answered, every batch acknowledged.
+bool _quiet(_Device a, _Device b) =>
+    a.link.inFlight == 0 &&
+    b.link.inFlight == 0 &&
+    [a, b].every(
+      (d) =>
+          d.bloc.state.isSynced &&
+          d.bloc.state.syncStatus == LwwSyncStatus.idle,
+    );
 
 void main() {
+  final logs = captureLogs();
   late TestDirs dirs;
   late _Device phone;
   late _Device desktop;
@@ -136,8 +126,10 @@ void main() {
     phone = await _Device.create('phone-a', '${dirs.root.path}/phone');
     desktop = await _Device.create('desktop-z', '${dirs.root.path}/desktop');
     ackTimeout = LwwSyncBloc.ackTimeout;
-    LwwSyncBloc.ackTimeout = const Duration(seconds: 2);
-    LwwSyncBloc.settleDelay = const Duration(milliseconds: 100);
+    // Never reached, so a busy machine never times out a real answer; the
+    // test that drops answers shortens it once nothing else is waiting.
+    LwwSyncBloc.ackTimeout = const Duration(hours: 1);
+    LwwSyncBloc.settleDelay = Duration.zero;
   });
 
   tearDown(() async {
@@ -151,15 +143,12 @@ void main() {
   Future<void> start() async {
     phone.bloc.add(const LwwSyncInitialised());
     desktop.bloc.add(const LwwSyncInitialised());
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+    await Future.wait([phone.bloc.initialised, desktop.bloc.initialised]);
   }
 
   Future<void> connect() async {
     LinkedTcpService.link(phone.link, desktop.link);
-    await _until(
-      () => phone.bloc.state.isSynced && desktop.bloc.state.isSynced,
-      reason: 'both in sync',
-    );
+    await eventually(() => _quiet(phone, desktop), reason: 'both in sync');
   }
 
   Future<bool> onDesktop(String id) async =>
@@ -167,6 +156,15 @@ void main() {
 
   Iterable<Object?> desktopAcks() =>
       desktop.link.sentOfType('sync.ack').map((m) => m.payload['ok']);
+
+  /// How many times the desktop started holding a received batch.
+  int holds() =>
+      logs.where((e) => '${e.message}'.contains('holding batch')).length;
+
+  /// Waits until the desktop holds a batch received after [before] holds:
+  /// it reached the pause, so not applying it is not a matter of time.
+  Future<void> heldOnDesktop({int before = 0}) =>
+      eventually(() => holds() > before, reason: 'the desktop holds a batch');
 
   group('pauseApplying', () {
     test('a batch received while paused waits, and is applied and '
@@ -177,44 +175,45 @@ void main() {
 
       await desktop.bloc.pauseApplying();
       await insertFhir(phone.db, id: 'during-restore', title: 'from phone');
-      await _until(
-        () => phone.link.sentOfType('sync.batch').isNotEmpty,
-        reason: 'the phone sends its change',
-      );
-      await Future<void>.delayed(const Duration(milliseconds: 300));
+      notifySyncedTablesWritten(phone.db);
+      await heldOnDesktop();
 
       expect(await onDesktop('during-restore'), isFalse, reason: 'held');
       expect(desktopAcks(), hasLength(acksBefore), reason: 'no answer yet');
 
       desktop.bloc.resumeApplying();
 
-      await _untilAsync(
+      await eventually(
         () => onDesktop('during-restore'),
         reason: 'applied after resume',
       );
-      await _until(() => phone.bloc.state.pendingChangeCount == 0);
+      await eventually(() => phone.bloc.state.pendingChangeCount == 0);
       expect(desktopAcks(), everyElement(isTrue), reason: 'never ok:false');
     });
 
     test('a batch held past the phone\'s ack timeout is sent again and '
         'applied, and nothing is refused', () async {
-      LwwSyncBloc.ackTimeout = const Duration(milliseconds: 300);
       await start();
       await connect();
+      // Short only while the desktop holds the batch, long again for the
+      // resend.
+      LwwSyncBloc.ackTimeout = const Duration(milliseconds: 50);
 
       await desktop.bloc.pauseApplying();
       await insertFhir(phone.db, id: 'slow', title: 'first');
-      await _until(
+      notifySyncedTablesWritten(phone.db);
+      await eventually(
         () => phone.bloc.state.syncStatus == LwwSyncStatus.error,
         reason: 'the phone stops waiting for the ack',
       );
       expect(phone.bloc.state.pendingChangeCount, 1);
+      LwwSyncBloc.ackTimeout = const Duration(hours: 1);
 
       desktop.bloc.resumeApplying();
-      await _untilAsync(() => onDesktop('slow'));
+      await eventually(() => onDesktop('slow'));
       phone.bloc.add(const SyncTriggered());
 
-      await _until(
+      await eventually(
         () => phone.bloc.state.pendingChangeCount == 0,
         reason: 'the resent batch is acknowledged',
       );
@@ -232,11 +231,12 @@ void main() {
       await desktop.bloc.pauseApplying();
       await desktop.bloc.pauseApplying();
       await insertFhir(phone.db, id: 'twice');
-      await Future<void>.delayed(const Duration(milliseconds: 300));
+      notifySyncedTablesWritten(phone.db);
+      await heldOnDesktop();
       expect(await onDesktop('twice'), isFalse);
 
       desktop.bloc.resumeApplying();
-      await _untilAsync(() => onDesktop('twice'));
+      await eventually(() => onDesktop('twice'));
     });
 
     test('pausing while a batch is being applied completes only once its '
@@ -246,14 +246,15 @@ void main() {
       final gate = Completer<void>();
       desktop.service.gate = gate;
       await insertFhir(phone.db, id: 'in-flight');
-      await _until(
+      notifySyncedTablesWritten(phone.db);
+      await eventually(
         () => desktop.service.atGate,
         reason: 'the desktop starts applying',
       );
 
       var paused = false;
       final pausing = desktop.bloc.pauseApplying().then((_) => paused = true);
-      await Future<void>.delayed(const Duration(milliseconds: 100));
+      await pumpEventQueue();
       expect(paused, isFalse, reason: 'the batch is still being applied');
 
       desktop.service.gate = null;
@@ -261,16 +262,14 @@ void main() {
       await pausing;
       expect(await onDesktop('in-flight'), isTrue, reason: 'saved first');
 
-      final batchesBefore = phone.link.sentOfType('sync.batch').length;
+      final holdsBefore = holds();
       await insertFhir(phone.db, id: 'next');
-      await _until(
-        () => phone.link.sentOfType('sync.batch').length > batchesBefore,
-      );
-      await Future<void>.delayed(const Duration(milliseconds: 300));
+      notifySyncedTablesWritten(phone.db);
+      await heldOnDesktop(before: holdsBefore);
       expect(await onDesktop('next'), isFalse, reason: 'held');
 
       desktop.bloc.resumeApplying();
-      await _untilAsync(() => onDesktop('next'));
+      await eventually(() => onDesktop('next'));
     });
 
     test('closing the bloc while a batch is held does not hang', () async {
@@ -278,21 +277,25 @@ void main() {
       await connect();
       await desktop.bloc.pauseApplying();
       await insertFhir(phone.db, id: 'held');
-      await _until(() => phone.link.sentOfType('sync.batch').isNotEmpty);
-      await Future<void>.delayed(const Duration(milliseconds: 100));
+      notifySyncedTablesWritten(phone.db);
+      await heldOnDesktop();
 
-      await desktop.bloc.close().timeout(const Duration(seconds: 5));
+      // A hang would run into the test's timeout.
+      await desktop.bloc.close();
     });
   });
+
+  // How long the comparison may take is tested on fake time, in
+  // lww_sync_bloc_edges_test.dart; these give it an hour, so a result means
+  // it never waited for the timeout.
+  const never = Duration(hours: 1);
 
   group('syncAndConfirmMatch', () {
     test('returns false at once when no phone is connected, and sends '
         'nothing', () async {
       await start();
 
-      final watch = Stopwatch()..start();
-      expect(await desktop.bloc.syncAndConfirmMatch(), isFalse);
-      expect(watch.elapsed, lessThan(const Duration(seconds: 1)));
+      expect(await desktop.bloc.syncAndConfirmMatch(timeout: never), isFalse);
       expect(desktop.link.sent, isEmpty);
     });
 
@@ -303,7 +306,7 @@ void main() {
       await insertFhir(desktop.db, id: 'desk-edit');
       final digestsBefore = desktop.link.sentOfType('sync.digest').length;
 
-      expect(await desktop.bloc.syncAndConfirmMatch(), isTrue);
+      expect(await desktop.bloc.syncAndConfirmMatch(timeout: never), isTrue);
 
       expect(await fetchRow(phone.db, 'fhir_resource', 'desk-edit'), isNotNull);
       expect(desktop.bloc.state.tablesMatch, isTrue);
@@ -320,7 +323,7 @@ void main() {
       await start();
       await connect();
       phone.link.unlink();
-      await _until(() => !desktop.bloc.state.connected);
+      await eventually(() => !desktop.bloc.state.connected);
       await insertFhir(phone.db, id: 'offline-1', title: 'made offline');
       await insertNote(
         phone.db,
@@ -329,42 +332,11 @@ void main() {
       );
 
       LinkedTcpService.link(phone.link, desktop.link);
-      await _until(() => desktop.bloc.state.connected);
+      await eventually(() => desktop.bloc.state.connected);
 
-      expect(await desktop.bloc.syncAndConfirmMatch(), isTrue);
+      expect(await desktop.bloc.syncAndConfirmMatch(timeout: never), isTrue);
       expect(await onDesktop('offline-1'), isTrue);
       expect(await countRows(desktop.db, 'record_notes'), 1);
-    });
-
-    test('returns false after the timeout when the phone never answers the '
-        'comparison', () async {
-      await start();
-      await connect();
-      phone.link.dropTypes.add('sync.digest');
-
-      final watch = Stopwatch()..start();
-      final matched = await desktop.bloc.syncAndConfirmMatch(
-        timeout: const Duration(milliseconds: 500),
-      );
-
-      expect(matched, isFalse);
-      expect(watch.elapsed, lessThan(const Duration(seconds: 2)));
-    });
-
-    test('returns false after the timeout when the desktop\'s changes are '
-        'never acknowledged', () async {
-      await start();
-      await connect();
-      phone.link.dropTypes.add('sync.ack');
-      await insertFhir(desktop.db, id: 'unacked');
-
-      final watch = Stopwatch()..start();
-      final matched = await desktop.bloc.syncAndConfirmMatch(
-        timeout: const Duration(milliseconds: 500),
-      );
-
-      expect(matched, isFalse);
-      expect(watch.elapsed, lessThan(const Duration(seconds: 2)));
     });
 
     test('returns false as soon as the phone disconnects during the '
@@ -373,18 +345,16 @@ void main() {
       await connect();
       phone.link.dropTypes.add('sync.digest');
 
-      final watch = Stopwatch()..start();
-      final matched = desktop.bloc.syncAndConfirmMatch(
-        timeout: const Duration(seconds: 8),
-      );
-      await _until(
+      final matched = desktop.bloc.syncAndConfirmMatch(timeout: never);
+      // Set false only by the comparison asked for; nothing on the wire
+      // can set it back, since the phone's digests are dropped.
+      await eventually(
         () => !desktop.bloc.state.tablesMatch,
         reason: 'the fresh comparison starts',
       );
       phone.link.unlink();
 
       expect(await matched, isFalse);
-      expect(watch.elapsed, lessThan(const Duration(seconds: 4)));
     });
 
     test('returns false at once while applying is paused', () async {
@@ -392,9 +362,7 @@ void main() {
       await connect();
       await desktop.bloc.pauseApplying();
 
-      final watch = Stopwatch()..start();
-      expect(await desktop.bloc.syncAndConfirmMatch(), isFalse);
-      expect(watch.elapsed, lessThan(const Duration(seconds: 1)));
+      expect(await desktop.bloc.syncAndConfirmMatch(timeout: never), isFalse);
     });
   });
 }

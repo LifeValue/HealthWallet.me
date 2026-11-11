@@ -584,6 +584,50 @@ void main() {
     });
   });
 
+  test('a match check the peer never answers returns false once the timeout '
+      'is up, not before', () {
+    run((async) {
+      startConnected(async);
+      bool? matched;
+      bloc
+          .syncAndConfirmMatch(timeout: const Duration(seconds: 10))
+          .then((m) => matched = m);
+      async.flushMicrotasks();
+      // On connecting, after the drain, and the fresh one for the check.
+      expect(link.sentOfType('sync.digest'), hasLength(3));
+
+      async.elapse(const Duration(seconds: 9));
+      expect(matched, isNull);
+
+      async.elapse(const Duration(seconds: 1));
+      expect(matched, isFalse);
+      expect(logs, loggedWarning('the tables did not match within'));
+    });
+  });
+
+  test('a match check returns false once the timeout is up when the '
+      'changes are never acknowledged, without comparing', () {
+    run((async) {
+      sync.batches.add(const SyncBatch(id: 4, deviceId: 'me', tables: _rows));
+      startConnected(async);
+      expect(link.sentOfType('sync.batch'), hasLength(1));
+      bool? matched;
+      bloc
+          .syncAndConfirmMatch(timeout: const Duration(seconds: 10))
+          .then((m) => matched = m);
+      async.flushMicrotasks();
+
+      async.elapse(const Duration(seconds: 9));
+      expect(matched, isNull);
+
+      async.elapse(const Duration(seconds: 1));
+      expect(matched, isFalse);
+      expect(logs, loggedWarning('changes still waiting for the other device'));
+      // Only the digest sent on connecting.
+      expect(link.sentOfType('sync.digest'), hasLength(1));
+    });
+  });
+
   test('closing the bloc answers a match check still waiting with no '
       'match', () {
     run((async) {
