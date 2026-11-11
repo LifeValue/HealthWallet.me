@@ -62,6 +62,8 @@ Batch 1, in this order (specs in `_bmad-output/implementation-artifacts/`). **Do
    - Files of deleted records stay for ever, while record and attachment deletes remove the file immediately, so an undo can't bring it back. From now on files follow their record: kept 30 days, deleted at the purge. A start-up sweep removes files nothing refers to.
    - Source deletes are left to the same purge and sweep, because holders rewrites that code.
 
+**Device checks of batch 1 (HM-227), 2026-11-11**, on an iPhone 13 Pro Max, the iOS simulator and the macOS desktop app. They found B9–B24 (section 3). All are fixed on `feature/mobile-stabilization-remaining`, each with a test that failed first, except B13, kept as it is by the product owner. A review of the branch afterwards found more defects in processing, records, sync, backup and the desktop link; they were fixed the same way and are described under those items and in `architecture.md`. Added on the product owner's request: the desktop setting for how long the safety copy made before a restore is kept (1–365 days, 30 by default; Backup section of `architecture.md`). Coverage of the 111 touched `lib/` files: 98.4% of lines (the rest runs only on other platforms, or is dead code). 4,578 tests, passing on macOS and on Linux as root, also with every CPU core busy and limited to one CPU like the CI runner.
+
 Batch 2:
 
 5. **Records filters and paging (B4).**
