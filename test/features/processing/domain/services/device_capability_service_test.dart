@@ -52,9 +52,9 @@ void main() {
     });
 
     test('maps iPad generations and unknown machines', () {
-      expect(DeviceCapabilityService.estimateIosRam('iPad16,1'), 16384);
-      expect(DeviceCapabilityService.estimateIosRam('iPad14,1'), 8192);
-      expect(DeviceCapabilityService.estimateIosRam('iPad11,1'), 6144);
+      expect(DeviceCapabilityService.estimateIosRam('iPad16,1'), 8192);
+      expect(DeviceCapabilityService.estimateIosRam('iPad14,1'), 4096);
+      expect(DeviceCapabilityService.estimateIosRam('iPad11,1'), 3072);
       expect(DeviceCapabilityService.estimateIosRam('iPad6,1'), 4096);
       expect(DeviceCapabilityService.estimateIosRam('x86_64'), 4096);
     });

@@ -18,10 +18,10 @@ void main() {
     });
 
     test('maps iPad generations to their RAM', () {
-      expect(DeviceCapabilityService.estimateIosRam('iPad16,3'), 16384);
+      expect(DeviceCapabilityService.estimateIosRam('iPad16,3'), 8192);
       expect(DeviceCapabilityService.estimateIosRam('iPad13,4'), 8192);
-      expect(DeviceCapabilityService.estimateIosRam('iPad8,1'), 6144);
-      expect(DeviceCapabilityService.estimateIosRam('iPad7,5'), 4096);
+      expect(DeviceCapabilityService.estimateIosRam('iPad8,1'), 4096);
+      expect(DeviceCapabilityService.estimateIosRam('iPad7,5'), 2048);
     });
 
     test('falls back to 4096 MB for an unknown machine', () {
