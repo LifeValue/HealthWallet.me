@@ -1,3 +1,4 @@
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
@@ -143,6 +144,24 @@ void main() {
     bloc.add(event);
     await pumpEventQueue();
     return bloc.state;
+  }
+
+  /// Runs [body] on a new bloc in fake time, so the search debounce passes
+  /// without waiting for it.
+  void inFakeTime(
+    void Function(FakeAsync time, RecordsBloc records) body, {
+    RecordsFilterStore? store,
+  }) {
+    fakeAsync((time) {
+      final records = RecordsBloc(
+        repository,
+        _FakeSpecialtyClassifier(),
+        store,
+      );
+      body(time, records);
+      records.close();
+      time.flushMicrotasks();
+    });
   }
 
   List<Encounter> encounters(int count, {String title = 'visit'}) => [
@@ -436,15 +455,19 @@ void main() {
       expect(after.activeFilters, [FhirType.Condition]);
     });
 
-    test('a search does not change the saved filters', () async {
-      await run(const RecordsSourceChanged(null, personId: 'jane'));
-      await run(const RecordsFiltersApplied([FhirType.Condition]));
+    test('a search does not change the saved filters', () {
+      inFakeTime(store: store, (time, records) {
+        records
+          ..add(const RecordsSourceChanged(null, personId: 'jane'))
+          ..add(const RecordsFiltersApplied([FhirType.Condition]));
+        time.flushMicrotasks();
 
-      bloc.add(const RecordsSearch('zz'));
-      await Future<void>.delayed(const Duration(milliseconds: 600));
-      await pumpEventQueue();
+        records.add(const RecordsSearch('zz'));
+        time.elapse(const Duration(milliseconds: 500));
 
-      expect(store.load('jane').types, [FhirType.Condition]);
+        expect(repository.searches, ['zz']);
+        expect(store.load('jane').types, [FhirType.Condition]);
+      });
     });
   });
 
@@ -539,27 +562,30 @@ void main() {
   });
 
   group('search', () {
-    test('runs after the debounce and lists the matches', () async {
+    test('runs after the debounce and lists the matches', () {
       repository.searchResults = encounters(2);
 
-      await run(const RecordsSearch('  he  '));
-      expect(bloc.state.searchQuery, 'he');
-      expect(repository.searches, isEmpty);
+      inFakeTime((time, records) {
+        records.add(const RecordsSearch('  he  '));
+        time.elapse(const Duration(milliseconds: 499));
+        expect(records.state.searchQuery, 'he');
+        expect(repository.searches, isEmpty);
 
-      await Future<void>.delayed(const Duration(milliseconds: 600));
-      await pumpEventQueue();
+        time.elapse(const Duration(milliseconds: 1));
 
-      expect(repository.searches, ['he']);
-      expect(bloc.state.resources, hasLength(2));
-      expect(bloc.state.hasMorePages, isFalse);
+        expect(repository.searches, ['he']);
+        expect(records.state.resources, hasLength(2));
+        expect(records.state.hasMorePages, isFalse);
+      });
     });
 
-    test('a one-letter query does not search', () async {
-      await run(const RecordsSearch('h'));
-      await Future<void>.delayed(const Duration(milliseconds: 600));
-      await pumpEventQueue();
+    test('a one-letter query does not search', () {
+      inFakeTime((time, records) {
+        records.add(const RecordsSearch('h'));
+        time.elapse(const Duration(seconds: 1));
 
-      expect(repository.searches, isEmpty);
+        expect(repository.searches, isEmpty);
+      });
     });
 
     test('an empty query reloads the list', () async {
