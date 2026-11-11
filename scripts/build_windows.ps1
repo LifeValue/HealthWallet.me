@@ -1,106 +1,72 @@
-# HealthWallet Windows Build Script
-# Run this on a Windows machine with Flutter installed
-# Usage: .\scripts\build_windows.ps1
+# Builds the Windows desktop app with the Flutter version pinned in .fvmrc and packages it as a
+# portable zip and, with -Msix, a Store MSIX, in build\windows\packages\. The CI job
+# windows:release runs this script.
+#
+# Needs: Git for Windows, Visual Studio 2022 with "Desktop development with C++", FVM on PATH
+# (`choco install fvm`, or `dart pub global activate fvm`), and SSH access to
+# git.lifevalue.com (port 2822) for the private packages (CI rewrites them to HTTPS with its job token).
+#
+# Usage: .\scripts\build_windows.ps1 [-Msix] [-SkipCodegen] [-Clean]
 
 param(
+    [switch]$Msix,
     [switch]$SkipCodegen,
     [switch]$Clean
 )
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
-
-Write-Host "`n=== HealthWallet Windows Build ===" -ForegroundColor Cyan
-
-# --- Prerequisites check ---
-Write-Host "`n[1/6] Checking prerequisites..." -ForegroundColor Yellow
-
-$flutter = Get-Command flutter -ErrorAction SilentlyContinue
-if (-not $flutter) {
-    Write-Host "ERROR: Flutter not found. Install Flutter and add it to PATH." -ForegroundColor Red
-    exit 1
-}
-
-$flutterVersion = flutter --version 2>&1 | Select-String "Flutter (\d+\.\d+\.\d+)"
-Write-Host "  Flutter: $($flutterVersion.Matches.Groups[1].Value)"
-
-# Check Windows desktop is enabled
-$devices = flutter devices 2>&1
-if ($devices -notmatch "windows") {
-    Write-Host "  Enabling Windows desktop support..."
-    flutter config --enable-windows-desktop
-}
-Write-Host "  Windows desktop: enabled" -ForegroundColor Green
-
-# --- Check .env ---
-Write-Host "`n[2/6] Checking .env file..." -ForegroundColor Yellow
-if (-not (Test-Path "$ProjectRoot\.env")) {
-    Write-Host "WARNING: .env file not found. Build may fail if env vars are required." -ForegroundColor DarkYellow
-    Write-Host "  Copy your .env file to: $ProjectRoot\.env"
-} else {
-    Write-Host "  .env found" -ForegroundColor Green
-}
-
-# --- Clean (optional) ---
-if ($Clean) {
-    Write-Host "`n[3/6] Cleaning previous build..." -ForegroundColor Yellow
-    Set-Location $ProjectRoot
-    flutter clean
-    Write-Host "  Cleaned" -ForegroundColor Green
-} else {
-    Write-Host "`n[3/6] Skipping clean (use -Clean to force)" -ForegroundColor Gray
-}
-
-# --- Dependencies ---
-Write-Host "`n[4/6] Getting dependencies..." -ForegroundColor Yellow
 Set-Location $ProjectRoot
-flutter pub get
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "ERROR: flutter pub get failed" -ForegroundColor Red
-    exit 1
-}
-Write-Host "  Dependencies resolved" -ForegroundColor Green
 
-# --- Code generation ---
+function Invoke-Step([string]$Description, [scriptblock]$Command) {
+    Write-Host "`n==> $Description" -ForegroundColor Cyan
+    & $Command
+    if ($LASTEXITCODE -ne 0) { throw "$Description failed (exit code $LASTEXITCODE)" }
+}
+
+if (-not (Get-Command fvm -ErrorAction SilentlyContinue)) {
+    throw "FVM not found. Install it (choco install fvm) and open a new shell."
+}
+$FlutterVersion = (Get-Content .fvmrc -Raw | ConvertFrom-Json).flutter
+
+# Installs the pinned version when missing; FVM then runs it for this project.
+Invoke-Step "Flutter $FlutterVersion (from .fvmrc)" { fvm install --skip-pub-get }
+Invoke-Step "Windows desktop enabled" { fvm flutter config --enable-windows-desktop }
+
+if (-not (Test-Path .env)) {
+    Write-Warning ".env not found: the app builds with the default (empty) configuration."
+}
+
+if ($Clean) { Invoke-Step "Clean" { fvm flutter clean } }
+Invoke-Step "Dependencies" { fvm flutter pub get --enforce-lockfile }
 if (-not $SkipCodegen) {
-    Write-Host "`n[5/6] Running code generation..." -ForegroundColor Yellow
-    dart run build_runner build --delete-conflicting-outputs
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "ERROR: Code generation failed" -ForegroundColor Red
-        exit 1
-    }
-    Write-Host "  Code generation complete" -ForegroundColor Green
-} else {
-    Write-Host "`n[5/6] Skipping code generation (use without -SkipCodegen to run)" -ForegroundColor Gray
+    Invoke-Step "Code generation" { fvm dart run build_runner build --delete-conflicting-outputs }
+}
+Invoke-Step "Windows release build" {
+    fvm flutter build windows --release --target lib/main_desktop.dart
 }
 
-# --- Build ---
-Write-Host "`n[6/6] Building Windows release..." -ForegroundColor Yellow
-Set-Location $ProjectRoot
-flutter build windows --release --target lib/main_desktop.dart
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "ERROR: Build failed" -ForegroundColor Red
-    exit 1
+$Version = (Select-String -Path pubspec.yaml -Pattern '^version:\s*([^+\s]+)').Matches[0].Groups[1].Value
+$Release = "build\windows\x64\runner\Release"
+$Out = "build\windows\packages"
+if (Test-Path $Out) { Remove-Item $Out -Recurse -Force }
+New-Item -ItemType Directory -Path $Out | Out-Null
+
+# A package left from an earlier run would end up in the zip.
+Get-ChildItem -Path $Release -Filter "*.msix" | Remove-Item -Force
+
+$Zip = "$Out\HealthWallet-Windows-v$Version-portable.zip"
+Write-Host "`n==> Portable zip" -ForegroundColor Cyan
+Compress-Archive -Path "$Release\*" -DestinationPath $Zip -Force
+Write-Host $Zip
+
+if ($Msix) {
+    # msix_config in pubspec.yaml; the Store signs the package.
+    Invoke-Step "MSIX" { fvm dart run msix:create --version "$Version.0" }
+    $Package = Get-ChildItem -Path $Release -Filter "*.msix" | Select-Object -First 1
+    $MsixOut = "$Out\HealthWallet-Windows-v$Version-setup.msix"
+    Copy-Item $Package.FullName $MsixOut
+    Write-Host $MsixOut
 }
 
-# --- Package output ---
-$BuildOutput = "$ProjectRoot\build\windows\x64\runner\Release"
-$Version = (Select-String -Path "$ProjectRoot\pubspec.yaml" -Pattern "^version:\s*(.+)$").Matches.Groups[1].Value.Trim()
-$ZipName = "HealthWallet-Windows-v$Version.zip"
-$ZipPath = "$ProjectRoot\build\$ZipName"
-
-Write-Host "`nPackaging build output..." -ForegroundColor Yellow
-
-if (Test-Path $ZipPath) {
-    Remove-Item $ZipPath -Force
-}
-
-Compress-Archive -Path "$BuildOutput\*" -DestinationPath $ZipPath -Force
-$SizeMB = [math]::Round((Get-Item $ZipPath).Length / 1MB, 1)
-
-Write-Host "`n=== Build Complete ===" -ForegroundColor Green
-Write-Host "  Output:  $BuildOutput" -ForegroundColor White
-Write-Host "  Package: $ZipPath ($SizeMB MB)" -ForegroundColor White
-Write-Host ""
-Write-Host "To install: unzip and run health_wallet.exe" -ForegroundColor Cyan
-Write-Host ""
+Write-Host "`nDone: unzip the portable build and run health_wallet.exe." -ForegroundColor Green
