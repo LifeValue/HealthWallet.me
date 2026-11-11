@@ -29,6 +29,7 @@ import 'package:health_wallet/features/sync/domain/repository/sync_repository.da
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../helpers/eventually.dart';
+import '../../../../helpers/fake_device_capability_service.dart';
 import '../../../share_records/share_test_helpers.dart';
 
 const _docScanner = MethodChannel('flutter_doc_scanner');
@@ -170,6 +171,7 @@ void main() {
         _FakeHolderService(),
         _FakeRecordsRepository(),
       ),
+      FakeDeviceCapabilityService(),
     );
   });
 

@@ -7,6 +7,7 @@ import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart'
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_matcher.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
@@ -45,6 +46,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
   SharedPreferences get prefs;
   AppStringsProvider get strings;
   LayoutExtractionService get layoutExtraction;
+  DeviceCapabilityService get deviceCapabilityService;
 
   void updateSession(
     Emitter<ProcessingState> emit, {
@@ -466,9 +468,13 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       final savedContextSize = isDesktop
           ? null
           : prefs.getInt(SharedPrefsConstants.aiContextSize);
-      final useVision =
-          prefs.getBool(SharedPrefsConstants.aiUseVision) ??
-          defaultDeepScan(isDesktop);
+      // Deep Scan on a device without the memory for it reads the text.
+      final useVision = deepScanRuns(
+        deepScanOn:
+            prefs.getBool(SharedPrefsConstants.aiUseVision) ??
+            defaultDeepScan(isDesktop),
+        capability: await deviceCapabilityService.getCapability(),
+      );
       final Stream<MappingResourcesWithProgress> stream = processingRepository
           .mapRemainingResources(
             sessionImages,

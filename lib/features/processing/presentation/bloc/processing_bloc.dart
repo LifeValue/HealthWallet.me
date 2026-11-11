@@ -10,6 +10,7 @@ import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
@@ -53,6 +54,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   final SharedPreferences _prefs;
   final AppStringsProvider _strings;
   final LayoutExtractionService _layoutExtraction;
+  final DeviceCapabilityService _deviceCapabilityService;
 
   @override
   ProcessingRepository get processingRepository => _repository;
@@ -85,6 +87,10 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   @override
   LayoutExtractionService get layoutExtraction => _layoutExtraction;
 
+  @override
+  DeviceCapabilityService get deviceCapabilityService =>
+      _deviceCapabilityService;
+
   final Set<String> _haltedHandovers = {};
 
   @override
@@ -101,6 +107,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     this._prefs,
     this._strings,
     this._layoutExtraction,
+    this._deviceCapabilityService,
   ) : super(const ProcessingState()) {
     on<ProcessingInitialised>(
       onProcessingInitialised,

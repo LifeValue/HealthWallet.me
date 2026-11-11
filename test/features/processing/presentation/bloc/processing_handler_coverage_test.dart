@@ -9,6 +9,7 @@ import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart'
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/features/holders/domain/entity/holder.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
@@ -35,6 +36,7 @@ import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../helpers/fake_device_capability_service.dart';
 import '../../../../helpers/log_capture.dart';
 
 final _en = lookupAppLocalizations(const Locale('en'));
@@ -342,6 +344,7 @@ void main() {
   late _FakeDocumentReferenceService documents;
   late SharedPreferences prefs;
   late ProcessingBloc bloc;
+  late FakeDeviceCapabilityService capability;
   late List<ProcessingState> states;
 
   setUp(() async {
@@ -354,6 +357,7 @@ void main() {
     holders = _FakeHolderService(records);
     selection = _FakeHolderSelection();
     documents = _FakeDocumentReferenceService();
+    capability = FakeDeviceCapabilityService();
     bloc = ProcessingBloc(
       repository,
       ocr,
@@ -371,6 +375,7 @@ void main() {
         holders,
         records,
       ),
+      capability,
     );
     states = [];
     final subscription = bloc.stream.listen(states.add);
@@ -886,6 +891,32 @@ void main() {
       expect(call.documentCategory, 'lab_report');
       expect(call.useVision, defaultDeepScan(isDesktop));
       expect(call.outputMode, ExtractionOutputMode.defaultMode);
+    });
+
+    test(
+      'Deep Scan reads the pages on a device with the memory for it',
+      () async {
+        await prefs.setBool(SharedPrefsConstants.aiUseVision, true);
+        seed(withPages(extracted));
+
+        bloc.add(const ProcessRemainingResources(sessionId: 's'));
+        await settle();
+
+        expect(repository.remainingCalls.single.useVision, isTrue);
+      },
+    );
+
+    test('Deep Scan on a device without the memory for it reads the text '
+        'instead of stopping', () async {
+      await prefs.setBool(SharedPrefsConstants.aiUseVision, true);
+      capability.capability = DeviceAiCapability.basicOnly;
+      seed(withPages(extracted));
+
+      bloc.add(const ProcessRemainingResources(sessionId: 's'));
+      await settle();
+
+      expect(session('s').status, ProcessingStatus.processing);
+      expect(repository.remainingCalls.single.useVision, isFalse);
     });
 
     test('snapshots after a cancel are dropped', () async {
