@@ -22,6 +22,11 @@ abstract class BackupState with _$BackupState {
     /// finished, such as files that couldn't be restored; null when there
     /// is nothing to add.
     String? restoreNotice,
+
+    /// Desktop: the scans on this computer not saved yet (every processing
+    /// session: a saved one is deleted), which a restore removes. Counted
+    /// when a backup is selected and after a restore.
+    @Default(0) int unsavedScanCount,
   }) = _BackupState;
 
   factory BackupState.initial() => const BackupState();

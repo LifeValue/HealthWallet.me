@@ -338,6 +338,7 @@ class _BackupCardState extends State<BackupCard> {
                         backup: selected,
                         isWorking: isWorking,
                         isPhoneOffline: isPhoneOffline,
+                        unsavedScanCount: widget.backupState.unsavedScanCount,
                         onRestoreConfirmed: (backup) => _restoring = backup,
                       ),
                     )
@@ -662,6 +663,9 @@ class _BackupPreview extends StatelessWidget {
   /// after it reconnects.
   final bool isPhoneOffline;
 
+  /// Scans on this computer not saved yet, which the restore removes.
+  final int unsavedScanCount;
+
   /// Called when the user confirms the restore, before it starts.
   final ValueChanged<BackupEntry> onRestoreConfirmed;
 
@@ -669,6 +673,7 @@ class _BackupPreview extends StatelessWidget {
     required this.backup,
     required this.isWorking,
     required this.isPhoneOffline,
+    required this.unsavedScanCount,
     required this.onRestoreConfirmed,
   });
 
@@ -752,6 +757,8 @@ class _BackupPreview extends StatelessWidget {
         ),
         if (!backup.hasFiles) context.l10n.backupOldNoFiles,
         if (isPhoneOffline) context.l10n.backupRestorePhoneOffline,
+        if (unsavedScanCount > 0)
+          context.l10n.backupRestoreRemovesScans(unsavedScanCount),
       ].join('\n\n'),
       cancelText: context.l10n.cancel,
       confirmText: context.l10n.desktopRestore,

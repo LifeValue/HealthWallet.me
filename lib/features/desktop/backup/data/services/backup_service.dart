@@ -408,6 +408,19 @@ class BackupService {
     );
   }
 
+  /// The scans on this device not saved yet, which a restore removes (it
+  /// replaces `processing_sessions` with the backup's): every session,
+  /// whatever its status, since saving one deletes it.
+  Future<int> countUnsavedScans() async {
+    final row = await _database
+        .customSelect(
+          'SELECT COUNT(*) AS c FROM processing_sessions',
+          readsFrom: {_database.processingSessions},
+        )
+        .getSingle();
+    return row.data['c'] as int;
+  }
+
   /// Stages, checks and moves the backup's files into [docs], and works out
   /// which restored attachment urls must point at another name.
   Future<_FilePlan> _placeFiles(

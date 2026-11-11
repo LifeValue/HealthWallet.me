@@ -51,7 +51,7 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     on<BackupRequested>(_onBackupRequested, transformer: droppable());
     on<RestoreRequested>(_onRestoreRequested, transformer: droppable());
     on<BackupHistoryLoaded>(_onHistoryLoaded);
-    on<BackupSelected>(_onBackupSelected);
+    on<BackupSelected>(_onBackupSelected, transformer: restartable());
     on<BackupDeleted>(_onBackupDeleted);
     on<BackupLocationChanged>(_onLocationChanged);
     on<BackupLocationReset>(_onLocationReset);
@@ -355,6 +355,8 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
           progress: 1.0,
           backupHistory: await _historyOrCurrent(),
           restoreNotice: notices.isEmpty ? null : notices.join('\n\n'),
+          // The restore replaced the scans with the backup's.
+          unsavedScanCount: await _unsavedScanCount(),
         ),
       );
       sendBackupStatus();
@@ -423,11 +425,24 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     }
   }
 
-  void _onBackupSelected(
+  Future<void> _onBackupSelected(
     BackupSelected event,
     Emitter<BackupState> emit,
-  ) {
+  ) async {
     emit(state.copyWith(selectedBackup: event.backup));
+    if (event.backup == null) return;
+    emit(state.copyWith(unsavedScanCount: await _unsavedScanCount()));
+  }
+
+  /// The scans a restore would remove, or 0 when they can't be counted
+  /// (logged): the confirmation then only leaves out that line.
+  Future<int> _unsavedScanCount() async {
+    try {
+      return await _backupService.countUnsavedScans();
+    } catch (e) {
+      logger.w('[Backup] could not count the unsaved scans', e);
+      return 0;
+    }
   }
 
   Future<void> _onBackupDeleted(
