@@ -85,7 +85,10 @@ class MdnsService {
     } finally {
       timer.cancel();
       await sub?.cancel();
-      await stopDiscovery();
+      // Only this search's browse: a start that returned late must not stop
+      // a newer search's.
+      if (identical(_discovery, discovery)) _discovery = null;
+      if (!discovery.isStopped) await discovery.stop();
     }
     return found.toList();
   }
