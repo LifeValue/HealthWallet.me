@@ -975,11 +975,11 @@ class BackupService {
   Future<int> _deleteExpired(DateTime? now, Set<String> keep) async {
     var deleted = 0;
     try {
-      final retention = Duration(days: await getSafetyCopyRetentionDays());
+      final days = await getSafetyCopyRetentionDays();
       final at = now ?? DateTime.now();
       for (final entry in await listBackups()) {
         if (!entry.isSafetyCopy ||
-            entry.timestamp.add(retention).isAfter(at) ||
+            safetyCopyExpiry(entry.timestamp, days).isAfter(at) ||
             keep.contains(entry.id)) {
           continue;
         }
@@ -1004,13 +1004,29 @@ class BackupService {
   Future<List<DateTime>> safetyCopyExpiries({
     Set<String> keep = const {},
   }) async {
-    final retention = Duration(days: await getSafetyCopyRetentionDays());
+    final days = await getSafetyCopyRetentionDays();
     return [
       for (final entry in await listBackups())
         if (entry.isSafetyCopy && !keep.contains(entry.id))
-          entry.timestamp.add(retention),
+          safetyCopyExpiry(entry.timestamp, days),
     ];
   }
+
+  /// When a safety copy made at [made] expires: [days] calendar days later,
+  /// at the same time of day, so a change to or from summer time in between
+  /// doesn't move it by an hour.
+  static DateTime safetyCopyExpiry(DateTime made, int days) => made.isUtc
+      ? made.add(Duration(days: days))
+      : DateTime(
+          made.year,
+          made.month,
+          made.day + days,
+          made.hour,
+          made.minute,
+          made.second,
+          made.millisecond,
+          made.microsecond,
+        );
 
   /// Removes `Documents/.restore-*` staging folders a crashed restore left
   /// behind and returns how many. Failures are logged.

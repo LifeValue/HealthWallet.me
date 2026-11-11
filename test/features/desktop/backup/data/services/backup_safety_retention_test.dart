@@ -36,6 +36,54 @@ void main() {
   Future<Set<String>> listedIds() async =>
       (await service.listBackups()).map((e) => e.id).toSet();
 
+  group('safetyCopyExpiry', () {
+    test('counts calendar days and keeps the time of day, so a change to '
+        'or from summer time in between does not move it', () {
+      // Made in summer time, expiring after the autumn change (and the
+      // other way round): the clock time stays the same wherever the test
+      // runs.
+      for (final made in [
+        DateTime(2026, 10, 12, 17, 34, 5),
+        DateTime(2026, 3, 10, 8, 15),
+      ]) {
+        final expiry = BackupService.safetyCopyExpiry(made, 30);
+        final expected = DateTime(
+          made.year,
+          made.month,
+          made.day + 30,
+          made.hour,
+          made.minute,
+          made.second,
+        );
+        expect(
+          (expiry.year, expiry.month, expiry.day, expiry.hour, expiry.minute),
+          (
+            expected.year,
+            expected.month,
+            expected.day,
+            made.hour,
+            made.minute,
+          ),
+        );
+      }
+    });
+
+    test('rolls over month and year ends', () {
+      expect(
+        BackupService.safetyCopyExpiry(DateTime(2026, 12, 20, 9), 30),
+        DateTime(2027, 1, 19, 9),
+      );
+    });
+
+    test('a UTC time adds whole days', () {
+      final made = DateTime.utc(2026, 10, 12, 14, 34);
+      expect(
+        BackupService.safetyCopyExpiry(made, 30),
+        made.add(const Duration(days: 30)),
+      );
+    });
+  });
+
   group('getSafetyCopyRetentionDays', () {
     test('is 30 days when nothing is stored', () async {
       expect(await service.getSafetyCopyRetentionDays(), 30);
