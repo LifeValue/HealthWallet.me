@@ -687,6 +687,8 @@ Rules:
     required (MappingPatient, MappingResource) withoutVision,
   }) async {
     ProcessingLogBuffer.instance.log('[$_ts][ScanAI] --- VISION FALLBACK ---');
+    // Cancelled while the projector was looked for: the model isn't loaded.
+    if (shouldCancelGeneration) return _cancelledBasicInfo();
     ProcessingLogBuffer.instance.log(
       '[$_ts][ScanAI] loading model + vision projector...',
     );

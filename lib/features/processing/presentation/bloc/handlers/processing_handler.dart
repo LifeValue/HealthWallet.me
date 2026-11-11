@@ -340,6 +340,22 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
 
       startNextPendingSession();
     } on Exception catch (e, s) {
+      // Cancelled, handed over or removed meanwhile: the failure of a step
+      // the session already left changes nothing (it would put a cancelled
+      // document back in the queue).
+      if (_leftStep(
+        event.sessionId,
+        ProcessingStatus.processingPatient,
+        emit,
+      )) {
+        logger.w(
+          '[ProcessingBloc] patient extraction failed after the session left '
+          'its step',
+          e,
+          s,
+        );
+        return;
+      }
       logger.e('[ProcessingBloc] patient extraction failed', e, s);
       if (session.origin == ProcessingOrigin.handover) {
         haltedHandovers.add(event.sessionId);
@@ -578,6 +594,17 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       );
       startNextPendingSession();
     } catch (e, s) {
+      // Cancelled, handed over or removed meanwhile: no failure to show, and
+      // no handover to halt.
+      if (_leftStep(event.sessionId, ProcessingStatus.processing, emit)) {
+        logger.w(
+          '[ProcessingBloc] resource extraction failed after the session '
+          'left its step',
+          e,
+          s,
+        );
+        return;
+      }
       logger.e('[ProcessingBloc] resource extraction failed', e, s);
       final failedSession = state.sessions.firstWhereOrNull(
         (s) => s.id == event.sessionId,
