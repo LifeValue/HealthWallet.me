@@ -1719,5 +1719,8 @@
   },
   "backupRestorePhoneOffline": "Telefonul nu este conectat. Înregistrările adăugate pe el de la ultima sincronizare vor reveni după ce se reconectează; modificările făcute la înregistrările existente vor fi înlocuite de copie.",
   "aiModelDeleteTitle": "Ștergi {name}?",
-  "aiModelDeleteMessage": "Modelul și fișierele pentru Scanarea Profundă sunt șterse de pe acest dispozitiv. Ca să scanezi din nou cu el, va trebui să-l descarci din nou (~{size} MB)."
+  "aiModelDeleteMessage": "Modelul și fișierele pentru Scanarea Profundă sunt șterse de pe acest dispozitiv. Ca să scanezi din nou cu el, va trebui să-l descarci din nou (~{size} MB).",
+  "processingNoPatientFound": "Niciun pacient găsit în document. Introdu datele.",
+  "processingStopping": "Se oprește…",
+  "handoverTakenBack": "Telefonul a preluat înapoi acest document."
 }

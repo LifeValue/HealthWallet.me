@@ -4793,4 +4793,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String aiModelDeleteMessage(int size) {
     return 'Das Modell und seine Tiefenscan-Dateien werden von diesem Gerät entfernt. Um wieder damit zu scannen, musst du es erneut herunterladen (~$size MB).';
   }
+
+  @override
+  String get processingNoPatientFound =>
+      'Kein Patient im Dokument gefunden. Gib die Daten ein.';
+
+  @override
+  String get processingStopping => 'Wird gestoppt…';
+
+  @override
+  String get handoverTakenBack =>
+      'Das Telefon hat dieses Dokument zurückgenommen.';
 }

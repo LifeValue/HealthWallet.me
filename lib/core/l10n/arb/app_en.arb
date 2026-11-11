@@ -2512,5 +2512,17 @@
         "type": "int"
       }
     }
+  },
+  "processingNoPatientFound": "No patient found in the document. Enter the details.",
+  "@processingNoPatientFound": {
+    "description": "Shown on the review when the AI found no patient and the user fills the fields in."
+  },
+  "processingStopping": "Stopping…",
+  "@processingStopping": {
+    "description": "Shown after Cancel while the AI finishes stopping; Continue waits until it has."
+  },
+  "handoverTakenBack": "The phone took this document back.",
+  "@handoverTakenBack": {
+    "description": "Shown on the desktop when the phone takes back a document that was open for review."
   }
 }

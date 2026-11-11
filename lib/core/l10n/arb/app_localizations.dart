@@ -8392,6 +8392,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The model and its Deep Scan files are removed from this device. To scan with it again, you\'ll need to download it again (~{size} MB).'**
   String aiModelDeleteMessage(int size);
+
+  /// Shown on the review when the AI found no patient and the user fills the fields in.
+  ///
+  /// In en, this message translates to:
+  /// **'No patient found in the document. Enter the details.'**
+  String get processingNoPatientFound;
+
+  /// Shown after Cancel while the AI finishes stopping; Continue waits until it has.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopping…'**
+  String get processingStopping;
+
+  /// Shown on the desktop when the phone takes back a document that was open for review.
+  ///
+  /// In en, this message translates to:
+  /// **'The phone took this document back.'**
+  String get handoverTakenBack;
 }
 
 class _AppLocalizationsDelegate

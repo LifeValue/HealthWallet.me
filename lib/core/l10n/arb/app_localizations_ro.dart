@@ -4795,4 +4795,14 @@ class AppLocalizationsRo extends AppLocalizations {
   String aiModelDeleteMessage(int size) {
     return 'Modelul și fișierele pentru Scanarea Profundă sunt șterse de pe acest dispozitiv. Ca să scanezi din nou cu el, va trebui să-l descarci din nou (~$size MB).';
   }
+
+  @override
+  String get processingNoPatientFound =>
+      'Niciun pacient găsit în document. Introdu datele.';
+
+  @override
+  String get processingStopping => 'Se oprește…';
+
+  @override
+  String get handoverTakenBack => 'Telefonul a preluat înapoi acest document.';
 }

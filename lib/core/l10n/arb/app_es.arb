@@ -1724,5 +1724,8 @@
   },
   "backupRestorePhoneOffline": "Tu teléfono no está conectado. Los registros añadidos en él desde la última sincronización volverán cuando se conecte; los cambios que hizo en registros existentes se reemplazarán por la copia.",
   "aiModelDeleteTitle": "¿Eliminar {name}?",
-  "aiModelDeleteMessage": "El modelo y sus archivos de escaneo profundo se eliminarán de este dispositivo. Para volver a escanear con él, tendrás que descargarlo de nuevo (~{size} MB)."
+  "aiModelDeleteMessage": "El modelo y sus archivos de escaneo profundo se eliminarán de este dispositivo. Para volver a escanear con él, tendrás que descargarlo de nuevo (~{size} MB).",
+  "processingNoPatientFound": "No se encontró ningún paciente en el documento. Introduce los datos.",
+  "processingStopping": "Deteniendo…",
+  "handoverTakenBack": "El teléfono recuperó este documento."
 }

@@ -4723,4 +4723,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String aiModelDeleteMessage(int size) {
     return 'The model and its Deep Scan files are removed from this device. To scan with it again, you\'ll need to download it again (~$size MB).';
   }
+
+  @override
+  String get processingNoPatientFound =>
+      'No patient found in the document. Enter the details.';
+
+  @override
+  String get processingStopping => 'Stopping…';
+
+  @override
+  String get handoverTakenBack => 'The phone took this document back.';
 }
