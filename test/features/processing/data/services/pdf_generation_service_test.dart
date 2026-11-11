@@ -217,5 +217,24 @@ void main() {
       expect(path, p.join(docs.path, 'out.pdf'));
       expect(File(path).existsSync(), isTrue);
     });
+
+    test('a PDF that cannot be written fails with the reason', () async {
+      // A directory where the PDF goes makes the write fail.
+      await Directory(p.join(docs.path, 'out.pdf')).create();
+
+      await expectLater(
+        service.createPdfFromImages(
+          imagePaths: [await image('a.png')],
+          fileName: 'out',
+        ),
+        throwsA(
+          isA<Exception>().having(
+            (e) => '$e',
+            'message',
+            contains('Failed to create PDF from images'),
+          ),
+        ),
+      );
+    });
   });
 }
