@@ -134,7 +134,7 @@ void main() {
     ]);
   });
 
-  for (final input in ['0', '366', 'abc', '7.5', '-3', '']) {
+  for (final input in ['0', '366', 'abc', '']) {
     testWidgets('rejects "$input" with a message and sends nothing', (
       tester,
     ) async {
@@ -191,13 +191,46 @@ void main() {
   testWidgets('cannot be changed while a backup runs', (tester) async {
     await pumpCard(tester, isBackingUp: true);
 
-    final button = tester.widget<TextButton>(
-      find.descendant(
-        of: find.byKey(SafetyCopyRetentionRow.changeKey),
-        matching: find.byType(TextButton),
-      ),
+    final link = tester.widget<InkWell>(
+      find.byKey(SafetyCopyRetentionRow.changeKey),
     );
-    expect(button.onPressed, isNull);
+    expect(link.onTap, isNull);
+  });
+
+  for (final (typed, kept) in [('7.5', '75'), ('-3', '3'), ('1234', '123')]) {
+    testWidgets('only digits, at most three, can be typed: "$typed" stays '
+        '"$kept"', (tester) async {
+      await pumpCard(tester);
+      await openEditor(tester);
+
+      await tester.enterText(field, typed);
+      await tester.pump();
+
+      expect(
+        tester
+            .widget<EditableText>(
+              find.descendant(of: field, matching: find.byType(EditableText)),
+            )
+            .controller
+            .text,
+        kept,
+      );
+    });
+  }
+
+  testWidgets('the word after the field follows the number typed', (
+    tester,
+  ) async {
+    await pumpCard(tester);
+    await openEditor(tester);
+
+    await tester.enterText(field, '1');
+    await tester.pump();
+    expect(find.text(en.backupSafetyRetentionDaysUnit(1)), findsOneWidget);
+
+    await tester.enterText(field, '45');
+    await tester.pump();
+    expect(find.text(en.backupSafetyRetentionDaysUnit(45)), findsOneWidget);
   });
 
   for (final code in ['en', 'de', 'es', 'ro']) {

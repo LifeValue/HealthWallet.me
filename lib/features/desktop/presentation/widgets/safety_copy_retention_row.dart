@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
@@ -34,7 +35,7 @@ class SafetyCopyRetentionRow extends StatefulWidget {
   static const errorKey = Key('safety_copy_retention_error');
 
   /// Width of the number field: room for three digits.
-  static const fieldWidth = 72.0;
+  static const fieldWidth = 64.0;
 
   /// Height of the field and its buttons.
   static const controlHeight = 36.0;
@@ -100,24 +101,33 @@ class _SafetyCopyRetentionRowState extends State<SafetyCopyRetentionRow> {
             ),
           ),
           const SizedBox(width: Insets.extraSmall),
-          AppButton(
+          // The same text link as the backup folder's Change.
+          InkWell(
             key: SafetyCopyRetentionRow.changeKey,
-            label: context.l10n.desktopChange,
-            onPressed: widget.isWorking ? null : _startEditing,
-            variant: AppButtonVariant.transparent,
-            fullWidth: false,
-            fontSize: 11,
-            padding: const EdgeInsets.symmetric(horizontal: Insets.extraSmall),
+            onTap: widget.isWorking ? null : _startEditing,
+            borderRadius: BorderRadius.circular(Insets.extraSmall),
+            child: Padding(
+              padding: const EdgeInsets.all(Insets.extraSmall),
+              child: Text(
+                context.l10n.desktopChange,
+                style: smallStyle.copyWith(
+                  color: widget.isWorking
+                      ? context.colorScheme.onSurface.withValues(alpha: 0.3)
+                      : context.colorScheme.primary,
+                ),
+              ),
+            ),
           ),
         ],
       );
     }
 
+    final typed = int.tryParse(_controller.text) ?? widget.days;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(context.l10n.backupSafetyRetentionEditLabel, style: smallStyle),
-        const SizedBox(height: Insets.extraSmall),
+        const SizedBox(height: Insets.small),
         Row(
           children: [
             SizedBox(
@@ -126,11 +136,30 @@ class _SafetyCopyRetentionRowState extends State<SafetyCopyRetentionRow> {
                 key: SafetyCopyRetentionRow.fieldKey,
                 controller: _controller,
                 keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(3),
+                ],
                 height: SafetyCopyRetentionRow.controlHeight,
-                onChanged: (_) {
-                  if (_invalid) setState(() => _invalid = false);
-                },
+                onChanged: (_) => setState(() => _invalid = false),
               ),
+            ),
+            const SizedBox(width: Insets.small),
+            Text(
+              context.l10n.backupSafetyRetentionDaysUnit(typed),
+              style: AppTextStyle.bodySmall.copyWith(
+                color: context.colorScheme.onSurface,
+              ),
+            ),
+            const Spacer(),
+            AppButton(
+              key: SafetyCopyRetentionRow.cancelKey,
+              label: context.l10n.cancel,
+              onPressed: _cancel,
+              variant: AppButtonVariant.transparent,
+              fullWidth: false,
+              height: SafetyCopyRetentionRow.controlHeight,
+              padding: const EdgeInsets.symmetric(horizontal: Insets.small),
             ),
             const SizedBox(width: Insets.small),
             AppButton(
@@ -139,21 +168,11 @@ class _SafetyCopyRetentionRowState extends State<SafetyCopyRetentionRow> {
               onPressed: _save,
               fullWidth: false,
               height: SafetyCopyRetentionRow.controlHeight,
-              padding: const EdgeInsets.symmetric(horizontal: Insets.normal),
-            ),
-            const SizedBox(width: Insets.small),
-            AppButton(
-              key: SafetyCopyRetentionRow.cancelKey,
-              label: context.l10n.cancel,
-              onPressed: _cancel,
-              variant: AppButtonVariant.outlined,
-              fullWidth: false,
-              height: SafetyCopyRetentionRow.controlHeight,
-              padding: const EdgeInsets.symmetric(horizontal: Insets.normal),
+              padding: const EdgeInsets.symmetric(horizontal: Insets.small),
             ),
           ],
         ),
-        const SizedBox(height: Insets.extraSmall),
+        const SizedBox(height: Insets.small),
         if (_invalid)
           Text(
             context.l10n.backupSafetyRetentionInvalid(
