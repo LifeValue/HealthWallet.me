@@ -10,6 +10,7 @@ import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_identifier.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
@@ -203,6 +204,22 @@ void main() {
       await tester.tap(find.text(_en.continueProcessing));
       expect(processingBloc.added, isEmpty);
     });
+
+    testWidgets('waits while the AI is still stopping after a cancel', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        state: const ProcessingState(
+          sessions: [_extracted],
+          stoppingSessionIds: {'s'},
+        ),
+      );
+
+      expect(continueButton(tester).enabled, isFalse);
+      await tester.tap(find.text(_en.continueProcessing));
+      expect(processingBloc.added, isEmpty);
+    });
   });
 
   testWidgets('shows nothing while the document is being read', (
@@ -235,6 +252,34 @@ void main() {
       await tapText(tester, _en.done);
 
       expect(saves, 1);
+    });
+
+    testWidgets('a document already in the wallet says so', (tester) async {
+      const visitKey = MappingIdentifier(
+        system: 'http://healthwallet.me/visit/clearvis.io',
+        value: 'optica-exemplu-1|PA-01234|2024-03-14',
+      );
+      final inWallet = draft.copyWith(
+        patient: _linked,
+        encounter: StagedEncounter(
+          draft: const MappingEncounter(id: 'e-draft', identifiers: [visitKey]),
+          existing: Encounter(
+            id: 'e1',
+            title: 'Checkup',
+            rawResource: {
+              'identifier': [visitKey.toJson()],
+            },
+          ),
+          mode: ImportMode.linkExisting,
+        ),
+      );
+      await pump(
+        tester,
+        state: ProcessingState(sessions: [inWallet]),
+        session: inWallet,
+      );
+
+      expect(find.text(_en.documentAlreadyInWallet), findsOne);
     });
 
     testWidgets('Done waits while the records are being saved', (
