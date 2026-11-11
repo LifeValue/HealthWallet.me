@@ -4823,4 +4823,32 @@ class AppLocalizationsDe extends AppLocalizations {
   String aiModelSwitchedToLiteMessage(String modelName) {
     return 'Das Modell $modelName benötigt mehr Arbeitsspeicher, als dieses Gerät hat, daher wird das Lite-Modell verwendet.';
   }
+
+  @override
+  String backupSafetyRetention(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Kopie vor einer Wiederherstellung behalten: $count Tage',
+      one: 'Kopie vor einer Wiederherstellung behalten: 1 Tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSafetyRetentionEditLabel =>
+      'Tage, die die Kopie vor einer Wiederherstellung behalten wird';
+
+  @override
+  String get backupSafetyRetentionHint =>
+      'Gilt auch für vorhandene Kopien. Ältere werden beim nächsten Start der App gelöscht.';
+
+  @override
+  String backupSafetyRetentionInvalid(int min, int max) {
+    return 'Gib eine ganze Zahl von Tagen zwischen $min und $max ein.';
+  }
+
+  @override
+  String get backupSafetyRetentionSaveFailed =>
+      'Die Aufbewahrungsdauer der Kopie vor einer Wiederherstellung konnte nicht gespeichert werden. Bitte versuche es erneut.';
 }

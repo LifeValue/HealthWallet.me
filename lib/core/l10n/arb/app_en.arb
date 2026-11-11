@@ -2547,5 +2547,38 @@
         "example": "Advanced"
       }
     }
+  },
+  "backupSafetyRetention": "{count, plural, =1{Keep the copy made before a restore: 1 day} other{Keep the copy made before a restore: {count} days}}",
+  "@backupSafetyRetention": {
+    "description": "Desktop Backup card, under the backup folder: how many days the automatic copy made before every restore is kept.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSafetyRetentionEditLabel": "Days to keep the copy made before a restore",
+  "@backupSafetyRetentionEditLabel": {
+    "description": "Desktop Backup card: label above the field where the user types how many days the copy made before a restore is kept."
+  },
+  "backupSafetyRetentionHint": "Applies to existing copies too. Older ones are deleted the next time the app starts.",
+  "@backupSafetyRetentionHint": {
+    "description": "Desktop Backup card, under the retention field: the new value counts for copies already made, and older copies are deleted at the next start, not right away."
+  },
+  "backupSafetyRetentionInvalid": "Enter a whole number of days from {min} to {max}.",
+  "@backupSafetyRetentionInvalid": {
+    "description": "Desktop Backup card: the typed number of days isn't a whole number in the allowed range.",
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSafetyRetentionSaveFailed": "Couldn't save how long to keep the copy made before a restore. Please try again.",
+  "@backupSafetyRetentionSaveFailed": {
+    "description": "Desktop Backup card: saving the number of days the copy made before a restore is kept failed."
   }
 }

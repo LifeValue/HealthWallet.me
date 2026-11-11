@@ -1730,5 +1730,10 @@
   "processingStopping": "Deteniendo…",
   "handoverTakenBack": "El teléfono recuperó este documento.",
   "aiModelSwitchedToLiteTitle": "Ahora se usa el modelo Lite",
-  "aiModelSwitchedToLiteMessage": "El modelo {modelName} necesita más memoria de la que tiene este dispositivo, así que se usa el modelo Lite."
+  "aiModelSwitchedToLiteMessage": "El modelo {modelName} necesita más memoria de la que tiene este dispositivo, así que se usa el modelo Lite.",
+  "backupSafetyRetention": "{count, plural, =1{Conservar la copia previa a una restauración: 1 día} other{Conservar la copia previa a una restauración: {count} días}}",
+  "backupSafetyRetentionEditLabel": "Días que se conserva la copia previa a una restauración",
+  "backupSafetyRetentionHint": "También se aplica a las copias existentes. Las más antiguas se eliminan la próxima vez que se inicie la aplicación.",
+  "backupSafetyRetentionInvalid": "Introduce un número entero de días entre {min} y {max}.",
+  "backupSafetyRetentionSaveFailed": "No se pudo guardar cuánto tiempo se conserva la copia previa a una restauración. Inténtalo de nuevo."
 }

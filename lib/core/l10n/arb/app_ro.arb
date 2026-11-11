@@ -1725,5 +1725,10 @@
   "processingStopping": "Se oprește…",
   "handoverTakenBack": "Telefonul a preluat înapoi acest document.",
   "aiModelSwitchedToLiteTitle": "Acum se folosește modelul Lite",
-  "aiModelSwitchedToLiteMessage": "Modelul {modelName} are nevoie de mai multă memorie decât are acest dispozitiv, așa că se folosește modelul Lite."
+  "aiModelSwitchedToLiteMessage": "Modelul {modelName} are nevoie de mai multă memorie decât are acest dispozitiv, așa că se folosește modelul Lite.",
+  "backupSafetyRetention": "{count, plural, =1{Păstrează copia făcută înainte de restaurare: 1 zi} few{Păstrează copia făcută înainte de restaurare: {count} zile} other{Păstrează copia făcută înainte de restaurare: {count} de zile}}",
+  "backupSafetyRetentionEditLabel": "Zile de păstrare a copiei făcute înainte de restaurare",
+  "backupSafetyRetentionHint": "Se aplică și copiilor existente. Cele mai vechi sunt șterse la următoarea pornire a aplicației.",
+  "backupSafetyRetentionInvalid": "Introdu un număr întreg de zile între {min} și {max}.",
+  "backupSafetyRetentionSaveFailed": "Nu s-a putut salva cât timp se păstrează copia făcută înainte de restaurare. Încearcă din nou."
 }

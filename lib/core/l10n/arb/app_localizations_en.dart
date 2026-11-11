@@ -4752,4 +4752,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String aiModelSwitchedToLiteMessage(String modelName) {
     return 'The $modelName model needs more memory than this device has, so the Lite model is used.';
   }
+
+  @override
+  String backupSafetyRetention(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Keep the copy made before a restore: $count days',
+      one: 'Keep the copy made before a restore: 1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSafetyRetentionEditLabel =>
+      'Days to keep the copy made before a restore';
+
+  @override
+  String get backupSafetyRetentionHint =>
+      'Applies to existing copies too. Older ones are deleted the next time the app starts.';
+
+  @override
+  String backupSafetyRetentionInvalid(int min, int max) {
+    return 'Enter a whole number of days from $min to $max.';
+  }
+
+  @override
+  String get backupSafetyRetentionSaveFailed =>
+      'Couldn\'t save how long to keep the copy made before a restore. Please try again.';
 }

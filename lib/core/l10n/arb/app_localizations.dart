@@ -8428,6 +8428,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The {modelName} model needs more memory than this device has, so the Lite model is used.'**
   String aiModelSwitchedToLiteMessage(String modelName);
+
+  /// Desktop Backup card, under the backup folder: how many days the automatic copy made before every restore is kept.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Keep the copy made before a restore: 1 day} other{Keep the copy made before a restore: {count} days}}'**
+  String backupSafetyRetention(int count);
+
+  /// Desktop Backup card: label above the field where the user types how many days the copy made before a restore is kept.
+  ///
+  /// In en, this message translates to:
+  /// **'Days to keep the copy made before a restore'**
+  String get backupSafetyRetentionEditLabel;
+
+  /// Desktop Backup card, under the retention field: the new value counts for copies already made, and older copies are deleted at the next start, not right away.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies to existing copies too. Older ones are deleted the next time the app starts.'**
+  String get backupSafetyRetentionHint;
+
+  /// Desktop Backup card: the typed number of days isn't a whole number in the allowed range.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a whole number of days from {min} to {max}.'**
+  String backupSafetyRetentionInvalid(int min, int max);
+
+  /// Desktop Backup card: saving the number of days the copy made before a restore is kept failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save how long to keep the copy made before a restore. Please try again.'**
+  String get backupSafetyRetentionSaveFailed;
 }
 
 class _AppLocalizationsDelegate

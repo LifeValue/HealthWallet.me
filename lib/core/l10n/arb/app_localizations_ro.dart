@@ -4825,4 +4825,33 @@ class AppLocalizationsRo extends AppLocalizations {
   String aiModelSwitchedToLiteMessage(String modelName) {
     return 'Modelul $modelName are nevoie de mai multă memorie decât are acest dispozitiv, așa că se folosește modelul Lite.';
   }
+
+  @override
+  String backupSafetyRetention(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Păstrează copia făcută înainte de restaurare: $count de zile',
+      few: 'Păstrează copia făcută înainte de restaurare: $count zile',
+      one: 'Păstrează copia făcută înainte de restaurare: 1 zi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSafetyRetentionEditLabel =>
+      'Zile de păstrare a copiei făcute înainte de restaurare';
+
+  @override
+  String get backupSafetyRetentionHint =>
+      'Se aplică și copiilor existente. Cele mai vechi sunt șterse la următoarea pornire a aplicației.';
+
+  @override
+  String backupSafetyRetentionInvalid(int min, int max) {
+    return 'Introdu un număr întreg de zile între $min și $max.';
+  }
+
+  @override
+  String get backupSafetyRetentionSaveFailed =>
+      'Nu s-a putut salva cât timp se păstrează copia făcută înainte de restaurare. Încearcă din nou.';
 }
