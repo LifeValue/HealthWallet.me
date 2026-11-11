@@ -1729,7 +1729,7 @@
   "backupSafetyRetention": "{count, plural, =1{Se păstrează 1 zi} few{Se păstrează {count} zile} other{Se păstrează {count} de zile}}",
   "backupSafetyRetentionTitle": "Copia făcută înainte de restaurare",
   "backupSafetyRetentionDaysUnit": "{count, plural, =1{zi} few{zile} other{de zile}}",
-  "backupSafetyRetentionHint": "Se aplică și copiilor existente. Cele mai vechi sunt șterse la următoarea pornire a aplicației.",
+  "backupSafetyRetentionHint": "Se aplică și copiilor existente. Copiile mai vechi de atât sunt șterse acum.",
   "backupSafetyRetentionInvalid": "Introdu un număr întreg de zile între {min} și {max}.",
   "backupSafetyRetentionSaveFailed": "Nu s-a putut salva cât timp se păstrează copia făcută înainte de restaurare. Încearcă din nou."
 }

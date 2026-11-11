@@ -4855,7 +4855,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get backupSafetyRetentionHint =>
-      'Se aplică și copiilor existente. Cele mai vechi sunt șterse la următoarea pornire a aplicației.';
+      'Se aplică și copiilor existente. Copiile mai vechi de atât sunt șterse acum.';
 
   @override
   String backupSafetyRetentionInvalid(int min, int max) {

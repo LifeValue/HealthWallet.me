@@ -4851,7 +4851,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get backupSafetyRetentionHint =>
-      'Gilt auch für vorhandene Kopien. Ältere werden beim nächsten Start der App gelöscht.';
+      'Gilt auch für vorhandene Kopien. Ältere Kopien werden jetzt gelöscht.';
 
   @override
   String backupSafetyRetentionInvalid(int min, int max) {

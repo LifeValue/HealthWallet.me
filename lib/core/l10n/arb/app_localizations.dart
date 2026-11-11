@@ -8447,10 +8447,10 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{day} other{days}}'**
   String backupSafetyRetentionDaysUnit(int count);
 
-  /// Desktop Backup card, under the retention field: the new value counts for copies already made, and older copies are deleted at the next start, not right away.
+  /// Desktop Backup card, under the retention field: the new value counts for copies already made, and copies older than it are deleted as soon as it is saved.
   ///
   /// In en, this message translates to:
-  /// **'Applies to existing copies too. Older ones are deleted the next time the app starts.'**
+  /// **'Applies to existing copies too. Copies older than this are deleted now.'**
   String get backupSafetyRetentionHint;
 
   /// Desktop Backup card: the typed number of days isn't a whole number in the allowed range.

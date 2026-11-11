@@ -1730,7 +1730,7 @@
   "backupSafetyRetention": "{count, plural, =1{Wird 1 Tag aufbewahrt} other{Wird {count} Tage aufbewahrt}}",
   "backupSafetyRetentionTitle": "Kopie vor einer Wiederherstellung",
   "backupSafetyRetentionDaysUnit": "{count, plural, =1{Tag} other{Tage}}",
-  "backupSafetyRetentionHint": "Gilt auch für vorhandene Kopien. Ältere werden beim nächsten Start der App gelöscht.",
+  "backupSafetyRetentionHint": "Gilt auch für vorhandene Kopien. Ältere Kopien werden jetzt gelöscht.",
   "backupSafetyRetentionInvalid": "Gib eine ganze Zahl von Tagen zwischen {min} und {max} ein.",
   "backupSafetyRetentionSaveFailed": "Die Aufbewahrungsdauer der Kopie vor einer Wiederherstellung konnte nicht gespeichert werden. Bitte versuche es erneut."
 }

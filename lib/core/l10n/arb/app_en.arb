@@ -2570,9 +2570,9 @@
       }
     }
   },
-  "backupSafetyRetentionHint": "Applies to existing copies too. Older ones are deleted the next time the app starts.",
+  "backupSafetyRetentionHint": "Applies to existing copies too. Copies older than this are deleted now.",
   "@backupSafetyRetentionHint": {
-    "description": "Desktop Backup card, under the retention field: the new value counts for copies already made, and older copies are deleted at the next start, not right away."
+    "description": "Desktop Backup card, under the retention field: the new value counts for copies already made, and copies older than it are deleted as soon as it is saved."
   },
   "backupSafetyRetentionInvalid": "Enter a whole number of days from {min} to {max}.",
   "@backupSafetyRetentionInvalid": {

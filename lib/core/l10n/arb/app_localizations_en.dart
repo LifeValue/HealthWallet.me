@@ -4780,7 +4780,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupSafetyRetentionHint =>
-      'Applies to existing copies too. Older ones are deleted the next time the app starts.';
+      'Applies to existing copies too. Copies older than this are deleted now.';
 
   @override
   String backupSafetyRetentionInvalid(int min, int max) {
