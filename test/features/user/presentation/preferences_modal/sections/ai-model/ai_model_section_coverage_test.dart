@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart' show MockBloc, whenListen;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
@@ -8,6 +9,7 @@ import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations_en.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/processing/domain/services/ai_model_download_service.dart';
@@ -41,6 +43,29 @@ class _MockProcessingBloc extends MockBloc<ProcessingEvent, ProcessingState>
 }
 
 final _en = lookupAppLocalizations(const Locale('en'));
+
+/// English with a model description that has no `**bold**` part.
+class _PlainEn extends AppLocalizationsEn {
+  static const description = 'Download a model to read your records.';
+
+  @override
+  String get onboardingAiModelDescription => description;
+}
+
+class _PlainDescriptionDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
+  const _PlainDescriptionDelegate();
+
+  @override
+  bool isSupported(Locale locale) => true;
+
+  @override
+  Future<AppLocalizations> load(Locale locale) =>
+      SynchronousFuture<AppLocalizations>(_PlainEn());
+
+  @override
+  bool shouldReload(_PlainDescriptionDelegate old) => false;
+}
 
 void main() {
   late _MockLoadModelBloc loadModelBloc;
@@ -203,6 +228,33 @@ void main() {
       await tap(tester, find.byType(AppButton));
 
       expect(find.byType(ModelManagementDialog), findsOneWidget);
+    });
+
+    testWidgets('a translation without bold markup shows as plain text', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      whenListen(loadModelBloc, states.stream, initialState: absent);
+      await tester.pumpWidget(
+        const MaterialApp(
+          locale: Locale('en'),
+          // The first delegate of a type wins.
+          localizationsDelegates: [
+            _PlainDescriptionDelegate(),
+            ...AppLocalizations.localizationsDelegates,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SingleChildScrollView(child: AiModelSection()),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text(_PlainEn.description), findsOneWidget);
+      expect(find.textContaining('**', findRichText: true), findsNothing);
     });
 
     testWidgets('a downloaded but unchosen model asks to select one', (
