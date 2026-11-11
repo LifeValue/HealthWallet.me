@@ -1722,5 +1722,7 @@
   "aiModelDeleteMessage": "Modelul și fișierele pentru Scanarea Profundă sunt șterse de pe acest dispozitiv. Ca să scanezi din nou cu el, va trebui să-l descarci din nou (~{size} MB).",
   "processingNoPatientFound": "Niciun pacient găsit în document. Introdu datele.",
   "processingStopping": "Se oprește…",
-  "handoverTakenBack": "Telefonul a preluat înapoi acest document."
+  "handoverTakenBack": "Telefonul a preluat înapoi acest document.",
+  "aiModelSwitchedToLiteTitle": "Acum se folosește modelul Lite",
+  "aiModelSwitchedToLiteMessage": "Modelul {modelName} are nevoie de mai multă memorie decât are acest dispozitiv, așa că se folosește modelul Lite."
 }

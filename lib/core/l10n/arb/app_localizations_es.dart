@@ -4789,4 +4789,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get handoverTakenBack => 'El teléfono recuperó este documento.';
+
+  @override
+  String get aiModelSwitchedToLiteTitle => 'Ahora se usa el modelo Lite';
+
+  @override
+  String aiModelSwitchedToLiteMessage(String modelName) {
+    return 'El modelo $modelName necesita más memoria de la que tiene este dispositivo, así que se usa el modelo Lite.';
+  }
 }

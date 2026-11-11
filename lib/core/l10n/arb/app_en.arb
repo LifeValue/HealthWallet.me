@@ -2524,5 +2524,19 @@
   "handoverTakenBack": "The phone took this document back.",
   "@handoverTakenBack": {
     "description": "Shown on the desktop when the phone takes back a document that was open for review."
+  },
+  "aiModelSwitchedToLiteTitle": "Now using the Lite model",
+  "@aiModelSwitchedToLiteTitle": {
+    "description": "Notification title when the selected AI model is replaced by Lite because the device lacks the memory for it."
+  },
+  "aiModelSwitchedToLiteMessage": "The {modelName} model needs more memory than this device has, so the Lite model is used.",
+  "@aiModelSwitchedToLiteMessage": {
+    "description": "Notification text when the selected AI model is replaced by Lite because the device lacks the memory for it.",
+    "placeholders": {
+      "modelName": {
+        "type": "String",
+        "example": "Advanced"
+      }
+    }
   }
 }

@@ -1723,5 +1723,7 @@
   "aiModelDeleteMessage": "Das Modell und seine Tiefenscan-Dateien werden von diesem Gerät entfernt. Um wieder damit zu scannen, musst du es erneut herunterladen (~{size} MB).",
   "processingNoPatientFound": "Kein Patient im Dokument gefunden. Gib die Daten ein.",
   "processingStopping": "Wird gestoppt…",
-  "handoverTakenBack": "Das Telefon hat dieses Dokument zurückgenommen."
+  "handoverTakenBack": "Das Telefon hat dieses Dokument zurückgenommen.",
+  "aiModelSwitchedToLiteTitle": "Jetzt mit dem Lite-Modell",
+  "aiModelSwitchedToLiteMessage": "Das Modell {modelName} benötigt mehr Arbeitsspeicher, als dieses Gerät hat, daher wird das Lite-Modell verwendet."
 }

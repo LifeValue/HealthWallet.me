@@ -8410,6 +8410,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The phone took this document back.'**
   String get handoverTakenBack;
+
+  /// Notification title when the selected AI model is replaced by Lite because the device lacks the memory for it.
+  ///
+  /// In en, this message translates to:
+  /// **'Now using the Lite model'**
+  String get aiModelSwitchedToLiteTitle;
+
+  /// Notification text when the selected AI model is replaced by Lite because the device lacks the memory for it.
+  ///
+  /// In en, this message translates to:
+  /// **'The {modelName} model needs more memory than this device has, so the Lite model is used.'**
+  String aiModelSwitchedToLiteMessage(String modelName);
 }
 
 class _AppLocalizationsDelegate

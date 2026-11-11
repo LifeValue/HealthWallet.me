@@ -4805,4 +4805,12 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get handoverTakenBack => 'Telefonul a preluat înapoi acest document.';
+
+  @override
+  String get aiModelSwitchedToLiteTitle => 'Acum se folosește modelul Lite';
+
+  @override
+  String aiModelSwitchedToLiteMessage(String modelName) {
+    return 'Modelul $modelName are nevoie de mai multă memorie decât are acest dispozitiv, așa că se folosește modelul Lite.';
+  }
 }

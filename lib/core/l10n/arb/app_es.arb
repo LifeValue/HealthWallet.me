@@ -1727,5 +1727,7 @@
   "aiModelDeleteMessage": "El modelo y sus archivos de escaneo profundo se eliminarán de este dispositivo. Para volver a escanear con él, tendrás que descargarlo de nuevo (~{size} MB).",
   "processingNoPatientFound": "No se encontró ningún paciente en el documento. Introduce los datos.",
   "processingStopping": "Deteniendo…",
-  "handoverTakenBack": "El teléfono recuperó este documento."
+  "handoverTakenBack": "El teléfono recuperó este documento.",
+  "aiModelSwitchedToLiteTitle": "Ahora se usa el modelo Lite",
+  "aiModelSwitchedToLiteMessage": "El modelo {modelName} necesita más memoria de la que tiene este dispositivo, así que se usa el modelo Lite."
 }
