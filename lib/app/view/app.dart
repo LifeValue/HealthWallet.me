@@ -21,6 +21,7 @@ import 'package:health_wallet/features/holders/presentation/widgets/holder_quest
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/ai_model_switch_notice_listener.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/capture_error_listener.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/ips_export_error_listener.dart';
@@ -224,7 +225,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                       child: WalletPassErrorListener(
                         child: CaptureErrorListener(
                           child: SyncErrorListener(
-                            child: HolderQuestionListener(child: child!),
+                            child: AiModelSwitchNoticeListener(
+                              child: HolderQuestionListener(child: child!),
+                            ),
                           ),
                         ),
                       ),

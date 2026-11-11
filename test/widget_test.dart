@@ -24,6 +24,7 @@ import 'package:health_wallet/features/holders/domain/services/holder_service.da
 import 'package:health_wallet/features/home/data/services/specialty_classifier_impl.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
+import 'package:health_wallet/features/processing/domain/services/ai_model_selection_guard.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
@@ -49,6 +50,7 @@ import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'features/app_lock/app_lock_test_fakes.dart';
+import 'helpers/fake_device_capability_service.dart';
 
 // ---------------------------------------------------------------------------
 // Fake implementations for abstract repositories / services
@@ -359,6 +361,9 @@ Future<void> _registerAppDependencies({
   getIt.registerSingleton<HolderSelection>(selection);
   getIt.registerFactory<PatientBloc>(() => patientBloc);
   getIt.registerSingleton<NotificationBloc>(notificationBloc);
+  getIt.registerSingleton<AiModelSelectionGuard>(
+    AiModelSelectionGuard(FakeDeviceCapabilityService(), prefs),
+  );
 }
 
 const _lockOverlay = Key('app_lock_overlay');

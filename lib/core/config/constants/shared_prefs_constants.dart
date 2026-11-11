@@ -15,6 +15,10 @@ class SharedPrefsConstants {
   static const aiThreads = 'aiThreads';
   static const aiContextSize = 'aiContextSize';
   static const aiSelectedModel = 'aiSelectedModel';
+
+  /// The model the selection was moved away from because the device can't
+  /// run it, until the user has been told.
+  static const aiModelSwitchNotice = 'aiModelSwitchNotice';
   static const aiUseVision = 'aiUseVision';
 
   /// Set once the AI settings that earlier versions saved by mistake have

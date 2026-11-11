@@ -18,6 +18,7 @@ import 'package:health_wallet/features/desktop/communication/presentation/bloc/c
 import 'package:health_wallet/features/desktop/handover/presentation/bloc/phone_handover_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_linking_service.dart';
+import 'package:health_wallet/features/processing/domain/services/ai_model_selection_guard.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -40,6 +41,9 @@ void main() async {
 
   // Before the first screen asks whose records to show.
   await getIt<HolderLinkingService>().linkUnassigned();
+
+  // Before anything reads the selected AI model.
+  await getIt<AiModelSelectionGuard>().replaceUnsupportedModel();
 
   getIt.registerLazySingleton<CommunicationBloc>(
     () => CommunicationBloc(

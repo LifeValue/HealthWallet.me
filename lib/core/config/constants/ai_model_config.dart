@@ -185,6 +185,12 @@ class AiModelConfig {
     _ => description,
   };
 
+  /// Whether this model runs only where
+  /// `DeviceCapabilityService.supportsAdvancedModel` says so: the Advanced
+  /// model and the retired Medical one, of the same size.
+  bool get needsAdvancedSupport =>
+      variant == AiModelVariant.qwen35x4b || variant == AiModelVariant.medGemma;
+
   static List<AiModelConfig> get availableVariants {
     if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) {
       return [qwen, qwen35x4b, qwen7b];

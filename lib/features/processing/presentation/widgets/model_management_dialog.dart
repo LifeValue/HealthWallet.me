@@ -55,13 +55,8 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
         onConfirm: () => _bloc.add(LoadModelDeleteRequested(config.variant)),
       );
 
-  static const _advancedVariants = {
-    AiModelVariant.qwen35x4b,
-    AiModelVariant.medGemma,
-  };
-
   bool _isIncompatible(AiModelConfig config, LoadModelState state) {
-    if (_advancedVariants.contains(config.variant)) {
+    if (config.needsAdvancedSupport) {
       return !state.advancedModelSupported;
     }
     if (config.variant == AiModelVariant.qwen) {
@@ -77,7 +72,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
     AiModelConfig config,
     LoadModelState state,
   ) {
-    if (_advancedVariants.contains(config.variant) &&
+    if (config.needsAdvancedSupport &&
         !state.advancedModelSupported &&
         state.deviceCapability != DeviceAiCapability.unsupported) {
       return context.l10n.medGemmaIncompatibleDevice;
