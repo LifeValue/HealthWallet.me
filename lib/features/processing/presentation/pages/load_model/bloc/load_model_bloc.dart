@@ -43,9 +43,11 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
       _onServiceStateChanged,
       transformer: sequential(),
     );
+    // In turn, so a cancel of another model (or of all) asked for while one
+    // is stopping is not lost.
     on<LoadModelDownloadCancelled>(
       _onLoadModelDownloadCancelled,
-      transformer: droppable(),
+      transformer: sequential(),
     );
     on<LoadModelVariantSelected>(_onVariantSelected);
     on<LoadModelDeleteRequested>(_onDeleteRequested);
@@ -458,8 +460,9 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         .where(_downloadService.isVariantDownloading)
         .where((variant) => only == null || variant == only)
         .toSet();
-    // That model's download already ended: nothing to stop.
-    if (only != null && cancelled.isEmpty) return;
+    // Those downloads already ended, or a cancel before this one stopped
+    // them: nothing to stop.
+    if (cancelled.isEmpty) return;
 
     // Returns once the transfers have ended and their partial files are gone.
     if (only == null) {
