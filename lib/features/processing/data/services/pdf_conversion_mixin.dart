@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 
-import 'package:crypto/crypto.dart';
 import 'package:health_wallet/core/services/temp_file_sweeper.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
@@ -67,13 +66,7 @@ mixin PdfConversionMixin implements TextRecognitionService {
     int fileSize,
     DateTime modified,
     double dpi,
-  ) {
-    final keyString =
-        '$pdfPath|$fileSize|${modified.millisecondsSinceEpoch}|$dpi';
-    final bytes = utf8.encode(keyString);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
-  }
+  ) => TempFileSweeper.pdfPageCacheKey(pdfPath, fileSize, modified, dpi);
 
   Future<List<String>?> getCachedImages(String cacheKey) async {
     try {

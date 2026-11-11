@@ -9,6 +9,7 @@ import 'package:health_wallet/core/services/attachment_references.dart';
 import 'package:health_wallet/core/services/folder_access_service.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/desktop/backup/data/services/scan_file_sweeper.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/restore_result.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/attachment_sync_service.dart';
@@ -39,11 +40,17 @@ class BackupService {
     this._attachments,
     this._legacyFolders, {
     AttachmentFilesLock? filesLock,
-  }) : _filesLock = filesLock ?? AttachmentFilesLock();
+    ScanFileSweeper? scanFiles,
+  }) : _filesLock = filesLock ?? AttachmentFilesLock(),
+       _scanFiles = scanFiles ?? ScanFileSweeper(_database, _pathResolver);
 
   /// Held from placing a restore's files to its commit, so the attachment
   /// cleaner never deletes a file the restore decided to reuse.
   final AttachmentFilesLock _filesLock;
+
+  /// Deletes the files of the scans a restore removed (see
+  /// [removeDroppedScanFiles]).
+  final ScanFileSweeper _scanFiles;
 
   /// "Before restore" copies older than this are deleted automatically.
   static const safetyCopyRetention = Duration(days: 30);
@@ -1003,12 +1010,39 @@ class BackupService {
     return true;
   }
 
-  /// Start-up housekeeping: restore and backup leftovers and expired safety
-  /// copies. Never throws.
+  /// Deletes the working files (in `imports/` and the page cache) of the
+  /// scans a restore removed, once neither this database nor a kept safety
+  /// copy holds them, so restoring that safety copy still finds them. See
+  /// [ScanFileSweeper]. Returns how many files went; never throws.
+  Future<int> removeDroppedScanFiles({DateTime? now}) async {
+    final List<BackupEntry> backups;
+    try {
+      backups = await listBackups();
+    } catch (e, s) {
+      logger.e(
+        '[Backup] could not list the safety copies; no scan file '
+        'deleted',
+        e,
+        s,
+      );
+      return 0;
+    }
+    return _scanFiles.sweep(
+      keepSessionsOf: [
+        for (final backup in backups)
+          if (backup.isSafetyCopy) backup.filePath,
+      ],
+      now: now,
+    );
+  }
+
+  /// Start-up housekeeping: restore and backup leftovers, expired safety
+  /// copies, then the files of the scans no kept data holds. Never throws.
   Future<void> cleanUpOnStartup() async {
     await removeRestoreLeftovers();
     await removeBackupLeftovers();
     await deleteExpiredSafetyCopies();
+    await removeDroppedScanFiles();
   }
 
   // ---------------------------------------------------------------------------
