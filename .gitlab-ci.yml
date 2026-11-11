@@ -126,10 +126,6 @@ stages:
     # Declared asset directories that only hold secrets in release builds.
     - mkdir -p assets/certs/android
     - touch .env
-    # TEMPORARY: shows why the ssh:// → https:// rewrite for the private git dependencies doesn't
-    # match (the token is replaced with *** before printing).
-    - echo "CI_SERVER_HOST=$CI_SERVER_HOST CI_SERVER_SHELL_SSH_HOST=${CI_SERVER_SHELL_SSH_HOST:-} CI_SERVER_SHELL_SSH_PORT=${CI_SERVER_SHELL_SSH_PORT:-} $(git --version)"
-    - git config --get-regexp '^url\.' | sed 's/gitlab-ci-token:[^@]*@/gitlab-ci-token:***@/' || echo "no url rewrite in git config"
     - flutter pub get --enforce-lockfile
 
 .flutter_sdk_cache: &flutter_sdk_cache
