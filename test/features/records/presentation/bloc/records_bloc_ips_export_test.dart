@@ -9,6 +9,7 @@ import 'package:health_wallet/features/records/domain/repository/records_reposit
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../helpers/log_capture.dart';
 import '../../../share_records/share_test_helpers.dart';
 
 const _shareChannel = MethodChannel('dev.fluttercommunity.plus/share');
@@ -34,10 +35,45 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
 
 class _FakeSpecialtyClassifier extends Fake implements SpecialtyClassifier {}
 
+/// An IPS PDF that is written like any file but cannot be deleted, as when
+/// the share target still holds it open.
+class _UndeletableFile extends Fake implements File {
+  _UndeletableFile(this._file);
+
+  final File _file;
+
+  @override
+  String get path => _file.path;
+
+  @override
+  Future<bool> exists() => _file.exists();
+
+  @override
+  Future<File> writeAsBytes(
+    List<int> bytes, {
+    FileMode mode = FileMode.write,
+    bool flush = false,
+  }) => _file.writeAsBytes(bytes, mode: mode, flush: flush);
+
+  @override
+  Future<FileSystemEntity> delete({bool recursive = false}) async =>
+      throw FileSystemException('Operation not permitted', path);
+}
+
+/// Makes every IPS PDF undeletable.
+final class _UndeletableIpsPdfs extends IOOverrides {
+  @override
+  File createFile(String path) {
+    final file = super.createFile(path);
+    return path.contains(' - IPS Summary - ') ? _UndeletableFile(file) : file;
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  final logs = captureLogs();
 
   late Directory root;
   late _FakeRecordsRepository repository;
@@ -143,6 +179,32 @@ void main() {
 
     expect(first.existsSync(), isFalse);
     expect(pdf('Second').existsSync(), isTrue);
+  });
+
+  test('a previous PDF that cannot be deleted is logged and left for the '
+      'startup sweep, and the new export is still shared', () async {
+    // The bloc's handlers run in the zone it was created in.
+    await statusSub.cancel();
+    await bloc.close();
+    bloc = IOOverrides.runWithIOOverrides(
+      () => RecordsBloc(repository, _FakeSpecialtyClassifier()),
+      _UndeletableIpsPdfs(),
+    );
+    statuses = [];
+    statusSub = bloc.stream
+        .map((s) => s.ipsExportStatus)
+        .distinct()
+        .listen(statuses.add);
+
+    await export(patientName: 'First');
+    await export(patientName: 'Second');
+
+    expect(logs, loggedWarning('Deleting the previous IPS PDF failed'));
+    expect(pdf('First').existsSync(), isTrue);
+    expect(pdf('Second').existsSync(), isTrue);
+    expect(shared, hasLength(2));
+    expect(shared.last['paths'], [pdf('Second').path]);
+    expect(bloc.state.ipsExportStatus, IpsExportStatus.idle);
   });
 
   test('exporting the same patient again keeps one current PDF', () async {
