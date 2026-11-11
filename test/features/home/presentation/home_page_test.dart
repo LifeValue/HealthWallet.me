@@ -712,9 +712,6 @@ void main() {
         expect(find.byType(HomeDashboardSections), findsOneWidget);
         expect(tester.takeException(), isNull);
       },
-      // Without the patient row the header is only as tall as the greeting,
-      // and each status card overflows it by 7 px.
-      skip: true,
     );
 
     _desktopTest('a patient without a name shows as loading', (tester) async {

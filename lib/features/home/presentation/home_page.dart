@@ -241,6 +241,10 @@ class HomeViewState extends State<HomeView> {
     return _buildDashboardLayout(context, state);
   }
 
+  /// The desktop header's height without a patient row: room for the status
+  /// cards beside the greeting.
+  static const _desktopHeaderMinHeight = 60.0;
+
   Widget _buildDesktopLayout(BuildContext context, HomeState state) {
     if (state.shouldShowPlaceholder) {
       return Column(
@@ -248,7 +252,7 @@ class HomeViewState extends State<HomeView> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
             child: SizedBox(
-              height: 60,
+              height: _desktopHeaderMinHeight,
               child: Stack(
                 children: [
                   Align(
@@ -308,39 +312,44 @@ class HomeViewState extends State<HomeView> {
         ],
       ),
       children: [
-        Stack(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                HomeGreetingTitle(homeState: state),
-                if (state.patient != null) ...[
-                  const SizedBox(height: 6),
-                  _PatientRow(homeState: state),
-                ],
-              ],
-            ),
-            Positioned.fill(
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const _ConnectionMiniCard(),
-                    const SizedBox(width: 8),
-                    _PeriodicBuilder(
-                      builder: (_, tick) =>
-                          _SyncMiniCard(key: ValueKey('sync_$tick')),
-                    ),
-                    const SizedBox(width: 8),
-                    _PeriodicBuilder(
-                      builder: (_, tick) =>
-                          _BackupMiniCard(key: ValueKey('backup_$tick')),
-                    ),
+        ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: _desktopHeaderMinHeight,
+          ),
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  HomeGreetingTitle(homeState: state),
+                  if (state.patient != null) ...[
+                    const SizedBox(height: 6),
+                    _PatientRow(homeState: state),
                   ],
+                ],
+              ),
+              Positioned.fill(
+                child: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const _ConnectionMiniCard(),
+                      const SizedBox(width: 8),
+                      _PeriodicBuilder(
+                        builder: (_, tick) =>
+                            _SyncMiniCard(key: ValueKey('sync_$tick')),
+                      ),
+                      const SizedBox(width: 8),
+                      _PeriodicBuilder(
+                        builder: (_, tick) =>
+                            _BackupMiniCard(key: ValueKey('backup_$tick')),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
