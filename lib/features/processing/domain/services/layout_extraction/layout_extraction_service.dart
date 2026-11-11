@@ -75,8 +75,13 @@ class LayoutExtractionService {
   }) async {
     if (_registry.extractors.isEmpty) return false;
     try {
+      // Read at OCR resolution: small print is lost at the preview's 72 dpi.
       final images =
-          imagePaths ?? await _ocr.prepareAllImages(filePaths: filePaths);
+          imagePaths ??
+          await _ocr.prepareAllImages(
+            filePaths: filePaths,
+            dpi: OcrProcessingHelper.ocrDpi,
+          );
       if (images.isEmpty) return false;
       final text = await ocrText(sessionId, images);
       return text.trim().isNotEmpty && extract(text) != null;

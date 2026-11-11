@@ -1,23 +1,33 @@
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter/painting.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/capture/scan/presentation/pages/preview/image_rotation_utils.dart';
 
 part 'preview_bloc.freezed.dart';
 part 'preview_event.dart';
 part 'preview_state.dart';
 
+/// Called once the page image at [path] is turned by [quarterTurns]
+/// clockwise quarter turns, so whoever reads the page (OCR) can turn its own
+/// copy too.
+typedef PageRotatedCallback = void Function(String path, int quarterTurns);
+
 class PreviewBloc extends Bloc<PreviewEvent, PreviewState> {
-  PreviewBloc() : super(const PreviewState()) {
+  PreviewBloc({this.onPageRotated}) : super(const PreviewState()) {
     on<PreviewPageChanged>(_onPageChanged);
     on<PreviewInitialized>(_onInitialized);
-    on<PreviewPageRotated>(_onPageRotated);
+    // A tap while a page is turning is dropped, as the isRotating guard did.
+    on<PreviewPageRotated>(_onPageRotated, transformer: droppable());
     on<PreviewPageDeleted>(_onPageDeleted);
     on<PreviewPagesReordered>(_onPagesReordered);
     on<PreviewReorderModeToggled>(_onReorderModeToggled);
   }
+
+  final PageRotatedCallback? onPageRotated;
 
   void _onPageChanged(
     PreviewPageChanged event,
@@ -50,7 +60,9 @@ class PreviewBloc extends Bloc<PreviewEvent, PreviewState> {
       await rotateImage90CW(imagePath);
       imageCache.evict(FileImage(File(imagePath)));
       emit(state.copyWith(isRotating: false, hasChanges: true));
-    } catch (_) {
+      onPageRotated?.call(imagePath, 1);
+    } catch (e, s) {
+      logger.w('Turning the preview page failed', e, s);
       emit(state.copyWith(isRotating: false));
     }
   }

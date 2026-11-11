@@ -226,6 +226,81 @@ void main() {
       }
     });
 
+    test('page images and session page maps go on reset, not at '
+        'startup', () async {
+      final pages = [
+        cacheFile('${cacheKey}_page_1.jpg'),
+        cacheFile('${cacheKey}_page_12.jpg'),
+        cacheFile('${cacheKey}_page_2_r3.jpg'),
+        cacheFile(TempFileSweeper.sessionPageMapName(_id)),
+        cacheFile('${TempFileSweeper.sessionPageMapName(_id)}.tmp'),
+      ];
+      final kept = [
+        cacheFile('${cacheKey}_page_1.png'),
+        cacheFile('${cacheKey}_page_x.jpg'),
+        cacheFile('${cacheKey}_page_1_r4.jpg'),
+        cacheFile('not-a-session.pages.json'),
+        cacheFile('photo.jpg'),
+      ];
+
+      await sweeper(deleteDebugLogs: true).sweep();
+      for (final file in [...pages, ...kept]) {
+        expect(file.existsSync(), isTrue, reason: file.path);
+      }
+
+      await TempFileSweeper(
+        temporaryDirectory: () async => temp,
+        documentsDirectory: () async => docs,
+        deleteDebugLogs: false,
+        includeProcessingCache: true,
+      ).sweep();
+      for (final file in pages) {
+        expect(file.existsSync(), isFalse, reason: file.path);
+      }
+      for (final file in kept) {
+        expect(file.existsSync(), isTrue, reason: file.path);
+      }
+    });
+
+    test('the page pattern reads the cache key and page number', () {
+      final match = TempFileSweeper.ocrCachePagePattern.firstMatch(
+        '${cacheKey}_page_7_r2.jpg',
+      )!;
+
+      expect(match.group(1), cacheKey);
+      expect(match.group(2), '7');
+      expect(
+        TempFileSweeper.sessionPageMapName(_id),
+        '$_id${TempFileSweeper.sessionPageMapSuffix}',
+      );
+    });
+
+    test('a cache that can\'t be listed is left alone and the temp files '
+        'still go', () async {
+      final page = tempFile('healthwallet_pdf_page_1700000000000_0.png');
+      final created = <String>[];
+
+      await IOOverrides.runZoned(
+        () => expectLater(
+          TempFileSweeper(
+            temporaryDirectory: () async => temp,
+            documentsDirectory: () async => docs,
+            deleteDebugLogs: false,
+            includeProcessingCache: true,
+          ).sweep(),
+          completes,
+        ),
+        // The sweep builds only the cache's Directory itself.
+        createDirectory: (path) {
+          created.add(path);
+          return _UnlistableDirectory(path);
+        },
+      );
+
+      expect(created, ['${docs.path}/${TempFileSweeper.ocrCacheDirName}']);
+      expect(page.existsSync(), isFalse);
+    });
+
     test('completes without a cache directory', () async {
       await expectLater(
         TempFileSweeper(
@@ -303,6 +378,24 @@ class _ListedDirectory extends Fake implements Directory {
     bool recursive = false,
     bool followLinks = true,
   }) => Stream.fromIterable(entries);
+}
+
+/// A directory that exists but can't be listed, as one the app lost access
+/// to would.
+class _UnlistableDirectory extends Fake implements Directory {
+  _UnlistableDirectory(this.path);
+
+  @override
+  final String path;
+
+  @override
+  Future<bool> exists() async => true;
+
+  @override
+  Stream<FileSystemEntity> list({
+    bool recursive = false,
+    bool followLinks = true,
+  }) => Stream.error(FileSystemException('Permission denied', path));
 }
 
 /// A directory whose delete fails, as a locked or busy one would.

@@ -241,6 +241,10 @@ class HomeViewState extends State<HomeView> {
     return _buildDashboardLayout(context, state);
   }
 
+  /// The desktop header's height without a patient row: room for the status
+  /// cards beside the greeting.
+  static const _desktopHeaderMinHeight = 60.0;
+
   Widget _buildDesktopLayout(BuildContext context, HomeState state) {
     if (state.shouldShowPlaceholder) {
       return Column(
@@ -248,7 +252,7 @@ class HomeViewState extends State<HomeView> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
             child: SizedBox(
-              height: 60,
+              height: _desktopHeaderMinHeight,
               child: Stack(
                 children: [
                   Align(
@@ -308,39 +312,44 @@ class HomeViewState extends State<HomeView> {
         ],
       ),
       children: [
-        Stack(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                HomeGreetingTitle(homeState: state),
-                if (state.patient != null) ...[
-                  const SizedBox(height: 6),
-                  _PatientRow(homeState: state),
-                ],
-              ],
-            ),
-            Positioned.fill(
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const _ConnectionMiniCard(),
-                    const SizedBox(width: 8),
-                    _PeriodicBuilder(
-                      builder: (_, tick) =>
-                          _SyncMiniCard(key: ValueKey('sync_$tick')),
-                    ),
-                    const SizedBox(width: 8),
-                    _PeriodicBuilder(
-                      builder: (_, tick) =>
-                          _BackupMiniCard(key: ValueKey('backup_$tick')),
-                    ),
+        ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: _desktopHeaderMinHeight,
+          ),
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  HomeGreetingTitle(homeState: state),
+                  if (state.patient != null) ...[
+                    const SizedBox(height: 6),
+                    _PatientRow(homeState: state),
                   ],
+                ],
+              ),
+              Positioned.fill(
+                child: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const _ConnectionMiniCard(),
+                      const SizedBox(width: 8),
+                      _PeriodicBuilder(
+                        builder: (_, tick) =>
+                            _SyncMiniCard(key: ValueKey('sync_$tick')),
+                      ),
+                      const SizedBox(width: 8),
+                      _PeriodicBuilder(
+                        builder: (_, tick) =>
+                            _BackupMiniCard(key: ValueKey('backup_$tick')),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -489,20 +498,59 @@ class _PatientRowState extends State<_PatientRow> {
   }
 }
 
-class _PeriodicBuilder extends StatelessWidget {
+/// Rebuilds [builder] every 30 seconds, with a tick that counts up from 0,
+/// for as long as it is shown.
+class _PeriodicBuilder extends StatefulWidget {
   final Widget Function(BuildContext context, int tick) builder;
   const _PeriodicBuilder({required this.builder});
 
-  static final _ticker = Stream<int>.periodic(
-    const Duration(seconds: 30),
-    (i) => i,
-  ).asBroadcastStream();
+  static const _period = Duration(seconds: 30);
+
+  @override
+  State<_PeriodicBuilder> createState() => _PeriodicBuilderState();
+}
+
+class _PeriodicBuilderState extends State<_PeriodicBuilder> {
+  late final Timer _timer;
+  var _tick = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(
+      _PeriodicBuilder._period,
+      (_) => setState(() => _tick++),
+    );
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(context, _tick);
+}
+
+/// The desktop header's three status cards, laid out as the header does but
+/// without its 30-second refresh, so widget tests can reach the private
+/// cards.
+@visibleForTesting
+class HomeStatusCardsForTesting extends StatelessWidget {
+  const HomeStatusCardsForTesting({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<int>(
-      stream: _ticker,
-      builder: (context, snapshot) => builder(context, snapshot.data ?? 0),
+    return const Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _ConnectionMiniCard(),
+        SizedBox(width: 8),
+        _SyncMiniCard(),
+        SizedBox(width: 8),
+        _BackupMiniCard(),
+      ],
     );
   }
 }
@@ -585,6 +633,10 @@ class _SyncMiniCard extends StatelessWidget {
               ? AppColors.error
               : syncState.pendingChangeCount > 0
               ? AppColors.warning
+              // Neutral (no phone, nothing compared yet): the light-theme
+              // grey is near-black and vanishes on the dark background.
+              : context.isDarkMode
+              ? AppColors.textSecondaryDark
               : AppColors.textSecondary;
 
           final last = syncState.lastSyncTime;
@@ -774,7 +826,9 @@ class _MiniStatusCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 140,
+        // Grows to fit longer translated labels ("Copie de rezervă") instead
+        // of cutting them off; very long ones still end in an ellipsis.
+        constraints: const BoxConstraints(minWidth: 140, maxWidth: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: color.withValues(alpha: bgAlpha),
@@ -784,6 +838,7 @@ class _MiniStatusCard extends StatelessWidget {
           ),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             if (isLoading)
               SizedBox(
@@ -797,7 +852,7 @@ class _MiniStatusCard extends StatelessWidget {
             else
               Icon(icon, size: 20, color: color),
             const SizedBox(width: 12),
-            Expanded(
+            Flexible(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,

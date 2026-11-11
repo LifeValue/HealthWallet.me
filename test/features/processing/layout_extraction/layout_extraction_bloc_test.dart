@@ -33,6 +33,7 @@ import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../helpers/fake_device_capability_service.dart';
 import 'clearvis_io_extractor_test.dart' show fixture;
 
 /// The wallet's rows by row id, as the database would hand them back.
@@ -223,6 +224,7 @@ class _FixtureOcr extends Fake implements OcrProcessingHelper {
   @override
   Future<List<String>> prepareAllImages({
     required List<String> filePaths,
+    double dpi = 72,
   }) async => filePaths;
 }
 
@@ -275,6 +277,7 @@ void main() {
         holders,
         records,
       ),
+      FakeDeviceCapabilityService(),
     );
   });
 

@@ -43,7 +43,7 @@ enum PipelineFailureReason {
   String localizedMessage(AppLocalizations l10n) => switch (this) {
     modelNotFound => l10n.modelNotFoundError,
     modelCorrupted => l10n.modelCorruptedError,
-    notEnoughMemory => l10n.processingFailedCapacity,
+    notEnoughMemory => l10n.processingFailedMemory,
     scanFailed => l10n.scanFailed,
     importFailed => l10n.importDocumentFailed,
     noValidFiles => l10n.noValidFilesFound,
@@ -87,13 +87,32 @@ abstract class ProcessingState with _$ProcessingState {
     String? displayedSessionId,
     String? deletingSessionId,
     @Default({}) Map<String, List<String>> sessionImagePaths,
+
+    /// The 200 dpi page OCR and the AI read for a 72 dpi preview page of a
+    /// PDF. A page without one (a photo, or a page not rendered yet or that
+    /// failed) is read as it is.
+    @Default({}) Map<String, String> ocrPageByPreviewPath,
     Notification? notification,
     @Default(false) bool useVision,
+
+    /// Sessions cancelled while the AI is still stopping; they can't be
+    /// processed again until it has.
+    @Default({}) Set<String> stoppingSessionIds,
   }) = _ProcessingState;
+
+  /// Whether the AI is still stopping after [sessionId] was cancelled.
+  bool isStopping(String sessionId) => stoppingSessionIds.contains(sessionId);
+
+  /// The pages OCR and the AI read for [sessionId], in the preview's order.
+  List<String> ocrPagesFor(String sessionId) => [
+    for (final preview in sessionImagePaths[sessionId] ?? const <String>[])
+      ocrPageByPreviewPath[preview] ?? preview,
+  ];
 
   bool canRetrySession(String sessionId) {
     final session = sessions.firstWhereOrNull((s) => s.id == sessionId);
     return session != null &&
+        !isStopping(sessionId) &&
         (session.status == ProcessingStatus.draft ||
             session.status == ProcessingStatus.patientExtracted ||
             session.status == ProcessingStatus.cancelled ||

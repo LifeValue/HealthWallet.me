@@ -57,8 +57,9 @@ class PatientCardDetails extends StatelessWidget {
   Widget _buildIdentifierAndAgeRows(BuildContext context) {
     return AnimatedOpacity(
       duration: Duration(
-        milliseconds: isExpanding ? 400 : (isCollapsing ? 600 : 200),
+        milliseconds: isExpanding ? 100 : (isCollapsing ? 150 : 120),
       ),
+      curve: Curves.easeOut,
       opacity: (isExpanding || isCollapsing) ? 0.0 : 1.0,
       child: Column(
         children: [
@@ -72,7 +73,7 @@ class PatientCardDetails extends StatelessWidget {
                 BlendMode.srcIn,
               ),
             ),
-            '${FhirFieldExtractor.extractPatientIdentifierLabel(displayPatient, l10n: context.l10n)}: ${FhirFieldExtractor.extractPatientIdentifierValue(displayPatient)}',
+            '${FhirFieldExtractor.extractPatientIdentifierLabel(displayPatient, l10n: context.l10n)}: ${_orDash(FhirFieldExtractor.extractPatientIdentifierValue(displayPatient))}',
           ),
           _buildPatientInfoRow(
             context,
@@ -84,7 +85,7 @@ class PatientCardDetails extends StatelessWidget {
                 BlendMode.srcIn,
               ),
             ),
-            '${context.l10n.age}: ${FhirFieldExtractor.extractPatientAge(displayPatient, l10n: context.l10n)} (${_formatBirthDate(context, displayPatient)})',
+            _ageLine(context, displayPatient),
           ),
         ],
       ),
@@ -94,8 +95,9 @@ class PatientCardDetails extends StatelessWidget {
   Widget _buildGenderBloodAndContactRows(BuildContext context) {
     return AnimatedOpacity(
       duration: Duration(
-        milliseconds: isExpanding ? 600 : (isCollapsing ? 400 : 300),
+        milliseconds: isExpanding ? 150 : (isCollapsing ? 100 : 180),
       ),
+      curve: Curves.easeOut,
       opacity: (isExpanding || isCollapsing) ? 0.0 : 1.0,
       child: Column(
         children: [
@@ -125,8 +127,9 @@ class PatientCardDetails extends StatelessWidget {
   Widget _buildEditButton(BuildContext context) {
     return AnimatedOpacity(
       duration: Duration(
-        milliseconds: isExpanding ? 800 : (isCollapsing ? 200 : 400),
+        milliseconds: isExpanding ? 200 : (isCollapsing ? 50 : 240),
       ),
+      curve: Curves.easeOut,
       opacity: (isExpanding || isCollapsing) ? 0.0 : 1.0,
       child: SizedBox(
         width: double.infinity,
@@ -213,6 +216,20 @@ class PatientCardDetails extends StatelessWidget {
     }
   }
 
+  static String _orDash(String value) => value.isEmpty ? '-' : value;
+
+  /// The age, with the birth date in brackets when there is one.
+  String _ageLine(BuildContext context, Patient patient) {
+    final age = FhirFieldExtractor.extractPatientAge(
+      patient,
+      l10n: context.l10n,
+    );
+    final birthDate = _formatBirthDate(context, patient);
+    return birthDate.isEmpty
+        ? '${context.l10n.age}: $age'
+        : '${context.l10n.age}: $age ($birthDate)';
+  }
+
   String _formatBirthDate(BuildContext context, Patient patient) {
     final birthDate = FhirFieldExtractor.extractPatientBirthDate(patient);
     if (birthDate == null) return patient.birthDate?.toString() ?? '';
@@ -225,9 +242,8 @@ class PatientCardDetails extends StatelessWidget {
       patient.contact?.firstOrNull?.telecom,
       'phone',
     );
-    final display = (phone != null && phone.isNotEmpty)
-        ? PhoneDisplayFormatter.format(phone)
-        : '-';
+    // A saved country code without a number is no number.
+    final display = _orDash(PhoneDisplayFormatter.format(phone));
 
     return _buildPatientInfoRow(
       context,

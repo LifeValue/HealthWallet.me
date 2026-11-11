@@ -15,7 +15,7 @@ packages:
       path: "."
       ref: main
       resolved-ref: "1c136197270103a938f8755d52330a11b2ba4b02"
-      url: "ssh://git@git.techstackapps.com:2822/mobile/flutter/packages/flutter-airdrop.git"
+      url: "ssh://git@git.lifevalue.com:2822/mobile/flutter/packages/flutter-airdrop.git"
     source: git
     version: "1.0.0"
   analyzer:
@@ -571,7 +571,7 @@ packages:
     source: hosted
     version: "0.6.0"
   fake_async:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: fake_async
       sha256: "5368f224a74523e8d2e7399ea1638b37aecfca824a3cc4dfdf77bf1fa905ac44"
@@ -599,8 +599,8 @@ packages:
     description:
       path: "."
       ref: HEAD
-      resolved-ref: "737b764a12dc27dfcebdda2a58ac0374bee38b85"
-      url: "ssh://git@git.techstackapps.com:2822/mobile/health-wallet/fhir-ips-export.git"
+      resolved-ref: e62ad2d91ac0cd3836ee52864332073f7f912424
+      url: "ssh://git@git.lifevalue.com:2822/mobile/health-wallet/fhir-ips-export.git"
     source: git
     version: "0.0.1"
   fhir_node:

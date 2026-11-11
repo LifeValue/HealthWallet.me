@@ -11,7 +11,9 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/cancel_download_dialog.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class ModelManagementDialog extends StatefulWidget {
@@ -39,28 +41,40 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
     _bloc.add(const LoadModelInitialized());
   }
 
-  static const _advancedVariants = {
-    AiModelVariant.qwen35x4b,
-    AiModelVariant.medGemma,
-  };
+  /// Deletes the model only once the user confirms: it is a large download.
+  Future<void> _confirmDelete(BuildContext context, AiModelConfig config) =>
+      AppSimpleDialog.showConfirmation(
+        context: context,
+        title: context.l10n.aiModelDeleteTitle(
+          config.localizedName(context.l10n),
+        ),
+        message: context.l10n.aiModelDeleteMessage(config.modelSizeMB),
+        confirmText: context.l10n.delete,
+        cancelText: context.l10n.cancel,
+        confirmColor: AppColors.error,
+        onConfirm: () => _bloc.add(LoadModelDeleteRequested(config.variant)),
+      );
 
-  bool _isIncompatible(AiModelConfig config, DeviceAiCapability capability) {
-    if (_advancedVariants.contains(config.variant)) {
-      return capability != DeviceAiCapability.full;
+  bool _isIncompatible(AiModelConfig config, LoadModelState state) {
+    if (config.needsAdvancedSupport) {
+      return !state.advancedModelSupported;
     }
     if (config.variant == AiModelVariant.qwen) {
-      return capability == DeviceAiCapability.unsupported;
+      return state.deviceCapability == DeviceAiCapability.unsupported;
     }
     return false;
   }
 
+  /// Why an Advanced model can't be used. Not on an unsupported device: the
+  /// notice above the models already says that no model fits.
   String? _incompatibleMessage(
     BuildContext context,
     AiModelConfig config,
-    DeviceAiCapability capability,
+    LoadModelState state,
   ) {
-    if (_advancedVariants.contains(config.variant) &&
-        capability == DeviceAiCapability.basicOnly) {
+    if (config.needsAdvancedSupport &&
+        !state.advancedModelSupported &&
+        state.deviceCapability != DeviceAiCapability.unsupported) {
       return context.l10n.medGemmaIncompatibleDevice;
     }
     return null;
@@ -163,10 +177,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                         state.isVariantDownloaded,
                       ).map((config) {
                         final variant = config.variant;
-                        final incompatible = _isIncompatible(
-                          config,
-                          state.deviceCapability,
-                        );
+                        final incompatible = _isIncompatible(config, state);
                         return Padding(
                           padding: const EdgeInsets.only(bottom: Insets.small),
                           child: _buildModelCard(
@@ -182,7 +193,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                             incompatibleMessage: _incompatibleMessage(
                               context,
                               config,
-                              state.deviceCapability,
+                              state,
                             ),
                           ),
                         );
@@ -293,8 +304,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                 ),
                 if (isDownloaded && !isDownloading)
                   GestureDetector(
-                    onTap: () =>
-                        _bloc.add(LoadModelDeleteRequested(config.variant)),
+                    onTap: () => _confirmDelete(context, config),
                     child: Assets.icons.trashCan.svg(
                       width: 18,
                       height: 18,
@@ -359,11 +369,22 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                '${context.l10n.aiModelDownloading} ${progress?.toStringAsFixed(0) ?? 0}%',
-                style: AppTextStyle.labelSmall.copyWith(
-                  color: AppColors.primary,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${context.l10n.aiModelDownloading} ${progress?.toStringAsFixed(0) ?? 0}%',
+                      style: AppTextStyle.labelSmall.copyWith(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                  CancelDownloadButton(
+                    onCancelConfirmed: () => _bloc.add(
+                      LoadModelDownloadCancelled(variant: config.variant),
+                    ),
+                  ),
+                ],
               ),
             ] else if (!isDownloaded && !incompatible)
               SizedBox(

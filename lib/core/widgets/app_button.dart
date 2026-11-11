@@ -128,14 +128,15 @@ class AppButton extends StatelessWidget {
       final borderColor = backgroundColor ?? colorScheme.primary;
       final textColor = backgroundColor ?? colorScheme.primary;
       final iconColor = backgroundColor ?? colorScheme.primary;
+      // The label takes the button's foreground colour, which follows hover.
       final labelWidget = Text(
         label,
         style: AppTextStyle.buttonMedium.copyWith(
-          color: textColor,
+          color: icon != null ? textColor : null,
           fontSize: fontSize,
         ),
       );
-      final style = OutlinedButton.styleFrom(
+      final baseStyle = OutlinedButton.styleFrom(
         backgroundColor: Colors.transparent,
         foregroundColor: textColor,
         side: BorderSide(color: borderColor, width: 1),
@@ -145,6 +146,28 @@ class AppButton extends StatelessWidget {
         fixedSize: fixedSize,
         shape: effectiveShape,
       );
+      // Without an icon, hovering or pressing fills it with its border colour
+      // and turns the label white, so it reads as a button under the mouse.
+      bool filled(Set<WidgetState> states) =>
+          !states.contains(WidgetState.disabled) &&
+          (states.contains(WidgetState.hovered) ||
+              states.contains(WidgetState.pressed));
+      final style = icon != null
+          ? baseStyle
+          : baseStyle.copyWith(
+              backgroundColor: WidgetStateProperty.resolveWith(
+                (states) => filled(states) ? borderColor : Colors.transparent,
+              ),
+              foregroundColor: WidgetStateProperty.resolveWith(
+                (states) => states.contains(WidgetState.disabled)
+                    ? textColor.withValues(alpha: 0.5)
+                    : filled(states)
+                    // The same label colour as a filled button's.
+                    ? (isDarkMode ? Colors.white : colorScheme.onPrimary)
+                    : textColor,
+              ),
+              overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+            );
 
       button = icon != null
           ? OutlinedButton.icon(

@@ -703,11 +703,11 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get processingFailedCapacity =>
-      'Documentul este prea mare pentru dimensiunea curentă a contextului AI.';
+      'Documentul este prea mare pentru memoria de lucru curentă a AI-ului.';
 
   @override
   String get processingFailedCapacitySuggestion =>
-      'Apasă pe pictograma de setări de mai sus și crește Dimensiunea Contextului la 2048 sau mai mare, apoi reîncearcă.';
+      'Apasă pe pictograma de setări de mai sus și crește Memoria de lucru la 2048 sau mai mare, apoi reîncearcă.';
 
   @override
   String get increaseAiModelCapacity => 'Crește Capacitatea AI';
@@ -732,37 +732,37 @@ class AppLocalizationsRo extends AppLocalizations {
       'Ajustează performanța AI pentru dispozitivul tău. Valorile recomandate sunt preselectate.';
 
   @override
-  String get setAiTokensUsage => 'Setează Utilizarea Token-urilor AI';
+  String get setAiTokensUsage => 'Lungimea maximă a răspunsului';
 
   @override
   String get tokenUsageDescription =>
-      'Controlează cât de multă putere de procesare poate folosi AI-ul. Capacitate mai mare permite fișiere mai mari și sarcini mai complexe, dar folosește mai multe resurse și durează mai mult.';
+      'Cât poate scrie AI-ul cel mult la fiecare pas, în timp ce enumeră înregistrările găsite în document. Prea scurt și unele înregistrări sunt tăiate; mai lung durează mai mult. Încape mereu în memoria de lucru.';
 
   @override
-  String get gpuLayersLabel => 'Straturi GPU';
+  String get gpuLayersLabel => 'Cip grafic (GPU)';
 
   @override
   String get gpuLayersDescription =>
-      'Transferă straturile modelului pe GPU pentru procesare mai rapidă a imaginilor. Mai multe straturi = mai rapid, dar folosește mai multă memorie. Setează la 0 dacă aplicația se blochează.';
+      'Cât din AI rulează pe cipul grafic al dispozitivului, care este mai rapid decât procesorul principal. Mai mare este mai rapid, dar folosește mai multă memorie. Dacă aplicația se închide sau se blochează în timpul scanării, micșorează-l sau setează-l la 0.';
 
   @override
-  String get threadsLabel => 'Fire CPU';
+  String get threadsLabel => 'Nuclee procesor (CPU)';
 
   @override
   String get threadsDescription =>
-      'Numărul de fire CPU pentru inferență. Mai multe fire = mai rapid, dar consumă mai multă baterie.';
+      'Câte nuclee ale procesorului folosește AI-ul în același timp. Mai multe înseamnă mai rapid, dar consumă bateria mai repede și pot încălzi dispozitivul.';
 
   @override
   String get recommended => 'Recomandat';
 
   @override
-  String get tokenPresetLow => 'Scăzut';
+  String get tokenPresetLow => 'Scurt';
 
   @override
   String get tokenPresetMedium => 'Mediu';
 
   @override
-  String get tokenPresetHigh => 'Ridicat';
+  String get tokenPresetHigh => 'Lung';
 
   @override
   String get tokenPresetCustom => 'Personalizat';
@@ -771,14 +771,11 @@ class AppLocalizationsRo extends AppLocalizations {
   String get setTokens => 'Setează';
 
   @override
-  String get tokens => 'token-uri';
-
-  @override
-  String get contextSizeLabel => 'Dimensiune Context';
+  String get contextSizeLabel => 'Memorie de lucru';
 
   @override
   String get contextSizeDescription =>
-      'Cantitatea de text pe care AI-ul o poate procesa deodată. Un context mai mare gestionează documente mai mari, dar folosește mai multă memorie.';
+      'Spațiul de lucru al AI-ului pentru un pas: loc pentru a citi documentul și a nota ce găsește. Mai mare încape documente mai lungi, dar folosește mai multă memorie a dispozitivului. Dacă scanarea eșuează cu „memorie insuficientă”, micșorează-l.';
 
   @override
   String get useVisionLabel => 'Scanare Profundă';
@@ -1430,11 +1427,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String get desktopRestoreBackupTitle => 'Restaurezi copia de siguranță?';
 
   @override
-  String desktopRestoreBackupMessage(String name, int count) {
-    return 'Toate datele actuale de pe acest dispozitiv vor fi înlocuite cu \"$name\".\n\n$count înregistrări vor fi restaurate.\n\nDatele de pe telefonul asociat nu vor fi afectate.';
-  }
-
-  @override
   String get desktopRestore => 'Restaurează';
 
   @override
@@ -1532,6 +1524,11 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get attachedDocuments => 'Documente atașate';
+
+  @override
+  String documentAttachedTo(String visit) {
+    return 'Atașat la $visit.';
+  }
 
   @override
   String get cameraPermissionRequired => 'Permisiune cameră necesară';
@@ -2548,9 +2545,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String get desktopBackupFailed => 'Backup-ul a eșuat. Încearcă din nou.';
 
   @override
-  String get desktopRestoreFailed => 'Restaurarea a eșuat. Încearcă din nou.';
-
-  @override
   String get desktopBackupActionFailed =>
       'Backup-urile nu au putut fi actualizate. Încearcă din nou.';
 
@@ -2919,17 +2913,6 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get aiModelDownloadFailed => 'Descărcarea a eșuat';
-
-  @override
-  String get aiModelDownloadCancelledTitle => 'Descărcare anulată';
-
-  @override
-  String get aiModelDownloadInterruptedMessage =>
-      'Descărcarea a fost întreruptă. Încearcă din nou.';
-
-  @override
-  String get aiModelDownloadCancelledNotificationTitle =>
-      'Descărcarea modelului AI a fost anulată';
 
   @override
   String get aiModelDownloadWasCancelled =>
@@ -4743,4 +4726,143 @@ class AppLocalizationsRo extends AppLocalizations {
   String handoverDraftSavedOnPhone(String origin) {
     return '$origin a fost salvat pe telefon. Modificările făcute aici ciornei nu au fost păstrate.';
   }
+
+  @override
+  String failedToSaveSetting(String setting) {
+    return 'Nu s-a putut salva setarea „$setting”. Încearcă din nou.';
+  }
+
+  @override
+  String get processingFailedMemory =>
+      'Nu există suficientă memorie liberă pentru a rula modelul AI. Închide alte aplicații și încearcă din nou, sau dezactivează Scanare Profundă din Setări AI.';
+
+  @override
+  String get tokenPresetLowHint => 'câteva valori';
+
+  @override
+  String get tokenPresetMediumHint => 'un raport scurt';
+
+  @override
+  String get tokenPresetHighHint => 'un raport complet';
+
+  @override
+  String get backupRecordsOnly => 'Doar înregistrări';
+
+  @override
+  String backupRestoreConfirmPointInTime(String date) {
+    return 'Aceasta înlocuiește înregistrările de pe acest computer și de pe telefonul asociat cu copia din $date. Înregistrările adăugate între timp sunt eliminate. Mai întâi se salvează o copie „Înainte de restaurare” a datelor actuale, păstrată 30 de zile, ca să poți anula.';
+  }
+
+  @override
+  String get backupOldNoFiles =>
+      'Această copie nu conține fișiere. Înregistrările vor fi restaurate, iar fișierele actuale păstrate.';
+
+  @override
+  String backupSafetyName(String date) {
+    return 'Înainte de restaurare $date';
+  }
+
+  @override
+  String get backupRestoreFailed =>
+      'Restaurarea a eșuat. Datele nu au fost modificate; copia \"Înainte de restaurare\" este în listă.';
+
+  @override
+  String get backupSafetyFailed =>
+      'Copia de siguranță nu a putut fi creată, așa că nu s-a restaurat nimic. Verifică spațiul liber și folderul.';
+
+  @override
+  String backupFilesNotRestored(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de fișiere nu au putut fi restaurate.',
+      few: '$count fișiere nu au putut fi restaurate.',
+      one: 'Un fișier nu a putut fi restaurat.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupRestorePhoneOffline =>
+      'Telefonul nu este conectat. Înregistrările adăugate pe el de la ultima sincronizare vor reveni după ce se reconectează; modificările făcute la înregistrările existente vor fi înlocuite de copie.';
+
+  @override
+  String backupRestoreRemovesScans(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de scanări care așteaptă revizuirea vor fi eliminate.',
+      few: '$count scanări care așteaptă revizuirea vor fi eliminate.',
+      one: '1 scanare care așteaptă revizuirea va fi eliminată.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aiModelDeleteTitle(String name) {
+    return 'Ștergi $name?';
+  }
+
+  @override
+  String aiModelDeleteMessage(int size) {
+    return 'Modelul și fișierele pentru Scanarea Profundă sunt șterse de pe acest dispozitiv. Ca să scanezi din nou cu el, va trebui să-l descarci din nou (~$size MB).';
+  }
+
+  @override
+  String get processingNoPatientFound =>
+      'Niciun pacient găsit în document. Introdu datele.';
+
+  @override
+  String get processingStopping => 'Se oprește…';
+
+  @override
+  String get handoverTakenBack => 'Telefonul a preluat înapoi acest document.';
+
+  @override
+  String get aiModelSwitchedToLiteTitle => 'Acum se folosește modelul Lite';
+
+  @override
+  String aiModelSwitchedToLiteMessage(String modelName) {
+    return 'Modelul $modelName are nevoie de mai multă memorie decât are acest dispozitiv, așa că se folosește modelul Lite.';
+  }
+
+  @override
+  String backupSafetyRetention(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Se păstrează $count de zile',
+      few: 'Se păstrează $count zile',
+      one: 'Se păstrează 1 zi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSafetyRetentionTitle => 'Copia făcută înainte de restaurare';
+
+  @override
+  String backupSafetyRetentionDaysUnit(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'de zile',
+      few: 'zile',
+      one: 'zi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSafetyRetentionHint =>
+      'Se aplică și copiilor existente. Copiile mai vechi de atât sunt șterse acum.';
+
+  @override
+  String backupSafetyRetentionInvalid(int min, int max) {
+    return 'Introdu un număr întreg de zile între $min și $max.';
+  }
+
+  @override
+  String get backupSafetyRetentionSaveFailed =>
+      'Nu s-a putut salva cât timp se păstrează copia făcută înainte de restaurare. Încearcă din nou.';
 }

@@ -211,30 +211,29 @@
   "exitFocusMode": "Fokusmodus beenden",
   "chargerPluggedIn": "Ladegerät eingesteckt.",
   "plugInChargerEllipsis": "Stecke das Ladegerät ein...",
-  "processingFailedCapacity": "Das Dokument ist zu groß für die aktuelle KI-Kontextgröße.",
-  "processingFailedCapacitySuggestion": "Tippe oben auf das Einstellungssymbol und erhöhe die Kontextgröße auf 2048 oder höher, dann erneut versuchen.",
+  "processingFailedCapacity": "Das Dokument ist zu groß für den aktuellen KI-Arbeitsspeicher.",
+  "processingFailedCapacitySuggestion": "Tippe oben auf das Einstellungssymbol und erhöhe den KI-Arbeitsspeicher auf 2048 oder höher, dann erneut versuchen.",
   "increaseAiModelCapacity": "KI-Kapazität erhöhen",
   "goBack": "Zurück",
-  "setAiTokensUsage": "KI-Token-Nutzung einstellen",
-  "tokenUsageDescription": "Steuere, wie viel Rechenleistung die KI nutzen kann. Höhere Kapazität ermöglicht größere Dateien und komplexere Aufgaben, verbraucht aber mehr Ressourcen und dauert länger.",
-  "tokenPresetLow": "Niedrig",
+  "setAiTokensUsage": "Maximale Antwortlänge",
+  "tokenUsageDescription": "Wie viel die KI pro Schritt höchstens schreiben darf, während sie die gefundenen Einträge deines Dokuments auflistet. Zu kurz, und manche Einträge werden abgeschnitten; länger dauert mehr Zeit. Es passt immer in den KI-Arbeitsspeicher.",
+  "tokenPresetLow": "Kurz",
   "tokenPresetMedium": "Mittel",
-  "tokenPresetHigh": "Hoch",
+  "tokenPresetHigh": "Lang",
   "tokenPresetCustom": "Benutzerdefiniert",
   "setTokens": "Festlegen",
-  "tokens": "Tokens",
   "aiModelManage": "KI-Optionen verwalten",
   "aiModelNotSelected": "Keine Option ausgewählt",
   "aiModelSelect": "Option auswählen",
   "aiSettings": "KI-Einstellungen",
   "aiSettingsDescription": "KI-Leistung für dein Gerät anpassen. Empfohlene Werte sind vorausgewählt.",
-  "gpuLayersLabel": "GPU-Schichten",
-  "gpuLayersDescription": "Modell-Schichten auf GPU auslagern für schnellere Bildverarbeitung. Mehr Schichten = schneller, aber mehr Speicherverbrauch. Auf 0 setzen bei Abstürzen.",
-  "threadsLabel": "CPU-Threads",
-  "threadsDescription": "Anzahl der CPU-Threads für Inferenz. Mehr Threads = schneller, aber höherer Akkuverbrauch.",
+  "gpuLayersLabel": "Grafikchip (GPU)",
+  "gpuLayersDescription": "Wie viel der KI auf dem Grafikchip deines Geräts läuft, der schneller ist als der Hauptprozessor. Höher ist schneller, braucht aber mehr Speicher. Wenn die App beim Scannen schließt oder abstürzt, verringere den Wert oder setze ihn auf 0.",
+  "threadsLabel": "Prozessorkerne (CPU)",
+  "threadsDescription": "Wie viele Prozessorkerne die KI gleichzeitig nutzt. Mehr ist schneller, verbraucht aber den Akku schneller und kann das Gerät warm machen.",
   "recommended": "Empfohlen",
-  "contextSizeLabel": "Kontextgröße",
-  "contextSizeDescription": "Textmenge, die die KI auf einmal verarbeiten kann. Größerer Kontext verarbeitet größere Dokumente, benötigt aber mehr Speicher.",
+  "contextSizeLabel": "KI-Arbeitsspeicher",
+  "contextSizeDescription": "Der Arbeitsbereich der KI für einen Schritt: Platz, um dein Dokument zu lesen und aufzuschreiben, was sie findet. Größer passt für längere Dokumente, braucht aber mehr Speicher deines Geräts. Wenn das Scannen mit „nicht genügend Speicher“ fehlschlägt, verringere ihn.",
   "useVisionLabel": "Tiefenscan",
   "useVisionDescription": "Liest Bilder für eine tiefere Analyse (z. B. Handschrift). Verbraucht mehr Speicher und erfordert ein leistungsfähigeres Gerät.",
   "aiModelNotAvailableForDevice": "Nicht verfügbar für dieses Telefon",
@@ -606,17 +605,6 @@
   "desktopChecksum": "Prüfsumme",
   "desktopRestoreThisBackup": "Dieses Backup wiederherstellen",
   "desktopRestoreBackupTitle": "Backup wiederherstellen?",
-  "desktopRestoreBackupMessage": "Alle aktuellen Daten auf diesem Gerät werden durch \"{name}\" ersetzt.\n\n{count} Aufzeichnungen werden wiederhergestellt.\n\nDeine Daten auf dem gekoppelten Handy bleiben unberührt.",
-  "@desktopRestoreBackupMessage": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      },
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "desktopRestore": "Wiederherstellen",
   "desktopDeleteBackupTitle": "Backup löschen?",
   "desktopDeleteBackupMessage": "\"{name}\" löschen?\n\nDies kann nicht rückgängig gemacht werden.",
@@ -681,6 +669,7 @@
   "desktopHandoverProcessingMessage": "Verarbeitung läuft. Die Übergabe wird die aktuelle Verarbeitung abbrechen und Dateien an den Desktop senden.",
   "desktopHandover": "Übergabe",
   "attachedDocuments": "Angehängte Dokumente",
+  "documentAttachedTo": "An {visit} angehängt.",
   "cameraPermissionRequired": "Kamerazugriff erforderlich",
   "cameraPermissionRequiredMessage": "Diese App benötigt Kamerazugriff zum Scannen. Bitte erteile die Berechtigung.",
   "cameraPermissionDenied": "Kamerazugriff verweigert",
@@ -1091,7 +1080,6 @@
   "desktopRemoteBackupName": "Vom Telefon {date}",
   "desktopNoBackupLocation": "Auf dem Desktop ist kein Backup-Speicherort festgelegt. Öffne die Desktop-App und wähle zuerst einen Backup-Ordner.",
   "desktopBackupFailed": "Backup fehlgeschlagen. Bitte versuche es erneut.",
-  "desktopRestoreFailed": "Wiederherstellung fehlgeschlagen. Bitte versuche es erneut.",
   "desktopBackupActionFailed": "Die Backups konnten nicht aktualisiert werden. Bitte versuche es erneut.",
   "desktopSyncFailed": "Synchronisierung fehlgeschlagen. Prüfe die Verbindung und versuche es erneut.",
   "desktopHandoverTransfer": "Übertragung",
@@ -1185,9 +1173,6 @@
   "aiModelDownloadFailedTitle": "Download fehlgeschlagen",
   "aiModelDownloadFailedMessage": "Der Download des KI-Modells ist fehlgeschlagen. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
   "aiModelDownloadFailed": "Download fehlgeschlagen",
-  "aiModelDownloadCancelledTitle": "Download abgebrochen",
-  "aiModelDownloadInterruptedMessage": "Der Download wurde unterbrochen. Bitte versuchen Sie es erneut.",
-  "aiModelDownloadCancelledNotificationTitle": "Download des KI-Modells abgebrochen",
   "aiModelDownloadWasCancelled": "Der Download des KI-Modells wurde abgebrochen",
   "aiModelDownloadCancelled": "Download abgebrochen",
   "aiModelDownloadingPercent": "Wird heruntergeladen... {percent} %",
@@ -1699,5 +1684,53 @@
   "handoverSavedOnDesktop": "{origin} wurde auf dem Desktop gespeichert. Die Einträge kommen mit der nächsten Synchronisierung auf dieses Telefon.",
   "handoverSavedOnPhone": "{origin} wurde auf dem Telefon gespeichert.",
   "handoverDraftSavedOnDesktop": "{origin} wurde auf dem Desktop gespeichert. Hier gemachte Änderungen am Entwurf wurden nicht übernommen.",
-  "handoverDraftSavedOnPhone": "{origin} wurde auf dem Telefon gespeichert. Hier gemachte Änderungen am Entwurf wurden nicht übernommen."
+  "handoverDraftSavedOnPhone": "{origin} wurde auf dem Telefon gespeichert. Hier gemachte Änderungen am Entwurf wurden nicht übernommen.",
+  "failedToSaveSetting": "„{setting}“ konnte nicht gespeichert werden. Versuche es erneut.",
+  "processingFailedMemory": "Nicht genügend freier Speicher, um das KI-Modell auszuführen. Schließe andere Apps und versuche es erneut, oder schalte den Tiefenscan in den KI-Einstellungen aus.",
+  "tokenPresetLowHint": "ein paar Werte",
+  "tokenPresetMediumHint": "ein kurzer Bericht",
+  "tokenPresetHighHint": "ein vollständiger Bericht",
+  "backupRecordsOnly": "Nur Aufzeichnungen",
+  "backupRestoreConfirmPointInTime": "Dadurch werden deine Aufzeichnungen auf diesem Computer und deinem gekoppelten Telefon durch das Backup vom {date} ersetzt. Seitdem hinzugefügte Aufzeichnungen werden entfernt. Vorher wird eine Kopie „Vor Wiederherstellung“ deiner aktuellen Daten gespeichert und 30 Tage aufbewahrt, damit du das rückgängig machen kannst.",
+  "@backupRestoreConfirmPointInTime": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOldNoFiles": "Dieses Backup enthält keine Dateien. Die Aufzeichnungen werden wiederhergestellt, deine aktuellen Dateien bleiben erhalten.",
+  "backupSafetyName": "Vor Wiederherstellung {date}",
+  "@backupSafetyName": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreFailed": "Wiederherstellung fehlgeschlagen. Deine Daten wurden nicht geändert; das Backup \"Vor Wiederherstellung\" ist in der Liste.",
+  "backupSafetyFailed": "Das Sicherheits-Backup konnte nicht erstellt werden, daher wurde nichts wiederhergestellt. Prüfe den freien Speicher und den Ordner.",
+  "backupFilesNotRestored": "{count, plural, =1{1 Datei konnte nicht wiederhergestellt werden.} other{{count} Dateien konnten nicht wiederhergestellt werden.}}",
+  "@backupFilesNotRestored": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestorePhoneOffline": "Dein Telefon ist nicht verbunden. Seit der letzten Synchronisierung darauf hinzugefügte Aufzeichnungen kommen zurück, sobald es sich wieder verbindet; Änderungen an vorhandenen Aufzeichnungen werden durch das Backup ersetzt.",
+  "backupRestoreRemovesScans": "{count, plural, =1{1 Scan, der auf Überprüfung wartet, wird entfernt.} other{{count} Scans, die auf Überprüfung warten, werden entfernt.}}",
+  "aiModelDeleteTitle": "{name} löschen?",
+  "aiModelDeleteMessage": "Das Modell und seine Tiefenscan-Dateien werden von diesem Gerät entfernt. Um wieder damit zu scannen, musst du es erneut herunterladen (~{size} MB).",
+  "processingNoPatientFound": "Kein Patient im Dokument gefunden. Gib die Daten ein.",
+  "processingStopping": "Wird gestoppt…",
+  "handoverTakenBack": "Das Telefon hat dieses Dokument zurückgenommen.",
+  "aiModelSwitchedToLiteTitle": "Jetzt mit dem Lite-Modell",
+  "aiModelSwitchedToLiteMessage": "Das Modell {modelName} benötigt mehr Arbeitsspeicher, als dieses Gerät hat, daher wird das Lite-Modell verwendet.",
+  "backupSafetyRetention": "{count, plural, =1{Wird 1 Tag aufbewahrt} other{Wird {count} Tage aufbewahrt}}",
+  "backupSafetyRetentionTitle": "Kopie vor einer Wiederherstellung",
+  "backupSafetyRetentionDaysUnit": "{count, plural, =1{Tag} other{Tage}}",
+  "backupSafetyRetentionHint": "Gilt auch für vorhandene Kopien. Ältere Kopien werden jetzt gelöscht.",
+  "backupSafetyRetentionInvalid": "Gib eine ganze Zahl von Tagen zwischen {min} und {max} ein.",
+  "backupSafetyRetentionSaveFailed": "Die Aufbewahrungsdauer der Kopie vor einer Wiederherstellung konnte nicht gespeichert werden. Bitte versuche es erneut."
 }

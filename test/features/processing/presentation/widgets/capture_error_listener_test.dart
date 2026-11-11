@@ -16,6 +16,8 @@ import 'package:health_wallet/features/records/domain/repository/records_reposit
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../helpers/fake_device_capability_service.dart';
+
 class _FakeProcessingRepository extends Fake implements ProcessingRepository {}
 
 class _FakeOcrProcessingHelper extends Fake implements OcrProcessingHelper {}
@@ -55,6 +57,7 @@ void main() {
         _FakeHolderService(),
         _FakeRecordsRepository(),
       ),
+      FakeDeviceCapabilityService(),
     );
   });
 

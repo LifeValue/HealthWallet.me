@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:path/path.dart' as p;
@@ -13,9 +15,9 @@ typedef DirectoryProvider = Future<Directory> Function();
 ///
 /// Only top-level entries with these exact names are deleted, never the
 /// temporary directory itself: on Windows it is the user's shared `%TEMP%`.
-/// The OCR page cache (`pdf_page_*`) and `resized_*` images are kept unless
-/// [includeProcessingCache] is set, because processing sessions may still use
-/// them.
+/// The OCR page cache (`pdf_page_*`), `resized_*` images and the page images
+/// in [ocrCacheDirName] are kept unless [includeProcessingCache] is set,
+/// because processing sessions may still use them.
 ///
 /// The files are named from the constants below, so a producer and the sweep
 /// can't drift apart.
@@ -56,9 +58,49 @@ class TempFileSweeper {
   /// it closes; the sweep catches what a crash left.
   static const recordPreviewPrefix = 'healthwallet_record_preview_';
 
-  /// Directory in the documents directory holding the OCR cache metadata
-  /// (`<sha256 cache key>.json`, listing the `pdf_page_*` images).
+  /// Directory in the documents directory holding the PDF page images of the
+  /// processing sessions, their cache metadata (`<sha256 cache key>.json`,
+  /// listing a PDF's pages) and the sessions' page maps.
   static const ocrCacheDirName = 'pdf_preview_cache';
+
+  /// A PDF page image in [ocrCacheDirName]: `<cache key>_page_<n>.jpg`, at
+  /// 72 dpi for the preview or 200 dpi for OCR and the AI, or
+  /// `<cache key>_page_<n>_r<quarter turns>.jpg` for a rotated OCR page.
+  /// Group 1 is the cache key, group 2 the page number.
+  static final ocrCachePagePattern = RegExp(
+    r'^([0-9a-f]{64})_page_(\d+)(?:_r[1-3])?\.jpg$',
+  );
+
+  /// Suffix of a session's page map in [ocrCacheDirName].
+  static const sessionPageMapSuffix = '.pages.json';
+
+  /// `<session id>.pages.json`: where each preview page of the session came
+  /// from.
+  static String sessionPageMapName(String sessionId) =>
+      '$sessionId$sessionPageMapSuffix';
+
+  /// The session id of a page map named [name] (or of its `.tmp`), or null
+  /// when [name] isn't one.
+  static String? sessionIdOfPageMap(String name) {
+    final id = _sessionPageMap.firstMatch(name)?.group(1);
+    return id != null && _isUuid(id) ? id : null;
+  }
+
+  /// The cache key of the pages of the PDF at [pdfPath] (as the session
+  /// stores it, made absolute) rendered at [dpi]: their images are
+  /// `<key>_page_<n>.jpg` in [ocrCacheDirName], listed in `<key>.json`.
+  static String pdfPageCacheKey(
+    String pdfPath,
+    int fileSize,
+    DateTime modified,
+    double dpi,
+  ) => sha256
+      .convert(
+        utf8.encode(
+          '$pdfPath|$fileSize|${modified.millisecondsSinceEpoch}|$dpi',
+        ),
+      )
+      .toString();
 
   /// Debug logs older builds wrote to the documents directory.
   static const shareDebugLogName = 'share_debug.log';
@@ -105,6 +147,10 @@ class TempFileSweeper {
     '^.*${RegExp.escape(ipsSummaryInfix)}.*\\.pdf\$',
   );
   static final _ocrCacheMetadata = RegExp(r'^[0-9a-f]{64}\.json$');
+  static final _sessionPageMap = RegExp(
+    // A `.tmp` one is a page map a crash left half written.
+    '^(.+)${RegExp.escape(sessionPageMapSuffix)}(?:\\.tmp)?\$',
+  );
   static final _recordPreview = RegExp(
     '^${RegExp.escape(recordPreviewPrefix)}(.+)\\.[a-z0-9]+\$',
   );
@@ -115,7 +161,7 @@ class TempFileSweeper {
   Future<void> sweep() async {
     await _sweepTemporaryDirectory();
     if (deleteDebugLogs) await _deleteDebugLogs();
-    if (includeProcessingCache) await _deleteOcrCacheMetadata();
+    if (includeProcessingCache) await _deleteOcrCache();
   }
 
   Future<void> _sweepTemporaryDirectory() async {
@@ -193,7 +239,9 @@ class TempFileSweeper {
     }
   }
 
-  Future<void> _deleteOcrCacheMetadata() async {
+  /// Deletes the page images, their cache metadata and the page maps in
+  /// [ocrCacheDirName], and nothing else there.
+  Future<void> _deleteOcrCache() async {
     final docs = await _documents();
     if (docs == null) return;
     final List<FileSystemEntity> entries;
@@ -207,9 +255,16 @@ class TempFileSweeper {
     }
     for (final entry in entries) {
       final name = p.basename(entry.path);
-      if (entry is File && _ocrCacheMetadata.hasMatch(name)) {
+      if (entry is File && _isOcrCacheFile(name)) {
         await _delete(entry, name);
       }
     }
+  }
+
+  static bool _isOcrCacheFile(String name) {
+    if (_ocrCacheMetadata.hasMatch(name)) return true;
+    if (ocrCachePagePattern.hasMatch(name)) return true;
+    final pageMap = _sessionPageMap.firstMatch(name);
+    return pageMap != null && _isUuid(pageMap.group(1)!);
   }
 }

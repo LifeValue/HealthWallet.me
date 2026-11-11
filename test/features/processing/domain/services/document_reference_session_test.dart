@@ -7,6 +7,7 @@ import 'package:health_wallet/features/processing/data/services/pdf_generation_s
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
 
+import '../../../../helpers/log_capture.dart';
 import '../../../records/records_test_helpers.dart';
 
 /// One PDF per file, written into the documents directory.
@@ -39,6 +40,7 @@ class _FakePdfGenerationService extends Fake implements PdfGenerationService {
 }
 
 void main() {
+  final logs = captureLogs();
   late AppDatabase db;
   late Directory docs;
   late _FakePdfGenerationService pdfs;
@@ -154,5 +156,29 @@ void main() {
     await expectLater(saveSession('session-1', ['scan-b']), throwsException);
 
     expect(await documentTitles(), ['scan-a']);
+  });
+
+  test('an earlier document whose identifiers cannot be read is logged and '
+      'kept', () async {
+    await insertResource(
+      db,
+      id: 'wallet-pat_unreadable',
+      type: 'DocumentReference',
+      sourceId: 'wallet-pat',
+      title: 'unreadable',
+      raw: {
+        // An object where a list belongs, naming the session.
+        'identifier': {
+          'system': 'http://healthwallet.me/processing-session',
+          'value': 'session-1',
+        },
+      },
+    );
+
+    await saveSession('session-1', ['scan-a']);
+
+    expect(await documentTitles(), unorderedEquals(['unreadable', 'scan-a']));
+    expect(await documentTitles(deleted: true), isEmpty);
+    expect(logs, loggedWarning('Unreadable DocumentReference identifiers'));
   });
 }

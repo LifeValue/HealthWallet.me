@@ -18,28 +18,36 @@ class ImportActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
+    // An action without a callback isn't offered, e.g. Scan on desktop.
+    final buttons = [
+      if (onImportDocument != null)
         AppButton(
           label: context.l10n.importDocument,
           icon: Assets.icons.document.svg(),
           variant: AppButtonVariant.primary,
           onPressed: onImportDocument,
         ),
-        const SizedBox(height: Insets.small),
+      if (onPickImage != null)
         AppButton(
           label: context.l10n.pickImageFromGallery,
           icon: Assets.icons.image.svg(),
           variant: AppButtonVariant.secondary,
           onPressed: onPickImage,
         ),
-        const SizedBox(height: Insets.small),
+      if (onScanDocument != null)
         AppButton(
           label: context.l10n.scanDocument,
           icon: Assets.icons.scan.svg(),
           variant: AppButtonVariant.transparent,
           onPressed: onScanDocument,
         ),
+    ];
+    return Column(
+      children: [
+        for (final (i, button) in buttons.indexed) ...[
+          if (i > 0) const SizedBox(height: Insets.small),
+          button,
+        ],
       ],
     );
   }

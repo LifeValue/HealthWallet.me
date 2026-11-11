@@ -6,7 +6,6 @@ import 'package:health_wallet/features/processing/data/extractors/clearvis/clear
 import 'package:health_wallet/features/processing/data/services/native_text_recognition_service.dart';
 import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extractor_registry.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
-import 'package:health_wallet/features/user/data/data_source/remote/user_remote_data_source.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,9 +19,6 @@ abstract class RegisterModule {
 
   @lazySingleton
   AppDatabase get appDatabase => AppDatabase();
-
-  @lazySingleton
-  UserRemoteDataSource get userRemoteDataSource => MockUserRemoteDataSource();
 
   @lazySingleton
   BiometricAuthService biometricAuthService(AppStringsProvider strings) =>

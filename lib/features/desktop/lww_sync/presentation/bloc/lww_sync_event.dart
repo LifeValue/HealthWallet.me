@@ -5,7 +5,12 @@ sealed class LwwSyncEvent with _$LwwSyncEvent {
   const factory LwwSyncEvent.initialised() = LwwSyncInitialised;
 
   /// Send what is waiting now (Sync Now, a saved scan, a handover result).
-  const factory LwwSyncEvent.syncTriggered() = SyncTriggered;
+  ///
+  /// [userRequested] marks the user's Sync Now, which also clears the error
+  /// shown since the peer could not save a batch.
+  const factory LwwSyncEvent.syncTriggered({
+    @Default(false) bool userRequested,
+  }) = SyncTriggered;
 
   /// A synced table was written locally.
   const factory LwwSyncEvent.localChanged() = LwwLocalChanged;
@@ -22,6 +27,10 @@ sealed class LwwSyncEvent with _$LwwSyncEvent {
 
   /// The peer did not answer this side's digest.
   const factory LwwSyncEvent.digestTimedOut() = LwwDigestTimedOut;
+
+  /// Compare both sides' tables afresh: forget the last comparison and send
+  /// a digest (see [LwwSyncBloc.syncAndConfirmMatch]).
+  const factory LwwSyncEvent.matchCheckRequested() = LwwMatchCheckRequested;
 
   /// Received rows stopped arriving for a moment; screens reload once.
   const factory LwwSyncEvent.recordsSettled() = LwwRecordsSettled;

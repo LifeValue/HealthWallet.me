@@ -58,6 +58,13 @@ class _LoadModelPageState extends State<LoadModelPage> {
         listenWhen: (previous, current) => previous.status != current.status,
         listener: (context, state) {
           if (state.status == LoadModelStatus.modelLoaded) {
+            // The model list may still be open over this page when its
+            // download ends: close it first, or the pop below closes the
+            // list and this page stays, ready but never leaving.
+            Navigator.of(
+              context,
+              rootNavigator: true,
+            ).popUntil((route) => route is! PopupRoute);
             context.router.maybePop(true);
           }
           if (state.status == LoadModelStatus.error &&

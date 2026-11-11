@@ -92,6 +92,18 @@ class _FakeDataSource extends Fake implements AiInferenceDataSource {
   @override
   Future<void> disposeModel() async {}
 
+  /// Whether the vision projector file is on the device, and whether it
+  /// loads with the model.
+  bool projectorOnDisk = true;
+  bool projectorLoads = true;
+
+  @override
+  Future<bool> checkMmprojExistence() async => projectorOnDisk;
+
+  @override
+  bool isVisionModelAvailable() =>
+      projectorOnDisk && projectorLoads && loads.lastOrNull?.withVision == true;
+
   @override
   Future<({int availableMB, int requiredMB, bool canProceed})>
   checkMemoryHealth({
@@ -652,4 +664,78 @@ void main() {
       );
     },
   );
+
+  group('without the vision projector', () {
+    const encounterOnly =
+        '[{"resourceType":"Encounter","encounterType":"Consult",'
+        '"periodStart":"2025-03-14"}]';
+
+    test('a text pass that finds no patient is kept, without sending '
+        'images', () async {
+      final ds = _FakeDataSource([encounterOnly])..projectorOnDisk = false;
+
+      final (patient, container) = await _Repository(ds, _labOcr)
+          .processMapBasicInfo(
+            const ['p.png'],
+            outputMode: ExtractionOutputMode.grammar,
+          );
+
+      expect(ds.calls.map((c) => c.kind), ['text']);
+      expect(ds.loads.map((l) => l.withVision), [false]);
+      expect(patient.isIdentified, isFalse);
+      expect(
+        (container as MappingEncounter).encounterType.value,
+        'Consult',
+      );
+    });
+
+    test('a page too short for the text pass gives no patient and loads no '
+        'model', () async {
+      final ds = _FakeDataSource([])..projectorOnDisk = false;
+
+      final (patient, container) = await _Repository(ds, 'Rp.')
+          .processMapBasicInfo(
+            const ['p.png'],
+            outputMode: ExtractionOutputMode.grammar,
+          );
+
+      expect(ds.calls, isEmpty);
+      expect(ds.loads, isEmpty);
+      expect(patient.isIdentified, isFalse);
+      expect((container as MappingEncounter).encounterType.value, isEmpty);
+    });
+
+    test('a projector that does not load sends no images and keeps the text '
+        'result', () async {
+      final ds = _FakeDataSource([encounterOnly])..projectorLoads = false;
+
+      final (patient, container) = await _Repository(ds, _labOcr)
+          .processMapBasicInfo(
+            const ['p.png'],
+            outputMode: ExtractionOutputMode.grammar,
+          );
+
+      expect(ds.calls.map((c) => c.kind), ['text']);
+      expect(ds.loads.map((l) => l.withVision), [false, true]);
+      expect(patient.isIdentified, isFalse);
+      expect(
+        (container as MappingEncounter).encounterType.value,
+        'Consult',
+      );
+    });
+
+    test('phase 2 with Deep Scan reads the pages as text when the projector '
+        'does not load', () async {
+      final ds = _FakeDataSource(['[]'])..projectorLoads = false;
+
+      await _remaining(
+        ds,
+        mode: ExtractionOutputMode.grammar,
+        useVision: true,
+      );
+
+      expect(ds.calls.map((c) => c.kind), ['text']);
+      expect(ds.loads.map((l) => l.withVision), [true, false]);
+    });
+  });
 }

@@ -15,12 +15,17 @@ class PreviewCard extends StatefulWidget {
   final bool isEditable;
   final void Function(List<String>)? onPagesChanged;
 
+  /// Called when the user turns a page, with its path and the clockwise
+  /// quarter turns.
+  final PageRotatedCallback? onPageRotated;
+
   const PreviewCard({
     super.key,
     required this.imagePaths,
     required this.pageController,
     this.isEditable = false,
     this.onPagesChanged,
+    this.onPageRotated,
   });
 
   @override
@@ -33,7 +38,9 @@ class _PreviewCardState extends State<PreviewCard> {
   @override
   void initState() {
     super.initState();
-    _previewBloc = PreviewBloc();
+    _previewBloc = PreviewBloc(
+      onPageRotated: (path, turns) => widget.onPageRotated?.call(path, turns),
+    );
     _previewBloc.add(const PreviewInitialized(initialPageIndex: 0));
 
     _previewBloc.stream.listen((state) {
@@ -177,7 +184,7 @@ class _PageIndicator extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            '${currentPage + 1} of $totalPages',
+            context.l10n.pageOfTotal('${currentPage + 1}', '$totalPages'),
             style: AppTextStyle.bodySmall.copyWith(
               fontWeight: FontWeight.w500,
               color: context.colorScheme.onSurface,

@@ -390,6 +390,25 @@ void main() {
       expect(repository.documentReads, 0);
     });
 
+    test('a saved scan keeps the accents of its file name unencoded and still '
+        'shows its file', () async {
+      File(
+        '${docs.path}/Scrisoare medicală_1a2b3c4d.pdf',
+      ).writeAsStringSync('pdf');
+      final document = _record(
+        _documentJson(
+          id: 'doc-1',
+          url: 'file://Scrisoare medicală_1a2b3c4d.pdf',
+          title: 'PDF: Scrisoare medicală',
+        ),
+      );
+
+      final info = (await open(document)).attachments.single;
+
+      expect(info.filePath, '${docs.path}/Scrisoare medicală_1a2b3c4d.pdf');
+      expect(info.title, 'PDF: Scrisoare medicală');
+    });
+
     test('an absolute URL inside the documents directory resolves', () async {
       File('${docs.path}/scan.png').writeAsStringSync('png');
       final document = _record(
@@ -562,6 +581,31 @@ void main() {
       },
     );
 
+    test('an encounter\'s own document read before a record\'s document '
+        'stays first', () async {
+      await storeDocument(
+        _documentJson(id: 'doc-1', title: 'direct.pdf'),
+        encounterId: 'enc-1',
+      );
+      await storeDocument(
+        _documentJson(
+          id: 'doc-2',
+          title: 'lab.pdf',
+          related: ['Observation/obs-1'],
+          encounters: ['Encounter/enc-1'],
+        ),
+      );
+      repository.encounterRecords.add(
+        _observation(encounter: 'Encounter/enc-1'),
+      );
+
+      final state = await open(_encounter());
+
+      expect(state.attachments.map((a) => a.title), ['direct.pdf', 'lab.pdf']);
+      expect(state.attachments.first.sourceRecordTitle, isNull);
+      expect(state.attachments.last.sourceRecordTitle, 'Glucose');
+    });
+
     test('records shown from a share are related in memory', () async {
       final document = _record(
         _documentJson(id: 'doc-1', title: 'shared.pdf'),
@@ -713,19 +757,20 @@ void main() {
       expect(await documentRows(), hasLength(2));
     });
 
-    test('a name with spaces and accents is stored sanitised', () async {
+    test('a name with spaces and accents keeps them, and its url is '
+        'encoded', () async {
       await open(_observation());
 
       final state = await run(
-        RecordAttachmentsFileAttached([picked('Blood test é 1.PNG')]),
+        RecordAttachmentsFileAttached([picked('Blood test é: 1.PNG')]),
       );
 
       final stored = storedFiles().single;
-      expect(stored, matches(RegExp(r'^Blood_test___1_[0-9a-f]{8}\.PNG$')));
+      expect(stored, matches(RegExp(r'^Blood test é_ 1_[0-9a-f]{8}\.PNG$')));
       final row = (await documentRows()).single;
-      expect(row.title, 'Blood test é 1.PNG');
-      expect(attachmentOf(row)['title'], 'Blood test é 1.PNG');
-      expect(attachmentOf(row)['url'], 'file://$stored');
+      expect(row.title, 'Blood test é: 1.PNG');
+      expect(attachmentOf(row)['title'], 'Blood test é: 1.PNG');
+      expect(attachmentOf(row)['url'], 'file://${Uri.encodeComponent(stored)}');
       expect(attachmentOf(row)['contentType'], 'image/png');
       expect(state.attachments.single.filePath, '${docs.path}/$stored');
     });
@@ -979,48 +1024,9 @@ void main() {
     });
   });
 
-  group('uniqueStoredFileName', () {
-    Future<String> name(String original) =>
-        RecordAttachmentsBloc.uniqueStoredFileName(docs.path, original);
-
-    test('keeps a safe name and adds a suffix before the extension', () async {
-      expect(
-        await name('report.v2.pdf'),
-        matches(r'^report\.v2_[0-9a-f]{8}\.pdf$'),
-      );
-      expect(await name('notes'), matches(r'^notes_[0-9a-f]{8}$'));
-      expect(
-        await name('my-file_1.txt'),
-        matches(r'^my-file_1_[0-9a-f]{8}\.txt$'),
-      );
-    });
-
-    test('two calls give different names', () async {
-      expect(await name('a.pdf'), isNot(await name('a.pdf')));
-    });
-
-    test('never gives a hidden or empty name', () async {
-      expect(await name('.pdf'), matches(r'^file_[0-9a-f]{8}\.pdf$'));
-      expect(await name('..report.pdf'), matches(r'^report_[0-9a-f]{8}\.pdf$'));
-      expect(await name('отчет.pdf'), matches(r'^file_[0-9a-f]{8}\.pdf$'));
-      expect(await name(''), matches(r'^file_[0-9a-f]{8}$'));
-      expect(await name('report.'), matches(r'^report\._[0-9a-f]{8}$'));
-    });
-
-    test('shortens long names and ignores a long extension', () async {
-      final long = await name('${'a' * 300}.pdf');
-      expect(long, matches(RegExp('^a{100}_[0-9a-f]{8}\\.pdf\$')));
-
-      final odd = await name('archive.${'x' * 20}');
-      expect(odd, startsWith('archive.xxxx'));
-      expect(odd, matches(r'_[0-9a-f]{8}$'));
-      expect(odd.length, lessThan(120));
-    });
-  });
-
   group('delete', () {
-    test('tombstones the record and removes its file, keeping a same-name '
-        'one', () async {
+    test('tombstones the record and keeps its file until the purge, next to '
+        'a same-name one', () async {
       await open(_observation());
       await run(
         RecordAttachmentsFileAttached([
@@ -1040,8 +1046,8 @@ void main() {
       expect(await documentRows(), hasLength(2), reason: 'rows are kept');
       await expectTombstone(first.id, before);
       expect((await liveDocumentRows()).map((r) => r.id), [rows.last.id]);
-      expect(storedFiles(), hasLength(1));
-      expect(storedFiles(), isNot(contains(firstFile)));
+      expect(storedFiles(), hasLength(2));
+      expect(storedFiles(), contains(firstFile));
       expect(state.attachments, hasLength(1));
       expect(
         File(state.attachments.single.filePath!).readAsStringSync(),

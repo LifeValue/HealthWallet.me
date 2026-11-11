@@ -706,11 +706,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get processingFailedCapacity =>
-      'Das Dokument ist zu groß für die aktuelle KI-Kontextgröße.';
+      'Das Dokument ist zu groß für den aktuellen KI-Arbeitsspeicher.';
 
   @override
   String get processingFailedCapacitySuggestion =>
-      'Tippe oben auf das Einstellungssymbol und erhöhe die Kontextgröße auf 2048 oder höher, dann erneut versuchen.';
+      'Tippe oben auf das Einstellungssymbol und erhöhe den KI-Arbeitsspeicher auf 2048 oder höher, dann erneut versuchen.';
 
   @override
   String get increaseAiModelCapacity => 'KI-Kapazität erhöhen';
@@ -735,37 +735,37 @@ class AppLocalizationsDe extends AppLocalizations {
       'KI-Leistung für dein Gerät anpassen. Empfohlene Werte sind vorausgewählt.';
 
   @override
-  String get setAiTokensUsage => 'KI-Token-Nutzung einstellen';
+  String get setAiTokensUsage => 'Maximale Antwortlänge';
 
   @override
   String get tokenUsageDescription =>
-      'Steuere, wie viel Rechenleistung die KI nutzen kann. Höhere Kapazität ermöglicht größere Dateien und komplexere Aufgaben, verbraucht aber mehr Ressourcen und dauert länger.';
+      'Wie viel die KI pro Schritt höchstens schreiben darf, während sie die gefundenen Einträge deines Dokuments auflistet. Zu kurz, und manche Einträge werden abgeschnitten; länger dauert mehr Zeit. Es passt immer in den KI-Arbeitsspeicher.';
 
   @override
-  String get gpuLayersLabel => 'GPU-Schichten';
+  String get gpuLayersLabel => 'Grafikchip (GPU)';
 
   @override
   String get gpuLayersDescription =>
-      'Modell-Schichten auf GPU auslagern für schnellere Bildverarbeitung. Mehr Schichten = schneller, aber mehr Speicherverbrauch. Auf 0 setzen bei Abstürzen.';
+      'Wie viel der KI auf dem Grafikchip deines Geräts läuft, der schneller ist als der Hauptprozessor. Höher ist schneller, braucht aber mehr Speicher. Wenn die App beim Scannen schließt oder abstürzt, verringere den Wert oder setze ihn auf 0.';
 
   @override
-  String get threadsLabel => 'CPU-Threads';
+  String get threadsLabel => 'Prozessorkerne (CPU)';
 
   @override
   String get threadsDescription =>
-      'Anzahl der CPU-Threads für Inferenz. Mehr Threads = schneller, aber höherer Akkuverbrauch.';
+      'Wie viele Prozessorkerne die KI gleichzeitig nutzt. Mehr ist schneller, verbraucht aber den Akku schneller und kann das Gerät warm machen.';
 
   @override
   String get recommended => 'Empfohlen';
 
   @override
-  String get tokenPresetLow => 'Niedrig';
+  String get tokenPresetLow => 'Kurz';
 
   @override
   String get tokenPresetMedium => 'Mittel';
 
   @override
-  String get tokenPresetHigh => 'Hoch';
+  String get tokenPresetHigh => 'Lang';
 
   @override
   String get tokenPresetCustom => 'Benutzerdefiniert';
@@ -774,14 +774,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get setTokens => 'Festlegen';
 
   @override
-  String get tokens => 'Tokens';
-
-  @override
-  String get contextSizeLabel => 'Kontextgröße';
+  String get contextSizeLabel => 'KI-Arbeitsspeicher';
 
   @override
   String get contextSizeDescription =>
-      'Textmenge, die die KI auf einmal verarbeiten kann. Größerer Kontext verarbeitet größere Dokumente, benötigt aber mehr Speicher.';
+      'Der Arbeitsbereich der KI für einen Schritt: Platz, um dein Dokument zu lesen und aufzuschreiben, was sie findet. Größer passt für längere Dokumente, braucht aber mehr Speicher deines Geräts. Wenn das Scannen mit „nicht genügend Speicher“ fehlschlägt, verringere ihn.';
 
   @override
   String get useVisionLabel => 'Tiefenscan';
@@ -1431,11 +1428,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get desktopRestoreBackupTitle => 'Backup wiederherstellen?';
 
   @override
-  String desktopRestoreBackupMessage(String name, int count) {
-    return 'Alle aktuellen Daten auf diesem Gerät werden durch \"$name\" ersetzt.\n\n$count Aufzeichnungen werden wiederhergestellt.\n\nDeine Daten auf dem gekoppelten Handy bleiben unberührt.';
-  }
-
-  @override
   String get desktopRestore => 'Wiederherstellen';
 
   @override
@@ -1533,6 +1525,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get attachedDocuments => 'Angehängte Dokumente';
+
+  @override
+  String documentAttachedTo(String visit) {
+    return 'An $visit angehängt.';
+  }
 
   @override
   String get cameraPermissionRequired => 'Kamerazugriff erforderlich';
@@ -2548,10 +2545,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Backup fehlgeschlagen. Bitte versuche es erneut.';
 
   @override
-  String get desktopRestoreFailed =>
-      'Wiederherstellung fehlgeschlagen. Bitte versuche es erneut.';
-
-  @override
   String get desktopBackupActionFailed =>
       'Die Backups konnten nicht aktualisiert werden. Bitte versuche es erneut.';
 
@@ -2925,17 +2918,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get aiModelDownloadFailed => 'Download fehlgeschlagen';
-
-  @override
-  String get aiModelDownloadCancelledTitle => 'Download abgebrochen';
-
-  @override
-  String get aiModelDownloadInterruptedMessage =>
-      'Der Download wurde unterbrochen. Bitte versuchen Sie es erneut.';
-
-  @override
-  String get aiModelDownloadCancelledNotificationTitle =>
-      'Download des KI-Modells abgebrochen';
 
   @override
   String get aiModelDownloadWasCancelled =>
@@ -4743,4 +4725,140 @@ class AppLocalizationsDe extends AppLocalizations {
   String handoverDraftSavedOnPhone(String origin) {
     return '$origin wurde auf dem Telefon gespeichert. Hier gemachte Änderungen am Entwurf wurden nicht übernommen.';
   }
+
+  @override
+  String failedToSaveSetting(String setting) {
+    return '„$setting“ konnte nicht gespeichert werden. Versuche es erneut.';
+  }
+
+  @override
+  String get processingFailedMemory =>
+      'Nicht genügend freier Speicher, um das KI-Modell auszuführen. Schließe andere Apps und versuche es erneut, oder schalte den Tiefenscan in den KI-Einstellungen aus.';
+
+  @override
+  String get tokenPresetLowHint => 'ein paar Werte';
+
+  @override
+  String get tokenPresetMediumHint => 'ein kurzer Bericht';
+
+  @override
+  String get tokenPresetHighHint => 'ein vollständiger Bericht';
+
+  @override
+  String get backupRecordsOnly => 'Nur Aufzeichnungen';
+
+  @override
+  String backupRestoreConfirmPointInTime(String date) {
+    return 'Dadurch werden deine Aufzeichnungen auf diesem Computer und deinem gekoppelten Telefon durch das Backup vom $date ersetzt. Seitdem hinzugefügte Aufzeichnungen werden entfernt. Vorher wird eine Kopie „Vor Wiederherstellung“ deiner aktuellen Daten gespeichert und 30 Tage aufbewahrt, damit du das rückgängig machen kannst.';
+  }
+
+  @override
+  String get backupOldNoFiles =>
+      'Dieses Backup enthält keine Dateien. Die Aufzeichnungen werden wiederhergestellt, deine aktuellen Dateien bleiben erhalten.';
+
+  @override
+  String backupSafetyName(String date) {
+    return 'Vor Wiederherstellung $date';
+  }
+
+  @override
+  String get backupRestoreFailed =>
+      'Wiederherstellung fehlgeschlagen. Deine Daten wurden nicht geändert; das Backup \"Vor Wiederherstellung\" ist in der Liste.';
+
+  @override
+  String get backupSafetyFailed =>
+      'Das Sicherheits-Backup konnte nicht erstellt werden, daher wurde nichts wiederhergestellt. Prüfe den freien Speicher und den Ordner.';
+
+  @override
+  String backupFilesNotRestored(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Dateien konnten nicht wiederhergestellt werden.',
+      one: '1 Datei konnte nicht wiederhergestellt werden.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupRestorePhoneOffline =>
+      'Dein Telefon ist nicht verbunden. Seit der letzten Synchronisierung darauf hinzugefügte Aufzeichnungen kommen zurück, sobald es sich wieder verbindet; Änderungen an vorhandenen Aufzeichnungen werden durch das Backup ersetzt.';
+
+  @override
+  String backupRestoreRemovesScans(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Scans, die auf Überprüfung warten, werden entfernt.',
+      one: '1 Scan, der auf Überprüfung wartet, wird entfernt.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aiModelDeleteTitle(String name) {
+    return '$name löschen?';
+  }
+
+  @override
+  String aiModelDeleteMessage(int size) {
+    return 'Das Modell und seine Tiefenscan-Dateien werden von diesem Gerät entfernt. Um wieder damit zu scannen, musst du es erneut herunterladen (~$size MB).';
+  }
+
+  @override
+  String get processingNoPatientFound =>
+      'Kein Patient im Dokument gefunden. Gib die Daten ein.';
+
+  @override
+  String get processingStopping => 'Wird gestoppt…';
+
+  @override
+  String get handoverTakenBack =>
+      'Das Telefon hat dieses Dokument zurückgenommen.';
+
+  @override
+  String get aiModelSwitchedToLiteTitle => 'Jetzt mit dem Lite-Modell';
+
+  @override
+  String aiModelSwitchedToLiteMessage(String modelName) {
+    return 'Das Modell $modelName benötigt mehr Arbeitsspeicher, als dieses Gerät hat, daher wird das Lite-Modell verwendet.';
+  }
+
+  @override
+  String backupSafetyRetention(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Wird $count Tage aufbewahrt',
+      one: 'Wird 1 Tag aufbewahrt',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSafetyRetentionTitle => 'Kopie vor einer Wiederherstellung';
+
+  @override
+  String backupSafetyRetentionDaysUnit(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Tage',
+      one: 'Tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSafetyRetentionHint =>
+      'Gilt auch für vorhandene Kopien. Ältere Kopien werden jetzt gelöscht.';
+
+  @override
+  String backupSafetyRetentionInvalid(int min, int max) {
+    return 'Gib eine ganze Zahl von Tagen zwischen $min und $max ein.';
+  }
+
+  @override
+  String get backupSafetyRetentionSaveFailed =>
+      'Die Aufbewahrungsdauer der Kopie vor einer Wiederherstellung konnte nicht gespeichert werden. Bitte versuche es erneut.';
 }

@@ -179,16 +179,14 @@ void main() {
       expect(bloc.state.resources.map((r) => r.id), ['s1-1', 's2-2']);
     });
 
-    test('without chosen filters, encounters and reports are shown', () async {
-      build([_visit(1)]);
+    test('without chosen filters, every record is shown', () async {
+      build([_visit(1), const Patient(id: 'p', sourceId: 's1')]);
 
       bloc.add(const RecordsSourceChanged('s1'));
-      await until((s) => s.activeFilters.isNotEmpty);
+      await until((s) => s.resources.length == 2);
 
-      expect(bloc.state.activeFilters, [
-        FhirType.Encounter,
-        FhirType.DiagnosticReport,
-      ]);
+      expect(bloc.state.activeFilters, isEmpty);
+      expect(bloc.state.resources.map((r) => r.id), containsAll(['s1-1', 'p']));
     });
 
     test('chosen filters stay when the source changes', () async {
@@ -299,7 +297,7 @@ void main() {
 
   test('deleting a record with chosen related records deletes them '
       'together and reloads', () async {
-    // A patient remains, so the list reloads (the filters hide the patient).
+    // A patient remains, so the list reloads.
     build([
       _visit(1),
       _visit(2),
@@ -307,7 +305,7 @@ void main() {
       const Patient(id: 'p', sourceId: 's1'),
     ]);
     bloc.add(const RecordsSourceChanged('s1'));
-    await until((s) => s.resources.length == 3);
+    await until((s) => s.resources.length == 4);
 
     bloc.add(
       const RecordsResourceDeleted(
@@ -315,7 +313,7 @@ void main() {
         selectedRelatedIds: ['s1-2'],
       ),
     );
-    await until((s) => s.resources.length == 1);
+    await until((s) => s.resources.length == 2);
 
     expect(repository.deleted, ['s1-1', 's1-2']);
   });

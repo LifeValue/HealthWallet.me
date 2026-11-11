@@ -191,8 +191,10 @@ abstract class TokenCapacityUpdated extends ProcessingEvent
     with _$TokenCapacityUpdated {
   const TokenCapacityUpdated._();
 
+  /// Reloads the model and maps [sessionId] again. [newMaxTokens] is saved
+  /// when given; leave it out when only another model setting changed.
   const factory TokenCapacityUpdated({
-    required int newMaxTokens,
+    int? newMaxTokens,
     required String sessionId,
   }) = _TokenCapacityUpdated;
 }
@@ -212,6 +214,30 @@ abstract class PagesReordered extends ProcessingEvent with _$PagesReordered {
     required String sessionId,
     required List<String> reorderedPaths,
   }) = _PagesReordered;
+}
+
+/// The user turned the preview page [previewPath] of [sessionId] by
+/// [quarterTurns] clockwise quarter turns; its OCR page turns too.
+@freezed
+abstract class PageRotated extends ProcessingEvent with _$PageRotated {
+  const PageRotated._();
+
+  const factory PageRotated({
+    required String sessionId,
+    required String previewPath,
+    @Default(1) int quarterTurns,
+  }) = _PageRotated;
+}
+
+/// Sent by the bloc itself once the records of [sessionId] are saved: its
+/// 200 dpi OCR pages are no longer needed.
+@freezed
+abstract class OcrPagesReleased extends ProcessingEvent
+    with _$OcrPagesReleased {
+  const OcrPagesReleased._();
+
+  const factory OcrPagesReleased({required String sessionId}) =
+      _OcrPagesReleased;
 }
 
 @freezed
@@ -279,6 +305,17 @@ abstract class HandoverReturned extends ProcessingEvent
 
 /// The records of a handover were saved on the paired device, so this
 /// device's copy of the session is removed.
+/// The device that sent this document took it back (deleted it there): it
+/// goes from this one, with a notification saying so.
+@freezed
+abstract class SessionTakenBack extends ProcessingEvent
+    with _$SessionTakenBack {
+  const SessionTakenBack._();
+
+  const factory SessionTakenBack({required String sessionId}) =
+      _SessionTakenBack;
+}
+
 @freezed
 abstract class SessionSavedElsewhere extends ProcessingEvent
     with _$SessionSavedElsewhere {

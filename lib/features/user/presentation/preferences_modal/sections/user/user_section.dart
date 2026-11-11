@@ -37,18 +37,22 @@ class _UserSectionState extends State<UserSection> {
     _nameFocusNode.requestFocus();
   }
 
+  /// The field stays open until the name is saved, so a failed save keeps
+  /// the typed name and ✓ tries again.
   void _saveName() {
     final newName = _nameController.text.trim();
     if (newName.isNotEmpty) {
-      setState(() {
-        _isEditing = false;
-      });
-      _nameFocusNode.unfocus();
-
-      // Update the user name through BLoC
       context.read<UserBloc>().add(UserNameUpdated(newName));
     }
   }
+
+  /// The result of a name save: true when it was saved, false when it
+  /// failed, null for any other status.
+  static bool? _nameSaveResult(UserStatus status) => status.maybeWhen(
+    success: (setting) => setting == UserSetting.name ? true : null,
+    failure: (_, setting) => setting == UserSetting.name ? false : null,
+    orElse: () => null,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -59,14 +63,15 @@ class _UserSectionState extends State<UserSection> {
     return BlocListener<UserBloc, UserState>(
       listenWhen: (previous, current) =>
           previous.status != current.status &&
-          current.status.runtimeType.toString().contains('Failure'),
+          _nameSaveResult(current.status) != null,
       listener: (context, state) {
-        if (state.status.runtimeType.toString().contains('Failure')) {
-          // Show error message
+        if (_nameSaveResult(state.status)!) {
+          setState(() => _isEditing = false);
+          _nameFocusNode.unfocus();
+        } else {
           AppSnackBar.show(
             context,
-            message:
-                '${context.l10n.failedToUpdateDisplayName}: ${state.status.toString()}',
+            message: context.l10n.failedToUpdateDisplayName,
             type: AppSnackBarType.error,
           );
         }
@@ -120,7 +125,6 @@ class _UserSectionState extends State<UserSection> {
                                     contentPadding: EdgeInsets.zero,
                                   ),
                                   onSubmitted: (_) => _saveName(),
-                                  onEditingComplete: _saveName,
                                 )
                               : Text(
                                   displayName,

@@ -224,8 +224,8 @@
   "exitFocusMode": "Exit Focus Mode",
   "chargerPluggedIn": "Charger plugged in.",
   "plugInChargerEllipsis": "Plug in the charger...",
-  "processingFailedCapacity": "The document is too large for the current AI context size.",
-  "processingFailedCapacitySuggestion": "Tap the settings icon above and increase the Context Size to 2048 or higher, then retry.",
+  "processingFailedCapacity": "The document is too large for the current AI working memory.",
+  "processingFailedCapacitySuggestion": "Tap the settings icon above and increase the Working memory to 2048 or higher, then retry.",
   "increaseAiModelCapacity": "Increase AI Capacity",
   "goBack": "Go Back",
   "aiModelManage": "Manage AI Options",
@@ -233,21 +233,20 @@
   "aiModelSelect": "Select Option",
   "aiSettings": "AI Settings",
   "aiSettingsDescription": "Adjust AI performance for your device. Recommended values are pre-selected.",
-  "setAiTokensUsage": "Set AI Tokens Usage",
-  "tokenUsageDescription": "Control how much processing power the AI can use. Higher capacity allows larger files and more complex tasks, but uses more resources and takes longer.",
-  "gpuLayersLabel": "GPU Layers",
-  "gpuLayersDescription": "Offload model layers to GPU for faster image processing. More layers = faster but uses more memory. Set to 0 if the app crashes.",
-  "threadsLabel": "CPU Threads",
-  "threadsDescription": "Number of CPU threads for inference. More threads = faster but uses more battery.",
+  "setAiTokensUsage": "Maximum answer length",
+  "tokenUsageDescription": "The most the AI may write per step, while it lists the records it found in your document. Too short and some records get cut off; longer takes more time. It always fits inside the working memory.",
+  "gpuLayersLabel": "Graphics chip (GPU)",
+  "gpuLayersDescription": "How much of the AI runs on your device's graphics chip, which is faster than the main processor. Higher is faster but uses more memory. If the app closes or crashes during a scan, lower it, or set it to 0.",
+  "threadsLabel": "Processor cores (CPU)",
+  "threadsDescription": "How many processor cores the AI uses at the same time. More is faster, but uses the battery quicker and can make the device warm.",
   "recommended": "Recommended",
-  "tokenPresetLow": "Low",
+  "tokenPresetLow": "Short",
   "tokenPresetMedium": "Medium",
-  "tokenPresetHigh": "High",
+  "tokenPresetHigh": "Long",
   "tokenPresetCustom": "Custom",
   "setTokens": "Set",
-  "tokens": "tokens",
-  "contextSizeLabel": "Context Size",
-  "contextSizeDescription": "Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory.",
+  "contextSizeLabel": "Working memory",
+  "contextSizeDescription": "The AI's workspace for one step: space to read your document and write down what it finds. Bigger fits longer documents, but uses more of your device's memory. If scanning fails with \"not enough memory\", lower it.",
   "useVisionLabel": "Deep Scan",
   "useVisionDescription": "Reads images for deeper analysis (e.g. handwriting). Uses more memory and requires a more performant device.",
   "aiModelNotAvailableForDevice": "Not available for this phone",
@@ -640,17 +639,6 @@
   "desktopChecksum": "Checksum",
   "desktopRestoreThisBackup": "Restore this backup",
   "desktopRestoreBackupTitle": "Restore Backup?",
-  "desktopRestoreBackupMessage": "This will replace all current data on this device with \"{name}\".\n\n{count} records will be restored.\n\nYour data on the paired phone will not be affected.",
-  "@desktopRestoreBackupMessage": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      },
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "desktopRestore": "Restore",
   "desktopDeleteBackupTitle": "Delete Backup?",
   "desktopDeleteBackupMessage": "Delete \"{name}\"?\n\nThis cannot be undone.",
@@ -715,6 +703,15 @@
   "desktopHandoverProcessingMessage": "Processing is in progress. Handover will cancel the current processing and send files to desktop.",
   "desktopHandover": "Handover",
   "attachedDocuments": "Attached Documents",
+  "documentAttachedTo": "Attached to {visit}.",
+  "@documentAttachedTo": {
+    "description": "Says which visit a document attached without the AI was filed under, for example \"Checkup, 03/11/2026\".",
+    "placeholders": {
+      "visit": {
+        "type": "String"
+      }
+    }
+  },
   "cameraPermissionRequired": "Camera Permission Required",
   "cameraPermissionRequiredMessage": "This app needs camera access to scan. Please grant permission to continue.",
   "cameraPermissionDenied": "Camera Permission Denied",
@@ -1139,7 +1136,6 @@
   },
   "desktopNoBackupLocation": "No backup location set on desktop. Open the desktop app and choose a backup folder first.",
   "desktopBackupFailed": "Backup failed. Please try again.",
-  "desktopRestoreFailed": "Restore failed. Please try again.",
   "desktopBackupActionFailed": "Could not update the backups. Please try again.",
   "desktopSyncFailed": "Sync failed. Check the connection and try again.",
   "desktopHandoverTransfer": "Transfer",
@@ -1375,9 +1371,6 @@
   "aiModelDownloadFailedTitle": "Download Failed",
   "aiModelDownloadFailedMessage": "AI model download failed. Please check your connection and try again.",
   "aiModelDownloadFailed": "Download failed",
-  "aiModelDownloadCancelledTitle": "Download Cancelled",
-  "aiModelDownloadInterruptedMessage": "The download was interrupted. Please try again.",
-  "aiModelDownloadCancelledNotificationTitle": "AI Model Download Cancelled",
   "aiModelDownloadWasCancelled": "AI model download was cancelled",
   "aiModelDownloadCancelled": "Download cancelled",
   "aiModelDownloadingPercent": "Downloading... {percent}%",
@@ -2461,5 +2454,140 @@
         "type": "String"
       }
     }
+  },
+  "failedToSaveSetting": "Couldn't save “{setting}”. Try again.",
+  "@failedToSaveSetting": {
+    "placeholders": {
+      "setting": {
+        "type": "String"
+      }
+    }
+  },
+  "processingFailedMemory": "Not enough free memory to run the AI model. Close other apps and try again, or turn off Deep Scan in AI Settings.",
+  "tokenPresetLowHint": "a few values",
+  "tokenPresetMediumHint": "a short report",
+  "tokenPresetHighHint": "a full report",
+  "backupRecordsOnly": "Records only",
+  "backupRestoreConfirmPointInTime": "This replaces your records on this computer and on your paired phone with the backup from {date}. Records added since then are removed. A “Before restore” copy of your current data is saved first and kept for 30 days, so you can undo this.",
+  "@backupRestoreConfirmPointInTime": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOldNoFiles": "This backup has no files. Records will be restored and your current files kept.",
+  "backupSafetyName": "Before restore {date}",
+  "@backupSafetyName": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreFailed": "Restore failed. Your data was not changed; the \"Before restore\" backup is in the list.",
+  "backupSafetyFailed": "Couldn't make a safety backup, so nothing was restored. Check free space and the backup folder.",
+  "backupFilesNotRestored": "{count, plural, =1{1 file couldn't be restored.} other{{count} files couldn't be restored.}}",
+  "@backupFilesNotRestored": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestorePhoneOffline": "Your phone isn't connected. Records added on it since its last sync will come back after it reconnects; changes it made to existing records will be replaced by the backup.",
+  "backupRestoreRemovesScans": "{count, plural, =1{1 scan waiting for review will be removed.} other{{count} scans waiting for review will be removed.}}",
+  "@backupRestoreRemovesScans": {
+    "description": "Restore confirmation: the scans not saved yet on this computer, which the restore removes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiModelDeleteTitle": "Delete {name}?",
+  "aiModelDeleteMessage": "The model and its Deep Scan files are removed from this device. To scan with it again, you'll need to download it again (~{size} MB).",
+  "@aiModelDeleteTitle": {
+    "description": "Asks before deleting a downloaded AI model.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@aiModelDeleteMessage": {
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "processingNoPatientFound": "No patient found in the document. Enter the details.",
+  "@processingNoPatientFound": {
+    "description": "Shown on the review when the AI found no patient and the user fills the fields in."
+  },
+  "processingStopping": "Stopping…",
+  "@processingStopping": {
+    "description": "Shown after Cancel while the AI finishes stopping; Continue waits until it has."
+  },
+  "handoverTakenBack": "The phone took this document back.",
+  "@handoverTakenBack": {
+    "description": "Shown on the desktop when the phone takes back a document that was open for review."
+  },
+  "aiModelSwitchedToLiteTitle": "Now using the Lite model",
+  "@aiModelSwitchedToLiteTitle": {
+    "description": "Notification title when the selected AI model is replaced by Lite because the device lacks the memory for it."
+  },
+  "aiModelSwitchedToLiteMessage": "The {modelName} model needs more memory than this device has, so the Lite model is used.",
+  "@aiModelSwitchedToLiteMessage": {
+    "description": "Notification text when the selected AI model is replaced by Lite because the device lacks the memory for it.",
+    "placeholders": {
+      "modelName": {
+        "type": "String",
+        "example": "Advanced"
+      }
+    }
+  },
+  "backupSafetyRetention": "{count, plural, =1{Kept for 1 day} other{Kept for {count} days}}",
+  "@backupSafetyRetention": {
+    "description": "Desktop Backup card, under the backup folder: how many days the automatic copy made before every restore is kept.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSafetyRetentionTitle": "Copy made before a restore",
+  "@backupSafetyRetentionTitle": {
+    "description": "Desktop Backup card: heading of the section with how long the copy made before a restore is kept, like the Location heading above it."
+  },
+  "backupSafetyRetentionDaysUnit": "{count, plural, =1{day} other{days}}",
+  "@backupSafetyRetentionDaysUnit": {
+    "description": "The word after the number of days in the safety copy retention field.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSafetyRetentionHint": "Applies to existing copies too. Copies older than this are deleted now.",
+  "@backupSafetyRetentionHint": {
+    "description": "Desktop Backup card, under the retention field: the new value counts for copies already made, and copies older than it are deleted as soon as it is saved."
+  },
+  "backupSafetyRetentionInvalid": "Enter a whole number of days from {min} to {max}.",
+  "@backupSafetyRetentionInvalid": {
+    "description": "Desktop Backup card: the typed number of days isn't a whole number in the allowed range.",
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSafetyRetentionSaveFailed": "Couldn't save how long to keep the copy made before a restore. Please try again.",
+  "@backupSafetyRetentionSaveFailed": {
+    "description": "Desktop Backup card: saving the number of days the copy made before a restore is kept failed."
   }
 }

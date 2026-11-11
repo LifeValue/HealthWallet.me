@@ -95,12 +95,24 @@ void main() {
     },
   );
 
-  test('download cancelled notification is Romanian', () async {
-    final notification = await notificationFor(
-      AiModelDownloadStatus.cancelled,
-    );
+  test(
+    'a cancelled download removes its notification, with no error text',
+    () async {
+      bloc.add(
+        const LoadModelServiceStateChanged(
+          serviceState: AiModelDownloadState(
+            status: AiModelDownloadStatus.cancelled,
+            variant: variant,
+          ),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
 
-    expect(notification.text, ro.aiModelDownloadCancelledTitle);
-    expect(notification.description, ro.aiModelDownloadInterruptedMessage);
-  });
+      expect(notifications.events, [
+        NotificationRemovedById(
+          id: '${kAiModelDownloadNotificationId}_${variant.name}',
+        ),
+      ]);
+    },
+  );
 }

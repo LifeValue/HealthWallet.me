@@ -692,11 +692,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get processingFailedCapacity =>
-      'The document is too large for the current AI context size.';
+      'The document is too large for the current AI working memory.';
 
   @override
   String get processingFailedCapacitySuggestion =>
-      'Tap the settings icon above and increase the Context Size to 2048 or higher, then retry.';
+      'Tap the settings icon above and increase the Working memory to 2048 or higher, then retry.';
 
   @override
   String get increaseAiModelCapacity => 'Increase AI Capacity';
@@ -721,37 +721,37 @@ class AppLocalizationsEn extends AppLocalizations {
       'Adjust AI performance for your device. Recommended values are pre-selected.';
 
   @override
-  String get setAiTokensUsage => 'Set AI Tokens Usage';
+  String get setAiTokensUsage => 'Maximum answer length';
 
   @override
   String get tokenUsageDescription =>
-      'Control how much processing power the AI can use. Higher capacity allows larger files and more complex tasks, but uses more resources and takes longer.';
+      'The most the AI may write per step, while it lists the records it found in your document. Too short and some records get cut off; longer takes more time. It always fits inside the working memory.';
 
   @override
-  String get gpuLayersLabel => 'GPU Layers';
+  String get gpuLayersLabel => 'Graphics chip (GPU)';
 
   @override
   String get gpuLayersDescription =>
-      'Offload model layers to GPU for faster image processing. More layers = faster but uses more memory. Set to 0 if the app crashes.';
+      'How much of the AI runs on your device\'s graphics chip, which is faster than the main processor. Higher is faster but uses more memory. If the app closes or crashes during a scan, lower it, or set it to 0.';
 
   @override
-  String get threadsLabel => 'CPU Threads';
+  String get threadsLabel => 'Processor cores (CPU)';
 
   @override
   String get threadsDescription =>
-      'Number of CPU threads for inference. More threads = faster but uses more battery.';
+      'How many processor cores the AI uses at the same time. More is faster, but uses the battery quicker and can make the device warm.';
 
   @override
   String get recommended => 'Recommended';
 
   @override
-  String get tokenPresetLow => 'Low';
+  String get tokenPresetLow => 'Short';
 
   @override
   String get tokenPresetMedium => 'Medium';
 
   @override
-  String get tokenPresetHigh => 'High';
+  String get tokenPresetHigh => 'Long';
 
   @override
   String get tokenPresetCustom => 'Custom';
@@ -760,14 +760,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get setTokens => 'Set';
 
   @override
-  String get tokens => 'tokens';
-
-  @override
-  String get contextSizeLabel => 'Context Size';
+  String get contextSizeLabel => 'Working memory';
 
   @override
   String get contextSizeDescription =>
-      'Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory.';
+      'The AI\'s workspace for one step: space to read your document and write down what it finds. Bigger fits longer documents, but uses more of your device\'s memory. If scanning fails with \"not enough memory\", lower it.';
 
   @override
   String get useVisionLabel => 'Deep Scan';
@@ -1410,11 +1407,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get desktopRestoreBackupTitle => 'Restore Backup?';
 
   @override
-  String desktopRestoreBackupMessage(String name, int count) {
-    return 'This will replace all current data on this device with \"$name\".\n\n$count records will be restored.\n\nYour data on the paired phone will not be affected.';
-  }
-
-  @override
   String get desktopRestore => 'Restore';
 
   @override
@@ -1512,6 +1504,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get attachedDocuments => 'Attached Documents';
+
+  @override
+  String documentAttachedTo(String visit) {
+    return 'Attached to $visit.';
+  }
 
   @override
   String get cameraPermissionRequired => 'Camera Permission Required';
@@ -2521,9 +2518,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get desktopBackupFailed => 'Backup failed. Please try again.';
 
   @override
-  String get desktopRestoreFailed => 'Restore failed. Please try again.';
-
-  @override
   String get desktopBackupActionFailed =>
       'Could not update the backups. Please try again.';
 
@@ -2880,17 +2874,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiModelDownloadFailed => 'Download failed';
-
-  @override
-  String get aiModelDownloadCancelledTitle => 'Download Cancelled';
-
-  @override
-  String get aiModelDownloadInterruptedMessage =>
-      'The download was interrupted. Please try again.';
-
-  @override
-  String get aiModelDownloadCancelledNotificationTitle =>
-      'AI Model Download Cancelled';
 
   @override
   String get aiModelDownloadWasCancelled => 'AI model download was cancelled';
@@ -4672,4 +4655,139 @@ class AppLocalizationsEn extends AppLocalizations {
   String handoverDraftSavedOnPhone(String origin) {
     return '$origin was saved on the phone. Any changes made here to its draft were not kept.';
   }
+
+  @override
+  String failedToSaveSetting(String setting) {
+    return 'Couldn\'t save “$setting”. Try again.';
+  }
+
+  @override
+  String get processingFailedMemory =>
+      'Not enough free memory to run the AI model. Close other apps and try again, or turn off Deep Scan in AI Settings.';
+
+  @override
+  String get tokenPresetLowHint => 'a few values';
+
+  @override
+  String get tokenPresetMediumHint => 'a short report';
+
+  @override
+  String get tokenPresetHighHint => 'a full report';
+
+  @override
+  String get backupRecordsOnly => 'Records only';
+
+  @override
+  String backupRestoreConfirmPointInTime(String date) {
+    return 'This replaces your records on this computer and on your paired phone with the backup from $date. Records added since then are removed. A “Before restore” copy of your current data is saved first and kept for 30 days, so you can undo this.';
+  }
+
+  @override
+  String get backupOldNoFiles =>
+      'This backup has no files. Records will be restored and your current files kept.';
+
+  @override
+  String backupSafetyName(String date) {
+    return 'Before restore $date';
+  }
+
+  @override
+  String get backupRestoreFailed =>
+      'Restore failed. Your data was not changed; the \"Before restore\" backup is in the list.';
+
+  @override
+  String get backupSafetyFailed =>
+      'Couldn\'t make a safety backup, so nothing was restored. Check free space and the backup folder.';
+
+  @override
+  String backupFilesNotRestored(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files couldn\'t be restored.',
+      one: '1 file couldn\'t be restored.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupRestorePhoneOffline =>
+      'Your phone isn\'t connected. Records added on it since its last sync will come back after it reconnects; changes it made to existing records will be replaced by the backup.';
+
+  @override
+  String backupRestoreRemovesScans(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count scans waiting for review will be removed.',
+      one: '1 scan waiting for review will be removed.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aiModelDeleteTitle(String name) {
+    return 'Delete $name?';
+  }
+
+  @override
+  String aiModelDeleteMessage(int size) {
+    return 'The model and its Deep Scan files are removed from this device. To scan with it again, you\'ll need to download it again (~$size MB).';
+  }
+
+  @override
+  String get processingNoPatientFound =>
+      'No patient found in the document. Enter the details.';
+
+  @override
+  String get processingStopping => 'Stopping…';
+
+  @override
+  String get handoverTakenBack => 'The phone took this document back.';
+
+  @override
+  String get aiModelSwitchedToLiteTitle => 'Now using the Lite model';
+
+  @override
+  String aiModelSwitchedToLiteMessage(String modelName) {
+    return 'The $modelName model needs more memory than this device has, so the Lite model is used.';
+  }
+
+  @override
+  String backupSafetyRetention(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Kept for $count days',
+      one: 'Kept for 1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSafetyRetentionTitle => 'Copy made before a restore';
+
+  @override
+  String backupSafetyRetentionDaysUnit(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'days',
+      one: 'day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSafetyRetentionHint =>
+      'Applies to existing copies too. Copies older than this are deleted now.';
+
+  @override
+  String backupSafetyRetentionInvalid(int min, int max) {
+    return 'Enter a whole number of days from $min to $max.';
+  }
+
+  @override
+  String get backupSafetyRetentionSaveFailed =>
+      'Couldn\'t save how long to keep the copy made before a restore. Please try again.';
 }

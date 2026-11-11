@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/processing/data/data_source/local/processing_local_data_source.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
 import 'package:health_wallet/features/processing/data/repository/ai_extraction_repository.dart';
@@ -35,9 +36,12 @@ class ProcessingRepositoryImpl extends Object
   final TextRecognitionService _textRecognitionService;
   final PathResolver _pathResolver;
 
-  bool _isStreamActive = false;
-  Completer<void>? _streamCompleter;
-  bool _shouldCancelGeneration = false;
+  /// AI runs started and not yet ended, oldest first. Each waits for the
+  /// one before it, so two never share the engine.
+  final List<_AiRun> _runs = [];
+
+  /// The run that holds the engine.
+  _AiRun? _activeRun;
 
   @override
   AiInferenceDataSource get networkDataSource => _networkDataSource;
@@ -45,8 +49,40 @@ class ProcessingRepositoryImpl extends Object
   @override
   TextRecognitionService get textRecognitionService => _textRecognitionService;
 
+  /// Whether the run holding the engine was cancelled; false between runs.
   @override
-  bool get shouldCancelGeneration => _shouldCancelGeneration;
+  bool get shouldCancelGeneration => _activeRun?.cancelled ?? false;
+
+  /// Registers a run behind the ones still running; [_takeTurn] waits for
+  /// them and [_endRun] lets the next one start.
+  _AiRun _enqueueRun() {
+    final run = _AiRun(_runs.lastOrNull);
+    _runs.add(run);
+    return run;
+  }
+
+  Future<void> _takeTurn(_AiRun run) async {
+    await run.previous?.ended;
+    run.previous = null;
+    _activeRun = run;
+  }
+
+  void _endRun(_AiRun run) {
+    if (identical(_activeRun, run)) _activeRun = null;
+    _runs.remove(run);
+    run.end();
+  }
+
+  /// Runs [body] in its turn, after the AI runs started before it.
+  Future<T> _inTurn<T>(Future<T> Function() body) async {
+    final run = _enqueueRun();
+    try {
+      await _takeTurn(run);
+      return await body();
+    } finally {
+      _endRun(run);
+    }
+  }
 
   @override
   Future<List<String>> scanDocuments() async {
@@ -310,8 +346,13 @@ class ProcessingRepositoryImpl extends Object
   @override
   Future<int> deleteProcessingSession(ProcessingSession session) async {
     for (final filePath in session.filePaths) {
-      final absolutePath = await _pathResolver.toAbsolute(filePath);
-      File(absolutePath).delete().ignore();
+      try {
+        final file = File(await _pathResolver.toAbsolute(filePath));
+        if (await file.exists()) await file.delete();
+      } catch (e, s) {
+        // The session goes anyway; a leftover file only takes space.
+        logger.w('Deleting a file of session ${session.id} failed', e, s);
+      }
     }
 
     return _localDataSource.deleteProcessingSession(session.id);
@@ -346,28 +387,14 @@ class ProcessingRepositoryImpl extends Object
   }
 
   @override
-  Stream<double> downloadModelForVariant(AiModelVariant variant) {
-    final controller = StreamController<double>();
-
-    _networkDataSource
-        .downloadModelForVariant(
+  Stream<double> downloadModelForVariant(AiModelVariant variant) =>
+      _cancellableDownload(
+        (onProgress) => _networkDataSource.downloadModelForVariant(
           variant,
-          onProgress: (progress) {
-            if (!controller.isClosed) {
-              controller.add(progress.toDouble());
-            }
-          },
-        )
-        .then((_) {
-          controller.close();
-        })
-        .catchError((error) {
-          controller.addError(error);
-          controller.close();
-        });
-
-    return controller.stream;
-  }
+          onProgress: onProgress,
+        ),
+        cancel: () => _networkDataSource.cancelModelDownloadForVariant(variant),
+      );
 
   @override
   Future<bool> checkModelExistenceForVariant(AiModelVariant variant) async {
@@ -380,25 +407,50 @@ class ProcessingRepositoryImpl extends Object
   }
 
   @override
-  Stream<double> downloadMmprojForVariant(AiModelVariant variant) {
-    final controller = StreamController<double>();
-
-    _networkDataSource
-        .downloadMmprojForVariant(
+  Stream<double> downloadMmprojForVariant(AiModelVariant variant) =>
+      _cancellableDownload(
+        (onProgress) => _networkDataSource.downloadMmprojForVariant(
           variant,
-          onProgress: (progress) {
-            if (!controller.isClosed) {
-              controller.add(progress.toDouble());
-            }
-          },
-        )
-        .then((_) {
-          controller.close();
-        })
-        .catchError((error) {
-          controller.addError(error);
-          controller.close();
-        });
+          onProgress: onProgress,
+        ),
+        cancel: () =>
+            _networkDataSource.cancelMmprojDownloadForVariant(variant),
+      );
+
+  /// Progress of the download [start] begins. Cancelling the subscription
+  /// stops that transfer through [cancel], and the cancel completes once the
+  /// transfer has ended and its partial file is gone.
+  Stream<double> _cancellableDownload(
+    Future<void> Function(void Function(int) onProgress) start, {
+    required Future<void> Function() cancel,
+  }) {
+    // Set once the transfer has ended, so a late cancel (onCancel also runs
+    // after the done event) never reaches a newer transfer of the same file.
+    var ended = false;
+    final controller = StreamController<double>(
+      onCancel: () async {
+        if (ended) return;
+        try {
+          await cancel();
+        } catch (e, s) {
+          logger.e('Could not cancel the model download', e, s);
+        }
+      },
+    );
+
+    start((progress) {
+      if (!controller.isClosed) controller.add(progress.toDouble());
+    }).then(
+      (_) {
+        ended = true;
+        controller.close();
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        ended = true;
+        controller.addError(error, stackTrace);
+        controller.close();
+      },
+    );
 
     return controller.stream;
   }
@@ -416,16 +468,35 @@ class ProcessingRepositoryImpl extends Object
     int? threads,
     int? contextSize,
     ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
-  }) async {
-    return processMapBasicInfo(
+  }) => _inTurn(
+    () => processMapBasicInfo(
       imagePaths,
       maxTokens: maxTokens,
       gpuLayers: gpuLayers,
       threads: threads,
       contextSize: contextSize,
       outputMode: outputMode,
-    );
-  }
+    ),
+  );
+
+  @override
+  Future<MappingResource> mapContainerOnly(
+    String ocrText, {
+    int? maxTokens,
+    int? gpuLayers,
+    int? threads,
+    int? contextSize,
+    ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
+  }) => _inTurn(
+    () => super.mapContainerOnly(
+      ocrText,
+      maxTokens: maxTokens,
+      gpuLayers: gpuLayers,
+      threads: threads,
+      contextSize: contextSize,
+      outputMode: outputMode,
+    ),
+  );
 
   @override
   Stream<MappingResourcesWithProgress> mapRemainingResources(
@@ -438,11 +509,9 @@ class ProcessingRepositoryImpl extends Object
     int? contextSize,
     ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
   }) async* {
+    final run = _enqueueRun();
     try {
-      _isStreamActive = true;
-      _streamCompleter = Completer<void>();
-      _shouldCancelGeneration = false;
-
+      await _takeTurn(run);
       yield* processMapRemainingResources(
         imagePaths,
         documentCategory: documentCategory,
@@ -454,28 +523,58 @@ class ProcessingRepositoryImpl extends Object
         outputMode: outputMode,
       );
     } finally {
-      await disposeModel();
-
-      _isStreamActive = false;
-      _shouldCancelGeneration = false;
-      _streamCompleter?.complete();
+      try {
+        await disposeModelInRun();
+      } finally {
+        _endRun(run);
+      }
     }
   }
 
+  /// Waits for the AI runs started so far to end; a run started later is
+  /// not waited for.
   @override
   Future<void> waitForStreamCompletion() async {
-    if (_isStreamActive &&
-        _streamCompleter != null &&
-        !_streamCompleter!.isCompleted) {
-      await _streamCompleter!.future;
-    }
+    final last = _runs.lastOrNull;
+    if (last != null) await last.ended;
   }
 
+  /// Cancels the AI runs started so far, the one holding the engine and the
+  /// ones waiting for it, and stops the running generation. A run started
+  /// later is not affected.
   @override
   Future<void> cancelGeneration() async {
-    _shouldCancelGeneration = true;
+    if (_runs.isEmpty) return;
+    for (final run in _runs) {
+      run.cancelled = true;
+    }
+    _networkDataSource.cancelGeneration();
   }
 
+  /// Waits for the AI runs started so far, so a run that is using the
+  /// engine (another session's, say) keeps it until it ends.
   @override
-  Future disposeModel() => _networkDataSource.disposeModel();
+  Future disposeModel() => _inTurn(_networkDataSource.disposeModel);
+
+  @override
+  Future<void> disposeModelInRun() => _networkDataSource.disposeModel();
+}
+
+/// One call that uses the AI engine: a patient step, a container-only step or
+/// a records stream.
+class _AiRun {
+  _AiRun(this.previous);
+
+  /// The run started before this one, until this one's turn has come.
+  _AiRun? previous;
+
+  bool cancelled = false;
+
+  final _ended = Completer<void>();
+
+  Future<void> get ended => _ended.future;
+
+  void end() {
+    if (!_ended.isCompleted) _ended.complete();
+  }
 }

@@ -31,7 +31,7 @@ Patient-controlled health record app in Flutter: FHIR R4 records from providers 
 - Run `scripts/check.sh` before pushing: it runs the formatters on the files the branch changed since `develop`, then `fvm flutter analyze` and `fvm flutter test`, and must pass with no issues, infos included. Run `pre-commit run --all-files` only after changing a formatter's configuration. CI enforces the same and more: `checks` (dart format, analyze, test), `lint` (formatters and commitlint on the changed files), `scan:dependencies` (osv-scanner on every lockfile) and `scan:secrets` (gitleaks over the commits the branch adds) run in parallel, and any failure fails the pipeline. A dependency with a known vulnerability is updated, not ignored.
 - `scripts/coverage.sh` prints test coverage for the whole app, each feature and the critical areas listed in `tool/coverage_report.dart` (`--files <dir>` for per-file numbers). Coverage is not a CI gate, but new code in a critical area comes with tests.
 - Fix lints rather than silencing them; when a rule is wrong for one line, use `// ignore: <rule>` with a comment saying why. Never write an empty `catch`: log the error with `logger` or comment why it is safe to ignore.
-- `pub get` needs SSH access to `git.techstackapps.com` for `fhir_ips_export` and `airdrop`; if it fails, tell the user rather than removing or stubbing the dependency.
+- `pub get` needs SSH access to `git.lifevalue.com` for `fhir_ips_export` and `airdrop`; if it fails, tell the user rather than removing or stubbing the dependency.
 
 ## Conventions that differ from defaults
 

@@ -19,6 +19,7 @@ import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
+import 'package:health_wallet/features/dashboard/presentation/helpers/dashboard_tab.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
@@ -91,10 +92,14 @@ class _RecordsViewState extends State<RecordsView> {
 
     final scope = _scope(context);
 
-    // One event sets the scope and the default filters together, so the
-    // Attachments view never loads with the filters but not the scope.
+    // One event sets the scope and the person's saved filters together, so
+    // the Attachments view never loads with the filters but not the scope.
     context.read<RecordsBloc>().add(
-      RecordsSourceChanged(scope.sourceId, sourceIds: scope.sourceIds),
+      RecordsSourceChanged(
+        scope.sourceId,
+        sourceIds: scope.sourceIds,
+        personId: scope.personId,
+      ),
     );
 
     final currentFilters = context.read<RecordsBloc>().state.activeFilters;
@@ -102,9 +107,7 @@ class _RecordsViewState extends State<RecordsView> {
         .read<RecordsBloc>()
         .state
         .activeSpecialties;
-    final attachmentFilters =
-        widget.initFilters ??
-        (currentSpecialties.isNotEmpty ? <FhirType>[] : currentFilters);
+    final attachmentFilters = widget.initFilters ?? currentFilters;
     context.read<AttachmentBrowseBloc>().add(
       AttachmentBrowseInitialised(
         sourceId: scope.sourceId,
@@ -141,9 +144,16 @@ class _RecordsViewState extends State<RecordsView> {
     _updateSwipeState();
   }
 
+  bool _wasOnRecords = false;
+
   void _updateSwipeState() {
     final nav = getIt<PageViewNavigationController>();
     final isOnRecords = nav.currentPage == 1;
+    // Leaving Records ends a visit a Home card filtered.
+    if (_wasOnRecords && !isOnRecords) {
+      context.read<RecordsBloc>().add(RecordsVisitEnded());
+    }
+    _wasOnRecords = isOnRecords;
     nav.swipeEnabledNotifier.value =
         !isOnRecords || _viewMode == RecordsViewMode.recordsList;
   }
@@ -166,9 +176,15 @@ class _RecordsViewState extends State<RecordsView> {
 
   /// Whose records to show: the selection's source filter, or the selected
   /// person's sources (see `HolderScope.sourceIds`).
-  ({String? sourceId, List<String>? sourceIds}) _scope(BuildContext context) {
+  ({String? sourceId, List<String>? sourceIds, String? personId}) _scope(
+    BuildContext context,
+  ) {
     final scope = context.read<HomeBloc>().state.scope;
-    return (sourceId: scope.sourceFilter, sourceIds: scope.sourceIds);
+    return (
+      sourceId: scope.sourceFilter,
+      sourceIds: scope.sourceIds,
+      personId: scope.holder?.id,
+    );
   }
 
   /// Shows the records of the current scope again, in both views: after the
@@ -176,7 +192,11 @@ class _RecordsViewState extends State<RecordsView> {
   void _reloadRecords(BuildContext context, {bool attachments = true}) {
     final scope = _scope(context);
     context.read<RecordsBloc>().add(
-      RecordsSourceChanged(scope.sourceId, sourceIds: scope.sourceIds),
+      RecordsSourceChanged(
+        scope.sourceId,
+        sourceIds: scope.sourceIds,
+        personId: scope.personId,
+      ),
     );
     if (attachments) {
       _reloadAttachmentBrowse(
@@ -258,6 +278,10 @@ class _RecordsViewState extends State<RecordsView> {
     super.dispose();
   }
 
+  /// The Import page: the desktop has no Scan page, so it sits earlier.
+  int get _importTab =>
+      DashboardTab.import(isDesktop: getIt<AppPlatform>().isDesktop);
+
   Future<void> _handleImportDocument() async {
     try {
       await Future.delayed(const Duration(milliseconds: 100));
@@ -286,7 +310,9 @@ class _RecordsViewState extends State<RecordsView> {
           context.read<ProcessingBloc>().add(
             DocumentImported(filePaths: validPaths),
           );
-          unawaited(getIt<PageViewNavigationController>().navigateToPage(3));
+          unawaited(
+            getIt<PageViewNavigationController>().navigateToPage(_importTab),
+          );
         }
       }
     } catch (e) {
@@ -311,7 +337,9 @@ class _RecordsViewState extends State<RecordsView> {
         context.read<ProcessingBloc>().add(
           DocumentImported(filePaths: validPaths),
         );
-        unawaited(getIt<PageViewNavigationController>().navigateToPage(3));
+        unawaited(
+          getIt<PageViewNavigationController>().navigateToPage(_importTab),
+        );
       }
     } catch (e) {
       logger.e('Could not import the picked images', e);
@@ -330,7 +358,7 @@ class _RecordsViewState extends State<RecordsView> {
 
   void _handleScanDocument() {
     final navController = getIt<PageViewNavigationController>();
-    navController.navigateToPage(2);
+    navController.navigateToPage(DashboardTab.scan);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(milliseconds: 100), () async {
         final cameraStatus = await Permission.camera.request();
@@ -667,7 +695,10 @@ class _RecordsViewState extends State<RecordsView> {
                   pageController: widget.pageController,
                   onImportDocument: _handleImportDocument,
                   onPickImage: _handlePickImage,
-                  onScanDocument: _handleScanDocument,
+                  // The desktop has no scanner.
+                  onScanDocument: getIt<AppPlatform>().isDesktop
+                      ? null
+                      : _handleScanDocument,
                 );
               },
             ),

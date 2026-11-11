@@ -108,7 +108,9 @@ class SyncStatusCard extends StatelessWidget {
                 : context.l10n.desktopSyncNow,
             onPressed: isConnected && !isSyncing
                 ? () {
-                    context.read<LwwSyncBloc>().add(const SyncTriggered());
+                    context.read<LwwSyncBloc>().add(
+                      const SyncTriggered(userRequested: true),
+                    );
                   }
                 : null,
             height: 36,

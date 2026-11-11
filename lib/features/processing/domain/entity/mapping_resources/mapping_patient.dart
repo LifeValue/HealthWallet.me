@@ -148,10 +148,7 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
       birthDate: dateOfBirth.value.isNotEmpty
           ? fhir_r4.FhirDate.fromString(dateOfBirth.value)
           : null,
-      // An empty code is not valid FHIR and would fail the save.
-      gender: gender.value.isEmpty
-          ? null
-          : fhir_r4.AdministrativeGender(gender.value),
+      gender: _toFhirGender(gender.value),
       identifier: [
         if (patientIdentifier.value.isNotEmpty)
           fhir_r4.Identifier(
@@ -293,6 +290,16 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
     patientIdentifier: patientIdentifier.calculateConfidence(inputText),
   );
 
+  /// The AI may leave the gender empty (the phase-1 schema allows `''`) or
+  /// write something that is not a FHIR code; both mean "no gender", so the
+  /// field is left out rather than guessed. `AdministrativeGender('')` throws.
+  static fhir_r4.AdministrativeGender? _toFhirGender(String value) {
+    final code = value.trim().toLowerCase();
+    return const {'male', 'female', 'other', 'unknown'}.contains(code)
+        ? fhir_r4.AdministrativeGender(code)
+        : null;
+  }
+
   static String? _mapLabelToFhirCode(String label) {
     switch (label.toUpperCase()) {
       case 'MRN':
@@ -321,6 +328,13 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
         return null;
     }
   }
+
+  /// Whether a name or an identifier says who the patient is. A patient
+  /// read from a document without one is no patient found.
+  bool get isIdentified =>
+      familyName.value.isNotEmpty ||
+      givenName.value.isNotEmpty ||
+      patientIdentifier.value.isNotEmpty;
 
   @override
   bool get isValid =>

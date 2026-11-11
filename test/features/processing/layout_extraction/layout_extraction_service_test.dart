@@ -5,12 +5,32 @@ import 'package:health_wallet/features/holders/domain/services/holder_service.da
 import 'package:health_wallet/features/processing/data/extractors/clearvis/clearvis_io_extractor.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extractor.dart';
 import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extractor_registry.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 
+import '../../../helpers/log_capture.dart';
 import 'clearvis_io_extractor_test.dart' show fixture;
+
+/// Claims every document, then fails reading it.
+class _ThrowingExtractor implements LayoutExtractor {
+  const _ThrowingExtractor();
+
+  @override
+  String get id => 'throwing';
+
+  @override
+  int get version => 1;
+
+  @override
+  double score(String ocrText) => 1;
+
+  @override
+  LayoutExtraction? extract(String ocrText) =>
+      throw const FormatException('unexpected layout');
+}
 
 class _Model extends Fake implements ProcessingRepository {
   _Model(this.exists);
@@ -30,6 +50,7 @@ class _Ocr extends Fake implements OcrProcessingHelper {
   @override
   Future<List<String>> prepareAllImages({
     required List<String> filePaths,
+    double dpi = 72,
   }) async {
     if (prepareFails) throw const FileSystemException('unreadable PDF');
     return filePaths;
@@ -47,6 +68,7 @@ class _Holders extends Fake implements HolderService {}
 class _Records extends Fake implements RecordsRepository {}
 
 void main() {
+  final logs = captureLogs();
   setUpAll(
     () => ProcessingLogBuffer.debugOverrideInstance(
       ProcessingLogBuffer.forTesting(
@@ -109,5 +131,18 @@ void main() {
     expect(await s.ocrText('s', ['/p1']), recognised);
     expect(await s.ocrText('s', ['/p1']), recognised);
     expect(ocr.calls, 2);
+  });
+
+  test('an extractor that fails is logged, and the AI reads the document', () {
+    final s = LayoutExtractionService(
+      _Model(true),
+      _Ocr(recognised),
+      LayoutExtractorRegistry(const [_ThrowingExtractor()]),
+      _Holders(),
+      _Records(),
+    );
+
+    expect(s.extract(recognised), isNull);
+    expect(logs, loggedWarning('[LayoutExtraction] throwing failed'));
   });
 }

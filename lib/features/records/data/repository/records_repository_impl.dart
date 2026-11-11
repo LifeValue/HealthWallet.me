@@ -10,7 +10,6 @@ import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart'
 import 'package:health_wallet/core/constants/blood_types.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/data/local/soft_delete.dart';
-import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/data/data_source/fhir_resource_datasource.dart';
@@ -23,7 +22,6 @@ import 'package:health_wallet/features/sync/data/data_source/local/sync_local_da
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/features/sync/domain/services/demo_data_extractor.dart';
 import 'package:injectable/injectable.dart';
-import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -34,13 +32,11 @@ class RecordsRepositoryImpl implements RecordsRepository {
   final SyncLocalDataSource _syncLocalDataSource;
   final AppDatabase _database;
   final SharedNotesDatasource _sharedNotes;
-  final PathResolver _pathResolver;
 
   RecordsRepositoryImpl(
     this._database,
     this._syncLocalDataSource,
     this._sharedNotes,
-    this._pathResolver,
   ) : _datasource = FhirResourceDatasource(_database);
 
   @override
@@ -266,11 +262,11 @@ class RecordsRepositoryImpl implements RecordsRepository {
       _deleteRecords(ids.toSet());
 
   /// Deletes the records [ids] with what belongs to them: their notes and the
-  /// documents attached only to them; then the attachment files no remaining
-  /// record uses.
+  /// documents attached only to them. Their attachment files stay on the
+  /// device, so undoing the delete or a restore opens them again; the 30-day
+  /// tombstone purge deletes the files no other row refers to.
   Future<void> _deleteRecords(Set<String> ids) async {
     if (ids.isEmpty) return;
-    final fileUrls = <String>{};
 
     await _database.transaction(() async {
       final rows = await (_database.select(
@@ -279,18 +275,10 @@ class RecordsRepositoryImpl implements RecordsRepository {
       final attached = await _documentsAttachedOnlyTo(rows, ids);
       final allIds = {...ids, ...attached.map((r) => r.id)};
 
-      for (final row in [...rows, ...attached]) {
-        fileUrls.addAll(_attachmentFileUrls(row.resourceRaw));
-      }
-
       // Tombstones the records and their notes, so the delete reaches the
       // paired device.
       await _datasource.deleteResourcesByIds(allIds.toList());
     });
-
-    for (final url in fileUrls) {
-      await _deleteFileIfUnused(url);
-    }
   }
 
   /// DocumentReferences attached (`context.related`) to [rows] and to no
@@ -366,36 +354,12 @@ class RecordsRepositoryImpl implements RecordsRepository {
     }
   }
 
-  /// Deletes the file behind [url] unless another record still refers to it
-  /// (two attachments can share a file) or it lies outside the app's
-  /// documents, where a URL synced from another device could point.
-  Future<void> _deleteFileIfUnused(String url) async {
-    try {
-      final stillUsed = await _database
-          .customSelect(
-            'SELECT 1 FROM fhir_resource WHERE instr(resource_raw, ?) > 0 '
-            'AND deleted_at IS NULL LIMIT 1',
-            variables: [Variable.withString(url)],
-            readsFrom: {_database.fhirResource},
-          )
-          .get();
-      if (stillUsed.isNotEmpty) return;
-
-      final docsPath = p.normalize(await _pathResolver.getDocumentsPath());
-      final path = p.normalize(
-        await _pathResolver.toAbsolute(Uri.decodeComponent(url.substring(7))),
-      );
-      if (!p.isWithin(docsPath, path) ||
-          p.basename(path).toLowerCase().startsWith('db.sqlite')) {
-        return;
-      }
-      final file = File(path);
-      if (await file.exists()) await file.delete();
-    } catch (e, s) {
-      // The record is gone either way; a leftover file is only disk space.
-      logger.w('Deleting an attachment file failed', e, s);
-    }
-  }
+  /// Deletes no file: a deleted record keeps its attachment files for the 30
+  /// days its tombstone lives, so undo and restore still find them. The
+  /// tombstone purge (`LwwSyncService.cleanupTombstones`) and the start-up
+  /// sweep delete the files no row refers to. Kept only because
+  /// [clearDemoData] calls it.
+  Future<void> _deleteFileIfUnused(String url) async {}
 
   @override
   Future<void> deleteResourceWithRelated(String resourceId) async {

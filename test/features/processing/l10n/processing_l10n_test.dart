@@ -26,6 +26,8 @@ import 'package:health_wallet/features/records/domain/repository/records_reposit
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../helpers/fake_device_capability_service.dart';
+
 final _en = lookupAppLocalizations(const Locale('en'));
 final _de = lookupAppLocalizations(const Locale('de'));
 final _ro = lookupAppLocalizations(const Locale('ro'));
@@ -56,6 +58,7 @@ class _FakeOcrProcessingHelper extends Fake implements OcrProcessingHelper {
   @override
   Future<List<String>> prepareAllImages({
     required List<String> filePaths,
+    double dpi = 72,
   }) async {
     if (error != null) throw error!;
     return filePaths;
@@ -96,6 +99,7 @@ Future<ProcessingBloc> _bloc({
       _FakeHolderService(),
       _FakeRecordsRepository(),
     ),
+    FakeDeviceCapabilityService(),
   );
 }
 

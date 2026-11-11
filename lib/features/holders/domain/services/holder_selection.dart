@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:health_wallet/features/holders/domain/entity/holder.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
+import 'package:health_wallet/features/records/domain/services/records_filter_store.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -49,13 +50,17 @@ class HolderScope {
 
 /// Owns the selection and keeps it: the person by holder id, the source
 /// filter by source id. Reading the people again ([refresh]) keeps both
-/// while they still exist.
+/// while they still exist, and forgets the Records filters of anyone who no
+/// longer does.
 @lazySingleton
 class HolderSelection {
-  HolderSelection(this._holders, this._prefs);
+  HolderSelection(this._holders, this._prefs, [this._recordsFilters]);
 
   final HolderService _holders;
   final SharedPreferences _prefs;
+
+  /// Without it (tests), no saved Records filters are forgotten.
+  final RecordsFilterStore? _recordsFilters;
 
   static const _holderKey = 'selected_holder_id';
 
@@ -75,6 +80,9 @@ class HolderSelection {
   /// sync, a scan, an edit, an answer, a delete.
   Future<HolderScope> refresh() async {
     final directory = await _holders.load();
+    await _recordsFilters?.forgetAllBut({
+      for (final holder in directory.holders) holder.id,
+    });
     final saved =
         _prefs.getString(_holderKey) ?? _prefs.getString(_legacyPatientKey);
     final holder =

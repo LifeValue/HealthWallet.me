@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/services/device_capability_service.dart'
+    as core;
 import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -185,6 +187,12 @@ class AiModelConfig {
     _ => description,
   };
 
+  /// Whether this model runs only where
+  /// `DeviceCapabilityService.supportsAdvancedModel` says so: the Advanced
+  /// model and the retired Medical one, of the same size.
+  bool get needsAdvancedSupport =>
+      variant == AiModelVariant.qwen35x4b || variant == AiModelVariant.medGemma;
+
   static List<AiModelConfig> get availableVariants {
     if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) {
       return [qwen, qwen35x4b, qwen7b];
@@ -243,9 +251,14 @@ class AiModelConfig {
   }
 
   static AiModelVariant recommendedVariant(DeviceProfile profile) {
+    // A phone or tablet is recommended Advanced exactly where it is offered.
     if (!profile.isDesktop) {
-      if (profile.ramMB >= 6144) return AiModelVariant.qwen35x4b;
-      return AiModelVariant.qwen;
+      return core.DeviceCapabilityService.supportsAdvancedModelFor(
+            profile.ramMB,
+            platform: profile.platform,
+          )
+          ? AiModelVariant.qwen35x4b
+          : AiModelVariant.qwen;
     }
 
     if (profile.gpuType == GpuType.appleSilicon) {

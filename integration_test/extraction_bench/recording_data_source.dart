@@ -221,6 +221,9 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
   Future<void> disposeModel() => _inner.disposeModel();
 
   @override
+  void cancelGeneration() => _inner.cancelGeneration();
+
+  @override
   Future<({int availableMB, int requiredMB, bool canProceed})>
   checkMemoryHealth({
     bool withVision = true,
@@ -250,6 +253,14 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
   @override
   Future<void> deleteModelForVariant(AiModelVariant variant) =>
       _inner.deleteModelForVariant(variant);
+
+  @override
+  Future<void> cancelModelDownloadForVariant(AiModelVariant variant) =>
+      _inner.cancelModelDownloadForVariant(variant);
+
+  @override
+  Future<void> cancelMmprojDownloadForVariant(AiModelVariant variant) =>
+      _inner.cancelMmprojDownloadForVariant(variant);
 
   @override
   Future<void> downloadModel({required void Function(int) onProgress}) =>

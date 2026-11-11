@@ -144,9 +144,10 @@ class DocumentReferenceService {
 
     // A scan's documents get the same ids every time its session is saved,
     // on either device: a handed-over document saved on the phone and on the
-    // desktop is one record, not two.
+    // desktop is one record, not two. Without a session, a uuid, so two
+    // documents saved in the same millisecond get two rows.
     final documentReferenceId = sessionId == null
-        ? _generateId()
+        ? const Uuid().v4()
         : sessionDocumentId(sessionId, index);
 
     final List<fhir_r4.Reference>? encounterReferences = encounter != null
@@ -198,7 +199,7 @@ class DocumentReferenceService {
       identifier: [
         fhir_r4.Identifier(
           system: fhir_r4.FhirUri('http://healthwallet.me/document-id'),
-          value: fhir_r4.FhirString(_generateId()),
+          value: fhir_r4.FhirString(documentReferenceId),
           use: fhir_r4.IdentifierUse.usual,
         ),
         if (sessionId != null)
@@ -366,8 +367,4 @@ class DocumentReferenceService {
         Namespace.url.value,
         'http://healthwallet.me/session/$sessionId/document/$index',
       );
-
-  String _generateId() {
-    return DateTime.now().millisecondsSinceEpoch.toString();
-  }
 }

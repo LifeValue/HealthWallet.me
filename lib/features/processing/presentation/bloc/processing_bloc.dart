@@ -10,10 +10,13 @@ import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
+import 'package:health_wallet/features/processing/domain/ai_settings_reset.dart';
+import 'package:health_wallet/features/processing/domain/deep_scan_defaults.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
@@ -51,6 +54,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   final SharedPreferences _prefs;
   final AppStringsProvider _strings;
   final LayoutExtractionService _layoutExtraction;
+  final DeviceCapabilityService _deviceCapabilityService;
 
   @override
   ProcessingRepository get processingRepository => _repository;
@@ -83,6 +87,10 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   @override
   LayoutExtractionService get layoutExtraction => _layoutExtraction;
 
+  @override
+  DeviceCapabilityService get deviceCapabilityService =>
+      _deviceCapabilityService;
+
   final Set<String> _haltedHandovers = {};
 
   @override
@@ -99,13 +107,18 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     this._prefs,
     this._strings,
     this._layoutExtraction,
+    this._deviceCapabilityService,
   ) : super(const ProcessingState()) {
-    on<ProcessingInitialised>(onProcessingInitialised);
+    on<ProcessingInitialised>(
+      onProcessingInitialised,
+      transformer: sequential(),
+    );
     on<CaptureButtonPressed>(onCaptureButtonPressed);
     on<DocumentImported>(onDocumentImported);
     on<SessionChangedProgress>(onSessionChangedProgress);
-    on<SessionCleared>(onSessionCleared);
-    on<SessionActivated>(onSessionActivated);
+    // Concurrent: opening one session must not wait for another's pages.
+    on<SessionCleared>(onSessionCleared, transformer: concurrent());
+    on<SessionActivated>(onSessionActivated, transformer: concurrent());
     on<MappingInitiated>(onMappingInitiated, transformer: restartable());
     on<ResourceChanged>(onResourceChanged);
     on<PatientReverted>(onPatientReverted);
@@ -115,12 +128,20 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     on<MappingCancelled>(onMappingCancelled);
     on<ResourcesAdded>(onResourcesAdded);
     on<EncounterAttached>(onEncounterAttached);
-    on<ProcessRemainingResources>(onProcessRemainingResources);
+    on<ProcessRemainingResources>(
+      onProcessRemainingResources,
+      transformer: concurrent(),
+    );
     on<DocumentAttached>(onDocumentAttached);
-    on<TokenCapacityUpdated>(onTokenCapacityUpdated);
-    on<VisionToggled>(onVisionToggled);
-    on<PagesReordered>(onPagesReordered);
+    on<TokenCapacityUpdated>(
+      onTokenCapacityUpdated,
+      transformer: sequential(),
+    );
+    on<VisionToggled>(onVisionToggled, transformer: sequential());
+    on<PagesReordered>(onPagesReordered, transformer: sequential());
     on<ContainerTypeSwitched>(_onContainerTypeSwitched);
+    on<PageRotated>(onPageRotated, transformer: sequential());
+    on<OcrPagesReleased>(onOcrPagesReleased, transformer: sequential());
     on<SessionHandedOver>(_onSessionHandedOver, transformer: sequential());
     on<HandoverDraftReceived>(
       _onHandoverDraftReceived,
@@ -131,6 +152,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
       _onSessionSavedElsewhere,
       transformer: sequential(),
     );
+    on<SessionTakenBack>(_onSessionTakenBack, transformer: sequential());
   }
 
   @override
@@ -224,28 +246,38 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   ) async {
     emit(state.copyWith(status: const PipelineStatus.loading()));
 
+    final isDesktop =
+        Platform.isMacOS || Platform.isLinux || Platform.isWindows;
+    await _resetMistakenAiSettingsOnce(isDesktop: isDesktop);
+
     try {
-      final sessions = [
-        for (final s in await _repository.getProcessingSessions())
-          // A step the app was closed in the middle of starts again; left
-          // "processing", the session would hold up every other one.
-          switch (s.status) {
-            ProcessingStatus.processingPatient => s.copyWith(
-              status: ProcessingStatus.pending,
-              progress: 0,
-            ),
-            ProcessingStatus.processing => s.copyWith(
+      final sessions = <ProcessingSession>[];
+      for (final s in await _repository.getProcessingSessions()) {
+        // A step the app was closed in the middle of starts again; left
+        // "processing", the session would hold up every other one.
+        switch (s.status) {
+          case ProcessingStatus.processingPatient:
+            sessions.add(
+              s.copyWith(status: ProcessingStatus.pending, progress: 0),
+            );
+          case ProcessingStatus.processing:
+            // As after a cancel: step two saved each result as it went, and
+            // Done would save the partial ones, or its next run add to them.
+            final restarted = s.copyWith(
               status: ProcessingStatus.patientExtracted,
               progress: 0,
-            ),
-            _ => s,
-          },
-      ];
+              resources: const [],
+            );
+            sessions.add(restarted);
+            await _saveRestarted(restarted);
+          default:
+            sessions.add(s);
+        }
+      }
 
-      final isDesktop =
-          Platform.isMacOS || Platform.isLinux || Platform.isWindows;
       final useVision =
-          _prefs.getBool(SharedPrefsConstants.aiUseVision) ?? isDesktop;
+          _prefs.getBool(SharedPrefsConstants.aiUseVision) ??
+          defaultDeepScan(isDesktop);
       emit(
         state.copyWith(
           sessions: sessions,
@@ -270,6 +302,16 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     }
   }
 
+  /// A failed save is logged: the session still loads at step one, and the
+  /// next start clears its results again.
+  Future<void> _saveRestarted(ProcessingSession session) async {
+    try {
+      await _repository.editProcessingSession(session);
+    } on Exception catch (e, s) {
+      logger.e('Saving a session restarted at step one failed', e, s);
+    }
+  }
+
   void onNotificationAcknowledged(
     NotificationAcknowledged event,
     Emitter<ProcessingState> emit,
@@ -277,21 +319,51 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     emit(state.copyWith(notification: null));
   }
 
-  void onTokenCapacityUpdated(
+  Future<void> onTokenCapacityUpdated(
     TokenCapacityUpdated event,
     Emitter<ProcessingState> emit,
   ) async {
-    await _prefs.setInt(SharedPrefsConstants.aiMaxTokens, event.newMaxTokens);
+    final newMaxTokens = event.newMaxTokens;
+    if (newMaxTokens != null) {
+      await _prefs.setInt(SharedPrefsConstants.aiMaxTokens, newMaxTokens);
+    }
     await _repository.disposeModel();
     add(MappingInitiated(sessionId: event.sessionId));
   }
 
-  void onVisionToggled(
+  /// Sent by both AI settings screens, so a running Processing screen
+  /// follows a change made in Preferences.
+  Future<void> onVisionToggled(
     VisionToggled event,
     Emitter<ProcessingState> emit,
-  ) {
-    _prefs.setBool(SharedPrefsConstants.aiUseVision, event.useVision);
+  ) async {
     emit(state.copyWith(useVision: event.useVision));
+    await _prefs.setBool(SharedPrefsConstants.aiUseVision, event.useVision);
+  }
+
+  /// Removes, once, the AI settings that earlier versions saved by mistake
+  /// (see [mistakenAiSettings]). A failure is logged and retried on the next
+  /// start; it never stops the sessions from loading.
+  Future<void> _resetMistakenAiSettingsOnce({required bool isDesktop}) async {
+    if (_prefs.getBool(SharedPrefsConstants.aiMistakenSettingsReset) ?? false) {
+      return;
+    }
+    try {
+      final keys = mistakenAiSettings(
+        savedMaxTokens: _prefs.getInt(SharedPrefsConstants.aiMaxTokens),
+        savedUseVision: _prefs.getBool(SharedPrefsConstants.aiUseVision),
+        isDesktop: isDesktop,
+      );
+      for (final key in keys) {
+        await _prefs.remove(key);
+      }
+      await _prefs.setBool(SharedPrefsConstants.aiMistakenSettingsReset, true);
+      if (keys.isNotEmpty) {
+        logger.i('Reset mistakenly saved AI settings: $keys');
+      }
+    } on Exception catch (e, s) {
+      logger.e('Resetting the mistakenly saved AI settings failed', e, s);
+    }
   }
 
   void _onContainerTypeSwitched(
@@ -424,8 +496,15 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     // The desktop processes it: a failure of this phone's attempt (no model)
     // no longer applies.
     emit(state.copyWith(status: _withoutFailureOf(session.id)));
-    await _stopLocalProcessing(session);
+    try {
+      await _stopLocalProcessing(session);
+    } on Exception catch (e, s) {
+      // It is the desktop's now; the next run waits for the AI to end.
+      logger.e('[ProcessingBloc] stopping the AI for a handover failed', e, s);
+    }
     _layoutExtraction.forget(session.id);
+    // It held the queue: the next document goes on.
+    if (session.isProcessing) startNextPendingSession();
   }
 
   Future<void> _onHandoverDraftReceived(
@@ -509,6 +588,24 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     );
   }
 
+  Future<void> _onSessionTakenBack(
+    SessionTakenBack event,
+    Emitter<ProcessingState> emit,
+  ) async {
+    final session = state.sessions.firstWhereOrNull(
+      (s) => s.id == event.sessionId,
+    );
+    if (session == null) return;
+    await _removeForOtherDevice(
+      emit,
+      session,
+      Notification(
+        text: _strings.l10n.handoverTakenBack,
+        time: DateTime.now(),
+      ),
+    );
+  }
+
   Future<void> _onSessionSavedElsewhere(
     SessionSavedElsewhere event,
     Emitter<ProcessingState> emit,
@@ -517,7 +614,56 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
       (s) => s.id == event.sessionId,
     );
     if (session == null) return;
-    await _stopLocalProcessing(session);
+    // The records come through the sync; this copy and its files go.
+    await _removeForOtherDevice(
+      emit,
+      session,
+      Notification(
+        text: _savedElsewhereText(session, byDesktop: event.byDesktop),
+        time: DateTime.now(),
+        type: NotificationType.success,
+      ),
+    );
+  }
+
+  /// Removes [session], which the other device took back or saved, and says
+  /// so with [notification].
+  Future<void> _removeForOtherDevice(
+    Emitter<ProcessingState> emit,
+    ProcessingSession session,
+    Notification notification,
+  ) async {
+    final wasProcessing = session.isProcessing;
+    await removeSession(emit, session, notification: notification);
+    // It held the queue: the next document goes on.
+    if (wasProcessing) startNextPendingSession();
+  }
+
+  @override
+  Future<void> removeSession(
+    Emitter<ProcessingState> emit,
+    ProcessingSession session, {
+    Notification? notification,
+  }) async {
+    if (session.isProcessing) {
+      // Marked first, so the step being stopped stages, saves and announces
+      // nothing; stopping, so it can't be retried meanwhile.
+      _replaceSession(
+        emit,
+        session.copyWith(status: ProcessingStatus.cancelled, progress: 0),
+      );
+      emit(
+        state.copyWith(
+          stoppingSessionIds: {...state.stoppingSessionIds, session.id},
+        ),
+      );
+    }
+    try {
+      await _stopLocalProcessing(session);
+    } on Exception catch (e, s) {
+      // The session goes anyway; the next run waits for the AI to end.
+      logger.e('[ProcessingBloc] stopping the AI for a removal failed', e, s);
+    }
     _layoutExtraction.forget(session.id);
     _haltedHandovers.remove(session.id);
     emit(
@@ -526,16 +672,12 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
           for (final s in state.sessions)
             if (s.id != session.id) s,
         ],
-        sessionImagePaths: {...state.sessionImagePaths}..remove(session.id),
+        stoppingSessionIds: {...state.stoppingSessionIds}..remove(session.id),
         status: _withoutFailureOf(session.id),
-        notification: Notification(
-          text: _savedElsewhereText(session, byDesktop: event.byDesktop),
-          time: DateTime.now(),
-          type: NotificationType.success,
-        ),
+        notification: notification ?? state.notification,
       ),
     );
-    // The records come through the sync; this copy and its files go.
     await _repository.deleteProcessingSession(session);
+    await discardPagesOf(emit, session);
   }
 }

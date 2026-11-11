@@ -1371,13 +1371,13 @@ abstract class AppLocalizations {
   /// No description provided for @processingFailedCapacity.
   ///
   /// In en, this message translates to:
-  /// **'The document is too large for the current AI context size.'**
+  /// **'The document is too large for the current AI working memory.'**
   String get processingFailedCapacity;
 
   /// No description provided for @processingFailedCapacitySuggestion.
   ///
   /// In en, this message translates to:
-  /// **'Tap the settings icon above and increase the Context Size to 2048 or higher, then retry.'**
+  /// **'Tap the settings icon above and increase the Working memory to 2048 or higher, then retry.'**
   String get processingFailedCapacitySuggestion;
 
   /// No description provided for @increaseAiModelCapacity.
@@ -1425,37 +1425,37 @@ abstract class AppLocalizations {
   /// No description provided for @setAiTokensUsage.
   ///
   /// In en, this message translates to:
-  /// **'Set AI Tokens Usage'**
+  /// **'Maximum answer length'**
   String get setAiTokensUsage;
 
   /// No description provided for @tokenUsageDescription.
   ///
   /// In en, this message translates to:
-  /// **'Control how much processing power the AI can use. Higher capacity allows larger files and more complex tasks, but uses more resources and takes longer.'**
+  /// **'The most the AI may write per step, while it lists the records it found in your document. Too short and some records get cut off; longer takes more time. It always fits inside the working memory.'**
   String get tokenUsageDescription;
 
   /// No description provided for @gpuLayersLabel.
   ///
   /// In en, this message translates to:
-  /// **'GPU Layers'**
+  /// **'Graphics chip (GPU)'**
   String get gpuLayersLabel;
 
   /// No description provided for @gpuLayersDescription.
   ///
   /// In en, this message translates to:
-  /// **'Offload model layers to GPU for faster image processing. More layers = faster but uses more memory. Set to 0 if the app crashes.'**
+  /// **'How much of the AI runs on your device\'s graphics chip, which is faster than the main processor. Higher is faster but uses more memory. If the app closes or crashes during a scan, lower it, or set it to 0.'**
   String get gpuLayersDescription;
 
   /// No description provided for @threadsLabel.
   ///
   /// In en, this message translates to:
-  /// **'CPU Threads'**
+  /// **'Processor cores (CPU)'**
   String get threadsLabel;
 
   /// No description provided for @threadsDescription.
   ///
   /// In en, this message translates to:
-  /// **'Number of CPU threads for inference. More threads = faster but uses more battery.'**
+  /// **'How many processor cores the AI uses at the same time. More is faster, but uses the battery quicker and can make the device warm.'**
   String get threadsDescription;
 
   /// No description provided for @recommended.
@@ -1467,7 +1467,7 @@ abstract class AppLocalizations {
   /// No description provided for @tokenPresetLow.
   ///
   /// In en, this message translates to:
-  /// **'Low'**
+  /// **'Short'**
   String get tokenPresetLow;
 
   /// No description provided for @tokenPresetMedium.
@@ -1479,7 +1479,7 @@ abstract class AppLocalizations {
   /// No description provided for @tokenPresetHigh.
   ///
   /// In en, this message translates to:
-  /// **'High'**
+  /// **'Long'**
   String get tokenPresetHigh;
 
   /// No description provided for @tokenPresetCustom.
@@ -1494,22 +1494,16 @@ abstract class AppLocalizations {
   /// **'Set'**
   String get setTokens;
 
-  /// No description provided for @tokens.
-  ///
-  /// In en, this message translates to:
-  /// **'tokens'**
-  String get tokens;
-
   /// No description provided for @contextSizeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Context Size'**
+  /// **'Working memory'**
   String get contextSizeLabel;
 
   /// No description provided for @contextSizeDescription.
   ///
   /// In en, this message translates to:
-  /// **'Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory.'**
+  /// **'The AI\'s workspace for one step: space to read your document and write down what it finds. Bigger fits longer documents, but uses more of your device\'s memory. If scanning fails with \"not enough memory\", lower it.'**
   String get contextSizeDescription;
 
   /// No description provided for @useVisionLabel.
@@ -2604,12 +2598,6 @@ abstract class AppLocalizations {
   /// **'Restore Backup?'**
   String get desktopRestoreBackupTitle;
 
-  /// No description provided for @desktopRestoreBackupMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'This will replace all current data on this device with \"{name}\".\n\n{count} records will be restored.\n\nYour data on the paired phone will not be affected.'**
-  String desktopRestoreBackupMessage(String name, int count);
-
   /// No description provided for @desktopRestore.
   ///
   /// In en, this message translates to:
@@ -2789,6 +2777,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Attached Documents'**
   String get attachedDocuments;
+
+  /// Says which visit a document attached without the AI was filed under, for example "Checkup, 03/11/2026".
+  ///
+  /// In en, this message translates to:
+  /// **'Attached to {visit}.'**
+  String documentAttachedTo(String visit);
 
   /// No description provided for @cameraPermissionRequired.
   ///
@@ -4679,12 +4673,6 @@ abstract class AppLocalizations {
   /// **'Backup failed. Please try again.'**
   String get desktopBackupFailed;
 
-  /// No description provided for @desktopRestoreFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Restore failed. Please try again.'**
-  String get desktopRestoreFailed;
-
   /// No description provided for @desktopBackupActionFailed.
   ///
   /// In en, this message translates to:
@@ -5242,24 +5230,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Download failed'**
   String get aiModelDownloadFailed;
-
-  /// No description provided for @aiModelDownloadCancelledTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Download Cancelled'**
-  String get aiModelDownloadCancelledTitle;
-
-  /// No description provided for @aiModelDownloadInterruptedMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'The download was interrupted. Please try again.'**
-  String get aiModelDownloadInterruptedMessage;
-
-  /// No description provided for @aiModelDownloadCancelledNotificationTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'AI Model Download Cancelled'**
-  String get aiModelDownloadCancelledNotificationTitle;
 
   /// No description provided for @aiModelDownloadWasCancelled.
   ///
@@ -8332,6 +8302,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{origin} was saved on the phone. Any changes made here to its draft were not kept.'**
   String handoverDraftSavedOnPhone(String origin);
+
+  /// No description provided for @failedToSaveSetting.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save “{setting}”. Try again.'**
+  String failedToSaveSetting(String setting);
+
+  /// No description provided for @processingFailedMemory.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough free memory to run the AI model. Close other apps and try again, or turn off Deep Scan in AI Settings.'**
+  String get processingFailedMemory;
+
+  /// No description provided for @tokenPresetLowHint.
+  ///
+  /// In en, this message translates to:
+  /// **'a few values'**
+  String get tokenPresetLowHint;
+
+  /// No description provided for @tokenPresetMediumHint.
+  ///
+  /// In en, this message translates to:
+  /// **'a short report'**
+  String get tokenPresetMediumHint;
+
+  /// No description provided for @tokenPresetHighHint.
+  ///
+  /// In en, this message translates to:
+  /// **'a full report'**
+  String get tokenPresetHighHint;
+
+  /// No description provided for @backupRecordsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Records only'**
+  String get backupRecordsOnly;
+
+  /// No description provided for @backupRestoreConfirmPointInTime.
+  ///
+  /// In en, this message translates to:
+  /// **'This replaces your records on this computer and on your paired phone with the backup from {date}. Records added since then are removed. A “Before restore” copy of your current data is saved first and kept for 30 days, so you can undo this.'**
+  String backupRestoreConfirmPointInTime(String date);
+
+  /// No description provided for @backupOldNoFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup has no files. Records will be restored and your current files kept.'**
+  String get backupOldNoFiles;
+
+  /// No description provided for @backupSafetyName.
+  ///
+  /// In en, this message translates to:
+  /// **'Before restore {date}'**
+  String backupSafetyName(String date);
+
+  /// No description provided for @backupRestoreFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore failed. Your data was not changed; the \"Before restore\" backup is in the list.'**
+  String get backupRestoreFailed;
+
+  /// No description provided for @backupSafetyFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t make a safety backup, so nothing was restored. Check free space and the backup folder.'**
+  String get backupSafetyFailed;
+
+  /// No description provided for @backupFilesNotRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file couldn\'t be restored.} other{{count} files couldn\'t be restored.}}'**
+  String backupFilesNotRestored(int count);
+
+  /// No description provided for @backupRestorePhoneOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone isn\'t connected. Records added on it since its last sync will come back after it reconnects; changes it made to existing records will be replaced by the backup.'**
+  String get backupRestorePhoneOffline;
+
+  /// Restore confirmation: the scans not saved yet on this computer, which the restore removes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 scan waiting for review will be removed.} other{{count} scans waiting for review will be removed.}}'**
+  String backupRestoreRemovesScans(int count);
+
+  /// Asks before deleting a downloaded AI model.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}?'**
+  String aiModelDeleteTitle(String name);
+
+  /// No description provided for @aiModelDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The model and its Deep Scan files are removed from this device. To scan with it again, you\'ll need to download it again (~{size} MB).'**
+  String aiModelDeleteMessage(int size);
+
+  /// Shown on the review when the AI found no patient and the user fills the fields in.
+  ///
+  /// In en, this message translates to:
+  /// **'No patient found in the document. Enter the details.'**
+  String get processingNoPatientFound;
+
+  /// Shown after Cancel while the AI finishes stopping; Continue waits until it has.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopping…'**
+  String get processingStopping;
+
+  /// Shown on the desktop when the phone takes back a document that was open for review.
+  ///
+  /// In en, this message translates to:
+  /// **'The phone took this document back.'**
+  String get handoverTakenBack;
+
+  /// Notification title when the selected AI model is replaced by Lite because the device lacks the memory for it.
+  ///
+  /// In en, this message translates to:
+  /// **'Now using the Lite model'**
+  String get aiModelSwitchedToLiteTitle;
+
+  /// Notification text when the selected AI model is replaced by Lite because the device lacks the memory for it.
+  ///
+  /// In en, this message translates to:
+  /// **'The {modelName} model needs more memory than this device has, so the Lite model is used.'**
+  String aiModelSwitchedToLiteMessage(String modelName);
+
+  /// Desktop Backup card, under the backup folder: how many days the automatic copy made before every restore is kept.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Kept for 1 day} other{Kept for {count} days}}'**
+  String backupSafetyRetention(int count);
+
+  /// Desktop Backup card: heading of the section with how long the copy made before a restore is kept, like the Location heading above it.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy made before a restore'**
+  String get backupSafetyRetentionTitle;
+
+  /// The word after the number of days in the safety copy retention field.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{day} other{days}}'**
+  String backupSafetyRetentionDaysUnit(int count);
+
+  /// Desktop Backup card, under the retention field: the new value counts for copies already made, and copies older than it are deleted as soon as it is saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies to existing copies too. Copies older than this are deleted now.'**
+  String get backupSafetyRetentionHint;
+
+  /// Desktop Backup card: the typed number of days isn't a whole number in the allowed range.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a whole number of days from {min} to {max}.'**
+  String backupSafetyRetentionInvalid(int min, int max);
+
+  /// Desktop Backup card: saving the number of days the copy made before a restore is kept failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save how long to keep the copy made before a restore. Please try again.'**
+  String get backupSafetyRetentionSaveFailed;
 }
 
 class _AppLocalizationsDelegate

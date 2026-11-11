@@ -61,9 +61,29 @@ const _fast = LinkTimings(
   serverIdle: Duration(seconds: 3),
 );
 
+/// Remembers the port the server really listens on.
+class _RecordingTcp extends TcpService {
+  int? serverPort;
+
+  @override
+  Future<int> startServer({
+    required List<String> pairingKeys,
+    required String deviceId,
+    required String deviceName,
+    required String? pairedPeerId,
+    int port = TcpService.defaultPort,
+  }) async => serverPort = await super.startServer(
+    pairingKeys: pairingKeys,
+    deviceId: deviceId,
+    deviceName: deviceName,
+    pairedPeerId: pairedPeerId,
+    port: port,
+  );
+}
+
 class _Device {
   _Device(this.platform, String name)
-    : tcp = TcpService()
+    : tcp = _RecordingTcp()
         ..timings = _fast
         ..deviceDisplayName = name,
       storage = PairingStorageService(_MemoryPrefs(), _MemorySecrets()) {
@@ -77,7 +97,7 @@ class _Device {
   }
 
   final AppPlatform platform;
-  final TcpService tcp;
+  final _RecordingTcp tcp;
   final PairingStorageService storage;
   late final CommunicationBloc bloc;
 
@@ -114,9 +134,15 @@ void main() {
     CommunicationBloc.initialReconnectDelay = const Duration(milliseconds: 200);
     desktop = _Device(AppPlatform.desktop, 'Desk');
     desktop.bloc.add(const CommunicationInitialised());
-    await until(() => desktop.state.pairedDevice != null);
-    // A free port, since 49152 may be taken on this machine.
-    await until(() => desktop.state.pairedDevice!.lastPort > 0);
+    // The QR code must show the port the server listens on: when 49152 is
+    // taken it falls back to a free one, and until then the pairing still
+    // holds 49152.
+    await until(
+      () =>
+          desktop.tcp.serverPort != null &&
+          desktop.state.pairedDevice?.lastPort == desktop.tcp.serverPort,
+      reason: 'the desktop listening',
+    );
   });
 
   tearDown(() async {

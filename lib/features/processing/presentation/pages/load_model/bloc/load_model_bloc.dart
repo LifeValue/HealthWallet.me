@@ -31,13 +31,24 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     this._prefs,
     this._strings,
   ) : super(const LoadModelState()) {
-    on<LoadModelInitialized>(_onLoadModelInitialized);
+    on<LoadModelInitialized>(
+      _onLoadModelInitialized,
+      transformer: restartable(),
+    );
     on<LoadModelDownloadInitiated>(
       _onLoadModelDownloadInitiated,
       transformer: concurrent(),
     );
-    on<LoadModelServiceStateChanged>(_onServiceStateChanged);
-    on<LoadModelDownloadCancelled>(_onLoadModelDownloadCancelled);
+    on<LoadModelServiceStateChanged>(
+      _onServiceStateChanged,
+      transformer: sequential(),
+    );
+    // In turn, so a cancel of another model (or of all) asked for while one
+    // is stopping is not lost.
+    on<LoadModelDownloadCancelled>(
+      _onLoadModelDownloadCancelled,
+      transformer: sequential(),
+    );
     on<LoadModelVariantSelected>(_onVariantSelected);
     on<LoadModelDeleteRequested>(_onDeleteRequested);
 
@@ -81,8 +92,11 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     }
 
     final capability = await _deviceCapabilityService.getCapability();
+    final advancedModelSupported = await _deviceCapabilityService
+        .supportsAdvancedModel();
 
-    final autoSelected = selectedVariant ?? _autoSelectSingleModel(downloaded);
+    final autoSelected =
+        selectedVariant ?? await _autoSelectSingleModel(downloaded);
 
     final downloading = <AiModelVariant, bool>{};
     for (final config in AiModelConfig.availableVariants) {
@@ -96,6 +110,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         selectedVariant: autoSelected,
         downloadedVariants: downloaded,
         deviceCapability: capability,
+        advancedModelSupported: advancedModelSupported,
         downloadingVariants: downloading,
       ),
     );
@@ -117,7 +132,6 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     final serviceState = _downloadService.state;
 
     if (serviceState.status == AiModelDownloadStatus.cancelled) {
-      _addCancelledNotification();
       _downloadService.resetState();
     }
 
@@ -172,22 +186,25 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     );
   }
 
-  AiModelVariant? _autoSelectSingleModel(
+  /// Selects and saves the only downloaded model, unless the device can't run
+  /// it (the rule `AiModelSelectionGuard` applies at start-up): the user then
+  /// picks or downloads one the device runs.
+  Future<AiModelVariant?> _autoSelectSingleModel(
     Map<AiModelVariant, bool> downloadedMap,
-  ) {
+  ) async {
     final downloaded = downloadedMap.entries
         .where((e) => e.value)
         .map((e) => e.key)
         .toList();
 
-    if (downloaded.length == 1) {
-      _prefs.setString(
-        SharedPrefsConstants.aiSelectedModel,
-        downloaded.first.name,
-      );
-      return downloaded.first;
+    if (downloaded.length != 1) return null;
+    final only = downloaded.single;
+    if (AiModelConfig.fromVariant(only).needsAdvancedSupport &&
+        !await _deviceCapabilityService.supportsAdvancedModel()) {
+      return null;
     }
-    return null;
+    await _prefs.setString(SharedPrefsConstants.aiSelectedModel, only.name);
+    return only;
   }
 
   Future<bool> _hasInternetConnection() async {
@@ -257,10 +274,10 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     unawaited(_downloadService.startDownloadForVariant(variant));
   }
 
-  void _onServiceStateChanged(
+  Future<void> _onServiceStateChanged(
     LoadModelServiceStateChanged event,
     Emitter<LoadModelState> emit,
-  ) {
+  ) async {
     final serviceState = event.serviceState;
     final variant = serviceState.variant;
 
@@ -296,6 +313,14 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         break;
 
       case AiModelDownloadStatus.completed:
+        // First, so the state below is read after the device check.
+        final autoSelected = state.selectedVariant == null
+            ? await _autoSelectSingleModel({
+                ...state.downloadedVariants,
+                ?variant: true,
+              })
+            : null;
+
         final updatedDownloaded = variant != null
             ? {...state.downloadedVariants, variant: true}
             : state.downloadedVariants;
@@ -313,8 +338,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
           (e) => e.value && e.key != variant,
         );
 
-        var effectiveSelected = state.selectedVariant;
-        effectiveSelected ??= _autoSelectSingleModel(updatedDownloaded);
+        final effectiveSelected = state.selectedVariant ?? autoSelected;
 
         final selectedIsLoaded =
             effectiveSelected != null &&
@@ -408,57 +432,94 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
           (e) => e.value && e.key != variant,
         );
 
+        // A cancel of one model leaves a selected model on disk usable.
+        final selected = state.selectedVariant;
+        final selectedIsLoaded =
+            selected != null && state.isVariantDownloaded(selected);
+
         emit(
           state.copyWith(
             status: anyStillDownloading
                 ? LoadModelStatus.loading
-                : LoadModelStatus.modelAbsent,
+                : (selectedIsLoaded
+                      ? LoadModelStatus.modelLoaded
+                      : LoadModelStatus.modelAbsent),
             isBackgroundDownload: anyStillDownloading,
             downloadingVariants: updatedDownloading,
             variantProgress: updatedProgress,
           ),
         );
         if (variant != null) {
-          final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
           _notificationBloc.add(
-            NotificationTypeUpdated(
-              id: notifId,
-              type: NotificationType.error,
-              text: _strings.l10n.aiModelDownloadCancelledTitle,
-              description: _strings.l10n.aiModelDownloadInterruptedMessage,
-            ),
+            NotificationRemovedById(id: _downloadNotificationId(variant)),
           );
         }
         break;
     }
   }
 
-  void _addCancelledNotification() {
-    _notificationBloc.add(
-      NotificationTypeUpdated(
-        id: kAiModelDownloadNotificationId,
-        type: NotificationType.error,
-        text: _strings.l10n.aiModelDownloadCancelledNotificationTitle,
-        description: _strings.l10n.aiModelDownloadInterruptedMessage,
-      ),
-    );
-  }
+  static String _downloadNotificationId(AiModelVariant variant) =>
+      '${kAiModelDownloadNotificationId}_${variant.name}';
 
   Future<void> _onLoadModelDownloadCancelled(
     LoadModelDownloadCancelled event,
     Emitter<LoadModelState> emit,
   ) async {
-    await _downloadService.cancelDownload();
+    // Only model downloads are cancelled; a vision-file download keeps going.
+    final only = event.variant;
+    final cancelled = AiModelVariant.values
+        .where(_downloadService.isVariantDownloading)
+        .where((variant) => only == null || variant == only)
+        .toSet();
+    // Those downloads already ended, or a cancel before this one stopped
+    // them: nothing to stop.
+    if (cancelled.isEmpty) return;
+
+    // Returns once the transfers have ended and their partial files are gone.
+    if (only == null) {
+      await _downloadService.cancelDownload();
+    } else {
+      await _downloadService.cancelDownloadForVariant(only);
+    }
+
+    for (final variant in cancelled) {
+      _notificationBloc.add(
+        NotificationRemovedById(id: _downloadNotificationId(variant)),
+      );
+    }
+
+    // A transfer that finished just before the cancel left its file in place.
+    final downloaded = {...state.downloadedVariants};
+    for (final variant in cancelled) {
+      downloaded[variant] = await _downloadService.checkModelExistsForVariant(
+        variant,
+      );
+    }
+
+    // Read after the awaits: a download started meanwhile stays listed.
+    final downloading = {...state.downloadingVariants}
+      ..removeWhere((variant, _) => cancelled.contains(variant));
+    final progress = {...state.variantProgress}
+      ..removeWhere((variant, _) => cancelled.contains(variant));
+    final anyStillDownloading = downloading.values.any((v) => v);
+    final selected = state.selectedVariant;
+    final selectedIsLoaded =
+        selected != null && (downloaded[selected] ?? false);
+
     emit(
       state.copyWith(
-        status: LoadModelStatus.modelAbsent,
-        isBackgroundDownload: false,
-        downloadProgress: null,
-        downloadingVariants: {},
-        variantProgress: {},
+        status: anyStillDownloading
+            ? LoadModelStatus.loading
+            : (selectedIsLoaded
+                  ? LoadModelStatus.modelLoaded
+                  : LoadModelStatus.modelAbsent),
+        isBackgroundDownload: anyStillDownloading,
+        downloadProgress: anyStillDownloading ? state.downloadProgress : null,
+        downloadedVariants: downloaded,
+        downloadingVariants: downloading,
+        variantProgress: progress,
       ),
     );
-    _addCancelledNotification();
   }
 
   Future<void> _onVariantSelected(

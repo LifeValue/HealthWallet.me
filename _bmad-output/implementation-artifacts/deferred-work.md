@@ -124,3 +124,65 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
   summary: Decide whether the Home vitals card should show a scanned weight, height, temperature or glucose as on the document, like the records screens now do, instead of in the region unit.
   evidence: 2026-10-29: the records screens show scanned values as recorded; `patient_vitals_factory` still converts every source for the card, which is a summary in the region units. Product decision.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-profile-and-patient-dialogs.md`
+  summary: BiometricAuthService.authenticate swallows every error and returns false, so lockout or not-enrolled errors turn the lock off silently and the bloc's biometric failure message never shows.
+  evidence: lib/core/services/biometric_auth_service.dart:47-50 catches all exceptions; pre-existing, found in spec 1 review.
+- source_spec: `_bmad-output/implementation-artifacts/spec-profile-and-patient-dialogs.md`
+  summary: Setting failures outside the Preferences modal (receive mode from the records page, biometric switch in onboarding) show no message.
+  evidence: Only PreferenceModal listens for UserStatus.failure; records_page.dart:554 and onboarding_screen.dart:132,140 never had one.
+- source_spec: `_bmad-output/implementation-artifacts/spec-profile-and-patient-dialogs.md`
+  summary: The patient setup dialog overwrites a stored male or female gender with unknown when the user only fills in other fields.
+  evidence: patient_setup_dialog.dart starts at unknown and writes it whenever any field changed; same before this change.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-scan-and-ai-settings.md`
+  summary: The old Preferences Save also pinned aiGpuLayers, aiThreads and aiContextSize; the one-time reset clears only tokens and Deep Scan.
+  evidence: ai_model_section wrote all five values on every Save before the fix; whether to reset the load settings too needs a product decision.
+- source_spec: `_bmad-output/implementation-artifacts/spec-complete-backups.md`
+  summary: Restored Media attachments never reach the phone, because sync file transfer reads DocumentReference rows only.
+  evidence: lww_sync_service.dart missingAttachmentPaths (:681) and fileForRequest use resource_type = 'DocumentReference'; _attachmentsOf skips Media content.
+- source_spec: `_bmad-output/implementation-artifacts/spec-complete-backups.md`
+  summary: A restore overwrites an offline phone's unsynced edits to existing records without saying so; the dialog mentions only added records.
+  evidence: Point-in-time stamp S beats the phone's older stamps; the backupRestorePhoneOffline text promises only that added records come back. Needs a wording decision.
+- source_spec: `_bmad-output/implementation-artifacts/spec-complete-backups.md`
+  summary: The restore confirm text says records are "moved to deleted items for 30 days", but the app has no view of deleted items; the only undo is the "Before restore" copy.
+  evidence: backupRestoreConfirmPointInTime in the four ARBs; it is the approved Decisions text, so changing it needs a human.
+- source_spec: `_bmad-output/implementation-artifacts/spec-complete-backups.md`
+  summary: Restored scan sessions point at imports/ files that backups don't contain.
+  evidence: processing_sessions is restored as before and imports/ is not backed up.
+- source_spec: `_bmad-output/implementation-artifacts/spec-complete-backups.md`
+  summary: For legacy subfolder or absolute attachment URLs, restore treats a same-name top-level file as present while the viewer opens toAbsolute(path) and finds nothing.
+  evidence: backup_service.dart _placeFiles/_attachmentRewrites use the resolveFile basename fallback; this predates the change.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-attachment-ids-and-files.md`
+  summary: Files of purged records stored in Documents subfolders (scanned_documents/, provider_downloads/, shared_files/, imports/) are never deleted.
+  evidence: The approved rule allows only top-level files; before this change the immediate delete removed any file inside Documents.
+- source_spec: `_bmad-output/implementation-artifacts/spec-attachment-ids-and-files.md`
+  summary: The cleaner trusts the OS name to mean the Documents root belongs to the app; an unsandboxed macOS build would sweep ~/Documents.
+  evidence: AttachmentFileCleaner.supportedPlatforms; release builds are sandboxed (Release.entitlements).
+- source_spec: `_bmad-output/implementation-artifacts/spec-attachment-ids-and-files.md`
+  summary: Two Windows PCs sharing a OneDrive-redirected HealthWallet\Documents could sweep each other's files.
+  evidence: Each device sees only its own database's references.
+
+- source_spec: none (batch 1 coverage pass, 2026-11-03)
+  summary: Saving a scanned patient with an empty gender fails; MappingPatient.toFhirResource builds AdministrativeGender('') and throws "Invalid FHIR code", so the user gets a generic save failure.
+  evidence: lib/features/processing/domain/entity/mapping_resources/mapping_patient.dart; the phase-1 schema allows ''. Pinned by a skipped BUG test in processing_handler_coverage_test.dart.
+- source_spec: none (batch 1 coverage pass, 2026-11-03)
+  summary: Saving a scan for a session that no longer exists leaves the status at savingResources, so Done stays disabled.
+  evidence: onResourceCreationInitiated looks the session up with firstWhere outside its try. Pinned in processing_handler_coverage_test.dart.
+- source_spec: none (batch 1 coverage pass, 2026-11-03)
+  summary: If step 2 is cancelled and its stream then ends with no further result, the session still becomes a draft and "processing finished" is announced.
+  evidence: onProcessRemainingResources. Pinned in processing_handler_coverage_test.dart.
+- source_spec: none (batch 1 coverage pass, 2026-11-03)
+  summary: In the patient setup dialog an emergency phone entered on its own is not saved.
+  evidence: The phone isn't among patientFieldsChanged (patient_setup_dialog.dart ~200-205). Pinned in patient_setup_dialog_coverage_test.dart.
+- source_spec: none (batch 1 coverage pass, 2026-11-03)
+  summary: The legacy AiModelDownloadService.startDownload never removes its subscription, so isAnyDownloading stays true and later starts are ignored; its repository stream also can't be cancelled.
+  evidence: No caller in lib/; it belongs to the dead download methods slated for removal in batch 2. Pinned in ai_model_download_service_coverage_test.dart.
+- source_spec: none (batch 1 coverage pass, 2026-11-03)
+  summary: Clearing a given or family name in the patient edit dialog keeps the stored name, because an empty name is sent as null ("unchanged").
+  evidence: patient_edit_dialog.dart save; pinned as current behaviour in patient_edit_dialog_coverage_test.dart.
+- source_spec: none (batch 1 coverage pass, 2026-11-03)
+  summary: The ID-scan dialog's Retry button starts a new scan instead of re-reading the last image (DialogContent never uses onRetryOcr).
+  evidence: Pinned as current behaviour in the patient dialog coverage tests.
+

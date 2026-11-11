@@ -5,6 +5,8 @@ import 'package:health_wallet/features/desktop/communication/data/services/disco
 import 'package:health_wallet/features/desktop/communication/data/services/mdns_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/ssdp_service.dart';
 
+import '../../../../../helpers/log_capture.dart';
+
 class _FakeSsdp extends Fake implements SsdpService {
   ({String ip, int port, String deviceId})? result;
   Exception? error;
@@ -17,6 +19,7 @@ class _FakeSsdp extends Fake implements SsdpService {
     Duration timeout = const Duration(seconds: 3),
     String? expectedDeviceId,
     (InternetAddress, int)? target,
+    Future<RawDatagramSocket> Function()? bind,
   }) async {
     calls.add('search');
     lastExpectedDeviceId = expectedDeviceId;
@@ -29,6 +32,8 @@ class _FakeSsdp extends Fake implements SsdpService {
     required String ip,
     required int port,
     required String deviceId,
+    int listenPort = 1900,
+    Future<RawDatagramSocket> Function()? bind,
   }) async {
     calls.add('advertise $ip:$port $deviceId');
     if (advertiseError != null) throw advertiseError!;
@@ -39,13 +44,13 @@ class _FakeSsdp extends Fake implements SsdpService {
 }
 
 class _FakeMdns extends Fake implements MdnsService {
-  ({String ip, int port})? result;
+  List<({String ip, int port})> result = const [];
   Exception? error;
   String? lastToken;
   final calls = <String>[];
 
   @override
-  Future<({String ip, int port})?> search({
+  Future<List<({String ip, int port})>> search({
     required String token,
     Duration timeout = const Duration(seconds: 3),
   }) async {
@@ -59,13 +64,19 @@ class _FakeMdns extends Fake implements MdnsService {
   Future<void> startAdvertising({
     required int port,
     required String token,
-  }) async => calls.add('advertise $port $token');
+  }) async {
+    calls.add('advertise $port $token');
+    if (advertiseError != null) throw advertiseError!;
+  }
+
+  Exception? advertiseError;
 
   @override
   Future<void> stopAdvertising() async => calls.add('stop');
 }
 
 void main() {
+  final logs = captureLogs();
   late _FakeSsdp ssdp;
   late _FakeMdns mdns;
   late DiscoveryService discovery;
@@ -89,7 +100,7 @@ void main() {
   );
 
   test('returns every candidate, Bonjour first, without duplicates', () async {
-    mdns.result = (ip: '10.0.0.2', port: 49152);
+    mdns.result = [(ip: '10.0.0.2', port: 49152)];
     ssdp.result = (ip: '10.0.0.3', port: 49152, deviceId: 'desk-1');
     expect(
       (await search()).map((r) => '${r.method} ${r.ip}'),
@@ -98,6 +109,21 @@ void main() {
 
     ssdp.result = (ip: '10.0.0.2', port: 49152, deviceId: 'desk-1');
     expect((await search()).map((r) => r.method), ['mdns']);
+  });
+
+  test('every Bonjour answer is a candidate, so a desktop that restarted '
+      'on a new port is found next to its stale entry', () async {
+    mdns.result = [
+      (ip: 'desk.local.', port: 49152),
+      (ip: 'desk.local.', port: 50123),
+    ];
+    ssdp.result = (ip: '10.0.0.3', port: 50123, deviceId: 'desk-1');
+
+    expect((await search()).map((r) => '${r.method} ${r.ip}:${r.port}'), [
+      'mdns desk.local.:49152',
+      'mdns desk.local.:50123',
+      if (!Platform.isIOS) 'ssdp 10.0.0.3:50123',
+    ]);
   });
 
   test('a failing search method is skipped, not fatal', () async {
@@ -139,6 +165,20 @@ void main() {
       token: 'tok',
     );
     expect(mdns.calls, hasLength(2));
+  });
+
+  test('Bonjour failing to advertise is logged, not fatal', () async {
+    mdns.advertiseError = Exception('no Bonjour');
+
+    await discovery.startDesktopAdvertising(
+      ip: '10.0.0.9',
+      port: 50000,
+      deviceId: 'desk-1',
+      token: 'tok',
+    );
+
+    expect(ssdp.calls, ['advertise 10.0.0.9:50000 desk-1']);
+    expect(logs, loggedWarning('mDNS advertising failed'));
   });
 
   test('stopping stops both', () async {

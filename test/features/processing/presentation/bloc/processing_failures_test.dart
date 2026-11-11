@@ -24,6 +24,7 @@ import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../helpers/fake_device_capability_service.dart';
 import '../../../../helpers/log_capture.dart';
 import '../../../share_records/share_test_helpers.dart';
 
@@ -102,6 +103,7 @@ class _FakeOcrProcessingHelper extends Fake implements OcrProcessingHelper {
   @override
   Future<List<String>> prepareAllImages({
     required List<String> filePaths,
+    double dpi = 72,
   }) async => const [];
 
   @override
@@ -160,6 +162,7 @@ void main() {
         _FakeHolderService(),
         _FakeRecordsRepository(),
       ),
+      FakeDeviceCapabilityService(),
     );
   });
 
@@ -220,7 +223,7 @@ void main() {
       final expected = {
         PipelineFailureReason.modelNotFound: _ro.modelNotFoundError,
         PipelineFailureReason.modelCorrupted: _ro.modelCorruptedError,
-        PipelineFailureReason.notEnoughMemory: _ro.processingFailedCapacity,
+        PipelineFailureReason.notEnoughMemory: _ro.processingFailedMemory,
         PipelineFailureReason.scanFailed: _ro.scanFailed,
         PipelineFailureReason.importFailed: _ro.importDocumentFailed,
         PipelineFailureReason.noValidFiles: _ro.noValidFilesFound,
@@ -237,18 +240,15 @@ void main() {
       expect(_ro.processingFailedGeneric, isNot(_en.processingFailedGeneric));
     });
 
-    test(
-      'a memory failure tells the user to free memory',
-      () {
-        expect(
-          PipelineFailureReason.notEnoughMemory.localizedMessage(_en),
-          isNot(_en.processingFailedCapacity),
-        );
-      },
-      skip:
-          'BUG: a memory failure shows the context-size message, which '
-          'tells the user to raise the Context Size instead of closing apps',
-    );
+    test('a memory failure tells the user to free memory', () {
+      final text = PipelineFailureReason.notEnoughMemory.localizedMessage(_en);
+      expect(text, isNot(_en.processingFailedCapacity));
+      expect(text, contains('Close other apps'));
+      expect(text, contains('Deep Scan'));
+      // The desktop ignores the working memory setting, so the message must
+      // not send the user there.
+      expect(text, isNot(contains(_en.contextSizeLabel)));
+    });
   });
 
   group('scan', () {

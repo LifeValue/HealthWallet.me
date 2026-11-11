@@ -12,6 +12,7 @@ import 'package:health_wallet/features/user/domain/repository/user_repository.da
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../helpers/log_capture.dart';
 import '../../../app_lock/app_lock_test_fakes.dart';
 
 class _FakeUserRepository extends Fake implements UserRepository {
@@ -20,14 +21,29 @@ class _FakeUserRepository extends Fake implements UserRepository {
   Exception? getUserError;
   Exception? updateUserError;
   Exception? saveLockError;
+  Exception? readLockError;
   final List<User> updatedUsers = [];
   final List<bool> savedLockValues = [];
 
+  /// While set, a save is stored right away but returns only once it
+  /// completes, like a preferences write still flushing to disk.
+  Completer<void>? pendingUpdate;
+
+  /// Stores a save only once [pendingUpdate] completes, like a write that
+  /// lands on disk after a read already ran.
+  bool storeWhenDone = false;
+
+  /// While set, a read returns what was stored when it started, once this
+  /// completes.
+  Completer<void>? pendingGet;
+
   @override
-  Future<User> getCurrentUser({bool fetchFromNetwork = false}) async {
+  Future<User> getCurrentUser() async {
     final error = getUserError;
     if (error != null) throw error;
-    return storedUser ?? const User();
+    final user = storedUser ?? const User();
+    await pendingGet?.future;
+    return user;
   }
 
   @override
@@ -35,11 +51,17 @@ class _FakeUserRepository extends Fake implements UserRepository {
     final error = updateUserError;
     if (error != null) throw error;
     updatedUsers.add(user);
+    if (!storeWhenDone) storedUser = user;
+    await pendingUpdate?.future;
     storedUser = user;
   }
 
   @override
-  Future<bool> isBiometricAuthEnabled() async => lockEnabled;
+  Future<bool> isBiometricAuthEnabled() async {
+    final error = readLockError;
+    if (error != null) throw error;
+    return lockEnabled;
+  }
 
   @override
   Future<void> saveBiometricAuth(bool isEnabled) async {
@@ -55,9 +77,12 @@ class _FakeReceiveModeService extends Fake implements ReceiveModeService {
   bool isListening = false;
   int starts = 0;
   int stops = 0;
+  Exception? startError;
 
   @override
   Future<void> startListening() async {
+    final error = startError;
+    if (error != null) throw error;
     starts++;
     isListening = true;
   }
@@ -85,15 +110,19 @@ TypeMatcher<UserState> _state({
   return m;
 }
 
-final _isFailure = isA<UserState>().having(
-  (s) => s.status.maybeWhen(failure: (_) => true, orElse: () => false),
-  'is failure',
-  isTrue,
+TypeMatcher<UserState> _failure(UserSetting setting) => isA<UserState>().having(
+  (s) => s.status.maybeWhen(
+    failure: (_, setting) => setting,
+    orElse: () => null,
+  ),
+  'failed setting',
+  setting,
 );
 
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
   final dispatcher = binding.platformDispatcher;
+  final logs = captureLogs();
 
   late _FakeUserRepository users;
   late FakeLockAuthService auth;
@@ -265,6 +294,56 @@ void main() {
     );
 
     blocTest<UserBloc, UserState>(
+      'shows the user with the lock on when the lock setting cannot be read',
+      setUp: () {
+        users
+          ..storedUser = const User(name: 'Ana')
+          ..readLockError = Exception('keychain locked');
+      },
+      build: buildBloc,
+      act: (bloc) => bloc.add(const UserInitialised()),
+      expect: () => [
+        _state(status: const UserStatus.loading()),
+        isA<UserState>()
+            .having((s) => s.status, 'status', const UserStatus.success())
+            .having((s) => s.user.name, 'name', 'Ana')
+            // The app lock fails closed on the same read, so the switch
+            // shows it on rather than off.
+            .having((s) => s.isBiometricAuthEnabled, 'lock', isTrue),
+      ],
+      verify: (_) =>
+          expect(logs, loggedWarning('Failed to read the biometric lock')),
+    );
+
+    blocTest<UserBloc, UserState>(
+      'shows the user with the device region when the saved preferences '
+      'cannot be read',
+      setUp: () {
+        // A value of the wrong type, as a corrupt preferences file leaves.
+        SharedPreferences.setMockInitialValues({
+          SharedPrefsConstants.regionPreset: 1,
+          SharedPrefsConstants.countryCode: 2,
+          SharedPrefsConstants.appLocale: 3,
+        });
+        users.storedUser = const User(name: 'Ana');
+        dispatcher.localeTestValue = const Locale('en', 'GB');
+      },
+      build: buildBloc,
+      act: (bloc) => bloc.add(const UserInitialised()),
+      expect: () => [
+        _state(status: const UserStatus.loading()),
+        isA<UserState>()
+            .having((s) => s.status, 'status', const UserStatus.success())
+            .having((s) => s.user.name, 'name', 'Ana')
+            .having((s) => s.regionPreset, 'region', RegionPreset.uk)
+            .having((s) => s.countryCode, 'country', 'GB')
+            .having((s) => s.appLocale, 'locale', isNull),
+      ],
+      verify: (_) =>
+          expect(logs, loggedWarning('Failed to read the saved preferences')),
+    );
+
+    blocTest<UserBloc, UserState>(
       'UserDataUpdatedFromSync reloads the user',
       build: buildBloc,
       act: (bloc) async {
@@ -295,11 +374,36 @@ void main() {
     );
 
     blocTest<UserBloc, UserState>(
-      'reports a failure when the theme cannot be saved',
+      'reports a theme failure and keeps the old theme when it cannot be '
+      'saved',
       setUp: () => users.updateUserError = Exception('disk full'),
       build: buildBloc,
       act: (bloc) => bloc.add(const UserThemeToggled()),
-      expect: () => [_state(status: const UserStatus.loading()), _isFailure],
+      expect: () => [
+        _state(status: const UserStatus.loading()),
+        _failure(
+          UserSetting.theme,
+        ).having((s) => s.user.isDarkMode, 'dark', isFalse),
+      ],
+    );
+
+    blocTest<UserBloc, UserState>(
+      'a second toggle waits for the first and switches back',
+      build: buildBloc,
+      act: (bloc) => bloc
+        ..add(const UserThemeToggled())
+        ..add(const UserThemeToggled()),
+      skip: 2,
+      expect: () => [
+        _state(status: const UserStatus.loading()),
+        isA<UserState>()
+            .having((s) => s.status, 'status', const UserStatus.success())
+            .having((s) => s.user.isDarkMode, 'dark', isFalse),
+      ],
+      verify: (_) => expect(
+        users.updatedUsers.map((u) => u.isDarkMode),
+        [true, false],
+      ),
     );
   });
 
@@ -329,15 +433,35 @@ void main() {
     );
 
     blocTest<UserBloc, UserState>(
-      'leaves the lock off when the check throws',
+      'reports a biometric failure and leaves the lock off when the check '
+      'throws',
       setUp: () => auth.authenticateError = Exception('NotAvailable'),
       build: buildBloc,
       act: (bloc) => bloc.add(const UserBiometricAuthToggled(true)),
       expect: () => [
         _state(status: const UserStatus.loading()),
-        _state(status: const UserStatus.success(), lockEnabled: false),
+        _failure(
+          UserSetting.biometric,
+        ).having((s) => s.isBiometricAuthEnabled, 'lock', isFalse),
       ],
       verify: (_) => expect(users.savedLockValues, isEmpty),
+    );
+
+    blocTest<UserBloc, UserState>(
+      'reports a biometric failure and leaves the lock off when it cannot be '
+      'saved',
+      setUp: () {
+        users.saveLockError = Exception('disk full');
+        auth.results.add(true);
+      },
+      build: buildBloc,
+      act: (bloc) => bloc.add(const UserBiometricAuthToggled(true)),
+      expect: () => [
+        _state(status: const UserStatus.loading()),
+        _failure(
+          UserSetting.biometric,
+        ).having((s) => s.isBiometricAuthEnabled, 'lock', isFalse),
+      ],
     );
 
     blocTest<UserBloc, UserState>(
@@ -469,20 +593,71 @@ void main() {
       act: (bloc) => bloc.add(const UserBiometricAuthToggled(false)),
       expect: () => [
         _state(status: const UserStatus.loading()),
-        _isFailure.having((s) => s.isBiometricAuthEnabled, 'lock', isTrue),
+        _failure(
+          UserSetting.biometric,
+        ).having((s) => s.isBiometricAuthEnabled, 'lock', isTrue),
+      ],
+    );
+
+    blocTest<UserBloc, UserState>(
+      'a declined prompt keeps the lock on without a failure',
+      setUp: () {
+        users.lockEnabled = true;
+        auth.results.add(false);
+      },
+      build: buildBloc,
+      seed: () => lockOn,
+      act: (bloc) => bloc.add(const UserBiometricAuthToggled(false)),
+      expect: () => [
+        _state(status: const UserStatus.loading(), lockEnabled: true),
+        _state(status: const UserStatus.success(), lockEnabled: true),
       ],
     );
   });
 
   group('UserNameUpdated', () {
     blocTest<UserBloc, UserState>(
-      'shows and saves the new name',
+      'saves the new name, then shows it with a name success',
       build: buildBloc,
       act: (bloc) => bloc.add(const UserNameUpdated('Maria')),
       expect: () => [
-        isA<UserState>().having((s) => s.user.name, 'name', 'Maria'),
+        _state(
+          status: const UserStatus.loading(),
+        ).having((s) => s.user.name, 'name', ''),
+        isA<UserState>()
+            .having(
+              (s) => s.status,
+              'status',
+              const UserStatus.success(setting: UserSetting.name),
+            )
+            .having((s) => s.user.name, 'name', 'Maria'),
       ],
       verify: (_) => expect(users.updatedUsers.single.name, 'Maria'),
+    );
+
+    blocTest<UserBloc, UserState>(
+      'keeps the other fields of the user',
+      build: buildBloc,
+      seed: () => const UserState(
+        user: User(name: 'Ana', isDarkMode: true, isReceiveModeEnabled: true),
+      ),
+      act: (bloc) => bloc.add(const UserNameUpdated('Maria')),
+      skip: 1,
+      expect: () => [
+        isA<UserState>().having(
+          (s) => s.user,
+          'user',
+          const User(
+            name: 'Maria',
+            isDarkMode: true,
+            isReceiveModeEnabled: true,
+          ),
+        ),
+      ],
+      verify: (_) => expect(
+        users.storedUser,
+        const User(name: 'Maria', isDarkMode: true, isReceiveModeEnabled: true),
+      ),
     );
 
     test(
@@ -497,14 +672,91 @@ void main() {
         await pumpEventQueue();
 
         expect(states.last.user.name, '');
-        expect(states.last, _isFailure);
+        expect(states.last, _failure(UserSetting.name));
         await sub.cancel();
         await bloc.close();
       },
-      skip:
-          'BUG: the name is shown before it is saved and never rolled back, '
-          'and the save error escapes the handler instead of a failure state',
     );
+  });
+
+  group('concurrent saves', () {
+    test('a theme toggled while the name saves keeps both', () async {
+      final bloc = buildBloc();
+      final saving = users.pendingUpdate = Completer<void>();
+
+      bloc.add(const UserNameUpdated('Maria'));
+      await pumpEventQueue();
+      bloc.add(const UserThemeToggled());
+      await pumpEventQueue();
+      users.pendingUpdate = null;
+      saving.complete();
+      await pumpEventQueue();
+
+      const both = User(name: 'Maria', isDarkMode: true);
+      expect(bloc.state.user, both);
+      expect(users.storedUser, both);
+      await bloc.close();
+    });
+
+    test('a name saved while the theme saves keeps both', () async {
+      final bloc = buildBloc();
+      final saving = users.pendingUpdate = Completer<void>();
+
+      bloc.add(const UserThemeToggled());
+      await pumpEventQueue();
+      bloc.add(const UserNameUpdated('Maria'));
+      await pumpEventQueue();
+      users.pendingUpdate = null;
+      saving.complete();
+      await pumpEventQueue();
+
+      const both = User(name: 'Maria', isDarkMode: true);
+      expect(bloc.state.user, both);
+      expect(users.storedUser, both);
+      await bloc.close();
+    });
+
+    test('receive mode switched while the name saves keeps both', () async {
+      final bloc = buildBloc();
+      final saving = users.pendingUpdate = Completer<void>();
+
+      bloc.add(const UserNameUpdated('Maria'));
+      await pumpEventQueue();
+      bloc.add(const UserReceiveModeToggled(true));
+      await pumpEventQueue();
+      users.pendingUpdate = null;
+      saving.complete();
+      await pumpEventQueue();
+
+      const both = User(name: 'Maria', isReceiveModeEnabled: true);
+      expect(bloc.state.user, both);
+      expect(users.storedUser, both);
+      await bloc.close();
+    });
+  });
+
+  test('a sync reload during a name save ends with the new name', () async {
+    final bloc = buildBloc();
+    final saving = users.pendingUpdate = Completer<void>();
+    users
+      ..storedUser = const User(name: 'Ana')
+      ..storeWhenDone = true;
+
+    bloc.add(const UserNameUpdated('Maria'));
+    await pumpEventQueue();
+    final reading = users.pendingGet = Completer<void>();
+    bloc.add(const UserDataUpdatedFromSync());
+    await pumpEventQueue();
+    users.pendingUpdate = null;
+    saving.complete();
+    await pumpEventQueue();
+    users.pendingGet = null;
+    reading.complete();
+    await pumpEventQueue();
+
+    expect(bloc.state.user.name, 'Maria');
+    expect(users.storedUser?.name, 'Maria');
+    await bloc.close();
   });
 
   group('UserReceiveModeToggled (Share Proximity)', () {
@@ -565,13 +817,104 @@ void main() {
     );
 
     blocTest<UserBloc, UserState>(
-      'reports a failure when the setting cannot be saved',
+      'reports a receive-mode failure, keeps it off and stops listening when '
+      'the setting cannot be saved',
       setUp: () => users.updateUserError = Exception('disk full'),
       build: buildBloc,
       act: (bloc) => bloc.add(const UserReceiveModeToggled(true)),
-      expect: () => [_state(status: const UserStatus.loading()), _isFailure],
-      verify: (_) => expect(receiveMode.starts, 0),
+      expect: () => [
+        _state(status: const UserStatus.loading()),
+        _failure(
+          UserSetting.receiveMode,
+        ).having((s) => s.user.isReceiveModeEnabled, 'on', isFalse),
+      ],
+      verify: (_) => expect(receiveMode.isListening, isFalse),
     );
+
+    blocTest<UserBloc, UserState>(
+      'reports a receive-mode failure and saves nothing when listening cannot '
+      'start',
+      setUp: () => receiveMode.startError = Exception('Bluetooth off'),
+      build: buildBloc,
+      act: (bloc) => bloc.add(const UserReceiveModeToggled(true)),
+      expect: () => [
+        _state(status: const UserStatus.loading()),
+        _failure(
+          UserSetting.receiveMode,
+        ).having((s) => s.user.isReceiveModeEnabled, 'on', isFalse),
+      ],
+      verify: (_) => expect(users.updatedUsers, isEmpty),
+    );
+
+    blocTest<UserBloc, UserState>(
+      'reports a receive-mode failure and saves nothing when the service '
+      'cannot be found',
+      setUp: () => getIt.unregister<ReceiveModeService>(),
+      build: buildBloc,
+      act: (bloc) => bloc.add(const UserReceiveModeToggled(true)),
+      expect: () => [
+        _state(status: const UserStatus.loading()),
+        _failure(
+          UserSetting.receiveMode,
+        ).having((s) => s.user.isReceiveModeEnabled, 'on', isFalse),
+      ],
+      verify: (_) => expect(users.updatedUsers, isEmpty),
+    );
+  });
+
+  blocTest<UserBloc, UserState>(
+    'puts listening back on when turning it off cannot be saved, and still '
+    'reports the failure when it cannot start again',
+    setUp: () {
+      receiveMode.isListening = true;
+      users.updateUserError = Exception('disk full');
+    },
+    build: buildBloc,
+    seed: () => const UserState(user: User(isReceiveModeEnabled: true)),
+    act: (bloc) {
+      // Stopping works; starting again, to undo it, fails.
+      receiveMode.startError = Exception('Bluetooth off');
+      bloc.add(const UserReceiveModeToggled(false));
+    },
+    expect: () => [
+      _state(status: const UserStatus.loading()),
+      _failure(
+        UserSetting.receiveMode,
+      ).having((s) => s.user.isReceiveModeEnabled, 'on', isTrue),
+    ],
+    verify: (_) {
+      expect(receiveMode.stops, 1);
+      expect(receiveMode.isListening, isFalse);
+    },
+  );
+
+  test('a sync reload that cannot read the lock setting shows the user and '
+      'does not hold up the saves queued after it', () async {
+    users
+      ..lockEnabled = true
+      ..storedUser = const User(name: 'Synced');
+    final errors = <Object>[];
+    late UserBloc bloc;
+
+    // The bloc rethrows a handler's error into the zone it was built in.
+    await runZonedGuarded(() async {
+      bloc = buildBloc()..add(const UserInitialised());
+      await pumpEventQueue();
+      users.readLockError = Exception('keychain locked');
+      bloc
+        ..add(const UserDataUpdatedFromSync())
+        ..add(const UserThemeToggled());
+      await pumpEventQueue();
+    }, (error, _) => errors.add(error));
+
+    expect(errors, isEmpty);
+    expect(bloc.state.user.name, 'Synced');
+    expect(bloc.state.isBiometricAuthEnabled, isTrue);
+    expect(users.storedUser?.isDarkMode, isTrue);
+    expect(bloc.state.user.isDarkMode, isTrue);
+    expect(bloc.state.status, const UserStatus.success());
+    expect(logs, loggedWarning('Failed to read the biometric lock'));
+    await bloc.close();
   });
 
   group('preferences', () {

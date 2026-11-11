@@ -7,7 +7,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/widgets/app_message_card.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
+import 'package:health_wallet/features/desktop/backup/domain/utils/backup_name_date.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
+import 'package:health_wallet/features/desktop/communication/data/models/device_pairing.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/backup_card.dart';
@@ -32,6 +34,31 @@ class _MockLwwSyncBloc extends MockBloc<LwwSyncEvent, LwwSyncState>
 
 final _l10n = lookupAppLocalizations(const Locale('en'));
 
+/// A backup with its files (format 2): 1 KB database and 2 KB of files.
+final _withFiles = BackupEntry(
+  id: 'b3',
+  name: 'with-files',
+  timestamp: DateTime(2026, 11, 2, 9, 30),
+  sizeBytes: 1024,
+  recordCount: 5,
+  checksum: 'ghi',
+  filePath: '/tmp/with-files.db',
+  formatVersion: BackupEntry.filesFormat,
+  files: const [
+    BackupFile(name: 'a.pdf', sourcePaths: ['a.pdf'], sha256: 'x', size: 2048),
+  ],
+);
+
+DevicePairing _pairing({String? peer}) => DevicePairing(
+  deviceId: 'desktop',
+  deviceName: 'Desk',
+  pairingKey: 'key',
+  lastIp: '10.0.0.2',
+  lastPort: 49152,
+  pairedAt: DateTime(2026, 10, 1),
+  peerDeviceId: peer,
+);
+
 final _backup = BackupEntry(
   id: 'b1',
   name: 'backup-28-10-2026',
@@ -52,14 +79,17 @@ void main() {
     bool isBackingUp = false,
     String? error,
     List<BackupEntry>? history,
+    BackupEntry? selected,
+    String? restoreNotice,
   }) => BackupState(
     hasUserSelectedPath: true,
     backupPath: '/tmp',
     backupHistory: history ?? [_backup],
-    selectedBackup: _backup,
+    selectedBackup: selected ?? _backup,
     isRestoring: isRestoring,
     isBackingUp: isBackingUp,
     error: error,
+    restoreNotice: restoreNotice,
   );
 
   setUp(() {
@@ -159,6 +189,87 @@ void main() {
       );
     });
 
+    String pointInTime(BackupEntry backup) =>
+        _l10n.backupRestoreConfirmPointInTime(
+          backupNameDate(backup.timestamp, 'en', withTime: true),
+        );
+
+    Future<void> openFor(
+      WidgetTester tester,
+      BackupEntry backup, {
+      DesktopSyncState syncState = const DesktopSyncState(),
+    }) async {
+      await pumpCard(tester, cardState(selected: backup), syncState);
+      await tester.tap(find.text(_l10n.desktopRestoreThisBackup));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('says both devices go back to the backup\'s date and that a '
+        'safety copy is made first', (tester) async {
+      await openFor(tester, _withFiles);
+
+      expect(find.text(pointInTime(_withFiles)), findsOne);
+      expect(find.textContaining(_l10n.backupOldNoFiles), findsNothing);
+      expect(
+        find.textContaining(_l10n.backupRestorePhoneOffline),
+        findsNothing,
+      );
+    });
+
+    testWidgets('for a backup without files, says the current files are '
+        'kept', (tester) async {
+      await openFor(tester, _backup);
+
+      expect(
+        find.text('${pointInTime(_backup)}\n\n${_l10n.backupOldNoFiles}'),
+        findsOne,
+      );
+    });
+
+    testWidgets('with the paired phone offline, says its newest records come '
+        'back when it reconnects', (tester) async {
+      await openFor(
+        tester,
+        _withFiles,
+        syncState: DesktopSyncState(pairedDevice: _pairing(peer: 'phone')),
+      );
+
+      expect(
+        find.text(
+          '${pointInTime(_withFiles)}\n\n${_l10n.backupRestorePhoneOffline}',
+        ),
+        findsOne,
+      );
+    });
+
+    testWidgets('with the phone connected, or none paired yet, says nothing '
+        'about it being offline', (tester) async {
+      await openFor(
+        tester,
+        _withFiles,
+        syncState: DesktopSyncState(
+          connectionStatus: ConnectionStatus.connected,
+          pairedDevice: _pairing(peer: 'phone'),
+        ),
+      );
+      expect(
+        find.textContaining(_l10n.backupRestorePhoneOffline),
+        findsNothing,
+      );
+
+      await tester.tap(find.byKey(const Key('confirmation_dialog_close')));
+      await tester.pumpAndSettle();
+      await openFor(
+        tester,
+        _withFiles,
+        syncState: DesktopSyncState(pairedDevice: _pairing()),
+      );
+      expect(
+        find.textContaining(_l10n.backupRestorePhoneOffline),
+        findsNothing,
+      );
+    });
+
     testWidgets('Restore restores the backup', (tester) async {
       await open(tester);
 
@@ -243,6 +354,42 @@ void main() {
       expect(find.byType(Dialog), findsNothing);
     });
 
+    testWidgets('what the user should know about it is added to the '
+        'announcement', (tester) async {
+      await confirmRestore(tester);
+      final notice = _l10n.backupFilesNotRestored(2);
+      await emit(tester, [
+        cardState(isRestoring: true),
+        cardState(restoreNotice: notice),
+      ]);
+
+      expect(
+        find.text(
+          '${_l10n.desktopRestoreSucceededMessage('backup-28-10-2026', 27)}'
+          '\n\n$notice',
+        ),
+        findsOne,
+      );
+    });
+
+    testWidgets('the safety copy it made is not announced as a backup', (
+      tester,
+    ) async {
+      final safety = _withFiles.copyWith(
+        id: 'safety',
+        name: _l10n.backupSafetyName('Nov 3, 2026 10:00'),
+        isSafetyCopy: true,
+      );
+      await confirmRestore(tester);
+      await emit(tester, [
+        cardState(isRestoring: true),
+        cardState(history: [safety, _backup]),
+      ]);
+
+      expect(find.byKey(AppMessageCard.cardKey), findsNothing);
+      expect(find.text(_l10n.desktopRestoreSucceededTitle), findsOne);
+    });
+
     testWidgets('a restore that starts and finishes within one frame is '
         'still announced', (tester) async {
       await confirmRestore(tester);
@@ -301,6 +448,18 @@ void main() {
       ]);
 
       expect(successCard(), findsOne);
+    });
+
+    testWidgets('a safety copy that finishes is not announced', (
+      tester,
+    ) async {
+      await pumpCard(tester);
+      await emit(tester, [
+        cardState(isBackingUp: true),
+        cardState(history: [created.copyWith(isSafetyCopy: true), _backup]),
+      ]);
+
+      expect(successCard(), findsNothing);
     });
 
     testWidgets('the success card hides itself after a while', (
@@ -466,6 +625,12 @@ void main() {
       expect(bloc.events, contains(const BackupSelected(null)));
     });
 
+    testWidgets('the size includes the files', (tester) async {
+      await pumpCard(tester, cardState(selected: _withFiles));
+
+      expect(find.text('3.0 KB'), findsOne);
+    });
+
     testWidgets('the list has no way back', (tester) async {
       await pumpCard(
         tester,
@@ -477,6 +642,46 @@ void main() {
       );
 
       expect(find.text(_l10n.desktopAllBackups), findsNothing);
+    });
+  });
+
+  group('the list', () {
+    Future<void> pumpList(WidgetTester tester) => pumpCard(
+      tester,
+      BackupState(
+        hasUserSelectedPath: true,
+        backupPath: '/tmp',
+        backupHistory: [_withFiles, _backup],
+      ),
+    );
+
+    testWidgets('labels a backup without files "Records only"', (
+      tester,
+    ) async {
+      await pumpList(tester);
+
+      expect(
+        find.textContaining(_l10n.backupRecordsOnly),
+        findsOne,
+      );
+      final old = find.ancestor(
+        of: find.textContaining(_l10n.backupRecordsOnly),
+        matching: find.byType(Column),
+      );
+      expect(
+        find.descendant(
+          of: old.first,
+          matching: find.text('backup-28-10-2026'),
+        ),
+        findsOne,
+      );
+    });
+
+    testWidgets('shows each backup\'s size with its files', (tester) async {
+      await pumpList(tester);
+
+      expect(find.textContaining('3.0 KB'), findsOne);
+      expect(find.textContaining('1.0 KB'), findsOne);
     });
   });
 

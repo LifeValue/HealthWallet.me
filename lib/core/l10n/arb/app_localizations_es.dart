@@ -703,11 +703,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get processingFailedCapacity =>
-      'El documento es demasiado grande para el tamaño de contexto actual de IA.';
+      'El documento es demasiado grande para la memoria de trabajo actual de IA.';
 
   @override
   String get processingFailedCapacitySuggestion =>
-      'Toca el icono de ajustes arriba y aumenta el tamaño de contexto a 2048 o más, luego reintenta.';
+      'Toca el icono de ajustes arriba y aumenta la memoria de trabajo a 2048 o más, luego reintenta.';
 
   @override
   String get increaseAiModelCapacity => 'Aumentar capacidad de IA';
@@ -732,37 +732,37 @@ class AppLocalizationsEs extends AppLocalizations {
       'Ajusta el rendimiento de IA para tu dispositivo. Los valores recomendados están preseleccionados.';
 
   @override
-  String get setAiTokensUsage => 'Configurar uso de tokens IA';
+  String get setAiTokensUsage => 'Longitud máxima de la respuesta';
 
   @override
   String get tokenUsageDescription =>
-      'Controla cuánta capacidad de procesamiento puede usar la IA. Mayor capacidad permite archivos más grandes y tareas más complejas, pero usa más recursos y tarda más.';
+      'Lo máximo que la IA puede escribir en cada paso mientras enumera los registros que encontró en tu documento. Demasiado corta y se cortan algunos registros; más larga tarda más. Siempre cabe dentro de la memoria de trabajo.';
 
   @override
-  String get gpuLayersLabel => 'Capas GPU';
+  String get gpuLayersLabel => 'Chip gráfico (GPU)';
 
   @override
   String get gpuLayersDescription =>
-      'Descargar capas del modelo a la GPU para un procesamiento de imágenes más rápido. Más capas = más rápido pero más memoria. Pon 0 si la app se cierra.';
+      'Qué parte de la IA se ejecuta en el chip gráfico del dispositivo, que es más rápido que el procesador principal. Más alto es más rápido, pero usa más memoria. Si la app se cierra o falla durante un escaneo, bájalo o ponlo en 0.';
 
   @override
-  String get threadsLabel => 'Hilos CPU';
+  String get threadsLabel => 'Núcleos del procesador (CPU)';
 
   @override
   String get threadsDescription =>
-      'Número de hilos de CPU para inferencia. Más hilos = más rápido pero más batería.';
+      'Cuántos núcleos del procesador usa la IA a la vez. Más es más rápido, pero gasta la batería antes y puede calentar el dispositivo.';
 
   @override
   String get recommended => 'Recomendado';
 
   @override
-  String get tokenPresetLow => 'Bajo';
+  String get tokenPresetLow => 'Corta';
 
   @override
-  String get tokenPresetMedium => 'Medio';
+  String get tokenPresetMedium => 'Media';
 
   @override
-  String get tokenPresetHigh => 'Alto';
+  String get tokenPresetHigh => 'Larga';
 
   @override
   String get tokenPresetCustom => 'Personalizado';
@@ -771,14 +771,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get setTokens => 'Establecer';
 
   @override
-  String get tokens => 'tokens';
-
-  @override
-  String get contextSizeLabel => 'Tamaño de contexto';
+  String get contextSizeLabel => 'Memoria de trabajo';
 
   @override
   String get contextSizeDescription =>
-      'Cantidad de texto que la IA puede procesar a la vez. Un contexto mayor maneja documentos más grandes pero usa más memoria.';
+      'El espacio de trabajo de la IA para un paso: sitio para leer tu documento y anotar lo que encuentra. Más grande admite documentos más largos, pero usa más memoria del dispositivo. Si el escaneo falla por «memoria insuficiente», redúcelo.';
 
   @override
   String get useVisionLabel => 'Escaneo profundo';
@@ -1425,11 +1422,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get desktopRestoreBackupTitle => '¿Restaurar respaldo?';
 
   @override
-  String desktopRestoreBackupMessage(String name, int count) {
-    return 'Esto reemplazará todos los datos actuales en este dispositivo con \"$name\".\n\n Se restaurarán $count registros.\n\nTus datos en el teléfono vinculado no se verán afectados.';
-  }
-
-  @override
   String get desktopRestore => 'Restaurar';
 
   @override
@@ -1527,6 +1519,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get attachedDocuments => 'Documentos adjuntos';
+
+  @override
+  String documentAttachedTo(String visit) {
+    return 'Adjuntado a $visit.';
+  }
 
   @override
   String get cameraPermissionRequired => 'Permiso de cámara requerido';
@@ -2545,10 +2542,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'La copia de seguridad falló. Inténtalo de nuevo.';
 
   @override
-  String get desktopRestoreFailed =>
-      'La restauración falló. Inténtalo de nuevo.';
-
-  @override
   String get desktopBackupActionFailed =>
       'No se pudieron actualizar las copias de seguridad. Inténtalo de nuevo.';
 
@@ -2917,17 +2910,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get aiModelDownloadFailed => 'La descarga ha fallado';
-
-  @override
-  String get aiModelDownloadCancelledTitle => 'Descarga cancelada';
-
-  @override
-  String get aiModelDownloadInterruptedMessage =>
-      'La descarga se interrumpió. Inténtalo de nuevo.';
-
-  @override
-  String get aiModelDownloadCancelledNotificationTitle =>
-      'Descarga del modelo de IA cancelada';
 
   @override
   String get aiModelDownloadWasCancelled =>
@@ -4729,4 +4711,139 @@ class AppLocalizationsEs extends AppLocalizations {
   String handoverDraftSavedOnPhone(String origin) {
     return '$origin se guardó en el teléfono. Los cambios hechos aquí en su borrador no se conservaron.';
   }
+
+  @override
+  String failedToSaveSetting(String setting) {
+    return 'No se pudo guardar «$setting». Inténtalo de nuevo.';
+  }
+
+  @override
+  String get processingFailedMemory =>
+      'No hay suficiente memoria libre para ejecutar el modelo de IA. Cierra otras apps e inténtalo de nuevo, o desactiva el Escaneo profundo en Ajustes de IA.';
+
+  @override
+  String get tokenPresetLowHint => 'unos pocos valores';
+
+  @override
+  String get tokenPresetMediumHint => 'un informe breve';
+
+  @override
+  String get tokenPresetHighHint => 'un informe completo';
+
+  @override
+  String get backupRecordsOnly => 'Solo registros';
+
+  @override
+  String backupRestoreConfirmPointInTime(String date) {
+    return 'Esto reemplaza tus registros en este ordenador y en tu teléfono vinculado por la copia del $date. Los registros añadidos desde entonces se eliminan. Antes se guarda una copia «Antes de restaurar» de tus datos actuales, que se conserva 30 días para que puedas deshacerlo.';
+  }
+
+  @override
+  String get backupOldNoFiles =>
+      'Esta copia no tiene archivos. Se restaurarán los registros y se conservarán tus archivos actuales.';
+
+  @override
+  String backupSafetyName(String date) {
+    return 'Antes de restaurar $date';
+  }
+
+  @override
+  String get backupRestoreFailed =>
+      'La restauración falló. Tus datos no cambiaron; la copia \"Antes de restaurar\" está en la lista.';
+
+  @override
+  String get backupSafetyFailed =>
+      'No se pudo crear la copia de seguridad previa, así que no se restauró nada. Comprueba el espacio libre y la carpeta.';
+
+  @override
+  String backupFilesNotRestored(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'No se pudieron restaurar $count archivos.',
+      one: 'No se pudo restaurar 1 archivo.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupRestorePhoneOffline =>
+      'Tu teléfono no está conectado. Los registros añadidos en él desde la última sincronización volverán cuando se conecte; los cambios que hizo en registros existentes se reemplazarán por la copia.';
+
+  @override
+  String backupRestoreRemovesScans(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Se eliminarán $count escaneos pendientes de revisión.',
+      one: 'Se eliminará 1 escaneo pendiente de revisión.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aiModelDeleteTitle(String name) {
+    return '¿Eliminar $name?';
+  }
+
+  @override
+  String aiModelDeleteMessage(int size) {
+    return 'El modelo y sus archivos de escaneo profundo se eliminarán de este dispositivo. Para volver a escanear con él, tendrás que descargarlo de nuevo (~$size MB).';
+  }
+
+  @override
+  String get processingNoPatientFound =>
+      'No se encontró ningún paciente en el documento. Introduce los datos.';
+
+  @override
+  String get processingStopping => 'Deteniendo…';
+
+  @override
+  String get handoverTakenBack => 'El teléfono recuperó este documento.';
+
+  @override
+  String get aiModelSwitchedToLiteTitle => 'Ahora se usa el modelo Lite';
+
+  @override
+  String aiModelSwitchedToLiteMessage(String modelName) {
+    return 'El modelo $modelName necesita más memoria de la que tiene este dispositivo, así que se usa el modelo Lite.';
+  }
+
+  @override
+  String backupSafetyRetention(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Se conserva $count días',
+      one: 'Se conserva 1 día',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSafetyRetentionTitle => 'Copia previa a una restauración';
+
+  @override
+  String backupSafetyRetentionDaysUnit(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'días',
+      one: 'día',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSafetyRetentionHint =>
+      'También se aplica a las copias existentes. Las copias que superen este plazo se eliminan ahora.';
+
+  @override
+  String backupSafetyRetentionInvalid(int min, int max) {
+    return 'Introduce un número entero de días entre $min y $max.';
+  }
+
+  @override
+  String get backupSafetyRetentionSaveFailed =>
+      'No se pudo guardar cuánto tiempo se conserva la copia previa a una restauración. Inténtalo de nuevo.';
 }

@@ -7,6 +7,7 @@ import 'package:health_wallet/bootstrap.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/services/startup_hardening.dart';
+import 'package:health_wallet/features/desktop/backup/data/services/safety_copy_expiry_scheduler.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/discovery_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
@@ -18,6 +19,7 @@ import 'package:health_wallet/features/desktop/tray/data/services/tray_service.d
 import 'package:health_wallet/features/desktop/tray/data/services/window_lifecycle_service.dart';
 import 'package:health_wallet/features/desktop/tray/presentation/bloc/tray_bloc.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_linking_service.dart';
+import 'package:health_wallet/features/processing/domain/services/ai_model_selection_guard.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 
 void main() async {
@@ -31,6 +33,9 @@ void main() async {
 
   // Before the first screen asks whose records to show.
   await getIt<HolderLinkingService>().linkUnassigned();
+
+  // Before anything reads the selected AI model.
+  await getIt<AiModelSelectionGuard>().replaceUnsupportedModel();
 
   getIt.registerLazySingleton<CommunicationBloc>(
     () => CommunicationBloc(
@@ -56,10 +61,13 @@ void main() async {
     // is quitting, so it reconnects later by itself.
     await getIt<LwwSyncBloc>().shutdown();
     await getIt<CommunicationBloc>().shutdown();
+    await getIt<SafetyCopyExpiryScheduler>().dispose();
   };
 
   getIt<CommunicationBloc>().add(const CommunicationInitialised());
   getIt<BackupBloc>().add(const BackupHistoryLoaded());
+  // Deletes each safety copy when it expires while the app stays open.
+  unawaited(getIt<SafetyCopyExpiryScheduler>().start());
   getIt<ProcessingBloc>().add(const ProcessingInitialised());
   getIt<LwwSyncBloc>().add(const LwwSyncInitialised());
   getIt<HandoverBloc>().add(const HandoverInitialised());

@@ -38,6 +38,10 @@ class _FakePdfGenerationService extends Fake implements PdfGenerationService {
   }
 }
 
+final _uuid = RegExp(
+  r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+);
+
 void main() {
   late TestDirs dirs;
   late AppDatabase db;
@@ -133,6 +137,13 @@ void main() {
       expect(attachment['title'], 'PDF: a');
       expect(attachment['contentType'], 'application/pdf');
       expect(attachment['size'], utf8.encode('%PDF a.pdf').length);
+      expect(raw['id'], ids.single);
+      expect(ids.single, matches(_uuid));
+      expect(
+        raw['identifier'][0]['system'],
+        'http://healthwallet.me/document-id',
+      );
+      expect(raw['identifier'][0]['value'], ids.single);
       expect(raw['subject']['reference'], 'Patient/pat-1');
       expect(raw['context']['encounter'][0]['reference'], 'Encounter/enc-1');
     });
@@ -155,8 +166,8 @@ void main() {
       expect(jsonDecode(row['resource_raw'] as String)['context'], isNull);
     });
 
-    test('BUG: two groups saved in the same millisecond get the same id, so '
-        'the second replaces the first', () async {
+    test('two groups saved in the same millisecond get two ids and two '
+        'rows', () async {
       pdfs.groups = [
         await pdfGroup('a.pdf', 'PDF: a'),
         await pdfGroup('b.pdf', 'PDF: b'),
@@ -169,8 +180,11 @@ void main() {
       );
 
       expect(ids.toSet(), hasLength(2));
+      for (final id in ids) {
+        expect(id, matches(_uuid));
+      }
       expect(await countRows(db, 'fhir_resource'), 2);
-    }, skip: 'ids come from DateTime.now().millisecondsSinceEpoch');
+    });
 
     test('wraps a failure in an exception', () async {
       pdfs.error = Exception('render failed');
