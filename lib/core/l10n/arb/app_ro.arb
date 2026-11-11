@@ -382,14 +382,6 @@
       }
     }
   },
-  "shareFoundDevices": "S-au găsit {count} dispozitiv(e)",
-  "@shareFoundDevices": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "shareRetryingCount": "Se reîncearcă ({retryCount}/3)...",
   "@shareRetryingCount": {
     "placeholders": {
@@ -526,24 +518,12 @@
       }
     }
   },
-  "desktopSyncingTable": "Se sincronizează {tableName}...",
-  "@desktopSyncingTable": {
-    "placeholders": {
-      "tableName": {
-        "type": "String"
-      }
-    }
-  },
   "desktopSyncing": "Se sincronizează...",
   "desktopSyncNow": "Sincronizează acum",
   "desktopSyncError": "Eroare",
   "desktopSyncInSync": "Sincronizat",
   "desktopSyncReady": "Pregătit",
   "desktopSyncOffline": "Offline",
-  "desktopTableHealthRecords": "Înregistrări medicale",
-  "desktopTableSources": "Surse",
-  "desktopTableNotes": "Notițe",
-  "desktopTableSessions": "Sesiuni",
   "desktopConnection": "Conexiune",
   "desktopGeneratePairingQr": "Generează QR de asociere",
   "desktopScanFromMobile": "Scanează din pagina Sync de pe mobil",
@@ -640,17 +620,6 @@
     }
   },
   "desktopNewDeviceConnecting": "Dispozitiv nou se conectează",
-  "desktopNewDeviceMessage": "Un dispozitiv nou ({address}) dorește să se conecteze.\n\nAceasta va deconecta \"{currentDevice}\".\n\nComuți pe noul dispozitiv?",
-  "@desktopNewDeviceMessage": {
-    "placeholders": {
-      "address": {
-        "type": "String"
-      },
-      "currentDevice": {
-        "type": "String"
-      }
-    }
-  },
   "desktopKeepCurrent": "Păstrează actualul",
   "desktopSwitch": "Comută",
   "desktopCurrentDevice": "dispozitiv actual",
@@ -671,7 +640,6 @@
   "desktopHandoverToDesktop": "Predare pe desktop",
   "desktopHandoverProcessingMessage": "Procesarea este în curs. Predarea va anula procesarea curentă și va trimite fișierele pe desktop.",
   "desktopHandover": "Predare",
-  "attachedDocuments": "Documente atașate",
   "documentAttachedTo": "Atașat la {visit}.",
   "cameraPermissionRequired": "Permisiune cameră necesară",
   "cameraPermissionRequiredMessage": "Această aplicație necesită acces la cameră pentru scanare. Te rugăm să acorzi permisiunea.",
@@ -897,6 +865,7 @@
   "exportIpsPdf": "Exportă IPS (PDF)",
   "addIpsToAppleWallet": "Adaugă IPS în Apple Wallet",
   "addIpsToGoogleWallet": "Adaugă IPS în Google Wallet",
+  "shareSelectedRecordsFailed": "Înregistrările selectate nu au putut fi citite. Încearcă din nou.",
   "ipsExportFailed": "Rezumatul medical nu a putut fi exportat. Încearcă din nou.",
   "walletPassFailed": "Cardul nu a putut fi adăugat în portofel. Încearcă din nou.",
   "sourcesTitle": "Surse",
@@ -1074,8 +1043,6 @@
   "desktopBackupHistory": "Istoric",
   "desktopPairedWith": "Asociat cu {name}",
   "desktopMobileDevice": "Dispozitiv mobil",
-  "desktopNotFoundScanAgain": "Desktopul nu a fost găsit. Scanează din nou codul QR.",
-  "desktopPairingExpired": "Conectarea a eșuat. Scanează codul QR pentru a asocia din nou.",
   "desktopRemoteBackupName": "De pe telefon {date}",
   "desktopNoBackupLocation": "Nu este setată o locație de backup pe desktop. Deschide aplicația desktop și alege mai întâi un folder de backup.",
   "desktopBackupFailed": "Backup-ul a eșuat. Încearcă din nou.",
@@ -1158,13 +1125,13 @@
   "loadingRelatedResources": "Se încarcă resursele asociate...",
   "noRelatedResourcesForEncounter": "Nu s-au găsit resurse asociate acestei consultații",
   "cannotAttachToDocumentReference": "Nu se pot atașa fișiere la un document",
+  "attachToEncounterLoadFailed": "Pacienții și consultațiile nu au putut fi încărcate. Încearcă din nou.",
   "attachFileFailed": "Fișierul nu a putut fi atașat. Încearcă din nou.",
   "attachmentDeleteFailed": "Atașamentul nu a putut fi șters. Încearcă din nou.",
   "deleteRecordOfType": "Șterge {type}",
   "dateFilterEndBeforeStart": "Data de sfârșit trebuie să fie după data de început",
   "dateFilterChip": "Dată: {range}",
   "aiModelCheckFailed": "A apărut o eroare la verificarea existenței modelului",
-  "aiModelExistenceCheckFailed": "Verificarea existenței modelului a eșuat",
   "aiModelDownloadingTitle": "Se descarcă {modelName}",
   "aiModelDownloadStarting": "Se pornește descărcarea...",
   "aiModelReadyTitle": "{modelName} este gata",
@@ -1205,7 +1172,6 @@
   "dateFormatHintIso": "AAAA-LL-ZZ",
   "retryStep": "Reîncearcă (pasul {step})",
   "failedToCreateEncounter": "Crearea consultației a eșuat: {error}",
-  "failedToAttachDocuments": "Atașarea documentelor a eșuat: {error}",
   "fieldAccessionNumber": "Număr de acces",
   "fieldAchievementStatus": "Stadiu de realizare",
   "fieldActuality": "Realitate",

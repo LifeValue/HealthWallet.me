@@ -21,16 +21,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 abstract class AiInferenceDataSource {
-  Future<void> downloadModel({
-    required void Function(int) onProgress,
-  });
-
-  Future<void> downloadMmproj({
-    required void Function(int) onProgress,
-  });
-
   Future<bool> checkModelExistence();
 
+  /// Whether the active model's vision projector (mmproj) is on the device.
   Future<bool> checkMmprojExistence();
 
   Future<void> downloadModelForVariant(
@@ -742,30 +735,6 @@ class AiInferenceDataSourceImpl
         );
         throw Exception('Download failed for $filename: ${update.status}');
     }
-  }
-
-  @override
-  Future<void> downloadModel({
-    required void Function(int) onProgress,
-  }) async {
-    final config = _activeConfig;
-    await _downloadFile(
-      url: config.modelUrl,
-      filename: config.modelId,
-      onProgress: onProgress,
-    );
-  }
-
-  @override
-  Future<void> downloadMmproj({
-    required void Function(int) onProgress,
-  }) async {
-    final config = _activeConfig;
-    await _downloadFile(
-      url: config.mmprojUrl,
-      filename: config.mmprojId,
-      onProgress: onProgress,
-    );
   }
 
   @override

@@ -74,7 +74,6 @@ class _FakeRecords extends Fake implements RecordsRepository {
     List<String>? sourceIds,
     int limit = 20,
     int offset = 0,
-    DateFilter? dateFilter,
   }) async => wallet.rows.values
       .where(
         (r) =>

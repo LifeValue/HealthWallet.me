@@ -2166,12 +2166,6 @@ abstract class AppLocalizations {
   /// **'shared from {source}'**
   String shareSharedFrom(String source);
 
-  /// No description provided for @shareFoundDevices.
-  ///
-  /// In en, this message translates to:
-  /// **'Found {count} device(s)'**
-  String shareFoundDevices(int count);
-
   /// No description provided for @shareRetryingCount.
   ///
   /// In en, this message translates to:
@@ -2274,12 +2268,6 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 change} other{{count} changes}}'**
   String desktopSyncPendingValue(int count);
 
-  /// No description provided for @desktopSyncingTable.
-  ///
-  /// In en, this message translates to:
-  /// **'Syncing {tableName}...'**
-  String desktopSyncingTable(String tableName);
-
   /// No description provided for @desktopSyncing.
   ///
   /// In en, this message translates to:
@@ -2315,30 +2303,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Offline'**
   String get desktopSyncOffline;
-
-  /// No description provided for @desktopTableHealthRecords.
-  ///
-  /// In en, this message translates to:
-  /// **'Health Records'**
-  String get desktopTableHealthRecords;
-
-  /// No description provided for @desktopTableSources.
-  ///
-  /// In en, this message translates to:
-  /// **'Sources'**
-  String get desktopTableSources;
-
-  /// No description provided for @desktopTableNotes.
-  ///
-  /// In en, this message translates to:
-  /// **'Notes'**
-  String get desktopTableNotes;
-
-  /// No description provided for @desktopTableSessions.
-  ///
-  /// In en, this message translates to:
-  /// **'Sessions'**
-  String get desktopTableSessions;
 
   /// No description provided for @desktopConnection.
   ///
@@ -2688,12 +2652,6 @@ abstract class AppLocalizations {
   /// **'New Device Connecting'**
   String get desktopNewDeviceConnecting;
 
-  /// No description provided for @desktopNewDeviceMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'A new device ({address}) wants to connect.\n\nThis will disconnect \"{currentDevice}\".\n\nSwitch to the new device?'**
-  String desktopNewDeviceMessage(String address, String currentDevice);
-
   /// No description provided for @desktopKeepCurrent.
   ///
   /// In en, this message translates to:
@@ -2771,12 +2729,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Handover'**
   String get desktopHandover;
-
-  /// No description provided for @attachedDocuments.
-  ///
-  /// In en, this message translates to:
-  /// **'Attached Documents'**
-  String get attachedDocuments;
 
   /// Says which visit a document attached without the AI was filed under, for example "Checkup, 03/11/2026".
   ///
@@ -3700,6 +3652,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add IPS to Google Wallet'**
   String get addIpsToGoogleWallet;
+
+  /// No description provided for @shareSelectedRecordsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read the selected records. Please try again.'**
+  String get shareSelectedRecordsFailed;
 
   /// No description provided for @ipsExportFailed.
   ///
@@ -4643,18 +4601,6 @@ abstract class AppLocalizations {
   /// **'Mobile Device'**
   String get desktopMobileDevice;
 
-  /// No description provided for @desktopNotFoundScanAgain.
-  ///
-  /// In en, this message translates to:
-  /// **'Desktop not found. Try scanning QR again.'**
-  String get desktopNotFoundScanAgain;
-
-  /// No description provided for @desktopPairingExpired.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not connect. Scan QR code to pair again.'**
-  String get desktopPairingExpired;
-
   /// No description provided for @desktopRemoteBackupName.
   ///
   /// In en, this message translates to:
@@ -5147,6 +5093,12 @@ abstract class AppLocalizations {
   /// **'Cannot attach files to DocumentReference resources'**
   String get cannotAttachToDocumentReference;
 
+  /// No description provided for @attachToEncounterLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the patients and encounters. Please try again.'**
+  String get attachToEncounterLoadFailed;
+
   /// No description provided for @attachFileFailed.
   ///
   /// In en, this message translates to:
@@ -5182,12 +5134,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'An error appeared while checking model existence'**
   String get aiModelCheckFailed;
-
-  /// No description provided for @aiModelExistenceCheckFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to check model existence'**
-  String get aiModelExistenceCheckFailed;
 
   /// No description provided for @aiModelDownloadingTitle.
   ///
@@ -5428,12 +5374,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to create encounter: {error}'**
   String failedToCreateEncounter(String error);
-
-  /// No description provided for @failedToAttachDocuments.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to attach documents: {error}'**
-  String failedToAttachDocuments(String error);
 
   /// No description provided for @fieldAccessionNumber.
   ///
@@ -7448,7 +7388,7 @@ abstract class AppLocalizations {
   /// No description provided for @containerCount.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, other{{count} container(s)}}'**
+  /// **'{count, plural, one{{count} container} other{{count} containers}}'**
   String containerCount(int count);
 
   /// No description provided for @coverageOrderPrimary.

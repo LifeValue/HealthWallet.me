@@ -41,12 +41,14 @@ abstract class RecordsFiltersApplied extends RecordsEvent
     with _$RecordsFiltersApplied {
   const RecordsFiltersApplied._();
 
+  /// Sets every filter at once: the types, the dates and the specialties.
   /// [remember] false (a Home card) filters this visit only: the person's
   /// saved filters stay as they were. [personId] is the person the card
   /// was shown for, whose records Records opens on next.
   const factory RecordsFiltersApplied(
     List<FhirType> filters, {
     DateFilter? dateFilter,
+    @Default([]) List<MedicalSpecialty> specialties,
     @Default(true) bool remember,
     String? personId,
   }) = _RecordsFiltersApplied;
@@ -67,20 +69,6 @@ abstract class RecordDetailLoaded extends RecordsEvent
 
   const factory RecordDetailLoaded(IFhirResource resource) =
       _RecordsDetailLoaded;
-}
-
-@freezed
-abstract class LoadDemoData extends RecordsEvent with _$LoadDemoData {
-  const LoadDemoData._();
-
-  const factory LoadDemoData() = _LoadDemoData;
-}
-
-@freezed
-abstract class ClearDemoData extends RecordsEvent with _$ClearDemoData {
-  const ClearDemoData._();
-
-  const factory ClearDemoData() = _ClearDemoData;
 }
 
 @freezed
@@ -153,7 +141,6 @@ abstract class RecordsResourceDeleted extends RecordsEvent
 
   const factory RecordsResourceDeleted({
     required String resourceId,
-    @Default(false) bool deleteRelated,
     @Default([]) List<String> selectedRelatedIds,
   }) = _RecordsResourceDeleted;
 }
@@ -163,6 +150,7 @@ abstract class RecordsSpecialtyApplied extends RecordsEvent
     with _$RecordsSpecialtyApplied {
   const RecordsSpecialtyApplied._();
 
+  /// Sets the specialties and keeps the type and date filters.
   /// [remember] false (a Home card) filters this visit only: the person's
   /// saved filters stay as they were. [personId] is the person the card
   /// was shown for, whose records Records opens on next.

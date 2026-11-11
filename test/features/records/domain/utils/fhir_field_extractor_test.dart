@@ -113,10 +113,6 @@ void main() {
       ),
       'Oral route, Twice a day, 500 mg',
     );
-    expect(
-      FhirFieldExtractor.extractDosage(medicationRequest.dosageInstruction),
-      '500 mg, Oral route, Twice a day',
-    );
     expect(FhirFieldExtractor.extractReasonCodes(encounter.type), 'Checkup');
     expect(
       FhirFieldExtractor.extractReasonReferences([

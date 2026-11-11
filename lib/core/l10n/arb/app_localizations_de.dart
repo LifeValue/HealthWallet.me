@@ -1162,11 +1162,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String shareFoundDevices(int count) {
-    return '$count Gerät(e) gefunden';
-  }
-
-  @override
   String shareRetryingCount(int retryCount) {
     return 'Wiederholung ($retryCount/3)...';
   }
@@ -1252,11 +1247,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String desktopSyncingTable(String tableName) {
-    return '$tableName wird synchronisiert...';
-  }
-
-  @override
   String get desktopSyncing => 'Synchronisiere...';
 
   @override
@@ -1273,18 +1263,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get desktopSyncOffline => 'Offline';
-
-  @override
-  String get desktopTableHealthRecords => 'Gesundheitsdaten';
-
-  @override
-  String get desktopTableSources => 'Quellen';
-
-  @override
-  String get desktopTableNotes => 'Notizen';
-
-  @override
-  String get desktopTableSessions => 'Sitzungen';
 
   @override
   String get desktopConnection => 'Verbindung';
@@ -1477,11 +1455,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get desktopNewDeviceConnecting => 'Neues Gerät verbindet sich';
 
   @override
-  String desktopNewDeviceMessage(String address, String currentDevice) {
-    return 'Ein neues Gerät ($address) möchte sich verbinden.\n\nDies trennt die Verbindung zu \"$currentDevice\".\n\nZum neuen Gerät wechseln?';
-  }
-
-  @override
   String get desktopKeepCurrent => 'Aktuelles behalten';
 
   @override
@@ -1522,9 +1495,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get desktopHandover => 'Übergabe';
-
-  @override
-  String get attachedDocuments => 'Angehängte Dokumente';
 
   @override
   String documentAttachedTo(String visit) {
@@ -2032,6 +2002,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get addIpsToGoogleWallet => 'IPS zu Google Wallet hinzufügen';
 
   @override
+  String get shareSelectedRecordsFailed =>
+      'Die ausgewählten Aufzeichnungen konnten nicht gelesen werden. Bitte versuche es erneut.';
+
+  @override
   String get ipsExportFailed =>
       'Deine Gesundheitsübersicht konnte nicht exportiert werden. Bitte versuche es erneut.';
 
@@ -2524,14 +2498,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get desktopMobileDevice => 'Mobilgerät';
 
   @override
-  String get desktopNotFoundScanAgain =>
-      'Desktop nicht gefunden. Scanne den QR-Code erneut.';
-
-  @override
-  String get desktopPairingExpired =>
-      'Verbindung fehlgeschlagen. Scanne den QR-Code, um erneut zu koppeln.';
-
-  @override
   String desktopRemoteBackupName(String date) {
     return 'Vom Telefon $date';
   }
@@ -2862,6 +2828,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'An ein Dokument können keine Dateien angehängt werden';
 
   @override
+  String get attachToEncounterLoadFailed =>
+      'Patienten und Termine konnten nicht geladen werden. Bitte versuche es erneut.';
+
+  @override
   String get attachFileFailed =>
       'Die Datei konnte nicht angehängt werden. Bitte versuche es erneut.';
 
@@ -2888,10 +2858,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Beim Prüfen, ob das Modell vorhanden ist, ist ein Fehler aufgetreten';
 
   @override
-  String get aiModelExistenceCheckFailed =>
-      'Prüfung, ob das Modell vorhanden ist, fehlgeschlagen';
-
-  @override
   String aiModelDownloadingTitle(String modelName) {
     return '$modelName wird heruntergeladen';
   }
@@ -2914,7 +2880,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get aiModelDownloadFailedMessage =>
-      'Der Download des KI-Modells ist fehlgeschlagen. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.';
+      'Der Download des KI-Modells ist fehlgeschlagen. Bitte prüfe deine Verbindung und versuche es erneut.';
 
   @override
   String get aiModelDownloadFailed => 'Download fehlgeschlagen';
@@ -2963,7 +2929,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get couldNotOpenLink =>
-      'Der Link konnte nicht geöffnet werden. Bitte versuchen Sie es erneut.';
+      'Der Link konnte nicht geöffnet werden. Bitte versuche es erneut.';
 
   @override
   String get importFilesFailed =>
@@ -3047,11 +3013,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String failedToCreateEncounter(String error) {
     return 'Termin konnte nicht erstellt werden: $error';
-  }
-
-  @override
-  String failedToAttachDocuments(String error) {
-    return 'Dokumente konnten nicht angehängt werden: $error';
   }
 
   @override
@@ -4098,6 +4059,7 @@ class AppLocalizationsDe extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count Behälter',
+      one: '$count Behälter',
     );
     return '$_temp0';
   }

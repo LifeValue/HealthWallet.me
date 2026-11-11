@@ -9,12 +9,12 @@ abstract class RecordsState with _$RecordsState {
     String? sourceId,
     List<String>? sourceIds,
     @Default(false) bool hasMorePages,
+
+    /// The next page is loading below the list, which stays on screen.
+    @Default(false) bool isLoadingMore,
     @Default(RecordDetailStatus.initial())
     RecordDetailStatus recordDetailStatus,
     @Default([]) List<IFhirResource> relatedResources,
-    @Default(false) bool hasDemoData,
-    @Default(false) bool isLoadingDemoData,
-    String? demoDataError,
     @Default('') String searchQuery,
     @Default({}) Set<String> selectedResourceIds,
     @Default(false) bool isSelectionMode,

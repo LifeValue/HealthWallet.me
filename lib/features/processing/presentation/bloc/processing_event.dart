@@ -18,7 +18,6 @@ abstract class CaptureButtonPressed extends ProcessingEvent
   const CaptureButtonPressed._();
 
   const factory CaptureButtonPressed({
-    @Default(CaptureMode.images) CaptureMode mode,
     @Default(5) int maxPages,
   }) = _CaptureButtonPressed;
 }
@@ -57,11 +56,6 @@ abstract class SessionCleared extends ProcessingEvent with _$SessionCleared {
   const factory SessionCleared({
     required ProcessingSession session,
   }) = _SessionCleared;
-}
-
-enum CaptureMode {
-  images,
-  pdf,
 }
 
 @freezed

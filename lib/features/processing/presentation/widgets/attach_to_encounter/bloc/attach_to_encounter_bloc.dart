@@ -90,12 +90,11 @@ class AttachToEncounterBloc
       }
 
       emit(state.copyWith(status: AttachToEncounterStatus.success));
-    } catch (e) {
-      logger.e('Error loading patients in AttachToEncounterBloc: $e');
+    } catch (e, s) {
+      logger.e('Error loading patients in AttachToEncounterBloc', e, s);
       emit(
         state.copyWith(
           status: AttachToEncounterStatus.failure,
-          errorMessage: e.toString(),
         ),
       );
     }
@@ -160,12 +159,11 @@ class AttachToEncounterBloc
           filteredEncounters: _filterEncounters(encounters, state.searchQuery),
         ),
       );
-    } catch (e) {
-      logger.e('Error loading encounters: $e');
+    } catch (e, s) {
+      logger.e('Error loading encounters', e, s);
       emit(
         state.copyWith(
           status: AttachToEncounterStatus.failure,
-          errorMessage: e.toString(),
         ),
       );
     }

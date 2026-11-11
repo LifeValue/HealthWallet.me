@@ -9,30 +9,34 @@ import 'package:health_wallet/features/records/domain/services/records_filter_st
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Answers every query with no records and keeps the types each asked for.
-/// While [hold] is set, a query answers only once its entry in [held] is
-/// completed.
+/// Answers every list query with no records and keeps the types each asked
+/// for. While [hold] is set, a query answers only once its entry in [held]
+/// is completed. Reading every encounter for a specialty (no limit) isn't
+/// kept.
 class _FakeRecordsRepository extends Fake implements RecordsRepository {
   final queries = <List<FhirType>>[];
   bool hold = false;
   final held = <Completer<void>>[];
 
   @override
-  Future<List<IFhirResource>> getResources({
+  Future<ResourcePage> getResourcePage({
     List<FhirType> resourceTypes = const [],
     String? sourceId,
     List<String>? sourceIds,
-    int limit = 20,
-    int offset = 0,
     DateFilter? dateFilter,
+    bool Function(IFhirResource resource)? where,
+    int? limit = 20,
+    int offset = 0,
   }) async {
+    const none = (resources: <IFhirResource>[], nextOffset: 0, hasMore: false);
+    if (limit == null) return none;
     queries.add(resourceTypes);
     if (hold) {
       final answer = Completer<void>();
       held.add(answer);
       await answer.future;
     }
-    return const [];
+    return none;
   }
 }
 
@@ -48,7 +52,6 @@ RecordsSourceChanged _reload(String personId) => RecordsSourceChanged(
 
 /// What a Home records card sends for [personId].
 List<RecordsEvent> _recordsCard(List<FhirType> types, String personId) => [
-  RecordsSpecialtyApplied(const [], remember: false, personId: personId),
   RecordsFiltersApplied(types, remember: false, personId: personId),
 ];
 
@@ -162,6 +165,24 @@ void main() {
       expect(after.activeFilters, [FhirType.Media]);
       expect(repository.queries, hasLength(queries));
     });
+  });
+
+  test('another person on the same sources starts over: their own filters, '
+      'nothing chosen', () async {
+    const shared = ['family-src'];
+    await run([
+      const RecordsSourceChanged(null, sourceIds: shared, personId: 'jane'),
+      const RecordsSelectionToggled('r1'),
+    ]);
+    expect(bloc.state.selectedResourceIds, {'r1'});
+
+    final tom = await run([
+      const RecordsSourceChanged(null, sourceIds: shared, personId: 'tom'),
+    ]);
+
+    expect(tom.activeFilters, [FhirType.Media]);
+    expect(tom.selectedResourceIds, isEmpty);
+    expect(repository.queries.last, [FhirType.Media]);
   });
 
   group('leaving Records again while the last leave still reloads', () {

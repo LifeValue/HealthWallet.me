@@ -1143,11 +1143,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String shareFoundDevices(int count) {
-    return 'Found $count device(s)';
-  }
-
-  @override
   String shareRetryingCount(int retryCount) {
     return 'Retrying ($retryCount/3)...';
   }
@@ -1233,11 +1228,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String desktopSyncingTable(String tableName) {
-    return 'Syncing $tableName...';
-  }
-
-  @override
   String get desktopSyncing => 'Syncing...';
 
   @override
@@ -1254,18 +1244,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get desktopSyncOffline => 'Offline';
-
-  @override
-  String get desktopTableHealthRecords => 'Health Records';
-
-  @override
-  String get desktopTableSources => 'Sources';
-
-  @override
-  String get desktopTableNotes => 'Notes';
-
-  @override
-  String get desktopTableSessions => 'Sessions';
 
   @override
   String get desktopConnection => 'Connection';
@@ -1456,11 +1434,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get desktopNewDeviceConnecting => 'New Device Connecting';
 
   @override
-  String desktopNewDeviceMessage(String address, String currentDevice) {
-    return 'A new device ($address) wants to connect.\n\nThis will disconnect \"$currentDevice\".\n\nSwitch to the new device?';
-  }
-
-  @override
   String get desktopKeepCurrent => 'Keep Current';
 
   @override
@@ -1501,9 +1474,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get desktopHandover => 'Handover';
-
-  @override
-  String get attachedDocuments => 'Attached Documents';
 
   @override
   String documentAttachedTo(String visit) {
@@ -2008,6 +1978,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addIpsToGoogleWallet => 'Add IPS to Google Wallet';
 
   @override
+  String get shareSelectedRecordsFailed =>
+      'Couldn\'t read the selected records. Please try again.';
+
+  @override
   String get ipsExportFailed =>
       'Couldn\'t export your health summary. Please try again.';
 
@@ -2498,14 +2472,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get desktopMobileDevice => 'Mobile Device';
 
   @override
-  String get desktopNotFoundScanAgain =>
-      'Desktop not found. Try scanning QR again.';
-
-  @override
-  String get desktopPairingExpired =>
-      'Could not connect. Scan QR code to pair again.';
-
-  @override
   String desktopRemoteBackupName(String date) {
     return 'Remote $date';
   }
@@ -2820,6 +2786,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Cannot attach files to DocumentReference resources';
 
   @override
+  String get attachToEncounterLoadFailed =>
+      'Couldn\'t load the patients and encounters. Please try again.';
+
+  @override
   String get attachFileFailed =>
       'The file could not be attached. Please try again.';
 
@@ -2843,9 +2813,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aiModelCheckFailed =>
       'An error appeared while checking model existence';
-
-  @override
-  String get aiModelExistenceCheckFailed => 'Failed to check model existence';
 
   @override
   String aiModelDownloadingTitle(String modelName) {
@@ -2998,11 +2965,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String failedToCreateEncounter(String error) {
     return 'Failed to create encounter: $error';
-  }
-
-  @override
-  String failedToAttachDocuments(String error) {
-    return 'Failed to attach documents: $error';
   }
 
   @override
@@ -4043,7 +4005,8 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count container(s)',
+      other: '$count containers',
+      one: '$count container',
     );
     return '$_temp0';
   }

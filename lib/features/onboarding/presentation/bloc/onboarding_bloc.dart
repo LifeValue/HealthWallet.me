@@ -8,8 +8,13 @@ part 'onboarding_bloc.freezed.dart';
 part 'onboarding_event.dart';
 part 'onboarding_state.dart';
 
+/// Opens [url] outside the app; false when nothing could open it.
+typedef LinkOpener = Future<bool> Function(Uri url);
+
 class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
-  OnboardingBloc(this._strings) : super(const OnboardingState()) {
+  OnboardingBloc(this._strings, {LinkOpener? openLink})
+    : _openLink = openLink ?? _openExternally,
+      super(const OnboardingState()) {
     on<OnboardingPageChanged>(_onPageChanged);
     on<OnboardingNextPage>(_onNextPage);
     on<OnboardingPreviousPage>(_onPreviousPage);
@@ -17,6 +22,11 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   }
 
   final AppStringsProvider _strings;
+  final LinkOpener _openLink;
+
+  static Future<bool> _openExternally(Uri url) async =>
+      await canLaunchUrl(url) &&
+      await launchUrl(url, mode: LaunchMode.externalApplication);
 
   void _onPageChanged(
     OnboardingPageChanged event,
@@ -40,42 +50,27 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     }
   }
 
+  /// Opens the link; one that can't be opened sets [OnboardingState.errorMessage]
+  /// for this attempt only, so each failure is shown once.
   Future<void> _onLaunchUrl(
     OnboardingLaunchUrl event,
     Emitter<OnboardingState> emit,
   ) async {
-    emit(state.copyWith(isLaunchingUrl: true));
+    emit(state.copyWith(isLaunchingUrl: true, errorMessage: null));
 
+    var launched = false;
     try {
-      final url = Uri.parse(event.url);
-      if (await canLaunchUrl(url)) {
-        final launched = await launchUrl(
-          url,
-          mode: LaunchMode.externalApplication,
-        );
-        emit(
-          state.copyWith(
-            isLaunchingUrl: false,
-            urlLaunchSuccess: launched,
-          ),
-        );
-      } else {
-        emit(
-          state.copyWith(
-            isLaunchingUrl: false,
-            urlLaunchSuccess: false,
-          ),
-        );
-      }
-    } catch (e) {
-      logger.w('Opening the onboarding link failed: $e');
-      emit(
-        state.copyWith(
-          isLaunchingUrl: false,
-          urlLaunchSuccess: false,
-          errorMessage: _strings.l10n.couldNotOpenLink,
-        ),
-      );
+      launched = await _openLink(Uri.parse(event.url));
+      if (!launched) logger.w('Nothing could open the onboarding link');
+    } catch (e, s) {
+      logger.w('Opening the onboarding link failed', e, s);
     }
+    emit(
+      state.copyWith(
+        isLaunchingUrl: false,
+        urlLaunchSuccess: launched,
+        errorMessage: launched ? null : _strings.l10n.couldNotOpenLink,
+      ),
+    );
   }
 }

@@ -10,12 +10,12 @@ import 'package:health_wallet/features/records/domain/services/records_filter_st
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// One `getResources` call as the bloc made it.
+/// One `getResourcePage` call for the list, as the bloc made it.
 typedef _Query = ({
   List<FhirType> types,
   String? sourceId,
   List<String>? sourceIds,
-  int limit,
+  int? limit,
   int offset,
   DateFilter? dateFilter,
 });
@@ -32,9 +32,9 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
   /// What one record's related query returns instead of [related].
   final relatedOf = <String, List<IFhirResource>>{};
   Exception? error;
-  bool demoLoaded = false;
   final queries = <_Query>[];
   final searches = <String>[];
+  final searchTypes = <List<FhirType>>[];
   final deletes = <String>[];
 
   /// While set, each list or search query answers only once its own entry
@@ -56,10 +56,24 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
     List<String>? sourceIds,
     int limit = 20,
     int offset = 0,
+  }) async => patients;
+
+  /// [page] (or [unfiltered]) filtered by [where], as one page that ends the
+  /// list unless it is full. Reading every encounter for the specialty index
+  /// (no limit) isn't recorded.
+  @override
+  Future<ResourcePage> getResourcePage({
+    List<FhirType> resourceTypes = const [],
+    String? sourceId,
+    List<String>? sourceIds,
     DateFilter? dateFilter,
+    bool Function(IFhirResource resource)? where,
+    int? limit = 20,
+    int offset = 0,
   }) async {
-    if (resourceTypes.length == 1 && resourceTypes.single == FhirType.Patient) {
-      return patients;
+    if (limit == null) {
+      if (error != null) throw error!;
+      return (resources: page, nextOffset: 0, hasMore: false);
     }
     queries.add((
       types: resourceTypes,
@@ -71,8 +85,15 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
     ));
     await _answer();
     if (error != null) throw error!;
-    if (resourceTypes.isEmpty && unfiltered != null) return unfiltered!;
-    return page;
+    final rows = resourceTypes.isEmpty && unfiltered != null
+        ? unfiltered!
+        : page;
+    final matches = rows.where((r) => where?.call(r) ?? true).toList();
+    return (
+      resources: matches,
+      nextOffset: offset + rows.length,
+      hasMore: rows.length == limit,
+    );
   }
 
   @override
@@ -81,9 +102,12 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
     List<FhirType> resourceTypes = const [],
     String? sourceId,
     List<String>? sourceIds,
+    DateFilter? dateFilter,
+    bool Function(IFhirResource resource)? where,
     int limit = 50,
   }) async {
     searches.add(query);
+    searchTypes.add(resourceTypes);
     await _answer();
     return [
       for (final r in searchResults)
@@ -109,29 +133,10 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
   }
 
   @override
-  Future<void> loadDemoData() async {
-    if (error != null) throw error!;
-    demoLoaded = true;
-  }
-
-  @override
-  Future<void> clearDemoData() async {
-    if (error != null) throw error!;
-    demoLoaded = false;
-  }
-
-  @override
-  Future<bool> hasDemoData() async => demoLoaded;
-
-  @override
   Future<void> deleteResource(String resourceId) async {
     if (error != null) throw error!;
     deletes.add('one:$resourceId');
   }
-
-  @override
-  Future<void> deleteResourceWithRelated(String resourceId) async =>
-      deletes.add('related:$resourceId');
 
   @override
   Future<void> deleteResourcesByIds(List<String> ids) async =>
@@ -141,12 +146,13 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
 /// Classifies a resource as cardiology when its title says so.
 class _FakeSpecialtyClassifier extends Fake implements SpecialtyClassifier {
   @override
-  void buildEncounterIndex(List<IFhirResource> allResources) {}
+  EncounterSpecialties indexEncounters(Iterable<IFhirResource> resources) => {};
 
   @override
   Set<MedicalSpecialty> classify(
     IFhirResource resource, {
     MedicalSpecialty? override,
+    EncounterSpecialties? encounterSpecialties,
   }) => {
     ?override,
     if (resource.title.contains('heart')) MedicalSpecialty.cardiology,
@@ -597,24 +603,28 @@ void main() {
       expect(state.dateFilter, isNull);
     });
 
-    test('a Home card shows only records matching both its filters, '
+    test('a specialty, then record types, show only records matching both, '
         'whichever query answers last', () async {
       repository
         ..unfiltered = [const Encounter(id: 'e1', title: 'heart check')]
         ..page = [const Observation(id: 'o1', title: 'heart rate')]
         ..hold = true;
 
-      // What a Home card sends: its specialty, then its record types. The
-      // specialty's query still has the old types.
-      bloc
-        ..add(
-          const RecordsSpecialtyApplied([
-            MedicalSpecialty.cardiology,
-          ], remember: false),
-        )
-        ..add(
-          const RecordsFiltersApplied([FhirType.Observation], remember: false),
-        );
+      // The specialty's query still has the old types, and is still out
+      // when the types change.
+      bloc.add(
+        const RecordsSpecialtyApplied([
+          MedicalSpecialty.cardiology,
+        ], remember: false),
+      );
+      await pumpEventQueue();
+      bloc.add(
+        const RecordsFiltersApplied(
+          [FhirType.Observation],
+          specialties: [MedicalSpecialty.cardiology],
+          remember: false,
+        ),
+      );
       await pumpEventQueue();
       expect(repository.held, hasLength(2));
 
@@ -778,32 +788,6 @@ void main() {
     });
   });
 
-  group('demo data', () {
-    test('loading marks it present and reloads', () async {
-      final state = await run(const LoadDemoData());
-
-      expect(state.hasDemoData, isTrue);
-      expect(state.isLoadingDemoData, isFalse);
-      expect(repository.queries, hasLength(1));
-    });
-
-    test('clearing marks it absent and reloads', () async {
-      await run(const LoadDemoData());
-
-      final state = await run(const ClearDemoData());
-
-      expect(state.hasDemoData, isFalse);
-      expect(repository.queries, hasLength(2));
-    });
-
-    test('a failed load or clear keeps the error', () async {
-      repository.error = Exception('asset');
-
-      expect((await run(const LoadDemoData())).demoDataError, isNotNull);
-      expect((await run(const ClearDemoData())).demoDataError, isNotNull);
-    });
-  });
-
   group('selection', () {
     test('toggling selects and unselects', () async {
       await run(const RecordsSelectionToggled('a'));
@@ -841,14 +825,6 @@ void main() {
       expect(repository.deletes, ['one:r']);
       expect(statuses, contains(const RecordsStatus.deleted()));
       expect(repository.queries, hasLength(1));
-    });
-
-    test('a record with its related records', () async {
-      await run(
-        const RecordsResourceDeleted(resourceId: 'r', deleteRelated: true),
-      );
-
-      expect(repository.deletes, ['related:r']);
     });
 
     test('a record with the chosen related records', () async {

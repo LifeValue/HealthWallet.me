@@ -83,16 +83,14 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
       ),
       insetPadding: const EdgeInsets.all(Insets.normal),
       child: BlocConsumer<AttachToEncounterBloc, AttachToEncounterState>(
-        listener: (context, state) {
-          if (state.status == AttachToEncounterStatus.failure &&
-              state.errorMessage != null) {
-            AppSnackBar.show(
-              context,
-              message: state.errorMessage!,
-              type: AppSnackBarType.error,
-            );
-          }
-        },
+        listenWhen: (previous, current) =>
+            previous.status != current.status &&
+            current.status == AttachToEncounterStatus.failure,
+        listener: (context, state) => AppSnackBar.show(
+          context,
+          message: context.l10n.attachToEncounterLoadFailed,
+          type: AppSnackBarType.error,
+        ),
         builder: (context, state) {
           final patientOnly = widget.patientOnly;
           final canProceed =

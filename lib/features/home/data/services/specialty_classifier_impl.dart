@@ -6,26 +6,30 @@ import 'package:injectable/injectable.dart';
 
 @LazySingleton(as: SpecialtyClassifier)
 class SpecialtyClassifierImpl implements SpecialtyClassifier {
-  final Map<String, Set<MedicalSpecialty>> _encounterSpecialties = {};
+  EncounterSpecialties _encounterSpecialties = {};
 
   @override
   void buildEncounterIndex(List<IFhirResource> allResources) {
-    _encounterSpecialties.clear();
-    final encounters = allResources.where(
+    _encounterSpecialties = indexEncounters(allResources);
+  }
+
+  @override
+  EncounterSpecialties indexEncounters(Iterable<IFhirResource> resources) {
+    final index = <String, Set<MedicalSpecialty>>{};
+    for (final encounter in resources.where(
       (r) => r.fhirType == FhirType.Encounter,
-    );
-    for (final encounter in encounters) {
+    )) {
       final specialties = _classifyInternal(encounter);
-      if (specialties.isNotEmpty) {
-        _encounterSpecialties[encounter.resourceId] = specialties;
-      }
+      if (specialties.isNotEmpty) index[encounter.resourceId] = specialties;
     }
+    return index;
   }
 
   @override
   Set<MedicalSpecialty> classify(
     IFhirResource resource, {
     MedicalSpecialty? override,
+    EncounterSpecialties? encounterSpecialties,
   }) {
     if (FhirType.supportingTypes.contains(resource.fhirType)) {
       return {};
@@ -41,7 +45,8 @@ class SpecialtyClassifierImpl implements SpecialtyClassifier {
     }
 
     if (resource.encounterId.isNotEmpty) {
-      final inherited = _encounterSpecialties[resource.encounterId];
+      final inherited =
+          (encounterSpecialties ?? _encounterSpecialties)[resource.encounterId];
       if (inherited != null && inherited.isNotEmpty) {
         return inherited;
       }

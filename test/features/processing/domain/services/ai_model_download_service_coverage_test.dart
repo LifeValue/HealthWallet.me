@@ -43,11 +43,9 @@ class _FakeRepository extends Fake implements ProcessingRepository {
   bool mmprojExists = false;
   Error? mmprojExistenceError;
   Error? startError;
-  final legacy = _Download();
   final variants = <AiModelVariant, _Download>{};
   final mmprojs = <AiModelVariant, _Download>{};
   final deleted = <AiModelVariant>[];
-  var legacyStarts = 0;
   var variantStarts = 0;
   var mmprojStarts = 0;
 
@@ -55,7 +53,7 @@ class _FakeRepository extends Fake implements ProcessingRepository {
   _Download mmproj(AiModelVariant v) => mmprojs.putIfAbsent(v, _Download.new);
 
   void closeAll() {
-    for (final d in [legacy, ...variants.values, ...mmprojs.values]) {
+    for (final d in [...variants.values, ...mmprojs.values]) {
       d.close();
     }
   }
@@ -64,13 +62,6 @@ class _FakeRepository extends Fake implements ProcessingRepository {
   Future<bool> checkModelExistence() async {
     if (existenceError != null) throw existenceError!;
     return modelExists;
-  }
-
-  @override
-  Stream<double> downloadModel() {
-    legacyStarts++;
-    if (startError != null) throw startError!;
-    return legacy.stream;
   }
 
   @override
@@ -184,172 +175,6 @@ void main() {
       expect(s.isAnyDownloading, isFalse);
       expect(prefs.getBool(_inProgressKey), isTrue);
     });
-  });
-
-  group('checkModelExists', () {
-    test('reports checking, then whether the model is there', () async {
-      final s = await service();
-      repository.modelExists = true;
-
-      expect(await s.checkModelExists(), isTrue);
-      await pumpEventQueue();
-
-      expect(states, [
-        _state(AiModelDownloadStatus.checking),
-        _state(AiModelDownloadStatus.idle, available: true),
-      ]);
-    });
-
-    test('a missing model is idle and not available', () async {
-      final s = await service();
-
-      expect(await s.checkModelExists(), isFalse);
-      expect(s.state, _state(AiModelDownloadStatus.idle, available: false));
-    });
-
-    test('a failed check is an error and counts as missing', () async {
-      final s = await service();
-      repository.existenceError = StateError('disk');
-
-      expect(await s.checkModelExists(), isFalse);
-      expect(
-        s.state,
-        _state(
-          AiModelDownloadStatus.error,
-          error: 'Failed to check model existence',
-        ),
-      );
-    });
-
-    test('during a download it answers without touching the download '
-        'state', () async {
-      final s = await service();
-      await s.startDownloadForVariant(_qwen);
-      final before = s.state;
-      repository.modelExists = true;
-
-      expect(await s.checkModelExists(), isTrue);
-      repository.existenceError = StateError('disk');
-      expect(await s.checkModelExists(), isFalse);
-
-      expect(s.state, before);
-    });
-  });
-
-  group('startDownload (default model)', () {
-    test('a model already there completes at once without '
-        'downloading', () async {
-      final s = await service();
-      repository.modelExists = true;
-
-      await s.startDownload();
-
-      expect(repository.legacyStarts, 0);
-      expect(
-        s.state,
-        _state(
-          AiModelDownloadStatus.completed,
-          progress: 100.0,
-          available: true,
-        ),
-      );
-      expect(prefs.containsKey(_inProgressKey), isFalse);
-    });
-
-    test('reports progress and completes, clearing the in-progress '
-        'flag', () async {
-      final s = await service();
-
-      await s.startDownload();
-      expect(prefs.getBool(_inProgressKey), isTrue);
-      expect(s.state, _state(AiModelDownloadStatus.downloading, progress: 0));
-      expect(s.isVariantDownloading(_qwen), isTrue);
-
-      repository.legacy.controller.add(40);
-      await pumpEventQueue();
-      expect(s.state, _state(AiModelDownloadStatus.downloading, progress: 40));
-
-      await repository.legacy.controller.close();
-      await pumpEventQueue();
-      expect(
-        s.state,
-        _state(
-          AiModelDownloadStatus.completed,
-          progress: 100.0,
-          available: true,
-        ),
-      );
-      expect(prefs.containsKey(_inProgressKey), isFalse);
-    });
-
-    test('a failed existence check still downloads', () async {
-      final s = await service();
-      repository.existenceError = StateError('disk');
-
-      await s.startDownload();
-
-      expect(repository.legacyStarts, 1);
-      expect(s.state.status, AiModelDownloadStatus.downloading);
-    });
-
-    test('a second start during the download is ignored', () async {
-      final s = await service();
-
-      await s.startDownload();
-      await s.startDownload();
-
-      expect(repository.legacyStarts, 1);
-    });
-
-    test('a failed download is an error and clears the flag', () async {
-      final s = await service();
-
-      await s.startDownload();
-      repository.legacy.controller.addError(StateError('offline'));
-      await pumpEventQueue();
-
-      expect(
-        s.state,
-        _state(
-          AiModelDownloadStatus.error,
-          error:
-              'AI model download failed. Please check your connection and '
-              'try again.',
-        ),
-      );
-      expect(prefs.containsKey(_inProgressKey), isFalse);
-    });
-
-    test('a download that cannot start is an error and clears the '
-        'flag', () async {
-      final s = await service();
-      repository.startError = StateError('no network');
-
-      await s.startDownload();
-
-      expect(s.state.status, AiModelDownloadStatus.error);
-      expect(s.state.errorMessage, contains('AI model download failed'));
-      expect(prefs.containsKey(_inProgressKey), isFalse);
-      expect(s.isAnyDownloading, isFalse);
-    });
-
-    test(
-      'a finished download no longer counts as running',
-      skip:
-          'BUG: startDownload never removes its subscription from '
-          '_variantSubscriptions on done or error, so isAnyDownloading stays '
-          'true and later starts are ignored',
-      () async {
-        final s = await service();
-
-        await s.startDownload();
-        await repository.legacy.controller.close();
-        await pumpEventQueue();
-
-        expect(s.isAnyDownloading, isFalse);
-        expect(s.isVariantDownloading(_qwen), isFalse);
-      },
-    );
   });
 
   group('startDownloadForVariant', () {

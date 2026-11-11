@@ -7,6 +7,7 @@ import 'package:health_wallet/features/records/data/data_source/shared_notes_dat
 import 'package:health_wallet/features/records/data/repository/records_repository_impl.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
+import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
@@ -154,26 +155,6 @@ void main() {
       );
     });
 
-    test('a date filter drops dated records outside it, keeps undated '
-        'ones', () async {
-      await seed([
-        dto('in', date: DateTime(2024, 5, 6)),
-        dto('out', date: DateTime(2023, 5, 6)),
-        dto('undated'),
-      ]);
-
-      expect(
-        await ids(
-          repository.getResources(dateFilter: const DateFilter(fromYear: 2024)),
-        ),
-        unorderedEquals(['in', 'undated']),
-      );
-      expect(
-        await ids(repository.getResources(dateFilter: const DateFilter())),
-        hasLength(3),
-      );
-    });
-
     test('skips a record that cannot be parsed', () async {
       await seed([dto('good')]);
       await db.customStatement(
@@ -189,6 +170,142 @@ void main() {
       await tombstone('fhir_resource', 'gone');
 
       expect(await ids(repository.getResources()), ['kept']);
+    });
+  });
+
+  group('getResourcePage', () {
+    Future<List<String>> pageIds(Future<ResourcePage> page) async =>
+        (await page).resources.map((r) => r.id).toList();
+
+    test('a date filter drops dated records outside it, keeps undated '
+        'ones', () async {
+      await seed([
+        dto('in', date: DateTime(2024, 5, 6)),
+        dto('out', date: DateTime(2023, 5, 6)),
+        dto('undated'),
+      ]);
+
+      expect(
+        await pageIds(
+          repository.getResourcePage(
+            dateFilter: const DateFilter(fromYear: 2024),
+          ),
+        ),
+        unorderedEquals(['in', 'undated']),
+      );
+      expect(
+        await pageIds(
+          repository.getResourcePage(dateFilter: const DateFilter()),
+        ),
+        hasLength(3),
+      );
+    });
+
+    test('fills a page past the rows a filter skips, and the next page '
+        'starts after the last row read', () async {
+      // 250 rows, newest first r000..r249; every tenth one matches.
+      await seed([
+        for (var i = 0; i < 250; i++)
+          dto(
+            'r${i.toString().padLeft(3, '0')}',
+            date: DateTime(2024).subtract(Duration(days: i)),
+          ),
+      ]);
+      bool everyTenth(IFhirResource r) =>
+          int.parse(r.id.substring(1)) % 10 == 0;
+
+      final first = await repository.getResourcePage(
+        where: everyTenth,
+        limit: 20,
+      );
+      expect(first.resources.map((r) => r.id).first, 'r000');
+      expect(first.resources.map((r) => r.id).last, 'r190');
+      expect(first.nextOffset, 191);
+      expect(first.hasMore, isTrue);
+
+      final second = await repository.getResourcePage(
+        where: everyTenth,
+        limit: 20,
+        offset: first.nextOffset,
+      );
+      expect(second.resources.map((r) => r.id), [
+        'r200',
+        'r210',
+        'r220',
+        'r230',
+        'r240',
+      ]);
+      expect(second.hasMore, isFalse);
+    });
+
+    test('pages records with the same date without overlap', () async {
+      await seed([
+        for (var i = 0; i < 7; i++) dto('s$i', date: DateTime(2024)),
+      ]);
+
+      final seen = <String>[];
+      var offset = 0;
+      var hasMore = true;
+      while (hasMore) {
+        final page = await repository.getResourcePage(limit: 3, offset: offset);
+        seen.addAll(page.resources.map((r) => r.id));
+        offset = page.nextOffset;
+        hasMore = page.hasMore;
+      }
+
+      expect(seen, hasLength(7));
+      expect(seen.toSet(), hasLength(7));
+    });
+
+    test('a row that cannot be parsed still moves the next page on', () async {
+      await seed([
+        dto('a', date: DateTime(2024, 3)),
+        dto('b', date: DateTime(2024, 1)),
+      ]);
+      await db.customStatement(
+        'INSERT INTO fhir_resource (id, resource_type, resource_raw, date) '
+        "VALUES ('bad', 'Observation', 'not json', ?)",
+        [DateTime(2024, 2).millisecondsSinceEpoch ~/ 1000],
+      );
+
+      final first = await repository.getResourcePage(limit: 1);
+      final second = await repository.getResourcePage(
+        limit: 1,
+        offset: first.nextOffset,
+      );
+
+      expect([...first.resources, ...second.resources].map((r) => r.id), [
+        'a',
+        'b',
+      ]);
+    });
+
+    test('without a limit returns every match', () async {
+      await seed([for (var i = 0; i < 30; i++) dto('x$i')]);
+
+      final all = await repository.getResourcePage(limit: null);
+
+      expect(all.resources, hasLength(30));
+      expect(all.hasMore, isFalse);
+    });
+  });
+
+  group('getResourcesByIds', () {
+    test('returns the records asked for, newest first, without deleted '
+        'ones', () async {
+      await seed([
+        dto('old', date: DateTime(2020)),
+        dto('new', date: DateTime(2024)),
+        dto('gone', date: DateTime(2022)),
+        dto('other', date: DateTime(2023)),
+      ]);
+      await tombstone('fhir_resource', 'gone');
+
+      expect(await ids(repository.getResourcesByIds(['old', 'gone', 'new'])), [
+        'new',
+        'old',
+      ]);
+      expect(await repository.getResourcesByIds(const []), isEmpty);
     });
   });
 
@@ -425,75 +542,6 @@ void main() {
     });
   });
 
-  group('deleteResourceWithRelated', () {
-    Future<void> seedVisit() => seed([
-      dto('enc-row', type: 'Encounter', raw: rawOf('Encounter', 'enc-row')),
-      dto('obs-1', encounterId: 'enc-row'),
-      dto('obs-2', encounterId: 'enc-row'),
-      dto('obs-3', encounterId: 'other'),
-      dto('lone'),
-    ]);
-
-    test('deleting an encounter tombstones its records', () async {
-      await seedVisit();
-
-      await repository.deleteResourceWithRelated('enc-row');
-
-      expect(
-        await ids(repository.getResources()),
-        unorderedEquals([
-          'obs-3',
-          'lone',
-        ]),
-      );
-      expect(await countRows(db, 'fhir_resource'), 5);
-    });
-
-    test('deleting a record of a visit tombstones the encounter and its '
-        'siblings', () async {
-      await seedVisit();
-
-      await repository.deleteResourceWithRelated('obs-1');
-
-      expect(
-        await ids(repository.getResources()),
-        unorderedEquals([
-          'obs-3',
-          'lone',
-        ]),
-      );
-    });
-
-    test('a record without a visit is deleted on its own', () async {
-      await seedVisit();
-
-      await repository.deleteResourceWithRelated('lone');
-
-      expect(await ids(repository.getResources()), hasLength(4));
-      expect((await rowOf('fhir_resource', 'lone'))['deleted_at'], isNotNull);
-    });
-
-    test('an unknown or already deleted record is a no-op', () async {
-      await seedVisit();
-      await tombstone('fhir_resource', 'obs-1');
-
-      await repository.deleteResourceWithRelated('missing');
-      await repository.deleteResourceWithRelated('obs-1');
-
-      expect(await ids(repository.getResources()), hasLength(4));
-      expect((await rowOf('fhir_resource', 'obs-1'))['updated_at'], ms(at(0)));
-    });
-
-    test('an already deleted sibling keeps its tombstone', () async {
-      await seedVisit();
-      await tombstone('fhir_resource', 'obs-2');
-
-      await repository.deleteResourceWithRelated('enc-row');
-
-      expect((await rowOf('fhir_resource', 'obs-2'))['updated_at'], ms(at(0)));
-    });
-  });
-
   group('getRelatedResourceCount and getRelatedResourcesForDeletion', () {
     Future<void> seedVisit() => seed([
       dto('enc-1', type: 'Encounter', raw: rawOf('Encounter', 'enc-1')),
@@ -605,6 +653,12 @@ void main() {
         content: 'n',
       );
       final before = DateTime.now().millisecondsSinceEpoch;
+      // A tombstone is stamped at least one past the row's last write, so a
+      // delete in the same millisecond as that write would get a second
+      // stamp; let the clock move on first.
+      while (DateTime.now().millisecondsSinceEpoch <= before) {
+        await Future<void>.delayed(const Duration(milliseconds: 1));
+      }
 
       await repository.clearDemoData();
 
@@ -835,6 +889,27 @@ void main() {
         );
       },
     );
+
+    test('keeps to a date filter and a test, then to the limit', () async {
+      await seed([
+        dto('a', title: 'glucose', date: DateTime(2024, 3)),
+        dto('b', title: 'glucose', date: DateTime(2024, 2)),
+        dto('c', title: 'glucose', date: DateTime(2023)),
+        dto('d', title: 'glucose', date: DateTime(2024, 1)),
+      ]);
+
+      expect(
+        await ids(
+          repository.searchResources(
+            query: 'glucose',
+            dateFilter: const DateFilter(fromYear: 2024),
+            where: (r) => r.id != 'a',
+            limit: 1,
+          ),
+        ),
+        ['b'],
+      );
+    });
   });
 
   test('searchResources keeps type and title matches ahead when they are '

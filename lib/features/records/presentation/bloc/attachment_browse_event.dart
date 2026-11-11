@@ -15,7 +15,8 @@ abstract class AttachmentBrowseInitialised extends AttachmentBrowseEvent
     @Default([]) List<FhirType> resourceTypes,
     @Default(false) bool readOnly,
     @Default([]) List<IFhirResource> sourceRecords,
-    MedicalSpecialty? specialty,
+    DateFilter? dateFilter,
+    @Default([]) List<MedicalSpecialty> specialties,
   }) = _AttachmentBrowseInitialised;
 }
 

@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:bloc/bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
+import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
@@ -14,14 +15,15 @@ import 'package:health_wallet/features/home/domain/services/specialty_classifier
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/services/records_filter_store.dart';
+import 'package:health_wallet/features/records/domain/services/specialty_matcher.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+part 'records_bloc.freezed.dart';
 part 'records_event.dart';
 part 'records_state.dart';
-part 'records_bloc.freezed.dart';
 
 @injectable
 class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
@@ -30,9 +32,15 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   RecordsRepository get recordsRepository => _recordsRepository;
   Timer? _searchDebounceTimer;
 
-  /// Counts the loads that start the list over; a load whose count is no
-  /// longer current was overtaken and its records are dropped.
+  /// Counts loads; a load whose number is no longer the latest drops its
+  /// result, so an earlier, slower load can't replace a newer one.
   int _loadGeneration = 0;
+
+  /// Where the next page starts, in stored rows (see [ResourcePage]).
+  int _nextOffset = 0;
+
+  /// The specialty filter of the current list, kept for its next pages.
+  SpecialtyMatcher? _specialtyMatcher;
 
   /// Keeps each person's chosen filters; without it (tests, previews) the
   /// filters last only as long as this bloc.
@@ -45,6 +53,10 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   /// so the person's own come back when Records is left.
   bool _visitOnly = false;
   String? _lastIpsPdfPath;
+
+  static const _pageSize = 20;
+  static const _searchLimit = 100;
+  static const _minSearchLength = 2;
 
   RecordsBloc(
     this._recordsRepository,
@@ -60,8 +72,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     on<RecordsFiltersApplied>(_onFiltersApplied, transformer: restartable());
     on<RecordsFilterRemoved>(_onFilterRemoved, transformer: restartable());
     on<RecordDetailLoaded>(_onRecordDetailLoaded, transformer: restartable());
-    on<LoadDemoData>(_onLoadDemoData, transformer: droppable());
-    on<ClearDemoData>(_onClearDemoData, transformer: droppable());
     on<RecordsSearch>(_onSearch, transformer: restartable());
     on<RecordsSearchExecuted>(_onSearchExecuted, transformer: restartable());
     on<RecordsSharePressed>(_onRecordsSharePressed, transformer: droppable());
@@ -105,84 +115,99 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     return super.close();
   }
 
-  /// Loads the list for the filters and scope now shown. Only the latest
-  /// load's records are shown: handlers run concurrently, so an earlier,
-  /// slower query can answer after a later one. A next page ([offset] > 0)
-  /// belongs to the load that listed the page before it.
-  Future _loadResources(
+  bool get _isSearching => state.searchQuery.length >= _minSearchLength;
+
+  /// Loads the first page of the current scope, filters and search, or with
+  /// [more] the next page, shown below the list while it loads.
+  Future<void> _loadResources(
     Emitter<RecordsState> emit, {
-    int limit = 20,
-    offset = 0,
+    bool more = false,
   }) async {
-    final generation = offset == 0 ? ++_loadGeneration : _loadGeneration;
-    bool overtaken() => generation != _loadGeneration;
+    final generation = ++_loadGeneration;
+    bool isLatest() => generation == _loadGeneration && !emit.isDone;
 
-    final query = state.searchQuery;
-    final isSearching = query.isNotEmpty && query.length >= 2;
-    final specialties = state.activeSpecialties;
-
-    emit(state.copyWith(status: const RecordsStatus.loading()));
+    emit(
+      more
+          ? state.copyWith(isLoadingMore: true)
+          : state.copyWith(
+              status: const RecordsStatus.loading(),
+              isLoadingMore: false,
+            ),
+    );
     try {
-      List<IFhirResource> resources;
-
       // One source, or the selected patient's sources; every query uses the
       // same scope.
       final sourceId = state.sourceId;
       final sourceIds = sourceId == null ? state.sourceIds : null;
 
-      if (isSearching) {
-        resources = await _recordsRepository.searchResources(
-          query: query,
-          resourceTypes: [],
-          sourceId: sourceId,
-          sourceIds: sourceIds,
-          limit: 100,
-        );
-      } else {
-        resources = await _recordsRepository.getResources(
+      if (!more) {
+        _specialtyMatcher = null;
+        if (state.activeSpecialties.isNotEmpty) {
+          final encounters = await _recordsRepository.getResourcePage(
+            resourceTypes: [FhirType.Encounter],
+            sourceId: sourceId,
+            sourceIds: sourceIds,
+            limit: null,
+          );
+          if (!isLatest()) return;
+          _specialtyMatcher = SpecialtyMatcher(
+            _specialtyClassifier,
+            state.activeSpecialties,
+            encounters.resources,
+          );
+        }
+      }
+
+      if (_isSearching) {
+        final found = await _recordsRepository.searchResources(
+          query: state.searchQuery,
           resourceTypes: state.activeFilters,
           sourceId: sourceId,
           sourceIds: sourceIds,
-          limit: limit,
-          offset: offset,
           dateFilter: state.dateFilter,
+          where: _specialtyMatcher?.matches,
+          limit: _searchLimit,
         );
-      }
-      if (overtaken()) return;
-
-      List<IFhirResource> filteredResources = resources;
-      if (specialties.isNotEmpty) {
-        _specialtyClassifier.buildEncounterIndex(resources);
-        filteredResources = resources.where((r) {
-          final override = MedicalSpecialty.values
-              .where((s) => s.name == r.specialtyOverride)
-              .firstOrNull;
-          final classified = _specialtyClassifier.classify(
-            r,
-            override: override,
-          );
-          return specialties.any(classified.contains);
-        }).toList();
+        if (!isLatest()) return;
+        emit(
+          state.copyWith(
+            status: const RecordsStatus.success(),
+            resources: found,
+            hasMorePages: false,
+            isLoadingMore: false,
+          ),
+        );
+        return;
       }
 
-      final List<IFhirResource> updatedResources;
-      if (offset == 0) {
-        updatedResources = List<IFhirResource>.from(filteredResources);
-      } else {
-        updatedResources = List<IFhirResource>.from(state.resources);
-        updatedResources.addAll(filteredResources);
-      }
+      final page = await _recordsRepository.getResourcePage(
+        resourceTypes: state.activeFilters,
+        sourceId: sourceId,
+        sourceIds: sourceIds,
+        dateFilter: state.dateFilter,
+        where: _specialtyMatcher?.matches,
+        limit: _pageSize,
+        offset: more ? _nextOffset : 0,
+      );
+      if (!isLatest()) return;
 
+      _nextOffset = page.nextOffset;
       emit(
         state.copyWith(
           status: const RecordsStatus.success(),
-          resources: updatedResources,
-          hasMorePages: isSearching ? false : resources.length == limit,
+          resources: more
+              ? [...state.resources, ...page.resources]
+              : page.resources,
+          hasMorePages: page.hasMore,
+          isLoadingMore: false,
         ),
       );
-    } catch (e) {
-      if (overtaken()) return;
-      emit(state.copyWith(status: RecordsStatus.failure(e)));
+    } catch (e, s) {
+      if (!isLatest()) return;
+      logger.e('Loading records failed', e, s);
+      emit(
+        state.copyWith(status: RecordsStatus.failure(e), isLoadingMore: false),
+      );
     }
   }
 
@@ -234,32 +259,42 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsLoadMore event,
     Emitter<RecordsState> emit,
   ) async {
-    if (state.searchQuery.isNotEmpty && state.searchQuery.length >= 2) {
+    if (_isSearching ||
+        !state.hasMorePages ||
+        state.isLoadingMore ||
+        state.status == const RecordsStatus.loading()) {
       return;
     }
 
-    if (!state.hasMorePages) return;
-
-    await _loadResources(emit, offset: state.resources.length);
+    await _loadResources(emit, more: true);
   }
 
   Future<void> _onSourceChanged(
     RecordsSourceChanged event,
     Emitter<RecordsState> emit,
   ) async {
+    final personId = event.isShareContext ? null : event.personId;
+    final sameScope =
+        event.sourceId == state.sourceId &&
+        listEquals(event.sourceIds, state.sourceIds) &&
+        personId == _personId;
+
+    // The same scope again is a refresh: the list stays until the new one
+    // arrives. Another person's or source's list starts over, without the
+    // previous selection, which Share would otherwise send.
+    final nextState = sameScope
+        ? state
+        : state.copyWith(
+            sourceId: event.sourceId,
+            sourceIds: event.sourceIds,
+            resources: [],
+            hasMorePages: false,
+            selectedResourceIds: {},
+          );
+
     // The same person again (each visit, a sync) keeps the filters shown,
     // also those a Home card set for this visit.
-    emit(
-      _showPerson(
-        state.copyWith(
-          sourceId: event.sourceId,
-          sourceIds: event.sourceIds,
-          resources: [],
-          hasMorePages: true,
-        ),
-        event.isShareContext ? null : event.personId,
-      ),
-    );
+    emit(_showPerson(nextState, personId));
 
     await _loadResources(emit);
   }
@@ -270,9 +305,9 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   ) async {
     emit(
       _baseFor(event.personId).copyWith(
-        status: const RecordsStatus.loading(),
         activeFilters: event.filters,
         dateFilter: event.dateFilter,
+        activeSpecialties: event.specialties,
         resources: [],
       ),
     );
@@ -334,86 +369,25 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     }
   }
 
-  Future<void> _onLoadDemoData(
-    LoadDemoData event,
-    Emitter<RecordsState> emit,
-  ) async {
-    emit(
-      state.copyWith(
-        isLoadingDemoData: true,
-        demoDataError: null,
-      ),
-    );
-
-    try {
-      await _recordsRepository.loadDemoData();
-
-      final hasDemoData = await _recordsRepository.hasDemoData();
-
-      emit(
-        state.copyWith(
-          isLoadingDemoData: false,
-          hasDemoData: hasDemoData,
-          demoDataError: null,
-        ),
-      );
-
-      await _loadResources(emit);
-    } catch (e) {
-      emit(
-        state.copyWith(
-          isLoadingDemoData: false,
-          demoDataError: e.toString(),
-        ),
-      );
-    }
-  }
-
-  Future<void> _onClearDemoData(
-    ClearDemoData event,
-    Emitter<RecordsState> emit,
-  ) async {
-    try {
-      await _recordsRepository.clearDemoData();
-
-      emit(
-        state.copyWith(
-          hasDemoData: false,
-          demoDataError: null,
-        ),
-      );
-
-      await _loadResources(emit);
-    } catch (e) {
-      emit(
-        state.copyWith(
-          demoDataError: e.toString(),
-        ),
-      );
-    }
-  }
-
   Future<void> _onSearch(
     RecordsSearch event,
     Emitter<RecordsState> emit,
   ) async {
     final query = event.query.trim();
+    final wasSearching = _isSearching;
     emit(state.copyWith(searchQuery: query));
 
     _searchDebounceTimer?.cancel();
 
-    if (query.isEmpty) {
-      emit(
-        state.copyWith(
-          resources: [],
-          hasMorePages: true,
-        ),
-      );
+    // Too short to search: the list without a search, which a previous
+    // search may have replaced.
+    if (query.isEmpty || (query.length < _minSearchLength && wasSearching)) {
+      emit(state.copyWith(resources: []));
       await _loadResources(emit);
       return;
     }
 
-    if (query.length < 2) {
+    if (query.length < _minSearchLength) {
       return;
     }
 
@@ -497,6 +471,11 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     }
   }
 
+  /// The selected records, read from the database: the selection can hold
+  /// records that aren't in the loaded pages.
+  Future<List<IFhirResource>> loadSelectedResources() =>
+      _recordsRepository.getResourcesByIds(state.selectedResourceIds);
+
   void _onSelectionToggled(
     RecordsSelectionToggled event,
     Emitter<RecordsState> emit,
@@ -555,8 +534,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       if (event.selectedRelatedIds.isNotEmpty) {
         final allIds = <String>[event.resourceId, ...event.selectedRelatedIds];
         await _recordsRepository.deleteResourcesByIds(allIds);
-      } else if (event.deleteRelated) {
-        await _recordsRepository.deleteResourceWithRelated(event.resourceId);
       } else {
         await _recordsRepository.deleteResource(event.resourceId);
       }
@@ -595,7 +572,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   ) async {
     emit(
       _baseFor(event.personId).copyWith(
-        status: const RecordsStatus.loading(),
         activeSpecialties: event.specialties,
         resources: [],
       ),
@@ -611,12 +587,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsRefreshRequested event,
     Emitter<RecordsState> emit,
   ) async {
-    emit(
-      state.copyWith(
-        status: const RecordsStatus.loading(),
-        resources: [],
-      ),
-    );
+    emit(state.copyWith(resources: []));
 
     await _loadResources(emit);
   }
@@ -627,7 +598,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   ) async {
     emit(
       state.copyWith(
-        status: const RecordsStatus.loading(),
         activeFilters: [],
         activeSpecialties: [],
         dateFilter: null,

@@ -28,6 +28,8 @@ analyzer:
     - "**/*.freezed.dart"
     - "**/*.g.dart"
     - "**/*.config.dart"
+    # Written and deleted by scripts/write_coverage_helper.sh during coverage runs.
+    - test/coverage_all_files_test.dart
     - "**/*.gr.dart"
     - "**/*.gen.dart"
     - build/**

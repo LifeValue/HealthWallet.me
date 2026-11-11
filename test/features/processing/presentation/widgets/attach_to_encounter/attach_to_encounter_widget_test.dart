@@ -75,31 +75,8 @@ void main() {
     expect(bloc.events.first, isA<AttachToEncounterStarted>());
   });
 
-  testWidgets('a failure shows its message in a snackbar', (tester) async {
-    await pumpDialog(tester);
-
-    states.add(
-      const AttachToEncounterState(
-        status: AttachToEncounterStatus.failure,
-        errorMessage: 'Could not load the encounters',
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(
-      find.descendant(
-        of: find.byKey(AppSnackBar.cardKey),
-        matching: find.text('Could not load the encounters'),
-      ),
-      findsOne,
-    );
-
-    // Let the snackbar time out so no timer is left pending.
-    await tester.pump(const Duration(seconds: 5));
-    await tester.pumpAndSettle();
-  });
-
-  testWidgets('a failure without a message shows no snackbar', (tester) async {
+  testWidgets('a failure says so in a snackbar, without the error '
+      'text', (tester) async {
     await pumpDialog(tester);
 
     states.add(
@@ -107,7 +84,17 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(AppSnackBar.cardKey), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byKey(AppSnackBar.cardKey),
+        matching: find.text(_en.attachToEncounterLoadFailed),
+      ),
+      findsOne,
+    );
+
+    // Let the snackbar time out so no timer is left pending.
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
   });
 
   group('with a patient chosen and no encounter', () {

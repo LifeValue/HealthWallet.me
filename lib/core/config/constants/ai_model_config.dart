@@ -32,7 +32,9 @@ enum AiModelVariant {
 class AiModelConfig {
   final AiModelVariant variant;
   final String displayName;
-  final String description;
+
+  /// What the model is for, in English, without its size (see [sizeGb]).
+  final String summary;
   final String modelUrl;
   final String modelId;
   final String mmprojUrl;
@@ -50,7 +52,7 @@ class AiModelConfig {
   const AiModelConfig._({
     required this.variant,
     required this.displayName,
-    required this.description,
+    required this.summary,
     required this.modelUrl,
     required this.modelId,
     required this.mmprojUrl,
@@ -65,7 +67,7 @@ class AiModelConfig {
   static const medGemma = AiModelConfig._(
     variant: AiModelVariant.medGemma,
     displayName: 'Medical',
-    description: 'Previous Advanced model (~2.5 GB)',
+    summary: 'Previous Advanced model',
     modelUrl: 'https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF/resolve/main/medgemma-4b-it_Q4_K_M.gguf',
     modelId: 'medgemma-4b-it_Q4_K_M.gguf',
     mmprojUrl: 'https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF/resolve/main/mmproj-medgemma-4b-it-F16.gguf',
@@ -78,7 +80,7 @@ class AiModelConfig {
   static const qwen = AiModelConfig._(
     variant: AiModelVariant.qwen,
     displayName: 'Lite',
-    description: 'Fast and lightweight (~1.1 GB)',
+    summary: 'Fast and lightweight',
     modelUrl: 'https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/Qwen3VL-2B-Instruct-Q4_K_M.gguf',
     modelId: 'Qwen3VL-2B-Instruct-Q4_K_M.gguf',
     mmprojUrl: 'https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-2B-Instruct-F16.gguf',
@@ -91,7 +93,7 @@ class AiModelConfig {
   static const qwen7b = AiModelConfig._(
     variant: AiModelVariant.qwen7b,
     displayName: 'Ultra',
-    description: 'Best accuracy for desktop (~5 GB)',
+    summary: 'Best accuracy for desktop',
     modelUrl: 'https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3VL-8B-Instruct-Q4_K_M.gguf',
     modelId: 'Qwen3VL-8B-Instruct-Q4_K_M.gguf',
     mmprojUrl: 'https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-8B-Instruct-F16.gguf',
@@ -104,7 +106,7 @@ class AiModelConfig {
   static const qwen35x2b = AiModelConfig._(
     variant: AiModelVariant.qwen35x2b,
     displayName: 'Qwen3.5 2B',
-    description: 'Benchmark candidate (~1.9 GB)',
+    summary: 'Benchmark candidate',
     modelUrl: 'https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/main/Qwen3.5-2B-Q4_K_M.gguf',
     modelId: 'Qwen3.5-2B-Q4_K_M.gguf',
     mmprojUrl: 'https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/main/mmproj-F16.gguf',
@@ -117,7 +119,7 @@ class AiModelConfig {
   static const nuExtract2 = AiModelConfig._(
     variant: AiModelVariant.nuExtract2,
     displayName: 'NuExtract 2.0 2B',
-    description: 'Benchmark candidate (~2.3 GB)',
+    summary: 'Benchmark candidate',
     modelUrl: 'https://huggingface.co/numind/NuExtract-2.0-2B-GGUF/resolve/main/NuExtract-2.0-2B-Q4_K_M.gguf',
     modelId: 'NuExtract-2.0-2B-Q4_K_M.gguf',
     mmprojUrl: 'https://huggingface.co/numind/NuExtract-2.0-2B-GGUF/resolve/main/mmproj-BF16.gguf',
@@ -131,7 +133,7 @@ class AiModelConfig {
   static const qwen35x4b = AiModelConfig._(
     variant: AiModelVariant.qwen35x4b,
     displayName: 'Advanced',
-    description: 'Higher accuracy (~2.6 GB)',
+    summary: 'Higher accuracy',
     modelUrl: 'https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/main/Qwen3.5-4B-Q4_K_M.gguf',
     modelId: 'Qwen3.5-4B-Q4_K_M.gguf',
     mmprojUrl: 'https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/main/mmproj-F16.gguf',
@@ -145,7 +147,7 @@ class AiModelConfig {
   static const nuExtract3 = AiModelConfig._(
     variant: AiModelVariant.nuExtract3,
     displayName: 'NuExtract3 4B',
-    description: 'Benchmark candidate (~3.5 GB)',
+    summary: 'Benchmark candidate',
     modelUrl: 'https://huggingface.co/numind/NuExtract3-GGUF/resolve/main/NuExtract3-Q4_K_M.gguf',
     modelId: 'NuExtract3-Q4_K_M.gguf',
     mmprojUrl: 'https://huggingface.co/numind/NuExtract3-GGUF/resolve/main/mmproj-NuExtract3-BF16.gguf',
@@ -159,7 +161,7 @@ class AiModelConfig {
   static const medGemma15 = AiModelConfig._(
     variant: AiModelVariant.medGemma15,
     displayName: 'MedGemma 1.5',
-    description: 'Benchmark candidate (~3.3 GB)',
+    summary: 'Benchmark candidate',
     modelUrl: 'https://huggingface.co/unsloth/medgemma-1.5-4b-it-GGUF/resolve/main/medgemma-1.5-4b-it-Q4_K_M.gguf',
     modelId: 'medgemma-1.5-4b-it-Q4_K_M.gguf',
     mmprojUrl: 'https://huggingface.co/unsloth/medgemma-1.5-4b-it-GGUF/resolve/main/mmproj-F16.gguf',
@@ -177,14 +179,18 @@ class AiModelConfig {
     _ => displayName,
   };
 
-  /// [description] in the app language. The benchmark candidates, which
-  /// only the extraction benchmark selects, keep the English text.
+  /// The model file's size in GB with one decimal, from [modelSizeMB], so
+  /// the size shown is never typed in a second place.
+  double get sizeGb => (modelSizeMB / 100).round() / 10;
+
+  /// [summary] with [sizeGb], in the app language. The benchmark candidates,
+  /// which only the extraction benchmark selects, keep the English text.
   String localizedDescription(AppLocalizations l10n) => switch (variant) {
-    AiModelVariant.qwen => l10n.aiModelDescriptionLite(1.1),
-    AiModelVariant.qwen35x4b => l10n.aiModelDescriptionAdvanced(2.6),
-    AiModelVariant.qwen7b => l10n.aiModelDescriptionUltra(5),
-    AiModelVariant.medGemma => l10n.aiModelDescriptionPreviousAdvanced(2.5),
-    _ => description,
+    AiModelVariant.qwen => l10n.aiModelDescriptionLite(sizeGb),
+    AiModelVariant.qwen35x4b => l10n.aiModelDescriptionAdvanced(sizeGb),
+    AiModelVariant.qwen7b => l10n.aiModelDescriptionUltra(sizeGb),
+    AiModelVariant.medGemma => l10n.aiModelDescriptionPreviousAdvanced(sizeGb),
+    _ => '$summary (~$sizeGb GB)',
   };
 
   /// Whether this model runs only where

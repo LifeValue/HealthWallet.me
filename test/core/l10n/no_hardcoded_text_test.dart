@@ -58,11 +58,8 @@ final _sentencePattern = RegExp(
   r'''\b(?:subtitle|description|content|errorText|helperText|semanticLabel|semanticsLabel):\s*(['"])([A-Z][^'"]*)\1''',
 );
 
-/// Files whose English `description:` texts are not shown: the UI uses
-/// `AiModelConfig.localizedDescription`.
-const _englishMetadataFiles = [
-  'lib/core/config/constants/ai_model_config.dart',
-];
+/// Files whose English `description:` texts are not shown.
+const _englishMetadataFiles = <String>[];
 
 void main() {
   test('the app has no hardcoded user-visible English text', () {

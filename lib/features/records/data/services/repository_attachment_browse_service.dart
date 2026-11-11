@@ -3,10 +3,12 @@ import 'dart:io';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/file_url.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/services/attachment_browse_service.dart';
+import 'package:health_wallet/features/records/domain/services/specialty_matcher.dart';
 import 'package:injectable/injectable.dart';
 
 @Injectable(as: AttachmentBrowseService)
@@ -26,14 +28,32 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
     String? sourceId,
     List<String>? sourceIds,
     List<FhirType> resourceTypes = const [],
+    DateFilter? dateFilter,
+    List<MedicalSpecialty> specialties = const [],
   }) async {
-    final records = await _repository.getResources(
+    SpecialtyMatcher? specialtyMatcher;
+    if (specialties.isNotEmpty) {
+      final encounters = await _repository.getResourcePage(
+        resourceTypes: [FhirType.Encounter],
+        sourceId: sourceId,
+        sourceIds: sourceIds,
+        limit: null,
+      );
+      specialtyMatcher = SpecialtyMatcher(
+        _specialtyClassifier,
+        specialties,
+        encounters.resources,
+      );
+    }
+
+    final records = (await _repository.getResourcePage(
       resourceTypes: resourceTypes,
       sourceId: sourceId,
       sourceIds: sourceIds,
+      dateFilter: dateFilter,
+      where: specialtyMatcher?.matches,
       limit: 1000,
-      offset: 0,
-    );
+    )).resources;
 
     records.sort((a, b) {
       final dateA = a.date;

@@ -1,9 +1,5 @@
 {
   "@@locale": "es",
-  "counterAppBarTitle": "Contador",
-  "@counterAppBarTitle": {
-    "description": "Texto mostrado en la AppBar de la página del contador"
-  },
   "onboardingWelcomeTitle": "¡una Cartera de Salud para Ti!",
   "onboardingWelcomeSubtitle": "<link>HealthWallet.me</link> ya se conecta a más de 100.000 proveedores de salud estadounidenses, y estamos expandiendo a nuevos países.",
   "onboardingWelcomeDescription": "Agrega registros de cualquier proveedor, importa documentos manualmente o solicita soporte para tu país.",
@@ -383,14 +379,6 @@
       }
     }
   },
-  "shareFoundDevices": "Se encontraron {count} dispositivo(s)",
-  "@shareFoundDevices": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "shareRetryingCount": "Reintentando ({retryCount}/3)...",
   "@shareRetryingCount": {
     "placeholders": {
@@ -527,24 +515,12 @@
       }
     }
   },
-  "desktopSyncingTable": "Sincronizando {tableName}...",
-  "@desktopSyncingTable": {
-    "placeholders": {
-      "tableName": {
-        "type": "String"
-      }
-    }
-  },
   "desktopSyncing": "Sincronizando...",
   "desktopSyncNow": "Sincronizar ahora",
   "desktopSyncError": "Error",
   "desktopSyncInSync": "Sincronizado",
   "desktopSyncReady": "Listo",
   "desktopSyncOffline": "Sin conexión",
-  "desktopTableHealthRecords": "Registros de salud",
-  "desktopTableSources": "Fuentes",
-  "desktopTableNotes": "Notas",
-  "desktopTableSessions": "Sesiones",
   "desktopConnection": "Conexión",
   "desktopGeneratePairingQr": "Generar QR de vinculación",
   "desktopScanFromMobile": "Escanea desde la página Sync del móvil",
@@ -641,17 +617,6 @@
     }
   },
   "desktopNewDeviceConnecting": "Nuevo dispositivo conectándose",
-  "desktopNewDeviceMessage": "Un nuevo dispositivo ({address}) quiere conectarse.\n\nEsto desconectará \"{currentDevice}\".\n\n¿Cambiar al nuevo dispositivo?",
-  "@desktopNewDeviceMessage": {
-    "placeholders": {
-      "address": {
-        "type": "String"
-      },
-      "currentDevice": {
-        "type": "String"
-      }
-    }
-  },
   "desktopKeepCurrent": "Mantener actual",
   "desktopSwitch": "Cambiar",
   "desktopCurrentDevice": "dispositivo actual",
@@ -672,7 +637,6 @@
   "desktopHandoverToDesktop": "Entregar al escritorio",
   "desktopHandoverProcessingMessage": "El procesamiento está en curso. La entrega cancelará el procesamiento actual y enviará los archivos al escritorio.",
   "desktopHandover": "Entrega",
-  "attachedDocuments": "Documentos adjuntos",
   "documentAttachedTo": "Adjuntado a {visit}.",
   "cameraPermissionRequired": "Permiso de cámara requerido",
   "cameraPermissionRequiredMessage": "Esta app necesita acceso a la cámara para escanear. Por favor, otorga el permiso.",
@@ -898,6 +862,7 @@
   "exportIpsPdf": "Exportar IPS (PDF)",
   "addIpsToAppleWallet": "Agregar IPS a Apple Wallet",
   "addIpsToGoogleWallet": "Agregar IPS a Google Wallet",
+  "shareSelectedRecordsFailed": "No se pudieron leer los registros seleccionados. Inténtalo de nuevo.",
   "ipsExportFailed": "No se pudo exportar tu resumen de salud. Inténtalo de nuevo.",
   "walletPassFailed": "No se pudo agregar el pase a tu billetera. Inténtalo de nuevo.",
   "sourcesTitle": "Fuentes",
@@ -1079,8 +1044,6 @@
   "desktopBackupHistory": "Historial",
   "desktopPairedWith": "Emparejado con {name}",
   "desktopMobileDevice": "Dispositivo móvil",
-  "desktopNotFoundScanAgain": "No se encontró el escritorio. Vuelve a escanear el código QR.",
-  "desktopPairingExpired": "No se pudo conectar. Escanea el código QR para volver a emparejar.",
   "desktopRemoteBackupName": "Desde el móvil {date}",
   "desktopNoBackupLocation": "No hay una ubicación de copia de seguridad en el escritorio. Abre la app de escritorio y elige primero una carpeta.",
   "desktopBackupFailed": "La copia de seguridad falló. Inténtalo de nuevo.",
@@ -1163,13 +1126,13 @@
   "loadingRelatedResources": "Cargando recursos relacionados...",
   "noRelatedResourcesForEncounter": "No se encontraron recursos relacionados con este encuentro",
   "cannotAttachToDocumentReference": "No se pueden adjuntar archivos a un documento",
+  "attachToEncounterLoadFailed": "No se pudieron cargar los pacientes y encuentros. Inténtalo de nuevo.",
   "attachFileFailed": "No se pudo adjuntar el archivo. Inténtalo de nuevo.",
   "attachmentDeleteFailed": "No se pudo eliminar el archivo adjunto. Inténtalo de nuevo.",
   "deleteRecordOfType": "Eliminar {type}",
   "dateFilterEndBeforeStart": "La fecha de fin debe ser posterior a la fecha de inicio",
   "dateFilterChip": "Fecha: {range}",
   "aiModelCheckFailed": "Se produjo un error al comprobar si el modelo existe",
-  "aiModelExistenceCheckFailed": "No se pudo comprobar si el modelo existe",
   "aiModelDownloadingTitle": "Descargando {modelName}",
   "aiModelDownloadStarting": "Iniciando la descarga...",
   "aiModelReadyTitle": "{modelName} listo",
@@ -1210,7 +1173,6 @@
   "dateFormatHintIso": "AAAA-MM-DD",
   "retryStep": "Reintentar (paso {step})",
   "failedToCreateEncounter": "No se pudo crear el encuentro: {error}",
-  "failedToAttachDocuments": "No se pudieron adjuntar los documentos: {error}",
   "fieldAccessionNumber": "Número de acceso",
   "fieldAchievementStatus": "Estado de cumplimiento",
   "fieldActuality": "Realidad",

@@ -16,16 +16,17 @@ class _ScopeRecordingRepository extends Fake implements RecordsRepository {
   final exports = <(String?, String?)>[];
 
   @override
-  Future<List<IFhirResource>> getResources({
+  Future<ResourcePage> getResourcePage({
     List<FhirType> resourceTypes = const [],
     String? sourceId,
     List<String>? sourceIds,
-    int limit = 20,
-    int offset = 0,
     DateFilter? dateFilter,
+    bool Function(IFhirResource resource)? where,
+    int? limit = 20,
+    int offset = 0,
   }) async {
     lists.add((sourceId: sourceId, sourceIds: sourceIds?.join(',')));
-    return [];
+    return (resources: <IFhirResource>[], nextOffset: 0, hasMore: false);
   }
 
   @override
@@ -34,6 +35,8 @@ class _ScopeRecordingRepository extends Fake implements RecordsRepository {
     List<FhirType> resourceTypes = const [],
     String? sourceId,
     List<String>? sourceIds,
+    DateFilter? dateFilter,
+    bool Function(IFhirResource resource)? where,
     int limit = 50,
   }) async {
     searches.add((sourceId: sourceId, sourceIds: sourceIds?.join(',')));

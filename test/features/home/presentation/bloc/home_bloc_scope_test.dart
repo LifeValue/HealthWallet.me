@@ -33,7 +33,6 @@ class _RecordingRecords extends Fake implements RecordsRepository {
     List<String>? sourceIds,
     int limit = 20,
     int offset = 0,
-    DateFilter? dateFilter,
   }) async {
     scopes.add(sourceId ?? sourceIds.toString());
     return [];

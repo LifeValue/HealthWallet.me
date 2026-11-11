@@ -66,27 +66,31 @@ Batch 1, in this order (specs in `_bmad-output/implementation-artifacts/`). **Do
 
 Batch 2:
 
-5. **Records filters and paging (B4).**
-   - Choosing a specialty clears the type filter.
-   - Specialty is filtered after paging, so pages come up empty and load-more duplicates rows.
-   - Search ignores the type and date filters.
-   - The Attachments view ignores the date filter.
+5. **Records filters and paging (B4).** _Done on `feature/mobile-stabilization-batch-2`; the scroll position (A26) still needs a device._
+   - Choosing a specialty clears the type filter. _Kept now; a specialty tapped on Home still shows every type. The filter sheet and each Home card send one event with every filter, which also carries B20's visit-only flag and person._
+   - Specialty is filtered after paging, so pages come up empty and load-more duplicates rows. _Pages are filled past skipped rows, and the date filter too; specialties are classified with every encounter in scope._
+   - Search ignores the type and date filters. _It keeps to the types, dates and specialties._
+   - The Attachments view ignores the date filter. _It uses it, and every chosen specialty, not only the first; with B20 the specialties chosen are kept, so two of them are common._
    - A25–A28 in `records-audit.md`.
-6. **Cleanup and logging.**
-   - Section 5 dead code: `PdfStorageService` (two copies), `ClearDemoData`, `deleteResourceWithRelated`, the old model download methods, `CaptureMode.pdf`, the `add-document` intent filter, the `build.yaml` exclude.
-   - `extractDosage`.
-   - Model sizes written in two places.
-   - The Spanish-only key `counterAppBarTitle`.
-   - 18 empty `catch (_) {}` (11 in `desktop/`, 7 in `share_records/`); the backup ones (`backup_service.dart`, `backup_bloc.dart`, `backup_card.dart`) are fixed in item 3.
-7. **Tests and CI (section 6).**
-   - No BLoC tests for Home, Onboarding, Notifications, Focus Mode, Preview; Load Model and Attach to Encounter are only partly covered.
-   - No widget tests for the review form, scanning and the Preferences toggles (the patient dialog and Preferences modal tests come with item 1).
-   - No data tests for migrations 1→8.
-   - `integration_test/` (including `app_l10n_test.dart`) isn't run in CI.
-   - No coverage gate.
-   - The translation tests don't catch dropped plurals or outdated translations.
+   - _Checked again after merging `develop` (B20, B15, item 4). B20's per-person filters replace the default filters this item had kept; a person shown on the same sources as the last one now starts the list over, with their own filters and nothing selected. The received-share viewer had B15's accent bug, now fixed with `filePathOfUrl`. The paged and search queries hide deleted records, so item 4's 30-day purge applies._
+6. **Cleanup and logging.** _Done on `feature/mobile-stabilization-batch-2`._
+   - Section 5 dead code: `PdfStorageService` (two copies), `ClearDemoData`, `deleteResourceWithRelated`, the old model download methods, `CaptureMode.pdf`, the `add-document` intent filter, the `build.yaml` exclude. _All removed, with the repository's scan and saved-document methods, which only tests called (scanning calls the plugin from `session_handler.dart`)._
+   - `extractDosage`. _Removed._
+   - Model sizes written in two places. _The size shown is now worked out from `modelSizeMB`; the Ultra model reads "~4.6 GB" instead of "~5 GB"._
+   - The Spanish-only key `counterAppBarTitle`. _Removed._
+   - _After merging `develop`: `checkMmprojExistence` is back, since B9 calls it. Removed too: `AttachDocumentsService`, which B11 left without a caller; `PathResolver.resolveFileUrl` and `toRelativeFileUrl`, never called and with B15's decoding; and the 12 messages nothing shows (`aiModelExistenceCheckFailed`, the two old attach messages, `shareFoundDevices` and eight desktop ones)._
+   - 18 empty `catch (_) {}` (11 in `desktop/`, 7 in `share_records/`); the backup ones (`backup_service.dart`, `backup_bloc.dart`, `backup_card.dart`) are fixed in item 3. _The `desktop/` ones were already gone; the 7 in `share_records/` now log. No empty `catch` is left in `lib/`._
+7. **Tests and CI (section 6).** _Done on `feature/mobile-stabilization-batch-2`, except where noted. The whole app's coverage went from 54.0% to 63.6%, and to 74.5% (4,614 tests) after merging `develop`, with the floors raised to match. The CI changes haven't run on GitLab yet; `app_l10n_test.dart` passes on a fresh iPhone 16 simulator after the merge._
+   - No BLoC tests for Home, Onboarding, Notifications, Focus Mode, Preview; Load Model and Attach to Encounter are only partly covered. _Onboarding, Notifications, Focus Mode and Attach to Encounter now have BLoC tests; Preview already had them and Load Model is at 99%. Home is left out: holders rewrote it and B3 is still open. The tests found four bugs, now fixed: an onboarding link that couldn't open failed silently and its error came back on every page change; Focus Mode emitted after its start handler had returned; the attach dialog showed raw exception text; unreadable saved notifications were dropped without a log. B6 (notification routes) is pinned by a skipped `BUG:` test._
+   - No widget tests for the review form, scanning and the Preferences toggles (the patient dialog and Preferences modal tests come with item 1). _The scan page and the region and language dialog have tests; the review form (73%) and the other toggles already had them. Still open: the Share Proximity row (46%), whose permission and Bluetooth polling sits in the widget and should move to a service first, and the biometrics setup dialog._
+   - No data tests for migrations 1→8. _Added: records, sources (with the renamed name column), notes and processing sessions survive from v1, v3 and v5._
+   - `integration_test/` (including `app_l10n_test.dart`) isn't run in CI. _`test:integration` runs it on a fresh iOS simulator on the Mac mini: automatically on `develop`, `release/*` and `master`, by hand elsewhere._
+   - No coverage gate. _Each critical area has a floor in `tool/coverage_floors.json`; `checks` fails below it, and `scripts/coverage.sh --ratchet` raises the floors. The mobile Processing, Sync, Onboarding and Notifications BLoCs are now critical areas._
+   - The translation tests don't catch dropped plurals or outdated translations. _`arb_parity_test.dart` now fails when a translated plural lacks a form its language needs (Romanian `few`) or when an English text changed after it was translated (`tool/update_translation_baseline.dart`)._
 
 **Also open, not in a batch:**
+
+- Found during batch 2: Home never shows a failed load (`HomeStatus.failure` is set but nothing reads it); the scan flow calls the scanner plugin from `session_handler.dart`, not through the repository.
 
 - Notifications: routes aren't stored, so taps do nothing after a restart, and handover notifications have no route (B6).
 - Untitled records show the English "Resource", and other types fall back to the English type name.

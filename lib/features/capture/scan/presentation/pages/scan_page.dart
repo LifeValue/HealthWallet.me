@@ -102,6 +102,8 @@ class _ScanViewState extends State<ScanView>
     }
   }
 
+  /// Opens the scanner once the camera may be used; otherwise explains why
+  /// it can't, with a way to ask again or to open the settings.
   Future<void> _handleCaptureButtonPressed(BuildContext context) async {
     final cameraStatus = await Permission.camera.request();
     if (!context.mounted) return;
@@ -313,7 +315,7 @@ class _ScanViewState extends State<ScanView>
                           label: context.l10n.scanDocument,
                           icon: Assets.icons.scan.svg(),
                           variant: AppButtonVariant.primary,
-                          onPressed: () => _handleDirectScan(context),
+                          onPressed: () => _handleCaptureButtonPressed(context),
                         ),
                       ),
                     ],
@@ -363,7 +365,7 @@ class _ScanViewState extends State<ScanView>
               label: context.l10n.scanDocument,
               icon: Assets.icons.scan.svg(),
               variant: AppButtonVariant.primary,
-              onPressed: () => _handleDirectScan(context),
+              onPressed: () => _handleCaptureButtonPressed(context),
             ),
           ),
           SizedBox(height: MediaQuery.of(context).padding.bottom + 76),
@@ -378,22 +380,6 @@ class _ScanViewState extends State<ScanView>
       return commBloc.state.connectionStatus == ConnectionStatus.connected;
     } catch (_) {
       return false;
-    }
-  }
-
-  Future<void> _handleDirectScan(BuildContext context) async {
-    final cameraStatus = await Permission.camera.request();
-    if (!context.mounted) return;
-
-    if (cameraStatus.isGranted) {
-      context.read<ProcessingBloc>().add(const CaptureButtonPressed());
-    } else if (cameraStatus.isPermanentlyDenied) {
-      DialogHelper.showPermissionDeniedDialog(context);
-    } else {
-      DialogHelper.showPermissionRequiredDialog(
-        context,
-        () => _handleDirectScan(context),
-      );
     }
   }
 }

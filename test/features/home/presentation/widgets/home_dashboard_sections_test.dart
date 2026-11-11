@@ -453,17 +453,19 @@ void main() {
       expect(find.byType(MedicalRecordsSection), findsNothing);
     });
 
-    testWidgets('a specialty card filters Records to it for this visit and '
-        'opens Records', (tester) async {
+    testWidgets('a specialty card filters Records to it alone for this visit '
+        'and opens Records', (tester) async {
       await pump(tester, _loaded());
 
       await tester.tap(find.text(_dental));
       await tester.pumpAndSettle();
 
       expect(recordsBloc.added, [
-        const RecordsSpecialtyApplied([
-          MedicalSpecialty.dental,
-        ], remember: false),
+        const RecordsFiltersApplied(
+          [],
+          specialties: [MedicalSpecialty.dental],
+          remember: false,
+        ),
       ]);
       expect(homeBloc.added, isEmpty);
       expect(pageController.page, 1);
@@ -566,7 +568,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(recordsBloc.added, [
-        const RecordsSpecialtyApplied([], remember: false),
         RecordsFiltersApplied(
           HomeRecordsCategory.allergies.resourceTypes,
           remember: false,
@@ -756,8 +757,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(recordsBloc.added, [
-        const RecordsSpecialtyApplied(
-          [MedicalSpecialty.dental],
+        const RecordsFiltersApplied(
+          [],
+          specialties: [MedicalSpecialty.dental],
           remember: false,
           personId: 'jane',
         ),
@@ -771,7 +773,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(recordsBloc.added, [
-        const RecordsSpecialtyApplied([], remember: false, personId: 'jane'),
         RecordsFiltersApplied(
           HomeRecordsCategory.allergies.resourceTypes,
           remember: false,

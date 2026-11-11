@@ -110,10 +110,7 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
       records,
       getIt<SpecialtyClassifier>(),
     );
-    _attachmentBrowseBloc = AttachmentBrowseBloc(
-      service,
-      getIt<SpecialtyClassifier>(),
-    );
+    _attachmentBrowseBloc = AttachmentBrowseBloc(service);
     _attachmentBrowseBloc!.add(
       AttachmentBrowseInitialised(
         resourceTypes: _filterTypes,

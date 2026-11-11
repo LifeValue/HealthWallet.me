@@ -33,6 +33,7 @@ import 'package:health_wallet/features/records/presentation/pages/records_attach
 import 'package:health_wallet/features/records/presentation/pages/records_page.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_active_filters_bar.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_view_toggle.dart';
+import 'package:health_wallet/features/records/presentation/widgets/timeline_entry.dart';
 import 'package:health_wallet/features/records/presentation/widgets/vision_prescription_table.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/user/domain/entity/user.dart';
@@ -58,6 +59,14 @@ class _MockRecordsBloc extends MockBloc<RecordsEvent, RecordsState>
 
   @override
   void add(RecordsEvent event) => added.add(event);
+
+  /// The chosen records the bloc would read from the database: here, those
+  /// of the list shown.
+  @override
+  Future<List<IFhirResource>> loadSelectedResources() async => [
+    for (final r in state.resources)
+      if (state.selectedResourceIds.contains(r.id)) r,
+  ];
 }
 
 /// Keeps what the page asks of the attachments.
@@ -243,17 +252,17 @@ Matcher _sourceChanged({
     .having((e) => e.personId, 'personId', personId);
 
 /// The attachments of [sourceIds] (or [sourceId]) of [resourceTypes], for
-/// [specialty] if one is chosen.
+/// [specialties] if any are chosen.
 Matcher _browseOpened({
   String? sourceId,
   List<String>? sourceIds,
   List<FhirType> resourceTypes = const [],
-  MedicalSpecialty? specialty,
+  List<MedicalSpecialty> specialties = const [],
 }) => isA<AttachmentBrowseInitialised>()
     .having((e) => e.sourceId, 'sourceId', sourceId)
     .having((e) => e.sourceIds, 'sourceIds', sourceIds)
     .having((e) => e.resourceTypes, 'resourceTypes', resourceTypes)
-    .having((e) => e.specialty, 'specialty', specialty);
+    .having((e) => e.specialties, 'specialties', specialties);
 
 /// The icon drawn from [icon].
 Finder _icon(SvgGenImage icon) => find.byWidgetPredicate(
@@ -444,6 +453,35 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 750));
   }
+
+  group('the records list while loading', () {
+    testWidgets('a refresh keeps the records on screen', (tester) async {
+      await pumpPage(
+        tester,
+        screen: const Size(390, 844),
+        viewMode: RecordsViewMode.recordsList,
+        recordsState: RecordsState(
+          status: const RecordsStatus.loading(),
+          resources: [weight('obs-1', 70, 'kg')],
+        ),
+      );
+
+      expect(find.byType(TimelineEntry), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
+
+    testWidgets('an empty list shows the spinner', (tester) async {
+      await pumpPage(
+        tester,
+        screen: const Size(390, 844),
+        viewMode: RecordsViewMode.recordsList,
+        recordsState: const RecordsState(status: RecordsStatus.loading()),
+      );
+
+      expect(find.byType(TimelineEntry), findsNothing);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    });
+  });
 
   group('importing from the empty records list', () {
     Future<void> openList(WidgetTester tester) => pumpPage(
@@ -945,15 +983,18 @@ void main() {
       expect(recordsBloc.added.whereType<RecordsFiltersApplied>(), isEmpty);
     });
 
-    testWidgets('with a specialty chosen too, the attachments open for that '
-        'specialty within the chosen record types', (tester) async {
+    testWidgets('with specialties chosen too, the attachments open for every '
+        'one of them within the chosen record types', (tester) async {
       await pumpPage(
         tester,
         screen: phone,
         recordsState: const RecordsState(
           status: RecordsStatus.success(),
           activeFilters: [FhirType.Observation],
-          activeSpecialties: [MedicalSpecialty.cardiology],
+          activeSpecialties: [
+            MedicalSpecialty.cardiology,
+            MedicalSpecialty.dermatology,
+          ],
         ),
       );
 
@@ -962,7 +1003,10 @@ void main() {
         _browseOpened(
           sourceIds: const [],
           resourceTypes: [FhirType.Observation],
-          specialty: MedicalSpecialty.cardiology,
+          specialties: [
+            MedicalSpecialty.cardiology,
+            MedicalSpecialty.dermatology,
+          ],
         ),
       );
     });
@@ -1071,7 +1115,7 @@ void main() {
         _browseOpened(
           sourceIds: ['epic'],
           resourceTypes: [FhirType.Observation],
-          specialty: MedicalSpecialty.cardiology,
+          specialties: [MedicalSpecialty.cardiology],
         ),
       ]);
     });
@@ -1240,10 +1284,9 @@ void main() {
       final filters = recordsBloc.added.whereType<RecordsFiltersApplied>();
       expect(filters.single.filters, [FhirType.Observation]);
       expect(filters.single.dateFilter, isNull);
-      expect(
-        recordsBloc.added.whereType<RecordsSpecialtyApplied>().single,
-        const RecordsSpecialtyApplied([MedicalSpecialty.cardiology]),
-      );
+      expect(filters.single.specialties, [MedicalSpecialty.cardiology]);
+      // One event, so the list loads once, with every filter.
+      expect(recordsBloc.added.whereType<RecordsSpecialtyApplied>(), isEmpty);
       expect(find.text(l10n.applyFilters), findsNothing);
     }
 

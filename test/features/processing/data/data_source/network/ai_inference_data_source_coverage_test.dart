@@ -252,16 +252,11 @@ void main() {
       final dataSource = plainDataSource();
 
       expect(await dataSource.checkModelExistence(), isFalse);
-      expect(await dataSource.checkMmprojExistence(), isFalse);
       // The check creates the folder for later downloads.
       expect(modelDir.existsSync(), isTrue);
 
       put(AiModelConfig.qwen35x4b.modelId, 'GGUF');
       expect(await dataSource.checkModelExistence(), isTrue);
-      expect(await dataSource.checkMmprojExistence(), isFalse);
-
-      put(AiModelConfig.qwen35x4b.mmprojId, 'GGUF');
-      expect(await dataSource.checkMmprojExistence(), isTrue);
     });
 
     test('a file of another model does not count for the active one', () async {
@@ -270,7 +265,6 @@ void main() {
       put(AiModelConfig.qwen7b.mmprojId, 'GGUF');
 
       expect(await dataSource.checkModelExistence(), isFalse);
-      expect(await dataSource.checkMmprojExistence(), isFalse);
       expect(
         await dataSource.checkModelExistenceForVariant(AiModelVariant.qwen7b),
         isTrue,
@@ -315,14 +309,19 @@ void main() {
   });
 
   group('Dio download (desktop)', () {
-    test('downloadModel and downloadMmproj fetch the active model\'s '
-        'URLs into its file names', () async {
-      await selectModel(AiModelVariant.qwen35x4b);
+    test('a variant\'s model and vision files are fetched from its URLs '
+        'into its file names', () async {
       final server = _CannedServer();
       final dataSource = dioDataSource(server);
 
-      await dataSource.downloadModel(onProgress: (_) {});
-      await dataSource.downloadMmproj(onProgress: (_) {});
+      await dataSource.downloadModelForVariant(
+        AiModelVariant.qwen35x4b,
+        onProgress: (_) {},
+      );
+      await dataSource.downloadMmprojForVariant(
+        AiModelVariant.qwen35x4b,
+        onProgress: (_) {},
+      );
 
       expect(server.requests.map((r) => r.uri.toString()), [
         AiModelConfig.qwen35x4b.modelUrl,
@@ -336,8 +335,18 @@ void main() {
         fileIn(AiModelConfig.qwen35x4b.mmprojId).readAsStringSync(),
         'GGUF',
       );
-      expect(await dataSource.checkModelExistence(), isTrue);
-      expect(await dataSource.checkMmprojExistence(), isTrue);
+      expect(
+        await dataSource.checkModelExistenceForVariant(
+          AiModelVariant.qwen35x4b,
+        ),
+        isTrue,
+      );
+      expect(
+        await dataSource.checkMmprojExistenceForVariant(
+          AiModelVariant.qwen35x4b,
+        ),
+        isTrue,
+      );
     });
 
     test('progress is the rounded share of Content-Length', () async {
@@ -472,14 +481,19 @@ void main() {
   });
 
   group('background_downloader (mobile)', () {
-    test('the task downloads the active model into ai_models/ of the '
-        'documents directory', () async {
-      await selectModel(AiModelVariant.qwen35x4b);
+    test('the task downloads the model into ai_models/ of the documents '
+        'directory', () async {
       final downloader = _CannedFileDownloader(modelDir);
       final dataSource = mobileDataSource(downloader);
 
-      await dataSource.downloadModel(onProgress: (_) {});
-      await dataSource.downloadMmproj(onProgress: (_) {});
+      await dataSource.downloadModelForVariant(
+        AiModelVariant.qwen35x4b,
+        onProgress: (_) {},
+      );
+      await dataSource.downloadMmprojForVariant(
+        AiModelVariant.qwen35x4b,
+        onProgress: (_) {},
+      );
 
       final model = downloader.tasks.first;
       expect(model.url, AiModelConfig.qwen35x4b.modelUrl);
@@ -490,8 +504,18 @@ void main() {
       expect(model.headers, isEmpty);
       expect(downloader.tasks.last.url, AiModelConfig.qwen35x4b.mmprojUrl);
       expect(downloader.tasks.last.filename, AiModelConfig.qwen35x4b.mmprojId);
-      expect(await dataSource.checkModelExistence(), isTrue);
-      expect(await dataSource.checkMmprojExistence(), isTrue);
+      expect(
+        await dataSource.checkModelExistenceForVariant(
+          AiModelVariant.qwen35x4b,
+        ),
+        isTrue,
+      );
+      expect(
+        await dataSource.checkMmprojExistenceForVariant(
+          AiModelVariant.qwen35x4b,
+        ),
+        isTrue,
+      );
     });
 
     test('the task carries the Hugging Face token when one is set', () async {

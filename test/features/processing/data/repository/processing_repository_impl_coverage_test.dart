@@ -2,8 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/services.dart';
-import 'package:flutter_doc_scanner/flutter_doc_scanner_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
@@ -21,7 +19,6 @@ import 'package:health_wallet/features/processing/domain/services/text_recogniti
 import '../../../../helpers/log_capture.dart';
 import '../../../share_records/share_test_helpers.dart';
 
-const _scannerChannel = MethodChannel('flutter_doc_scanner');
 const _variant = AiModelVariant.qwen;
 
 class _FakeLocalDataSource extends Fake implements ProcessingLocalDataSource {
@@ -105,7 +102,6 @@ class _Transfer {
 }
 
 class _FakeNetwork extends Fake implements AiInferenceDataSource {
-  final legacy = _Transfer();
   final model = _Transfer();
   final mmproj = _Transfer();
   final modelCancels = <AiModelVariant>[];
@@ -118,10 +114,6 @@ class _FakeNetwork extends Fake implements AiInferenceDataSource {
   var disposes = 0;
   var textPrompts = 0;
   var visionPrompts = 0;
-
-  @override
-  Future<void> downloadModel({required void Function(int) onProgress}) =>
-      legacy.start(onProgress);
 
   @override
   Future<bool> checkModelExistence() async => modelExists;
@@ -246,80 +238,6 @@ class _FakeNetwork extends Fake implements AiInferenceDataSource {
   }
 }
 
-/// A scanner plugin that passes the native [PlatformException] on as it is
-/// (the method-channel plugin turns it into a `DocScanException`).
-class _FailingScannerPlatform extends FlutterDocScannerPlatform {
-  Never _fail() =>
-      throw PlatformException(code: 'NO_CAMERA', message: 'no camera');
-
-  @override
-  Future<dynamic> getScannedDocumentAsImages(
-    int page,
-    String imageFormat,
-    double quality,
-  ) async => _fail();
-
-  @override
-  Future<dynamic> getScannedDocumentAsPdf(int page) async => _fail();
-
-  @override
-  Future<dynamic> getScanDocuments(int page) async => _fail();
-}
-
-/// A file that exists but cannot be deleted. CI runs as root, so a
-/// permission can't make the delete fail.
-class _UndeletableFile extends Fake implements File {
-  _UndeletableFile(this.path);
-
-  @override
-  final String path;
-
-  @override
-  Future<bool> exists() async => true;
-
-  @override
-  Future<FileSystemEntity> delete({bool recursive = false}) async =>
-      throw FileSystemException('Cannot delete', path);
-}
-
-/// A directory that exists but whose listing and deletion fail.
-class _BrokenDirectory extends Fake implements Directory {
-  _BrokenDirectory(this.path);
-
-  @override
-  final String path;
-
-  @override
-  Future<bool> exists() async => true;
-
-  @override
-  Stream<FileSystemEntity> list({
-    bool recursive = false,
-    bool followLinks = true,
-  }) => Stream.error(FileSystemException('Cannot list', path));
-
-  @override
-  Future<FileSystemEntity> delete({bool recursive = false}) async =>
-      throw FileSystemException('Cannot delete', path);
-}
-
-/// Swaps the file or directory at the given paths for a broken one; every
-/// other path is real.
-final class _BrokenAt extends IOOverrides {
-  _BrokenAt({this.file, this.directory});
-
-  final String? file;
-  final String? directory;
-
-  @override
-  File createFile(String path) =>
-      path == file ? _UndeletableFile(path) : super.createFile(path);
-
-  @override
-  Directory createDirectory(String path) =>
-      path == directory ? _BrokenDirectory(path) : super.createDirectory(path);
-}
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final logs = captureLogs();
@@ -329,15 +247,6 @@ void main() {
   late _FakeNetwork network;
   late _FakeOcr ocr;
   late ProcessingRepositoryImpl repository;
-  late List<MethodCall> scannerCalls;
-
-  void scannerReturns(Object? Function(MethodCall call) answer) {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(_scannerChannel, (call) async {
-          scannerCalls.add(call);
-          return answer(call);
-        });
-  }
 
   setUp(() {
     root = mockPathProvider();
@@ -345,218 +254,13 @@ void main() {
     local = _FakeLocalDataSource();
     network = _FakeNetwork();
     ocr = _FakeOcr('Diagnosen: Vorhofflimmern seit 2019.');
-    scannerCalls = [];
     repository = ProcessingRepositoryImpl(network, local, ocr, PathResolver());
-    addTearDown(
-      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(_scannerChannel, null),
-    );
   });
 
   test('exposes its data source and OCR service to the extraction mixin', () {
     expect(repository.networkDataSource, same(network));
     expect(repository.textRecognitionService, same(ocr));
     expect(repository.shouldCancelGeneration, isFalse);
-  });
-
-  group('scanDocuments', () {
-    test('asks for up to 10 pages and drops empty paths', () async {
-      scannerReturns(
-        (_) => {
-          'images': ['/scan/a.jpg', '', '/scan/b.jpg'],
-        },
-      );
-
-      expect(await repository.scanDocuments(), ['/scan/a.jpg', '/scan/b.jpg']);
-      expect(scannerCalls.single.method, 'getScannedDocumentAsImages');
-      expect((scannerCalls.single.arguments as Map)['page'], 10);
-    });
-
-    test('a cancelled scan returns no paths', () async {
-      scannerReturns((_) => null);
-
-      expect(await repository.scanDocuments(), isEmpty);
-    });
-
-    test('a native failure surfaces as a scan error naming its code', () async {
-      scannerReturns(
-        (_) => throw PlatformException(code: 'SCAN_FAILED', message: 'boom'),
-      );
-
-      // The plugin turns the PlatformException into a DocScanException, so
-      // the generic branch reports it.
-      await expectLater(
-        repository.scanDocuments(),
-        throwsA(
-          isA<Exception>().having(
-            (e) => '$e',
-            'message',
-            allOf(contains('Failed to scan:'), contains('SCAN_FAILED')),
-          ),
-        ),
-      );
-    });
-  });
-
-  group('a platform error passed on by the plugin', () {
-    setUp(() {
-      final original = FlutterDocScannerPlatform.instance;
-      FlutterDocScannerPlatform.instance = _FailingScannerPlatform();
-      addTearDown(() => FlutterDocScannerPlatform.instance = original);
-    });
-
-    Matcher failsWith(String text) => throwsA(
-      isA<Exception>().having(
-        (e) => '$e',
-        'message',
-        allOf(contains(text), contains('no camera')),
-      ),
-    );
-
-    test('is a scanner platform error for images', () async {
-      await expectLater(
-        repository.scanDocuments(),
-        failsWith('Scanner platform error'),
-      );
-    });
-
-    test('is a PDF scanner platform error for a PDF', () async {
-      await expectLater(
-        repository.scanDocumentsAsPdf(),
-        failsWith('PDF Scanner platform error'),
-      );
-    });
-
-    test('is a default scanner platform error in default mode', () async {
-      await expectLater(
-        repository.scanDocumentsDefault(),
-        failsWith('Default Scanner platform error'),
-      );
-    });
-  });
-
-  group('scanDocumentsAsPdf', () {
-    test('returns the PDF the scanner made, with the page limit', () async {
-      scannerReturns((_) => {'pdfUri': '/scan/doc.pdf', 'pageCount': 2});
-
-      expect(await repository.scanDocumentsAsPdf(maxPages: 3), [
-        '/scan/doc.pdf',
-      ]);
-      expect(scannerCalls.single.method, 'getScannedDocumentAsPdf');
-      expect((scannerCalls.single.arguments as Map)['page'], 3);
-    });
-
-    test('defaults to 5 pages and a cancel returns nothing', () async {
-      scannerReturns((_) => null);
-
-      expect(await repository.scanDocumentsAsPdf(), isEmpty);
-      expect((scannerCalls.single.arguments as Map)['page'], 5);
-    });
-
-    test('an unreadable result surfaces as a PDF scan error', () async {
-      scannerReturns((_) => {'pageCount': 1});
-
-      await expectLater(
-        repository.scanDocumentsAsPdf(),
-        throwsA(
-          isA<Exception>().having(
-            (e) => '$e',
-            'message',
-            contains('Failed to scan PDF documents'),
-          ),
-        ),
-      );
-    });
-
-    test('a native failure surfaces as a PDF scan error', () async {
-      scannerReturns((_) => throw PlatformException(code: 'NO_ACTIVITY'));
-
-      await expectLater(
-        repository.scanDocumentsAsPdf(),
-        throwsA(
-          isA<Exception>().having(
-            (e) => '$e',
-            'message',
-            allOf(
-              contains('Failed to scan PDF documents'),
-              contains('NO_ACTIVITY'),
-            ),
-          ),
-        ),
-      );
-    });
-  });
-
-  group('scanDocumentsDefault', () {
-    test('keeps the listed paths that are not failures', () async {
-      scannerReturns(
-        (_) => ['/scan/a.jpg', '', 'Failed to save', 'Unknown', '/scan/b.png'],
-      );
-
-      expect(await repository.scanDocumentsDefault(maxPages: 2), [
-        '/scan/a.jpg',
-        '/scan/b.png',
-      ]);
-      expect(scannerCalls.single.method, 'getScanDocuments');
-      expect((scannerCalls.single.arguments as Map)['page'], 2);
-    });
-
-    test('a single path is returned as a list', () async {
-      scannerReturns((_) => '/scan/doc.pdf');
-
-      expect(await repository.scanDocumentsDefault(), ['/scan/doc.pdf']);
-      expect((scannerCalls.single.arguments as Map)['page'], 5);
-    });
-
-    test('any other result is kept as its text', () async {
-      scannerReturns((_) => 42);
-
-      expect(await repository.scanDocumentsDefault(), ['42']);
-    });
-
-    test('a cancel returns nothing', () async {
-      scannerReturns((_) => null);
-
-      expect(await repository.scanDocumentsDefault(), isEmpty);
-    });
-
-    for (final message in ['Failed to scan', 'Unknown error']) {
-      test('a "$message" answer is an error, not a path', () async {
-        scannerReturns((_) => message);
-
-        await expectLater(
-          repository.scanDocumentsDefault(),
-          throwsA(
-            isA<Exception>().having(
-              (e) => '$e',
-              'message',
-              allOf(
-                contains('Failed to scan in default mode'),
-                contains('Default scanner error: $message'),
-              ),
-            ),
-          ),
-        );
-      });
-    }
-
-    test('a native failure surfaces as a default-mode error', () async {
-      scannerReturns((_) => throw PlatformException(code: 'SCAN_IN_PROGRESS'));
-
-      await expectLater(
-        repository.scanDocumentsDefault(),
-        throwsA(
-          isA<Exception>().having(
-            (e) => '$e',
-            'message',
-            allOf(
-              contains('Failed to scan in default mode'),
-              contains('SCAN_IN_PROGRESS'),
-            ),
-          ),
-        ),
-      );
-    });
   });
 
   group('saveScannedDocument', () {
@@ -590,140 +294,6 @@ void main() {
         Directory('$docs/scanned_documents').listSync(),
         isEmpty,
         reason: 'the folder is made, but nothing is copied into it',
-      );
-    });
-  });
-
-  group('getSavedDocuments', () {
-    test('no scanned_documents folder means no documents', () async {
-      expect(await repository.getSavedDocuments(), isEmpty);
-    });
-
-    test('lists the images and PDFs, newest first', () async {
-      final dir = Directory('$docs/scanned_documents')..createSync();
-      File make(String name, DateTime modified) => File('${dir.path}/$name')
-        ..writeAsStringSync(name)
-        ..setLastModifiedSync(modified);
-      make('old.jpg', DateTime(2024));
-      make('new.PNG', DateTime(2026));
-      make('mid.pdf', DateTime(2025));
-      make('b.jpeg', DateTime(2023));
-      make('notes.txt', DateTime(2027));
-      Directory('${dir.path}/nested.jpg').createSync();
-
-      final paths = await repository.getSavedDocuments();
-
-      expect(paths.map((p) => p.split('/').last), [
-        'new.PNG',
-        'mid.pdf',
-        'old.jpg',
-        'b.jpeg',
-      ]);
-    });
-
-    test('an unreadable folder means no documents', () async {
-      final dir = '$docs/scanned_documents';
-
-      final paths = await IOOverrides.runWithIOOverrides(
-        repository.getSavedDocuments,
-        _BrokenAt(directory: dir),
-      );
-
-      expect(paths, isEmpty);
-    });
-  });
-
-  group('deleteDocument', () {
-    test('deletes the file and ignores one already gone', () async {
-      final file = File('$docs/scan.jpg')..writeAsStringSync('x');
-
-      await repository.deleteDocument(file.path);
-      await repository.deleteDocument('$docs/gone.jpg');
-
-      expect(file.existsSync(), isFalse);
-    });
-
-    test('a file that cannot be deleted is an error', () async {
-      final path = '$docs/kept.jpg';
-
-      await expectLater(
-        IOOverrides.runWithIOOverrides(
-          () => repository.deleteDocument(path),
-          _BrokenAt(file: path),
-        ),
-        throwsA(
-          isA<Exception>().having(
-            (e) => '$e',
-            'message',
-            contains('Failed to delete document'),
-          ),
-        ),
-      );
-    });
-  });
-
-  group('clearAllDocuments', () {
-    test('removes the scans folder and the imported images and PDFs', () async {
-      final scans = Directory('$docs/scanned_documents')..createSync();
-      File('${scans.path}/a.jpg').writeAsStringSync('a');
-      final image = File('${root.path}/tmp/import.png')..writeAsStringSync('');
-      final pdf = File('${root.path}/tmp/import.pdf')..writeAsStringSync('');
-      final unrelated = File('$docs/keep.pdf')..writeAsStringSync('');
-
-      await repository.clearAllDocuments(
-        importedImagePaths: [image.path, '${root.path}/tmp/gone.png'],
-        importedPdfPaths: [pdf.path, '${root.path}/tmp/gone.pdf'],
-      );
-
-      expect(scans.existsSync(), isFalse);
-      expect(image.existsSync(), isFalse);
-      expect(pdf.existsSync(), isFalse);
-      expect(unrelated.existsSync(), isTrue);
-    });
-
-    test('with nothing to clear it does nothing', () async {
-      await repository.clearAllDocuments();
-
-      expect(Directory('$docs/scanned_documents').existsSync(), isFalse);
-    });
-
-    test('an imported file that cannot be deleted does not stop the '
-        'others', () async {
-      final stuckImage = '${root.path}/tmp/stuck.png';
-      final stuckPdf = '${root.path}/tmp/stuck.pdf';
-      final image = File('${root.path}/tmp/other.png')..writeAsStringSync('');
-      final pdf = File('${root.path}/tmp/other.pdf')..writeAsStringSync('');
-
-      await IOOverrides.runWithIOOverrides(
-        () => repository.clearAllDocuments(
-          importedImagePaths: [stuckImage, image.path],
-        ),
-        _BrokenAt(file: stuckImage),
-      );
-      await IOOverrides.runWithIOOverrides(
-        () => repository.clearAllDocuments(
-          importedPdfPaths: [stuckPdf, pdf.path],
-        ),
-        _BrokenAt(file: stuckPdf),
-      );
-
-      expect(image.existsSync(), isFalse);
-      expect(pdf.existsSync(), isFalse);
-    });
-
-    test('a scans folder that cannot be deleted is an error', () async {
-      await expectLater(
-        IOOverrides.runWithIOOverrides(
-          repository.clearAllDocuments,
-          _BrokenAt(directory: '$docs/scanned_documents'),
-        ),
-        throwsA(
-          isA<Exception>().having(
-            (e) => '$e',
-            'message',
-            contains('Failed to clear all documents'),
-          ),
-        ),
       );
     });
   });
@@ -824,39 +394,6 @@ void main() {
         ['imports/a.pdf', 'imports/b.jpg'],
       );
       expect(companion.status.value, ProcessingStatus.processing.toString());
-    });
-  });
-
-  group('downloadModel', () {
-    test('reports progress as doubles and closes when the download '
-        'ends', () async {
-      final events = <double>[];
-      final done = Completer<void>();
-      repository.downloadModel().listen(events.add, onDone: done.complete);
-
-      network.legacy.onProgress!(10);
-      network.legacy.onProgress!(55);
-      network.legacy.done.complete();
-      await done.future;
-
-      expect(events, [10.0, 55.0]);
-    });
-
-    test('a failed download is reported as an error, then the stream '
-        'closes', () async {
-      final stream = repository.downloadModel();
-      final expectation = expectLater(
-        stream,
-        emitsInOrder([
-          1.0,
-          emitsError(isA<StateError>()),
-          emitsDone,
-        ]),
-      );
-
-      network.legacy.onProgress!(1);
-      network.legacy.done.completeError(StateError('offline'));
-      await expectation;
     });
   });
 

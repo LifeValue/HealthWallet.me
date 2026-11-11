@@ -259,40 +259,6 @@ class FhirCommonExtractor {
     return instructions.isEmpty ? null : instructions.join('; ');
   }
 
-  static String? extractDosage(List<fhir_r4.Dosage>? dosages) {
-    if (dosages == null || dosages.isEmpty) return null;
-
-    final dosage = dosages.first;
-
-    if (dosage.text?.valueString != null) {
-      return dosage.text!.valueString;
-    }
-
-    final parts = <String>[];
-
-    if (dosage.doseAndRate != null && dosage.doseAndRate!.isNotEmpty) {
-      final doseAndRate = dosage.doseAndRate!.first;
-      final doseQuantity = doseAndRate.doseX?.isAs<fhir_r4.Quantity>();
-      if (doseQuantity != null) {
-        final value = doseQuantity.value?.valueDouble?.toStringAsFixed(0);
-        final unit = doseQuantity.unit?.valueString;
-        if (value != null) {
-          parts.add('$value${unit != null ? ' $unit' : ''}');
-        }
-      }
-    }
-
-    final route = extractCodeableConceptText(dosage.route);
-    if (route != null) parts.add(route);
-
-    if (dosage.timing?.code != null) {
-      final timing = extractCodeableConceptText(dosage.timing!.code);
-      if (timing != null) parts.add(timing);
-    }
-
-    return parts.isEmpty ? null : parts.join(', ');
-  }
-
   static String? extractReasonCodes(List<dynamic>? reasonCodes) {
     return extractAllCodeableConceptsFromArray(reasonCodes);
   }

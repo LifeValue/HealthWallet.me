@@ -80,7 +80,6 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
     List<String>? sourceIds,
     int limit = 20,
     int offset = 0,
-    DateFilter? dateFilter,
   }) async {
     if (error != null) throw error!;
     expect(resourceTypes, [FhirType.DocumentReference]);

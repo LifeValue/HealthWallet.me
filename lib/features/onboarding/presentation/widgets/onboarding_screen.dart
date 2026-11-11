@@ -34,6 +34,11 @@ class OnboardingScreen extends StatelessWidget {
     this.customWidget,
   });
 
+  /// A link that could not be opened, once per failed attempt.
+  static bool _isNewError(OnboardingState previous, OnboardingState current) =>
+      current.errorMessage != null &&
+      previous.errorMessage != current.errorMessage;
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<UserBloc, UserState>(
@@ -186,6 +191,7 @@ class OnboardingScreen extends StatelessWidget {
       final afterLink = linkParts[1];
 
       return BlocListener<OnboardingBloc, OnboardingState>(
+        listenWhen: _isNewError,
         listener: (context, state) {
           if (state.errorMessage != null) {
             AppSnackBar.show(
@@ -278,6 +284,7 @@ class OnboardingScreen extends StatelessWidget {
       final afterLink = linkParts[1];
 
       return BlocListener<OnboardingBloc, OnboardingState>(
+        listenWhen: _isNewError,
         listener: (context, state) {
           if (state.errorMessage != null) {
             AppSnackBar.show(
@@ -420,6 +427,7 @@ class OnboardingScreen extends StatelessWidget {
     }
 
     return BlocListener<OnboardingBloc, OnboardingState>(
+      listenWhen: _isNewError,
       listener: (context, state) {
         if (state.errorMessage != null) {
           AppSnackBar.show(

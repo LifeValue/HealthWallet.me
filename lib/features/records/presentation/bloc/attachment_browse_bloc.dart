@@ -1,9 +1,8 @@
 import 'package:bloc/bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
-import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
-import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/services/attachment_browse_service.dart';
 import 'package:injectable/injectable.dart';
@@ -16,10 +15,7 @@ part 'attachment_browse_state.dart';
 class AttachmentBrowseBloc
     extends Bloc<AttachmentBrowseEvent, AttachmentBrowseState> {
   final AttachmentBrowseService _service;
-  final SpecialtyClassifier _specialtyClassifier;
-
-  AttachmentBrowseBloc(this._service, this._specialtyClassifier)
-    : super(const AttachmentBrowseState()) {
+  AttachmentBrowseBloc(this._service) : super(const AttachmentBrowseState()) {
     // A new scope or filter replaces a load still running, so an earlier,
     // slower load can't show another scope's records.
     on<AttachmentBrowseInitialised>(_onInitialised, transformer: restartable());
@@ -33,9 +29,6 @@ class AttachmentBrowseBloc
     AttachmentBrowseInitialised event,
     Emitter<AttachmentBrowseState> emit,
   ) async {
-    debugPrint(
-      '[BROWSE] _onInitialised called: sourceId=${event.sourceId}, sourceIds=${event.sourceIds}, resourceTypes=${event.resourceTypes}, specialty=${event.specialty}',
-    );
     final sourceRecords = event.sourceRecords.isNotEmpty
         ? event.sourceRecords
         : state.sourceRecords;
@@ -48,26 +41,13 @@ class AttachmentBrowseBloc
     );
 
     try {
-      var entries = await _service.loadEntries(
+      final entries = await _service.loadEntries(
         sourceId: event.sourceId,
         sourceIds: event.sourceIds,
         resourceTypes: event.resourceTypes,
+        dateFilter: event.dateFilter,
+        specialties: event.specialties,
       );
-      debugPrint('[BROWSE] loadEntries returned ${entries.length} entries');
-
-      if (event.specialty != null) {
-        _specialtyClassifier.buildEncounterIndex(
-          entries.map((e) => e.record).toList(),
-        );
-        entries = entries.where((e) {
-          final override = MedicalSpecialty.values
-              .where((s) => s.name == e.record.specialtyOverride)
-              .firstOrNull;
-          return _specialtyClassifier
-              .classify(e.record, override: override)
-              .contains(event.specialty);
-        }).toList();
-      }
 
       final timelineYears = _buildTimeline(entries);
 
@@ -99,7 +79,8 @@ class AttachmentBrowseBloc
           searchQuery: '',
         ),
       );
-    } catch (_) {
+    } catch (e, s) {
+      logger.e('Loading the attachments failed', e, s);
       emit(state.copyWith(status: AttachmentBrowseStatus.error));
     }
   }

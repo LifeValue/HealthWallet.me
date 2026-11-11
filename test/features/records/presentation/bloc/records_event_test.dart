@@ -13,8 +13,6 @@ void main() {
     final filtersApplied = RecordsFiltersApplied.new;
     final removed = RecordsFilterRemoved.new;
     final detailLoaded = RecordDetailLoaded.new;
-    final loadDemo = LoadDemoData.new;
-    final clearDemo = ClearDemoData.new;
     final search = RecordsSearch.new;
     final searchExecuted = RecordsSearchExecuted.new;
     final sharePressed = RecordsSharePressed.new;
@@ -37,8 +35,16 @@ void main() {
         const RecordsSourceChanged('src-1', personId: 'p'),
       ),
       (
-        filtersApplied([FhirType.Condition], remember: false),
-        const RecordsFiltersApplied([FhirType.Condition], remember: false),
+        filtersApplied(
+          [FhirType.Condition],
+          specialties: [MedicalSpecialty.cardiology],
+          remember: false,
+        ),
+        const RecordsFiltersApplied(
+          [FhirType.Condition],
+          specialties: [MedicalSpecialty.cardiology],
+          remember: false,
+        ),
       ),
       (
         removed(FhirType.Condition),
@@ -48,8 +54,6 @@ void main() {
         detailLoaded(const Patient(id: 'p')),
         const RecordDetailLoaded(Patient(id: 'p')),
       ),
-      (loadDemo(), const LoadDemoData()),
-      (clearDemo(), const ClearDemoData()),
       (search('heart'), const RecordsSearch('heart')),
       (searchExecuted('heart'), const RecordsSearchExecuted('heart')),
       (
@@ -61,8 +65,11 @@ void main() {
       (modeToggled(), const RecordsSelectionModeToggled()),
       (datesCleared(), const RecordsDateRangeCleared()),
       (
-        deleted(resourceId: 'r', deleteRelated: true),
-        const RecordsResourceDeleted(resourceId: 'r', deleteRelated: true),
+        deleted(resourceId: 'r', selectedRelatedIds: ['o']),
+        const RecordsResourceDeleted(
+          resourceId: 'r',
+          selectedRelatedIds: ['o'],
+        ),
       ),
       (
         specialtyApplied([MedicalSpecialty.cardiology]),

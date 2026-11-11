@@ -177,9 +177,6 @@
   summary: In the patient setup dialog an emergency phone entered on its own is not saved.
   evidence: The phone isn't among patientFieldsChanged (patient_setup_dialog.dart ~200-205). Pinned in patient_setup_dialog_coverage_test.dart.
 - source_spec: none (batch 1 coverage pass, 2026-11-03)
-  summary: The legacy AiModelDownloadService.startDownload never removes its subscription, so isAnyDownloading stays true and later starts are ignored; its repository stream also can't be cancelled.
-  evidence: No caller in lib/; it belongs to the dead download methods slated for removal in batch 2. Pinned in ai_model_download_service_coverage_test.dart.
-- source_spec: none (batch 1 coverage pass, 2026-11-03)
   summary: Clearing a given or family name in the patient edit dialog keeps the stored name, because an empty name is sent as null ("unchanged").
   evidence: patient_edit_dialog.dart save; pinned as current behaviour in patient_edit_dialog_coverage_test.dart.
 - source_spec: none (batch 1 coverage pass, 2026-11-03)

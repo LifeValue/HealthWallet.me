@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/services.dart';
-import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/logger.dart';
@@ -85,91 +83,6 @@ class ProcessingRepositoryImpl extends Object
   }
 
   @override
-  Future<List<String>> scanDocuments() async {
-    try {
-      final scannedResult = await FlutterDocScanner()
-          .getScannedDocumentAsImages(
-            page: 10,
-          );
-
-      if (scannedResult == null) {
-        return [];
-      }
-
-      final validPaths = scannedResult.images
-          .where((path) => path.isNotEmpty)
-          .toList();
-
-      return validPaths;
-    } on PlatformException catch (e) {
-      throw Exception('Scanner platform error: ${e.message ?? e.code}');
-    } catch (e) {
-      throw Exception('Failed to scan: $e');
-    }
-  }
-
-  @override
-  Future<List<String>> scanDocumentsAsPdf({int maxPages = 5}) async {
-    try {
-      final scannedResult = await FlutterDocScanner().getScannedDocumentAsPdf(
-        page: maxPages,
-      );
-
-      if (scannedResult == null) {
-        return [];
-      }
-
-      return [scannedResult.pdfUri];
-    } on PlatformException catch (e) {
-      throw Exception('PDF Scanner platform error: ${e.message ?? e.code}');
-    } catch (e) {
-      throw Exception('Failed to scan PDF documents: $e');
-    }
-  }
-
-  @override
-  Future<List<String>> scanDocumentsDefault({int maxPages = 5}) async {
-    try {
-      final scannedResult = await FlutterDocScanner().getScanDocuments(
-        page: maxPages,
-      );
-
-      if (scannedResult == null) {
-        return [];
-      }
-
-      List<String> documentPaths = [];
-
-      if (scannedResult is List) {
-        documentPaths = scannedResult.cast<String>();
-      } else if (scannedResult is String) {
-        if (scannedResult.contains('Failed') ||
-            scannedResult.contains('Unknown')) {
-          throw Exception('Default scanner error: $scannedResult');
-        }
-        documentPaths = [scannedResult];
-      } else {
-        documentPaths = [scannedResult.toString()];
-      }
-
-      final validPaths = documentPaths
-          .where(
-            (path) =>
-                path.isNotEmpty &&
-                !path.contains('Failed') &&
-                !path.contains('Unknown'),
-          )
-          .toList();
-
-      return validPaths;
-    } on PlatformException catch (e) {
-      throw Exception('Default Scanner platform error: ${e.message ?? e.code}');
-    } catch (e) {
-      throw Exception('Failed to scan in default mode: $e');
-    }
-  }
-
-  @override
   Future<String> saveScannedDocument(String sourcePath) async {
     try {
       final directory = await getApplicationDocumentsDirectory();
@@ -195,103 +108,6 @@ class ProcessingRepositoryImpl extends Object
     } catch (e) {
       throw Exception('Failed to save document: $e');
     }
-  }
-
-  @override
-  Future<List<String>> getSavedDocuments() async {
-    try {
-      final directory = await getApplicationDocumentsDirectory();
-      final scanDir = Directory(path.join(directory.path, 'scanned_documents'));
-
-      if (!await scanDir.exists()) {
-        return [];
-      }
-
-      final files = await scanDir
-          .list()
-          .where((entity) => entity is File)
-          .cast<File>()
-          .toList();
-
-      final documentPaths = files
-          .map((file) => file.path)
-          .where(_isValidDocumentFile)
-          .toList();
-
-      documentPaths.sort((a, b) {
-        final aFile = File(a);
-        final bFile = File(b);
-        return bFile.lastModifiedSync().compareTo(aFile.lastModifiedSync());
-      });
-
-      return documentPaths;
-    } catch (e) {
-      return [];
-    }
-  }
-
-  @override
-  Future<void> deleteDocument(String imagePath) async {
-    try {
-      final file = File(imagePath);
-      if (await file.exists()) {
-        await file.delete();
-      }
-    } catch (e) {
-      throw Exception('Failed to delete document: $e');
-    }
-  }
-
-  @override
-  Future<void> clearAllDocuments({
-    List<String>? scannedImagePaths,
-    List<String>? importedImagePaths,
-    List<String>? importedPdfPaths,
-  }) async {
-    try {
-      final directory = await getApplicationDocumentsDirectory();
-      final scanDir = Directory(path.join(directory.path, 'scanned_documents'));
-
-      if (await scanDir.exists()) {
-        await scanDir.delete(recursive: true);
-      }
-
-      if (importedImagePaths != null) {
-        for (var imagePath in importedImagePaths) {
-          try {
-            final file = File(imagePath);
-            if (await file.exists()) {
-              await file.delete();
-            }
-          } catch (_) {
-            // Best-effort cleanup; a leftover temp file is harmless.
-          }
-        }
-      }
-
-      if (importedPdfPaths != null) {
-        for (var pdfPath in importedPdfPaths) {
-          try {
-            final file = File(pdfPath);
-            if (await file.exists()) {
-              await file.delete();
-            }
-          } catch (_) {
-            // Best-effort cleanup; a leftover temp file is harmless.
-          }
-        }
-      }
-    } catch (e) {
-      throw Exception('Failed to clear all documents: $e');
-    }
-  }
-
-  bool _isValidDocumentFile(String filePath) {
-    final extension = path.extension(filePath).toLowerCase();
-    return extension == '.jpg' ||
-        extension == '.jpeg' ||
-        extension == '.png' ||
-        extension == '.pdf';
   }
 
   @override
@@ -356,29 +172,6 @@ class ProcessingRepositoryImpl extends Object
     }
 
     return _localDataSource.deleteProcessingSession(session.id);
-  }
-
-  @override
-  Stream<double> downloadModel() {
-    final controller = StreamController<double>();
-
-    _networkDataSource
-        .downloadModel(
-          onProgress: (progress) {
-            if (!controller.isClosed) {
-              controller.add(progress.toDouble());
-            }
-          },
-        )
-        .then((_) {
-          controller.close();
-        })
-        .catchError((error) {
-          controller.addError(error);
-          controller.close();
-        });
-
-    return controller.stream;
   }
 
   @override

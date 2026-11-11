@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/utils/file_url.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
 import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
@@ -110,7 +111,10 @@ class FhirBundleMapper {
         final candidate = File('$dir/$fileName');
         if (await candidate.exists()) return candidate;
       }
-    } catch (_) {}
+    } catch (e) {
+      // Treated as a missing file: the record is shared without it.
+      logger.w('Could not look for the attachment file $fileName', e);
+    }
 
     return null;
   }

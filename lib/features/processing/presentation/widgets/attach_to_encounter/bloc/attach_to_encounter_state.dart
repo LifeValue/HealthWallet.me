@@ -17,6 +17,5 @@ abstract class AttachToEncounterState with _$AttachToEncounterState {
     MappingPatient? scannedPatient,
     @Default(StagedEncounter()) StagedEncounter encounter,
     dynamic selectedPatient,
-    String? errorMessage,
   }) = _AttachToEncounterState;
 }
