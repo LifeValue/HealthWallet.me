@@ -107,9 +107,7 @@ class _RecordsViewState extends State<RecordsView> {
         .read<RecordsBloc>()
         .state
         .activeSpecialties;
-    final attachmentFilters =
-        widget.initFilters ??
-        (currentSpecialties.isNotEmpty ? <FhirType>[] : currentFilters);
+    final attachmentFilters = widget.initFilters ?? currentFilters;
     context.read<AttachmentBrowseBloc>().add(
       AttachmentBrowseInitialised(
         sourceId: scope.sourceId,
@@ -146,9 +144,16 @@ class _RecordsViewState extends State<RecordsView> {
     _updateSwipeState();
   }
 
+  bool _wasOnRecords = false;
+
   void _updateSwipeState() {
     final nav = getIt<PageViewNavigationController>();
     final isOnRecords = nav.currentPage == 1;
+    // Leaving Records ends a visit a Home card filtered.
+    if (_wasOnRecords && !isOnRecords) {
+      context.read<RecordsBloc>().add(RecordsVisitEnded());
+    }
+    _wasOnRecords = isOnRecords;
     nav.swipeEnabledNotifier.value =
         !isOnRecords || _viewMode == RecordsViewMode.recordsList;
   }

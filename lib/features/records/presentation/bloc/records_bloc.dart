@@ -37,6 +37,10 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
 
   /// The person whose filters are shown and saved, or null in a share.
   String? _personId;
+
+  /// Whether the filters shown were set by a Home card for this visit only,
+  /// so the person's own come back when Records is left.
+  bool _visitOnly = false;
   String? _lastIpsPdfPath;
 
   RecordsBloc(
@@ -63,6 +67,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     on<RecordsSpecialtyApplied>(_onSpecialtyApplied);
     on<RecordsRefreshRequested>(_onRefreshRequested);
     on<RecordsClearAllFilters>(_onClearAllFilters);
+    on<RecordsVisitEnded>(_onVisitEnded);
   }
 
   @override
@@ -213,6 +218,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       );
     }
     _personId = personId;
+    _visitOnly = false;
 
     emit(nextState);
 
@@ -232,7 +238,8 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       ),
     );
 
-    await _saveFilters();
+    _visitOnly = !event.remember;
+    if (event.remember) await _saveFilters();
 
     await _loadResources(emit);
   }
@@ -249,6 +256,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       ),
     );
 
+    _visitOnly = false;
     await _saveFilters();
 
     await _loadResources(emit);
@@ -492,6 +500,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       ),
     );
 
+    _visitOnly = false;
     await _saveFilters();
 
     await _loadResources(emit);
@@ -549,12 +558,12 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       state.copyWith(
         status: const RecordsStatus.loading(),
         activeSpecialties: event.specialties,
-        activeFilters: event.specialties.isNotEmpty ? [] : state.activeFilters,
         resources: [],
       ),
     );
 
-    await _saveFilters();
+    _visitOnly = !event.remember;
+    if (event.remember) await _saveFilters();
 
     await _loadResources(emit);
   }
@@ -587,8 +596,29 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       ),
     );
 
+    _visitOnly = false;
     await _saveFilters();
 
+    await _loadResources(emit);
+  }
+
+  Future<void> _onVisitEnded(
+    RecordsVisitEnded event,
+    Emitter<RecordsState> emit,
+  ) async {
+    final personId = _personId;
+    final store = _filterStore;
+    if (!_visitOnly || personId == null || store == null) return;
+    _visitOnly = false;
+    final saved = store.load(personId);
+    emit(
+      state.copyWith(
+        activeFilters: saved.types,
+        activeSpecialties: saved.specialties,
+        dateFilter: saved.dateFilter,
+        resources: [],
+      ),
+    );
     await _loadResources(emit);
   }
 }

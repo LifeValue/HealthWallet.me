@@ -41,9 +41,12 @@ abstract class RecordsFiltersApplied extends RecordsEvent
     with _$RecordsFiltersApplied {
   const RecordsFiltersApplied._();
 
+  /// [remember] false (a Home card) filters this visit only: the person's
+  /// saved filters stay as they were.
   const factory RecordsFiltersApplied(
     List<FhirType> filters, {
     DateFilter? dateFilter,
+    @Default(true) bool remember,
   }) = _RecordsFiltersApplied;
 }
 
@@ -158,10 +161,18 @@ abstract class RecordsSpecialtyApplied extends RecordsEvent
     with _$RecordsSpecialtyApplied {
   const RecordsSpecialtyApplied._();
 
-  const factory RecordsSpecialtyApplied(List<MedicalSpecialty> specialties) =
-      _RecordsSpecialtyApplied;
+  /// [remember] false (a Home card) filters this visit only: the person's
+  /// saved filters stay as they were.
+  const factory RecordsSpecialtyApplied(
+    List<MedicalSpecialty> specialties, {
+    @Default(true) bool remember,
+  }) = _RecordsSpecialtyApplied;
 }
 
 class RecordsRefreshRequested extends RecordsEvent {}
+
+/// The Records tab was left: filters a Home card set for that visit give
+/// way to the person's own.
+class RecordsVisitEnded extends RecordsEvent {}
 
 class RecordsClearAllFilters extends RecordsEvent {}

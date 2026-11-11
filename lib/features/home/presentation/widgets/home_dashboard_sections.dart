@@ -207,8 +207,9 @@ class HomeDashboardSections extends StatelessWidget {
               );
             },
             onTapCard: (specialty) {
+              // This visit only: the person's own Records filters stay.
               context.read<RecordsBloc>().add(
-                RecordsSpecialtyApplied([specialty]),
+                RecordsSpecialtyApplied([specialty], remember: false),
               );
               pageController.animateToPage(
                 1,
@@ -230,11 +231,15 @@ class HomeDashboardSections extends StatelessWidget {
               );
             },
             onTapCard: (card) {
+              // This visit only: the person's own Records filters stay.
               context.read<RecordsBloc>().add(
-                const RecordsSpecialtyApplied([]),
+                const RecordsSpecialtyApplied([], remember: false),
               );
               context.read<RecordsBloc>().add(
-                RecordsFiltersApplied(card.category.resourceTypes),
+                RecordsFiltersApplied(
+                  card.category.resourceTypes,
+                  remember: false,
+                ),
               );
               pageController.animateToPage(
                 1,

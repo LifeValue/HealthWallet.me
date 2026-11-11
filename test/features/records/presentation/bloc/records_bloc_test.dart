@@ -354,6 +354,88 @@ void main() {
       expect(store.load('jane').types, [FhirType.Condition]);
     });
 
+    test('record types and specialties chosen together both apply and are '
+        'both kept', () async {
+      repository.page = [
+        const Encounter(id: 'e1', title: 'heart check'),
+        const Encounter(id: 'e2', title: 'flu'),
+      ];
+      await run(const RecordsSourceChanged(null, personId: 'jane'));
+
+      await run(const RecordsFiltersApplied([FhirType.Encounter]));
+      final state = await run(
+        const RecordsSpecialtyApplied([MedicalSpecialty.cardiology]),
+      );
+
+      expect(state.activeFilters, [FhirType.Encounter]);
+      expect(state.activeSpecialties, [MedicalSpecialty.cardiology]);
+      expect(repository.queries.last.types, [FhirType.Encounter]);
+      expect(state.resources.map((r) => r.id), ['e1']);
+      expect(store.load('jane').types, [FhirType.Encounter]);
+      expect(store.load('jane').specialties, [MedicalSpecialty.cardiology]);
+    });
+
+    test('a Home card filters this visit only, and the person\'s own '
+        'filters come back when Records is left', () async {
+      await run(const RecordsSourceChanged(null, personId: 'jane'));
+      await run(const RecordsFiltersApplied([FhirType.Condition]));
+
+      await run(const RecordsSpecialtyApplied([], remember: false));
+      final card = await run(
+        const RecordsFiltersApplied([FhirType.Observation], remember: false),
+      );
+      expect(card.activeFilters, [FhirType.Observation]);
+      expect(store.load('jane').types, [FhirType.Condition]);
+
+      final after = await run(RecordsVisitEnded());
+
+      expect(after.activeFilters, [FhirType.Condition]);
+      expect(repository.queries.last.types, [FhirType.Condition]);
+    });
+
+    test('a Home card specialty is not kept either', () async {
+      await run(const RecordsSourceChanged(null, personId: 'jane'));
+
+      await run(
+        const RecordsSpecialtyApplied([
+          MedicalSpecialty.cardiology,
+        ], remember: false),
+      );
+      expect(store.load('jane').isEmpty, isTrue);
+
+      final after = await run(RecordsVisitEnded());
+
+      expect(after.activeSpecialties, isEmpty);
+    });
+
+    test('leaving Records after choosing filters yourself changes '
+        'nothing', () async {
+      await run(const RecordsSourceChanged(null, personId: 'jane'));
+      await run(const RecordsFiltersApplied([FhirType.Condition]));
+      final queries = repository.queries.length;
+
+      final after = await run(RecordsVisitEnded());
+
+      expect(after.activeFilters, [FhirType.Condition]);
+      expect(repository.queries, hasLength(queries));
+    });
+
+    test('changing a Home card\'s filter yourself makes it your own', () async {
+      await run(const RecordsSourceChanged(null, personId: 'jane'));
+      await run(
+        const RecordsFiltersApplied([
+          FhirType.Observation,
+          FhirType.Condition,
+        ], remember: false),
+      );
+
+      await run(const RecordsFilterRemoved(FhirType.Observation));
+      final after = await run(RecordsVisitEnded());
+
+      expect(store.load('jane').types, [FhirType.Condition]);
+      expect(after.activeFilters, [FhirType.Condition]);
+    });
+
     test('a search does not change the saved filters', () async {
       await run(const RecordsSourceChanged(null, personId: 'jane'));
       await run(const RecordsFiltersApplied([FhirType.Condition]));
@@ -410,7 +492,8 @@ void main() {
       expect(repository.queries.last.dateFilter, isNull);
     });
 
-    test('a specialty keeps only the matching records', () async {
+    test('a specialty keeps only the matching records, and the chosen '
+        'types stay', () async {
       repository.page = [
         const Encounter(id: 'a', title: 'heart check'),
         const Encounter(id: 'b', title: 'skin check'),
@@ -426,7 +509,7 @@ void main() {
         const RecordsSpecialtyApplied([MedicalSpecialty.cardiology]),
       );
 
-      expect(state.activeFilters, isEmpty);
+      expect(state.activeFilters, [FhirType.Encounter]);
       expect(state.resources.map((r) => r.id), ['a', 'c']);
     });
 
