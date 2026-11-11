@@ -289,6 +289,23 @@ void main() {
       expect(tcp.mpcHandshakes, 0);
     });
 
+    test('MPC that fails to stop is logged and the phone still tries '
+        'again', () async {
+      CommunicationBloc.initialReconnectDelay = const Duration(
+        milliseconds: 10,
+      );
+      final mpc = FakeMpc()
+        ..onConnect = (() => Completer<void>().future)
+        ..disconnectError = Exception('MPC gone');
+
+      final bloc = connect(mpc: mpc);
+      await eventually(() => notFound(bloc));
+      await eventually(() => logs.any((e) => '${e.message}'.contains('MPC')));
+
+      expect(logs, loggedWarning('MPC not stopped'));
+      await eventually(() => mpc.connects == 2);
+    });
+
     test('a late MPC failure does not stop a newer attempt\'s '
         'browsing', () async {
       final handshake = Completer<void>();

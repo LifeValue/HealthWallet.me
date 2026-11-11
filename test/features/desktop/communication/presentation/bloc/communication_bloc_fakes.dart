@@ -250,7 +250,14 @@ class FakeMpc implements CommunicationService {
   Future<void> send(Uint8List data) async {}
 
   @override
-  Future<void> disconnect() async => disconnects++;
+  Future<void> disconnect() async {
+    disconnects++;
+    final error = disconnectError;
+    if (error != null) throw error;
+  }
+
+  /// Why stopping fails, e.g. a platform call that errors.
+  Exception? disconnectError;
 
   @override
   Future<void> dispose() => _states.close();
@@ -266,3 +273,28 @@ DevicePairing pairedDesktop() => DevicePairing.generate(
 
 DiscoveryResult found(String ip, int port) =>
     DiscoveryResult(ip: ip, port: port, method: 'mdns');
+
+/// A network interface with one IPv4 address.
+class FakeInterface extends Fake implements NetworkInterface {
+  FakeInterface(this.name, String address)
+    : addresses = [_FakeAddress(address)];
+
+  @override
+  final String name;
+
+  @override
+  final List<InterfaceAddress> addresses;
+}
+
+class _FakeAddress extends Fake implements InterfaceAddress {
+  _FakeAddress(this.address);
+
+  @override
+  final String address;
+
+  @override
+  bool get isLoopback => false;
+
+  @override
+  bool get isLinkLocal => false;
+}
