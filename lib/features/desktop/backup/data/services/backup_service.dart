@@ -12,6 +12,7 @@ import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/desktop/backup/data/services/scan_file_sweeper.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/restore_result.dart';
+import 'package:health_wallet/features/desktop/backup/domain/utils/safety_copy_retention.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/attachment_sync_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
@@ -51,9 +52,6 @@ class BackupService {
   /// Deletes the files of the scans a restore removed (see
   /// [removeDroppedScanFiles]).
   final ScanFileSweeper _scanFiles;
-
-  /// "Before restore" copies older than this are deleted automatically.
-  static const safetyCopyRetention = Duration(days: 30);
 
   /// The tables that sync with the phone, parents first. A restore makes
   /// them the backup's state at a fresh stamp (see [restoreFromFile]).
@@ -154,6 +152,44 @@ class BackupService {
     await prefs.remove(SharedPrefsConstants.backupDirectoryBookmark);
   }
 
+  /// The whole days a "Before restore" copy is kept, as set on this desktop:
+  /// [SafetyCopyRetention.defaultDays] when nothing is stored or the stored
+  /// value isn't a valid number of days.
+  Future<int> getSafetyCopyRetentionDays() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.get(SharedPrefsConstants.safetyCopyRetentionDays);
+    if (stored is int && SafetyCopyRetention.isValid(stored)) return stored;
+    if (stored != null) {
+      logger.w(
+        '[Backup] ignored the invalid safety copy retention $stored; '
+        'keeping copies ${SafetyCopyRetention.defaultDays} days',
+      );
+    }
+    return SafetyCopyRetention.defaultDays;
+  }
+
+  /// Saves how many whole days "Before restore" copies are kept on this
+  /// desktop. Nothing is deleted now: copies older than that go at the next
+  /// start-up or backup ([deleteExpiredSafetyCopies]). Throws an
+  /// [ArgumentError] for a value outside [SafetyCopyRetention.minDays] to
+  /// [SafetyCopyRetention.maxDays], and a [StateError] when it isn't saved.
+  Future<void> setSafetyCopyRetentionDays(int days) async {
+    if (!SafetyCopyRetention.isValid(days)) {
+      throw ArgumentError.value(
+        days,
+        'days',
+        'must be from ${SafetyCopyRetention.minDays} to '
+            '${SafetyCopyRetention.maxDays}',
+      );
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final saved = await prefs.setInt(
+      SharedPrefsConstants.safetyCopyRetentionDays,
+      days,
+    );
+    if (!saved) throw StateError('The safety copy retention was not saved');
+  }
+
   // ---------------------------------------------------------------------------
   // Create
 
@@ -162,10 +198,10 @@ class BackupService {
   /// metadata. A failure removes what was written and rethrows. [name] is
   /// shown as given; the file name keeps its letters (any script), digits
   /// and the date's punctuation. With [isSafetyCopy] it is the automatic
-  /// "Before restore" copy, deleted after [safetyCopyRetention]. Nothing is
-  /// sent to the phone. The expired safety copies it deletes afterwards
-  /// never include [keepId]: the backup about to be restored, which may be
-  /// an old safety copy itself.
+  /// "Before restore" copy, deleted after [getSafetyCopyRetentionDays] days.
+  /// Nothing is sent to the phone. The expired safety copies it deletes
+  /// afterwards never include [keepId]: the backup about to be restored,
+  /// which may be an old safety copy itself.
   Future<BackupEntry> createSnapshot({
     String? name,
     bool isSafetyCopy = false,
@@ -897,16 +933,19 @@ class BackupService {
     logger.i('[Backup] deleted ${p.basename(dbPath)}');
   }
 
-  /// Deletes "Before restore" copies older than [safetyCopyRetention] and
-  /// returns how many. User backups and the ids in [keep] are never deleted.
-  /// Failures are logged.
+  /// Deletes "Before restore" copies made more than
+  /// [getSafetyCopyRetentionDays] days before [now], existing ones included,
+  /// and returns how many. User backups and the ids in [keep] are never
+  /// deleted. Failures are logged; when the setting can't be read nothing is
+  /// deleted.
   Future<int> deleteExpiredSafetyCopies({
     DateTime? now,
     Set<String> keep = const {},
   }) async {
-    final cutoff = (now ?? DateTime.now()).subtract(safetyCopyRetention);
     var deleted = 0;
     try {
+      final retention = Duration(days: await getSafetyCopyRetentionDays());
+      final cutoff = (now ?? DateTime.now()).subtract(retention);
       for (final entry in await listBackups()) {
         if (!entry.isSafetyCopy ||
             !entry.timestamp.isBefore(cutoff) ||

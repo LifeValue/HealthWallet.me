@@ -44,6 +44,10 @@ class _FakeDirectory extends Fake implements Directory {
 
 final _l10n = lookupAppLocalizations(const Locale('en'));
 
+/// The backup folder's Change: the first one, above the safety copy
+/// retention's.
+final _folderChange = find.text(_l10n.desktopChange).first;
+
 const _fsChannel = MethodChannel('dev.lifevalue.healthwallet/fs');
 
 BackupEntry _entry({
@@ -162,7 +166,7 @@ void main() {
     Future<void> tapChange(WidgetTester tester, {required bool present}) =>
         IOOverrides.runZoned(
           () async {
-            await tester.tap(find.text(_l10n.desktopChange));
+            await tester.tap(_folderChange);
             await tester.pumpAndSettle();
           },
           createDirectory: (path) => _FakeDirectory(path, present: present),
@@ -207,7 +211,7 @@ void main() {
       await tester.pumpWidget(card(listState(isBackingUp: true)));
 
       await IOOverrides.runZoned(() async {
-        await tester.tap(find.text(_l10n.desktopChange));
+        await tester.tap(_folderChange);
         await tester.pump();
       }, createDirectory: (path) => _FakeDirectory(path, present: true));
 

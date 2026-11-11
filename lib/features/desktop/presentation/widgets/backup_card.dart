@@ -20,6 +20,7 @@ import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_b
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/info_row.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/safety_copy_retention_row.dart';
 import 'package:intl/intl.dart';
 
 class BackupCard extends StatefulWidget {
@@ -316,6 +317,14 @@ class _BackupCardState extends State<BackupCard> {
             padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
             child: _BackupLocationRow(
               path: widget.backupState.backupPath,
+              isWorking: isWorking,
+            ),
+          ),
+          const SizedBox(height: Insets.extraSmall),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
+            child: SafetyCopyRetentionRow(
+              days: widget.backupState.safetyCopyRetentionDays,
               isWorking: isWorking,
             ),
           ),

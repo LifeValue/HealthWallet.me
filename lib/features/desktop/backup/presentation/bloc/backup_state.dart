@@ -27,6 +27,10 @@ abstract class BackupState with _$BackupState {
     /// session: a saved one is deleted), which a restore removes. Counted
     /// when a backup is selected and after a restore.
     @Default(0) int unsavedScanCount,
+
+    /// Desktop: how many whole days "Before restore" copies are kept, as set
+    /// on this computer. Read with the history.
+    @Default(SafetyCopyRetention.defaultDays) int safetyCopyRetentionDays,
   }) = _BackupState;
 
   factory BackupState.initial() => const BackupState();

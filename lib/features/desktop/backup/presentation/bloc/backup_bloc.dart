@@ -14,6 +14,7 @@ import 'package:health_wallet/features/desktop/backup/data/services/backup_servi
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/restore_result.dart';
 import 'package:health_wallet/features/desktop/backup/domain/utils/backup_name_date.dart';
+import 'package:health_wallet/features/desktop/backup/domain/utils/safety_copy_retention.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
@@ -55,6 +56,10 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     on<BackupDeleted>(_onBackupDeleted);
     on<BackupLocationChanged>(_onLocationChanged);
     on<BackupLocationReset>(_onLocationReset);
+    on<SafetyCopyRetentionChanged>(
+      _onSafetyCopyRetentionChanged,
+      transformer: sequential(),
+    );
     on<RemoteBackupRequested>(_onRemoteBackupRequested);
     on<PhoneBackupRequested>(_onPhoneBackupRequested);
     on<RemoteBackupStatusChanged>(_onRemoteBackupStatusChanged);
@@ -411,6 +416,7 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
           backupHistory: history,
           backupPath: path,
           hasUserSelectedPath: hasUserPath,
+          safetyCopyRetentionDays: await _safetyCopyRetentionDays(),
           error: null,
         ),
       );
@@ -420,6 +426,34 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
       emit(
         state.copyWith(
           error: _failed(e, _strings.l10n.desktopBackupActionFailed),
+        ),
+      );
+    }
+  }
+
+  /// The stored safety copy retention, or the one shown when it can't be
+  /// read (logged).
+  Future<int> _safetyCopyRetentionDays() async {
+    try {
+      return await _backupService.getSafetyCopyRetentionDays();
+    } catch (e) {
+      logger.w('[Backup] could not read the safety copy retention', e);
+      return state.safetyCopyRetentionDays;
+    }
+  }
+
+  /// Saves the retention; the expired copies go at the next start-up.
+  Future<void> _onSafetyCopyRetentionChanged(
+    SafetyCopyRetentionChanged event,
+    Emitter<BackupState> emit,
+  ) async {
+    try {
+      await _backupService.setSafetyCopyRetentionDays(event.days);
+      emit(state.copyWith(safetyCopyRetentionDays: event.days, error: null));
+    } catch (e) {
+      emit(
+        state.copyWith(
+          error: _failed(e, _strings.l10n.backupSafetyRetentionSaveFailed),
         ),
       );
     }

@@ -18,6 +18,11 @@ sealed class BackupEvent with _$BackupEvent {
   const factory BackupEvent.backupLocationChanged(String path) =
       BackupLocationChanged;
   const factory BackupEvent.backupLocationReset() = BackupLocationReset;
+
+  /// Desktop: the user set how many whole days "Before restore" copies are
+  /// kept. Copies older than that go at the next start-up, not now.
+  const factory BackupEvent.safetyCopyRetentionChanged(int days) =
+      SafetyCopyRetentionChanged;
   const factory BackupEvent.remoteBackupRequested() = RemoteBackupRequested;
 
   /// Phone: ask the desktop for a backup, once this phone's changes reached

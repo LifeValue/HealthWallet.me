@@ -35,6 +35,10 @@ class SharedPrefsConstants {
   /// macOS security-scoped bookmark for [backupDirectory], so the sandboxed
   /// app can open the folder again after a restart.
   static const backupDirectoryBookmark = 'backupDirectoryBookmark';
+
+  /// Whole days a "Before restore" safety copy is kept on this desktop. Not
+  /// synced and not stored in the backup folder.
+  static const safetyCopyRetentionDays = 'safetyCopyRetentionDays';
   static const minimizeToTray = 'minimizeToTray';
   static const recordsViewMode = 'recordsViewMode';
   static const specialtiesOrder = 'specialtiesOrder';
