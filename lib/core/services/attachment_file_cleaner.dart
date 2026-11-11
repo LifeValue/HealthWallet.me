@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/services/attachment_files_lock.dart';
 import 'package:health_wallet/core/services/attachment_references.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/logger.dart';
@@ -47,16 +48,21 @@ import 'package:uuid/uuid.dart';
 /// a sync write can't add a reference between the check and the delete.
 /// Nothing is deleted on Linux, where the documents directory is the user's
 /// own, or when the documents directory itself is a symbolic link.
+///
+/// Neither runs while a backup restore holds the [AttachmentFilesLock]: the
+/// restore may reuse a file its rows refer to only once it commits.
 @lazySingleton
 class AttachmentFileCleaner {
   AttachmentFileCleaner(
     this._db,
     this._paths,
     this._references,
-    this._legacyFolders,
-  ) : _operatingSystem = Platform.operatingSystem,
-      _now = DateTime.now,
-      _legacyRoots = const [];
+    this._legacyFolders, {
+    AttachmentFilesLock? filesLock,
+  }) : _operatingSystem = Platform.operatingSystem,
+       _now = DateTime.now,
+       _legacyRoots = const [],
+       _lock = filesLock ?? AttachmentFilesLock();
 
   /// A cleaner that acts as on [operatingSystem], reads the time from [now]
   /// and takes `legacyRoots` as the [LegacyAttachmentFolders] roots.
@@ -68,11 +74,14 @@ class AttachmentFileCleaner {
     String? operatingSystem,
     DateTime Function()? now,
     this._legacyRoots = const [],
+    AttachmentFilesLock? filesLock,
   }) : _operatingSystem = operatingSystem ?? Platform.operatingSystem,
        _now = now ?? DateTime.now,
-       _legacyFolders = null;
+       _legacyFolders = null,
+       _lock = filesLock ?? AttachmentFilesLock();
 
   final AppDatabase _db;
+  final AttachmentFilesLock _lock;
   final PathResolver _paths;
   final AttachmentReferences _references;
   final String _operatingSystem;
@@ -139,8 +148,21 @@ class AttachmentFileCleaner {
 
   /// Deletes the files named by [candidateUrls] (the attachments of purged
   /// rows) that no remaining row refers to. A url into a subfolder names no
-  /// candidate. Returns how many files were deleted; never throws.
+  /// candidate. Returns how many files were deleted; never throws. While a
+  /// restore runs it deletes nothing: the [sweep] catches those files later.
   Future<int> deleteUnreferenced(Iterable<String> candidateUrls) async {
+    final deleted = await _lock.ifFree(
+      () => _deleteUnreferenced(candidateUrls),
+    );
+    if (deleted == null) {
+      logger.i(
+        '$_tag a restore is running; purged files are left to the sweep',
+      );
+    }
+    return deleted ?? 0;
+  }
+
+  Future<int> _deleteUnreferenced(Iterable<String> candidateUrls) async {
     var deleted = 0;
     try {
       final urls = candidateUrls.toSet();
@@ -175,9 +197,15 @@ class AttachmentFileCleaner {
   /// older than [sweepMinAge] into [trashDirName] (under a free name, its
   /// modified time set to now), then deletes the files there older than
   /// [trashRetention]. Runs at start-up, in the background; a call while a
-  /// sweep runs joins it. Returns how many files were moved; never throws.
-  Future<int> sweep() =>
-      _sweeping ??= _sweep().whenComplete(() => _sweeping = null);
+  /// sweep runs joins it, and one while a restore runs does nothing. Returns
+  /// how many files were moved; never throws.
+  Future<int> sweep() => _sweeping ??= _lock
+      .ifFree(_sweep)
+      .then((moved) {
+        if (moved == null) logger.i('$_tag a restore is running; no sweep');
+        return moved ?? 0;
+      })
+      .whenComplete(() => _sweeping = null);
 
   Future<int> _sweep() async {
     var moved = 0;

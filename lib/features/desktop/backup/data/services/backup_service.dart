@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/services/attachment_files_lock.dart';
 import 'package:health_wallet/core/services/attachment_references.dart';
 import 'package:health_wallet/core/services/folder_access_service.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
@@ -36,8 +37,13 @@ class BackupService {
     this._pathResolver,
     this._references,
     this._attachments,
-    this._legacyFolders,
-  );
+    this._legacyFolders, {
+    AttachmentFilesLock? filesLock,
+  }) : _filesLock = filesLock ?? AttachmentFilesLock();
+
+  /// Held from placing a restore's files to its commit, so the attachment
+  /// cleaner never deletes a file the restore decided to reuse.
+  final AttachmentFilesLock _filesLock;
 
   /// "Before restore" copies older than this are deleted automatically.
   static const safetyCopyRetention = Duration(days: 30);
@@ -342,6 +348,12 @@ class BackupService {
       throw StateError('Backup checksum mismatch — file may be corrupted');
     }
 
+    // A file already in Documents may be reused, and only the commit makes
+    // the restored rows refer to it: the cleaner must not run until then.
+    return _filesLock.exclusive(() => _restore(backupPath, entry));
+  }
+
+  Future<RestoreResult> _restore(String backupPath, BackupEntry? entry) async {
     final docs = await _pathResolver.getDocumentsPath();
     final staging = Directory(
       p.join(
