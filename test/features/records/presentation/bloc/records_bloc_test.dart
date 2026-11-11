@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
@@ -32,6 +34,18 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
   final searches = <String>[];
   final deletes = <String>[];
 
+  /// While set, each list or search query answers only once its own entry
+  /// in [held] is completed, so a test can finish them in any order.
+  bool hold = false;
+  final held = <Completer<void>>[];
+
+  Future<void> _answer() async {
+    if (!hold) return;
+    final answer = Completer<void>();
+    held.add(answer);
+    await answer.future;
+  }
+
   @override
   Future<List<IFhirResource>> getResources({
     List<FhirType> resourceTypes = const [],
@@ -44,7 +58,6 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
     if (resourceTypes.length == 1 && resourceTypes.single == FhirType.Patient) {
       return patients;
     }
-    if (error != null) throw error!;
     queries.add((
       types: resourceTypes,
       sourceId: sourceId,
@@ -53,6 +66,8 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
       offset: offset,
       dateFilter: dateFilter,
     ));
+    await _answer();
+    if (error != null) throw error!;
     if (resourceTypes.isEmpty && unfiltered != null) return unfiltered!;
     return page;
   }
@@ -66,7 +81,11 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
     int limit = 50,
   }) async {
     searches.add(query);
-    return searchResults;
+    await _answer();
+    return [
+      for (final r in searchResults)
+        if (sourceId == null || r.sourceId == sourceId) r,
+    ];
   }
 
   @override
@@ -554,6 +573,58 @@ void main() {
       expect(state.dateFilter, isNull);
     });
 
+    test('a Home card shows only records matching both its filters, '
+        'whichever query answers last', () async {
+      repository
+        ..unfiltered = [const Encounter(id: 'e1', title: 'heart check')]
+        ..page = [const Observation(id: 'o1', title: 'heart rate')]
+        ..hold = true;
+
+      // What a Home card sends: its specialty, then its record types. The
+      // specialty's query still has the old types.
+      bloc
+        ..add(
+          const RecordsSpecialtyApplied([
+            MedicalSpecialty.cardiology,
+          ], remember: false),
+        )
+        ..add(
+          const RecordsFiltersApplied([FhirType.Observation], remember: false),
+        );
+      await pumpEventQueue();
+      expect(repository.held, hasLength(2));
+
+      repository.held[1].complete();
+      await pumpEventQueue();
+      repository.held[0].complete();
+      await pumpEventQueue();
+
+      final state = bloc.state;
+      expect(state.activeFilters, [FhirType.Observation]);
+      expect(state.activeSpecialties, [MedicalSpecialty.cardiology]);
+      expect(state.status, const RecordsStatus.success());
+      expect(state.resources.map((r) => r.id), ['o1']);
+    });
+
+    test('a failed earlier load does not hide the latest one', () async {
+      repository
+        ..page = encounters(1)
+        ..hold = true;
+      bloc
+        ..add(const RecordsFiltersApplied([FhirType.Encounter]))
+        ..add(const RecordsFiltersApplied([FhirType.Observation]));
+      await pumpEventQueue();
+
+      repository.held[1].complete();
+      await pumpEventQueue();
+      repository.error = Exception('db');
+      repository.held[0].complete();
+      await pumpEventQueue();
+
+      expect(bloc.state.status, const RecordsStatus.success());
+      expect(bloc.state.resources, hasLength(1));
+    });
+
     test('a refresh reloads', () async {
       await run(RecordsRefreshRequested());
 
@@ -585,6 +656,36 @@ void main() {
         time.elapse(const Duration(seconds: 1));
 
         expect(repository.searches, isEmpty);
+      });
+    });
+
+    test('a search on the previous source does not replace the new '
+        'source\'s hits', () {
+      repository.searchResults = [
+        const Encounter(id: 'a', sourceId: 's1', title: 'insulin'),
+        const Encounter(id: 'b', sourceId: 's2', title: 'insulin'),
+      ];
+
+      inFakeTime((time, records) {
+        records
+          ..add(const RecordsSourceChanged('s1'))
+          ..add(const RecordsSearch('insulin'));
+        time.elapse(const Duration(milliseconds: 500));
+        expect(records.state.resources.map((r) => r.id), ['a']);
+
+        repository.hold = true;
+        // What Records sends when it opens again, after a patient switch.
+        records
+          ..add(const RecordsInitialised())
+          ..add(const RecordsSourceChanged('s2'));
+        time.flushMicrotasks();
+        for (final answer in repository.held.reversed.toList()) {
+          answer.complete();
+          time.flushMicrotasks();
+        }
+
+        expect(records.state.sourceId, 's2');
+        expect(records.state.resources.map((r) => r.id), ['b']);
       });
     });
 

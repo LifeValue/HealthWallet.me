@@ -29,7 +29,10 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   final SpecialtyClassifier _specialtyClassifier;
   RecordsRepository get recordsRepository => _recordsRepository;
   Timer? _searchDebounceTimer;
-  bool _isSearching = false;
+
+  /// Counts the loads that start the list over; a load whose count is no
+  /// longer current was overtaken and its records are dropped.
+  int _loadGeneration = 0;
 
   /// Keeps each person's chosen filters; without it (tests, previews) the
   /// filters last only as long as this bloc.
@@ -77,20 +80,21 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     return super.close();
   }
 
+  /// Loads the list for the filters and scope now shown. Only the latest
+  /// load's records are shown: handlers run concurrently, so an earlier,
+  /// slower query can answer after a later one. A next page ([offset] > 0)
+  /// belongs to the load that listed the page before it.
   Future _loadResources(
     Emitter<RecordsState> emit, {
     int limit = 20,
     offset = 0,
   }) async {
-    final isSearching =
-        state.searchQuery.isNotEmpty && state.searchQuery.length >= 2;
-    if (isSearching && _isSearching) {
-      return;
-    }
+    final generation = offset == 0 ? ++_loadGeneration : _loadGeneration;
+    bool overtaken() => generation != _loadGeneration;
 
-    if (isSearching) {
-      _isSearching = true;
-    }
+    final query = state.searchQuery;
+    final isSearching = query.isNotEmpty && query.length >= 2;
+    final specialties = state.activeSpecialties;
 
     emit(state.copyWith(status: const RecordsStatus.loading()));
     try {
@@ -103,7 +107,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
 
       if (isSearching) {
         resources = await _recordsRepository.searchResources(
-          query: state.searchQuery,
+          query: query,
           resourceTypes: [],
           sourceId: sourceId,
           sourceIds: sourceIds,
@@ -119,9 +123,10 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
           dateFilter: state.dateFilter,
         );
       }
+      if (overtaken()) return;
 
       List<IFhirResource> filteredResources = resources;
-      if (state.activeSpecialties.isNotEmpty) {
+      if (specialties.isNotEmpty) {
         _specialtyClassifier.buildEncounterIndex(resources);
         filteredResources = resources.where((r) {
           final override = MedicalSpecialty.values
@@ -131,7 +136,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
             r,
             override: override,
           );
-          return state.activeSpecialties.any(classified.contains);
+          return specialties.any(classified.contains);
         }).toList();
       }
 
@@ -151,11 +156,8 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         ),
       );
     } catch (e) {
+      if (overtaken()) return;
       emit(state.copyWith(status: RecordsStatus.failure(e)));
-    } finally {
-      if (state.searchQuery.isNotEmpty && state.searchQuery.length >= 2) {
-        _isSearching = false;
-      }
     }
   }
 
