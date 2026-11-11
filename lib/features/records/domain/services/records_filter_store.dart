@@ -83,10 +83,26 @@ class RecordsFilterStore {
           },
       };
     }
+    await _write(all);
+  }
+
+  /// Forgets the filters of everyone not in [personIds], the people in the
+  /// wallet: a deleted person's choices are health data and must not stay,
+  /// nor come back if their id is used again.
+  Future<void> forgetAllBut(Set<String> personIds) async {
+    final all = _all();
+    final before = all.length;
+    all.removeWhere((personId, _) => !personIds.contains(personId));
+    if (all.length == before) return;
+    await _write(all);
+  }
+
+  Future<void> _write(Map<String, dynamic> all) async {
     try {
       await _prefs.setString(prefsKey, jsonEncode(all));
     } catch (e, s) {
-      // The filters still apply now; they are only not kept for next time.
+      // The filters shown still apply; the saved ones are only out of date
+      // until the next write.
       logger.w('The Records filters could not be saved', e, s);
     }
   }
