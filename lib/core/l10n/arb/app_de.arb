@@ -1719,6 +1719,7 @@
     }
   },
   "backupRestorePhoneOffline": "Dein Telefon ist nicht verbunden. Seit der letzten Synchronisierung darauf hinzugefügte Aufzeichnungen kommen zurück, sobald es sich wieder verbindet; Änderungen an vorhandenen Aufzeichnungen werden durch das Backup ersetzt.",
+  "backupRestoreRemovesScans": "{count, plural, =1{1 Scan, der auf Überprüfung wartet, wird entfernt.} other{{count} Scans, die auf Überprüfung warten, werden entfernt.}}",
   "aiModelDeleteTitle": "{name} löschen?",
   "aiModelDeleteMessage": "Das Modell und seine Tiefenscan-Dateien werden von diesem Gerät entfernt. Um wieder damit zu scannen, musst du es erneut herunterladen (~{size} MB).",
   "processingNoPatientFound": "Kein Patient im Dokument gefunden. Gib die Daten ein.",

@@ -4787,6 +4787,18 @@ class AppLocalizationsRo extends AppLocalizations {
       'Telefonul nu este conectat. Înregistrările adăugate pe el de la ultima sincronizare vor reveni după ce se reconectează; modificările făcute la înregistrările existente vor fi înlocuite de copie.';
 
   @override
+  String backupRestoreRemovesScans(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de scanări care așteaptă revizuirea vor fi eliminate.',
+      few: '$count scanări care așteaptă revizuirea vor fi eliminate.',
+      one: '1 scanare care așteaptă revizuirea va fi eliminată.',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String aiModelDeleteTitle(String name) {
     return 'Ștergi $name?';
   }

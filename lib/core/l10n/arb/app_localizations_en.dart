@@ -4715,6 +4715,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your phone isn\'t connected. Records added on it since its last sync will come back after it reconnects; changes it made to existing records will be replaced by the backup.';
 
   @override
+  String backupRestoreRemovesScans(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count scans waiting for review will be removed.',
+      one: '1 scan waiting for review will be removed.',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String aiModelDeleteTitle(String name) {
     return 'Delete $name?';
   }

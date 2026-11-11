@@ -2496,6 +2496,15 @@
     }
   },
   "backupRestorePhoneOffline": "Your phone isn't connected. Records added on it since its last sync will come back after it reconnects; changes it made to existing records will be replaced by the backup.",
+  "backupRestoreRemovesScans": "{count, plural, =1{1 scan waiting for review will be removed.} other{{count} scans waiting for review will be removed.}}",
+  "@backupRestoreRemovesScans": {
+    "description": "Restore confirmation: the scans not saved yet on this computer, which the restore removes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "aiModelDeleteTitle": "Delete {name}?",
   "aiModelDeleteMessage": "The model and its Deep Scan files are removed from this device. To scan with it again, you'll need to download it again (~{size} MB).",
   "@aiModelDeleteTitle": {

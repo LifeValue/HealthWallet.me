@@ -4785,6 +4785,17 @@ class AppLocalizationsDe extends AppLocalizations {
       'Dein Telefon ist nicht verbunden. Seit der letzten Synchronisierung darauf hinzugefügte Aufzeichnungen kommen zurück, sobald es sich wieder verbindet; Änderungen an vorhandenen Aufzeichnungen werden durch das Backup ersetzt.';
 
   @override
+  String backupRestoreRemovesScans(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Scans, die auf Überprüfung warten, werden entfernt.',
+      one: '1 Scan, der auf Überprüfung wartet, wird entfernt.',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String aiModelDeleteTitle(String name) {
     return '$name löschen?';
   }

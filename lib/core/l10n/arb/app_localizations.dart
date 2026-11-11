@@ -8381,6 +8381,12 @@ abstract class AppLocalizations {
   /// **'Your phone isn\'t connected. Records added on it since its last sync will come back after it reconnects; changes it made to existing records will be replaced by the backup.'**
   String get backupRestorePhoneOffline;
 
+  /// Restore confirmation: the scans not saved yet on this computer, which the restore removes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 scan waiting for review will be removed.} other{{count} scans waiting for review will be removed.}}'**
+  String backupRestoreRemovesScans(int count);
+
   /// Asks before deleting a downloaded AI model.
   ///
   /// In en, this message translates to:
