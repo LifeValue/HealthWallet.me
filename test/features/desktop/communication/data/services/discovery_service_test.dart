@@ -19,6 +19,7 @@ class _FakeSsdp extends Fake implements SsdpService {
     Duration timeout = const Duration(seconds: 3),
     String? expectedDeviceId,
     (InternetAddress, int)? target,
+    Future<RawDatagramSocket> Function()? bind,
   }) async {
     calls.add('search');
     lastExpectedDeviceId = expectedDeviceId;
@@ -32,6 +33,7 @@ class _FakeSsdp extends Fake implements SsdpService {
     required int port,
     required String deviceId,
     int listenPort = 1900,
+    Future<RawDatagramSocket> Function()? bind,
   }) async {
     calls.add('advertise $ip:$port $deviceId');
     if (advertiseError != null) throw advertiseError!;
