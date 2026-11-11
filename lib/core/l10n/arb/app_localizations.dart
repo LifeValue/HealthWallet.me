@@ -8441,6 +8441,12 @@ abstract class AppLocalizations {
   /// **'Days to keep the copy made before a restore'**
   String get backupSafetyRetentionEditLabel;
 
+  /// The word after the number of days in the safety copy retention field.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{day} other{days}}'**
+  String backupSafetyRetentionDaysUnit(int count);
+
   /// Desktop Backup card, under the retention field: the new value counts for copies already made, and older copies are deleted at the next start, not right away.
   ///
   /// In en, this message translates to:

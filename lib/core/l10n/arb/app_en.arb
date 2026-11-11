@@ -2561,6 +2561,15 @@
   "@backupSafetyRetentionEditLabel": {
     "description": "Desktop Backup card: label above the field where the user types how many days the copy made before a restore is kept."
   },
+  "backupSafetyRetentionDaysUnit": "{count, plural, =1{day} other{days}}",
+  "@backupSafetyRetentionDaysUnit": {
+    "description": "The word after the number of days in the safety copy retention field.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "backupSafetyRetentionHint": "Applies to existing copies too. Older ones are deleted the next time the app starts.",
   "@backupSafetyRetentionHint": {
     "description": "Desktop Backup card, under the retention field: the new value counts for copies already made, and older copies are deleted at the next start, not right away."

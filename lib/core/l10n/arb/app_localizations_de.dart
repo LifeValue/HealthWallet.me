@@ -4840,6 +4840,17 @@ class AppLocalizationsDe extends AppLocalizations {
       'Tage, die die Kopie vor einer Wiederherstellung behalten wird';
 
   @override
+  String backupSafetyRetentionDaysUnit(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Tage',
+      one: 'Tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get backupSafetyRetentionHint =>
       'Gilt auch für vorhandene Kopien. Ältere werden beim nächsten Start der App gelöscht.';
 

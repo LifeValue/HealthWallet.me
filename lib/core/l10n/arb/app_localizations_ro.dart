@@ -4843,6 +4843,18 @@ class AppLocalizationsRo extends AppLocalizations {
       'Zile de păstrare a copiei făcute înainte de restaurare';
 
   @override
+  String backupSafetyRetentionDaysUnit(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'de zile',
+      few: 'zile',
+      one: 'zi',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get backupSafetyRetentionHint =>
       'Se aplică și copiilor existente. Cele mai vechi sunt șterse la următoarea pornire a aplicației.';
 

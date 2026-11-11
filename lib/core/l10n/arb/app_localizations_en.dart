@@ -4769,6 +4769,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'Days to keep the copy made before a restore';
 
   @override
+  String backupSafetyRetentionDaysUnit(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'days',
+      one: 'day',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get backupSafetyRetentionHint =>
       'Applies to existing copies too. Older ones are deleted the next time the app starts.';
 
