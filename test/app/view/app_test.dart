@@ -7,17 +7,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/app/app.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/services/bluetooth_state_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/models/device_pairing.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/tray/presentation/bloc/tray_bloc.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
+import 'package:health_wallet/features/sync/ehrs/fasten/domain/entities/sync_qr_data.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/user/domain/entity/user.dart';
 import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
+import 'package:health_wallet/features/user/domain/services/default_patient_service.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 
@@ -127,6 +132,17 @@ class _CountingReceiveModeService extends Fake implements ReceiveModeService {
     stops++;
     isListening = false;
   }
+}
+
+/// A Fasten sync done in an earlier session.
+class _SyncedRepository extends FakeSyncRepository {
+  @override
+  Future<SyncQrData?> getCurrentSyncQrData() async => const SyncQrData(
+    token: 'token',
+    tokenMeta: SyncTokenMetaData(),
+    serverBaseUrls: ['https://fasten.example'],
+    syncEndpoint: '/sync',
+  );
 }
 
 /// Puts [instance] in getIt in place of what is registered as [T].
@@ -421,8 +437,12 @@ void main() {
     late _EventsPatientBloc patients;
     late _EventsUserBloc user;
 
-    /// Pumps the app with blocs that keep their events.
-    Future<void> pumpApp(WidgetTester tester) async {
+    /// Pumps the app with blocs that keep their events, and the sync bloc
+    /// [syncBloc] makes when given.
+    Future<void> pumpApp(
+      WidgetTester tester, {
+      SyncBloc Function()? syncBloc,
+    }) async {
       await registerAppDependencies();
       // Broadcast, so closing one that nothing listened to doesn't wait.
       sync = StreamController<SyncState>.broadcast();
@@ -463,7 +483,7 @@ void main() {
         const Stream<UserState>.empty(),
         initialState: const UserState(),
       );
-      await _replace<SyncBloc>(mockSync);
+      await _replace<SyncBloc>(syncBloc?.call() ?? mockSync);
       await _replace<ProcessingBloc>(processingBloc);
       await _replace<RecordsBloc>(recordsBloc);
       await _replace<HomeBloc>(home);
@@ -597,6 +617,49 @@ void main() {
       expect(recordsBloc.events, isEmpty);
       expect(user.events, isEmpty);
       expect(patients.events, isEmpty);
+      await _unmount(tester);
+    });
+
+    testWidgets('a finished sync reloads the records, the user and the '
+        'people', (tester) async {
+      await pumpApp(tester);
+      clearEvents();
+
+      sync.add(const SyncState(syncStatus: SyncStatus.synced));
+      await tester.pump();
+      await tester.pump();
+
+      expect(recordsBloc.events, [isA<RecordsInitialised>()]);
+      expect(user.events, [isA<UserDataUpdatedFromSync>()]);
+      expect(patients.events, [isA<PatientPatientsLoaded>()]);
+      expect(home.events, isEmpty);
+      await _unmount(tester);
+    });
+
+    testWidgets('opening the app after an earlier sync reloads the data '
+        'without an error', (tester) async {
+      // The real bloc: it reports `synced` at start-up when a sync was saved.
+      late SyncBloc syncBloc;
+      await pumpApp(
+        tester,
+        syncBloc: () => syncBloc = SyncBloc(
+          _SyncedRepository(),
+          getIt<RecordsRepository>(),
+          DefaultPatientService(
+            getIt<RecordsRepository>(),
+            FakeSyncLocalDataSource(),
+            getIt<HolderService>(),
+          ),
+          AppStringsProvider(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(syncBloc.state.syncStatus, SyncStatus.synced);
+      expect(recordsBloc.events, [isA<RecordsInitialised>()]);
+      expect(user.events, contains(isA<UserDataUpdatedFromSync>()));
+      expect(patients.events, contains(isA<PatientPatientsLoaded>()));
       await _unmount(tester);
     });
   });
