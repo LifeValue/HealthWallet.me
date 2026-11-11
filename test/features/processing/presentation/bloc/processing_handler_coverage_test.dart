@@ -1137,7 +1137,7 @@ void main() {
       },
     );
 
-    test('a failure keeps the resources read so far and goes back to step '
+    test('a failure drops the resources read so far and goes back to step '
         'one', () async {
       seed(withPages(extracted));
       bloc.add(const ProcessRemainingResources(sessionId: 's'));
@@ -1150,7 +1150,7 @@ void main() {
 
       final failed = session('s');
       expect(failed.status, ProcessingStatus.patientExtracted);
-      expect(failed.resources, [kept, first]);
+      expect(failed.resources, [kept]);
       expect(repository.edited.last.status, ProcessingStatus.patientExtracted);
       expect(
         bloc.state.status,

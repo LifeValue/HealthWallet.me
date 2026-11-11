@@ -612,11 +612,14 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       if (failedSession?.origin == ProcessingOrigin.handover) {
         haltedHandovers.add(event.sessionId);
       }
+      // Its partial results go, or the next run would add its own to them
+      // and the review show each record twice; what it started with stays.
       updateSession(
         emit,
         sessionId: event.sessionId,
         status: ProcessingStatus.patientExtracted,
-        resources: failedSession?.resources,
+        resources: session.resources,
+        progress: 0,
         updateDb: true,
       );
       if (!emit.isDone) {
