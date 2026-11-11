@@ -99,7 +99,7 @@ void main() {
         ),
       ),
       syncLocal,
-      RecordsRepositoryImpl(db, syncLocal, SharedNotesDatasource(), paths),
+      RecordsRepositoryImpl(db, syncLocal, SharedNotesDatasource()),
     );
   }
 

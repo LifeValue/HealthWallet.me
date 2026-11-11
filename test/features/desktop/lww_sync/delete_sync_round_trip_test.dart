@@ -67,12 +67,7 @@ void main() {
         ),
       ),
       syncLocal,
-      RecordsRepositoryImpl(
-        db,
-        syncLocal,
-        SharedNotesDatasource(),
-        FakePathResolver(docs.path),
-      ),
+      RecordsRepositoryImpl(db, syncLocal, SharedNotesDatasource()),
     );
   }
 

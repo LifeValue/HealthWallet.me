@@ -10,7 +10,6 @@ import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart'
 import 'package:health_wallet/core/constants/blood_types.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/data/local/soft_delete.dart';
-import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/data/data_source/fhir_resource_datasource.dart';
@@ -33,16 +32,11 @@ class RecordsRepositoryImpl implements RecordsRepository {
   final SyncLocalDataSource _syncLocalDataSource;
   final AppDatabase _database;
   final SharedNotesDatasource _sharedNotes;
-  // Not read since deletes stopped removing files; kept so the constructor,
-  // which injectable and the tests build, stays as it is.
-  // ignore: unused_field
-  final PathResolver _pathResolver;
 
   RecordsRepositoryImpl(
     this._database,
     this._syncLocalDataSource,
     this._sharedNotes,
-    this._pathResolver,
   ) : _datasource = FhirResourceDatasource(_database);
 
   @override
