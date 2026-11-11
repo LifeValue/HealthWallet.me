@@ -447,6 +447,7 @@ class BackupService {
 
     return _FilePlan(
       files: entry.files,
+      missing: {for (final url in entry.missing) AttachmentRef(url).path},
       destinations: destinations,
       added: addedCount,
       alreadyPresent: alreadyPresent,
@@ -695,23 +696,17 @@ class BackupService {
     if (!tables.contains('fhir_resource')) return const {};
     if (plan.destinations.values.every((d) => d == null)) return const {};
 
-    // Every file the backup lists, restored or not, so a url of a file that
-    // wasn't restored never goes to another file of the same name.
-    final byPath = <String, BackupFile>{};
-    final byName = <String, List<BackupFile>>{};
-    for (final file in plan.files) {
-      for (final path in file.sourcePaths) {
-        byPath[path] = file;
-        (byName[AttachmentReferences.basenameOf(path).toLowerCase()] ??= [])
-            .add(file);
-      }
-    }
-    BackupFile? fileFor(AttachmentRef ref) {
-      final exact = byPath[ref.path];
-      if (exact != null) return exact;
-      final named = byName[ref.basename.toLowerCase()]?.toSet();
-      return named != null && named.length == 1 ? named.single : null;
-    }
+    // Only by the paths the backup's own rows store: the metadata comes from
+    // the same snapshot (its checksum covers the `.db`), so every url the
+    // backup copied a file for is listed there. Never by name: a url whose
+    // file wasn't on the device (`missing`), or one the metadata doesn't
+    // list, would take another record's file of the same name.
+    final byPath = <String, BackupFile>{
+      for (final file in plan.files)
+        for (final path in file.sourcePaths) path: file,
+    };
+    BackupFile? fileFor(AttachmentRef ref) =>
+        plan.missing.contains(ref.path) ? null : byPath[ref.path];
 
     final rows = await _database
         .customSelect('SELECT id, resource_raw FROM backup_db.fhir_resource')
@@ -1024,6 +1019,7 @@ class BackupService {
 class _FilePlan {
   const _FilePlan({
     required this.files,
+    required this.missing,
     required this.destinations,
     required this.added,
     required this.alreadyPresent,
@@ -1033,6 +1029,7 @@ class _FilePlan {
 
   static final none = _FilePlan(
     files: const [],
+    missing: const {},
     destinations: const {},
     added: 0,
     alreadyPresent: 0,
@@ -1042,6 +1039,10 @@ class _FilePlan {
 
   /// Every file the backup lists, restored or not.
   final List<BackupFile> files;
+
+  /// The paths of the urls whose file wasn't on the device at backup time;
+  /// they are never pointed at a restored file.
+  final Set<String> missing;
 
   /// Each restored file's name in Documents; null when the records already
   /// find its content where they point. Files that couldn't be restored
