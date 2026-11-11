@@ -131,6 +131,21 @@ class _FakeOcrProcessingHelper extends Fake implements OcrProcessingHelper {
     required List<String> filePaths,
     double dpi = 72,
   }) async => filePaths;
+
+  /// The page [rotateOcrPage] returns, or the error it throws when set.
+  String? rotatedPage;
+  Exception? rotateError;
+
+  @override
+  Future<String?> rotateOcrPage({
+    required String sessionId,
+    required List<String> filePaths,
+    required String previewPath,
+    required int quarterTurns,
+  }) async {
+    if (rotateError != null) throw rotateError!;
+    return rotatedPage;
+  }
 }
 
 class _FakeSyncRepository extends Fake implements SyncRepository {}
@@ -1228,6 +1243,202 @@ void main() {
 
       expect(bloc.state.notification, isNull);
       expect(repository.deleted, isEmpty);
+    });
+  });
+
+  group('the same document sent again', () {
+    test('replaces a running attempt: its AI is stopped and its files '
+        'deleted', () async {
+      const previous = ProcessingSession(
+        id: 'h',
+        status: ProcessingStatus.processing,
+        filePaths: ['/old.jpg'],
+      );
+      seed(
+        const ProcessingState(
+          sessions: [previous],
+          sessionImagePaths: {
+            'h': ['/old.jpg'],
+          },
+        ),
+      );
+      final doc = file('doc.jpg');
+
+      bloc.add(DocumentImported(filePaths: [doc.path], sessionId: 'h'));
+      await bloc.stream.firstWhere((s) => s.status is SessionCreated);
+
+      expect(repository.cancels, 1);
+      expect(repository.deleted.single, previous);
+      expect(bloc.state.sessions.where((s) => s.id == 'h'), hasLength(1));
+      expect(session('h').filePaths, isNot(contains('/old.jpg')));
+      expect(bloc.state.sessionImagePaths['h'], isNot(contains('/old.jpg')));
+    });
+
+    test('replaces an attempt that is not running without stopping the '
+        'AI', () async {
+      const previous = ProcessingSession(
+        id: 'h',
+        status: ProcessingStatus.cancelled,
+      );
+      seed(const ProcessingState(sessions: [previous]));
+      final doc = file('doc.jpg');
+
+      bloc.add(DocumentImported(filePaths: [doc.path], sessionId: 'h'));
+      await bloc.stream.firstWhere((s) => s.status is SessionCreated);
+
+      expect(repository.cancels, 0);
+      expect(repository.deleted.single, previous);
+    });
+  });
+
+  group('page order', () {
+    test('labelled pages go first in page order, unlabelled ones after them '
+        'in their own order', () async {
+      final d = file('d.jpg');
+      final c = file('c.jpg');
+      final b = file('b.jpg');
+      final a = file('a.jpg');
+      ocr.textByPath = {'b_': 'Page 2 of 4', 'a_': 'Page 1 of 4'};
+
+      bloc.add(DocumentImported(filePaths: [d.path, b.path, c.path, a.path]));
+      await bloc.stream.firstWhere((s) => s.status is SessionCreated);
+
+      final paths = repository.created.single;
+      expect(paths[0], contains('/a_'));
+      expect(paths[1], contains('/b_'));
+      expect(paths[2], contains('/d_'));
+      expect(paths[3], contains('/c_'));
+    });
+  });
+
+  group('page rotation', () {
+    const seeded = ProcessingState(
+      sessions: [
+        ProcessingSession(id: 's', filePaths: ['/doc.pdf']),
+      ],
+      ocrPageByPreviewPath: {'/p1.png': '/ocr1.png'},
+    );
+
+    test('the turned OCR page replaces the one kept for the preview', () async {
+      seed(seeded);
+      ocr.rotatedPage = '/ocr1-turned.png';
+
+      bloc.add(const PageRotated(sessionId: 's', previewPath: '/p1.png'));
+      await settle();
+
+      expect(bloc.state.ocrPageByPreviewPath, {'/p1.png': '/ocr1-turned.png'});
+    });
+
+    test('when turning the OCR page fails, OCR reads the turned preview '
+        'instead', () async {
+      seed(seeded);
+      ocr.rotateError = Exception('disk full');
+
+      bloc.add(const PageRotated(sessionId: 's', previewPath: '/p1.png'));
+      await settle();
+
+      expect(bloc.state.ocrPageByPreviewPath, isEmpty);
+    });
+
+    test('a page of an unknown session is left alone', () async {
+      seed(seeded);
+      ocr.rotateError = Exception('not called');
+
+      bloc.add(const PageRotated(sessionId: 'x', previewPath: '/p1.png'));
+      await settle();
+
+      expect(bloc.state.ocrPageByPreviewPath, {'/p1.png': '/ocr1.png'});
+    });
+  });
+
+  group('a wallet patient in the review', () {
+    const existing = Patient(id: 'p1', title: 'Ana Pop');
+
+    ProcessingSession linked({MappingPatient? draft}) => ProcessingSession(
+      id: 's',
+      status: ProcessingStatus.draft,
+      patient: StagedPatient(
+        existing: existing,
+        draft: draft,
+        mode: ImportMode.linkExisting,
+      ),
+    );
+
+    test('a field change starts a draft from the wallet patient and keeps '
+        'it linked', () async {
+      seed(ProcessingState(sessions: [linked()]));
+
+      bloc.add(
+        const ResourceChanged(
+          sessionId: 's',
+          index: -1,
+          propertyKey: 'givenName',
+          newValue: 'Ioana',
+          isDraftPatient: true,
+        ),
+      );
+      await settle();
+
+      final patient = session('s').patient;
+      expect(patient.mode, ImportMode.linkExisting);
+      expect(patient.existing, existing);
+      expect(patient.draft?.id, 'p1');
+      expect(patient.draft?.givenName.value, 'Ioana');
+      expect(repository.edited, hasLength(1));
+    });
+
+    test('a field change edits a draft already started', () async {
+      seed(
+        ProcessingState(
+          sessions: [
+            linked(
+              draft: const MappingPatient(
+                id: 'd',
+                familyName: MappedProperty(value: 'Pop'),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      bloc.add(
+        const ResourceChanged(
+          sessionId: 's',
+          index: -1,
+          propertyKey: 'givenName',
+          newValue: 'Ioana',
+          isDraftPatient: true,
+        ),
+      );
+      await settle();
+
+      final draft = session('s').patient.draft!;
+      expect(draft.id, 'd');
+      expect(draft.familyName.value, 'Pop');
+      expect(draft.givenName.value, 'Ioana');
+    });
+
+    test('reverting drops the edits and links the wallet patient', () async {
+      seed(
+        ProcessingState(
+          sessions: [
+            linked(
+              draft: const MappingPatient(
+                givenName: MappedProperty(value: 'Ioana'),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      bloc.add(const PatientReverted(sessionId: 's'));
+      await settle();
+
+      final patient = session('s').patient;
+      expect(patient.draft, isNull);
+      expect(patient.existing, existing);
+      expect(patient.mode, ImportMode.linkExisting);
+      expect(repository.edited, hasLength(1));
     });
   });
 }
