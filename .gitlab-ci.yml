@@ -15,6 +15,8 @@
 #   ios / android / macos   manual on develop, release/* and master   shell-macmini (fastlane)
 #   windows                 manual on develop, release/* and master   needs a `windows` runner (none yet)
 #                           → GitLab Release with zip + msix
+#   linux                   manual on develop, release/* and master   Linux instance runner (Docker)
+#                           → the same GitLab Release with .deb + tar.gz
 #   shorebird patches       manual on master                          shell-macmini
 # feature/*, bugfix/* and hotfix/* branches get the checks only.
 #
@@ -616,17 +618,19 @@ shorebird:patch-ios:
     - shorebird patch --platforms ios --release-version=latest --no-codesign --allow-asset-diffs
 
 # =============================================================================
-# Windows — build zip + MSIX, publish as a GitLab Release
+# Desktop releases — one GitLab Release per version, which each platform's job adds its files to
 # =============================================================================
-# NO WINDOWS RUNNER IS REGISTERED YET. Until one with the `windows` tag exists, triggering this
-# job leaves it pending. Expected on that machine: Git for Windows, Flutter $FLUTTER_VERSION on
-# PATH, and the shell set to PowerShell (the runner default).
-#
 # master       → release      v<version>
 # other branch → pre-release  v<version>-dev.<pipeline iid>
-# The zip and msix go to the project's generic package registry, and the GitLab Release links to
-# them. Unlike the GitHub workflow, the release tag is created on the commit that was built, not
-# on the default branch.
+# Each job uploads its packages to the project's generic package registry, creates the release
+# for the tag when it does not exist yet (on the commit that was built) and links its packages
+# to it, so the Windows and Linux jobs of one pipeline share a release in either order.
+
+# Windows: portable zip + Store MSIX, built by scripts/build_windows.ps1.
+# NO WINDOWS RUNNER IS REGISTERED YET. Until one with the `windows` tag exists, triggering this
+# job leaves it pending. Expected on that machine (the script's header lists the same): Git for
+# Windows, Visual Studio 2022 with "Desktop development with C++", FVM on PATH (it installs the
+# Flutter version from .fvmrc on first use), and the shell set to PowerShell (the runner default).
 windows:release:
   stage: deploy
   tags: [windows]
@@ -639,35 +643,88 @@ windows:release:
     - $env:GIT_CONFIG_VALUE_0 = "ssh://git@$env:CI_SERVER_HOST:2822/"
   script:
     - if (-not $env:ENV_FILE_CONTENT) { throw "Protected CI/CD variables are not available on $env:CI_COMMIT_BRANCH. Protect this branch to deploy from it." }
-    - $env:FLUTTER_VERSION = (Get-Content .fvmrc -Raw | ConvertFrom-Json).flutter
-    - if (-not ((flutter --version) -match "Flutter $env:FLUTTER_VERSION")) { throw "flutter on PATH is not $env:FLUTTER_VERSION" }
     - Copy-Item $env:ENV_FILE_CONTENT .env
-    - flutter config --enable-windows-desktop
-    - flutter pub get
-    - dart run build_runner build
-    - flutter build windows --release --target lib/main_desktop.dart
+    - .\scripts\build_windows.ps1 -Msix
     - $version = ((Select-String -Path pubspec.yaml -Pattern '^version:\s*([^+\s]+)').Matches[0].Groups[1].Value)
     - if ($env:CI_COMMIT_BRANCH -eq "master") { $tag = "v$version" } else { $tag = "v$version-dev.$env:CI_PIPELINE_IID" }
-    - $zip = "HealthWallet-Windows-v$version-portable.zip"
-    - $msixOut = "HealthWallet-Windows-v$version-setup.msix"
-    - Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath $zip -Force
-    - dart run msix:create --version "$version.0"
-    - $msix = Get-ChildItem -Path "build\windows\x64\runner\Release" -Filter "*.msix" -Recurse | Select-Object -First 1
-    - Copy-Item $msix.FullName $msixOut
     - $headers = @{ "JOB-TOKEN" = $env:CI_JOB_TOKEN }
     - $packageUrl = "$env:CI_API_V4_URL/projects/$env:CI_PROJECT_ID/packages/generic/healthwallet-windows/$tag"
-    - foreach ($file in @($msixOut, $zip)) { Invoke-RestMethod -Method Put -Uri "$packageUrl/$file" -Headers $headers -InFile $file }
+    - $files = Get-ChildItem build\windows\packages
+    - foreach ($file in $files) { Invoke-RestMethod -Method Put -Uri "$packageUrl/$($file.Name)" -Headers $headers -InFile $file.FullName }
+    - $releases = "$env:CI_API_V4_URL/projects/$env:CI_PROJECT_ID/releases"
     - |
       $release = @{
         tag_name    = $tag
         ref         = $env:CI_COMMIT_SHA
         name        = $tag
-        description = "## HealthWallet $tag (Windows)`n`nBranch: ``$env:CI_COMMIT_BRANCH`` · Commit: ``$env:CI_COMMIT_SHA```n`n- **Installer (.msix):** double-click to install (Windows 10+)`n- **Portable (.zip):** extract and run ``health_wallet.exe``"
-        assets      = @{ links = @(
-          @{ name = $msixOut; url = "$packageUrl/$msixOut"; link_type = "package" },
-          @{ name = $zip;     url = "$packageUrl/$zip";     link_type = "package" }
-        ) }
-      } | ConvertTo-Json -Depth 5
-      Invoke-RestMethod -Method Post -Uri "$env:CI_API_V4_URL/projects/$env:CI_PROJECT_ID/releases" -Headers $headers -ContentType "application/json" -Body $release
+        description = "## HealthWallet $tag`n`nBranch: ``$env:CI_COMMIT_BRANCH`` · Commit: ``$env:CI_COMMIT_SHA```n`n- **Windows installer (.msix):** double-click to install (Windows 10+)`n- **Windows portable (.zip):** extract and run ``health_wallet.exe```n- **Linux (.deb):** ``sudo apt install ./HealthWallet-Linux-*.deb`` (Ubuntu 24.04, Debian 13 or newer)`n- **Linux portable (.tar.gz):** extract and run ``HealthWallet/health_wallet``"
+      } | ConvertTo-Json
+      # The other platform's job may have created it already.
+      try { Invoke-RestMethod -Method Post -Uri $releases -Headers $headers -ContentType "application/json" -Body $release | Out-Null }
+      catch { Invoke-RestMethod -Method Get -Uri "$releases/$tag" -Headers $headers | Out-Null }
+    - foreach ($file in $files) { Invoke-RestMethod -Method Post -Uri "$releases/$tag/assets/links" -Headers $headers -Body @{ name = $file.Name; url = "$packageUrl/$($file.Name)"; link_type = "package" } | Out-Null }
   after_script:
     - Remove-Item -Force -ErrorAction SilentlyContinue .env
+
+# Linux: .deb + portable tarball, built by flutter build linux and scripts/package_linux.sh, for
+# the runner's architecture. Built on Ubuntu 24.04, the oldest system the packages support:
+# llamadart's prebuilt libraries need glibc 2.38.
+linux:release:
+  stage: deploy
+  extends: .flutter_job
+  image: ubuntu:24.04
+  interruptible: false
+  needs: *all_checks
+  rules: *on_deploy_branches
+  cache:
+    - <<: *flutter_sdk_cache
+      policy: pull
+    - <<: *pub_cache
+      policy: pull
+  before_script:
+    - '[ -n "$ENV_FILE_CONTENT" ] || { echo "Protected CI/CD variables are not available on $CI_COMMIT_BRANCH. Protect this branch (Settings → Repository → Protected branches) to deploy from it."; exit 1; }'
+    - export DEBIAN_FRONTEND=noninteractive
+    - apt-get update -qq
+    # Flutter's Linux toolchain, the libraries the runner and the plugins link, and dpkg-deb.
+    - >-
+      apt-get install -y -qq --no-install-recommends
+      ca-certificates git curl unzip xz-utils zip jq file dpkg-dev
+      clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+      libsecret-1-dev libayatana-appindicator3-dev libtesseract-dev libleptonica-dev
+    - cp "$ENV_FILE_CONTENT" .env
+    - !reference [.flutter_job, before_script]
+  script:
+    - dart run build_runner build --delete-conflicting-outputs
+    - flutter build linux --release --target lib/main_desktop.dart
+    - scripts/package_linux.sh
+    - version="$(sed -nE 's/^version:[[:space:]]*([^+[:space:]]+).*/\1/p' pubspec.yaml)"
+    - if [ "$CI_COMMIT_BRANCH" = master ]; then tag="v$version"; else tag="v$version-dev.$CI_PIPELINE_IID"; fi
+    - package_url="$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/generic/healthwallet-linux/$tag"
+    - releases="$CI_API_V4_URL/projects/$CI_PROJECT_ID/releases"
+    - |
+      for file in build/linux/packages/*; do
+        curl --fail-with-body -sS -H "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "$file" "$package_url/$(basename "$file")"
+      done
+    - |
+      description="## HealthWallet $tag
+
+      Branch: \`$CI_COMMIT_BRANCH\` · Commit: \`$CI_COMMIT_SHA\`
+
+      - **Windows installer (.msix):** double-click to install (Windows 10+)
+      - **Windows portable (.zip):** extract and run \`health_wallet.exe\`
+      - **Linux (.deb):** \`sudo apt install ./HealthWallet-Linux-*.deb\` (Ubuntu 24.04, Debian 13 or newer)
+      - **Linux portable (.tar.gz):** extract and run \`HealthWallet/health_wallet\`"
+      # The other platform's job may have created it already.
+      jq -n --arg tag "$tag" --arg ref "$CI_COMMIT_SHA" --arg description "$description" \
+        '{tag_name: $tag, ref: $ref, name: $tag, description: $description}' |
+        curl --fail -sS -o /dev/null -H "JOB-TOKEN: $CI_JOB_TOKEN" -H "Content-Type: application/json" --data @- "$releases" ||
+        curl --fail -sS -o /dev/null -H "JOB-TOKEN: $CI_JOB_TOKEN" "$releases/$tag"
+    - |
+      for file in build/linux/packages/*; do
+        name="$(basename "$file")"
+        curl --fail-with-body -sS -o /dev/null -H "JOB-TOKEN: $CI_JOB_TOKEN" \
+          --data-urlencode "name=$name" --data-urlencode "url=$package_url/$name" --data "link_type=package" \
+          "$releases/$tag/assets/links"
+      done
+  after_script:
+    - rm -f .env

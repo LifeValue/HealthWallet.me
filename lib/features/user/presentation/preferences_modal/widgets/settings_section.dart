@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
@@ -133,7 +131,7 @@ class SettingsSection extends StatelessWidget {
                   ),
                 ),
               ),
-              if (Platform.isMacOS || Platform.isWindows) ...[
+              if (getIt<AppPlatform>().isDesktop) ...[
                 const SizedBox(height: Insets.normal),
                 const StorageSection(),
               ],

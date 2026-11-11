@@ -5,22 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/checked_pdf_view.dart';
-import 'package:pdfx/pdfx.dart' as pdfx;
 
 final _l10n = lookupAppLocalizations(const Locale('en'));
-
-/// A document as pdfx opens it, with [pagesCount] pages.
-class _FakeDocument extends Fake implements pdfx.PdfDocument {
-  _FakeDocument(this.pagesCount);
-
-  @override
-  final int pagesCount;
-
-  var closed = false;
-
-  @override
-  Future<void> close() async => closed = true;
-}
 
 Widget _app(Future<bool> Function(String) canOpen) => MaterialApp(
   localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -77,40 +63,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(checked, ['/docs/report.pdf']);
-  });
-
-  group('canOpenPdf', () {
-    test('a document with pages can be opened, and is closed again', () async {
-      final document = _FakeDocument(3);
-
-      final opens = await CheckedPdfView.canOpenPdf(
-        '/docs/report.pdf',
-        open: (_) async => document,
-      );
-
-      expect(opens, isTrue);
-      expect(document.closed, isTrue);
-    });
-
-    test('a document without pages cannot', () async {
-      expect(
-        await CheckedPdfView.canOpenPdf(
-          '/docs/empty.pdf',
-          open: (_) async => _FakeDocument(0),
-        ),
-        isFalse,
-      );
-    });
-
-    test('a file pdfx cannot open cannot, and nothing is thrown', () async {
-      expect(
-        await CheckedPdfView.canOpenPdf(
-          '/docs/broken.pdf',
-          open: (_) async => throw const FormatException('not a PDF'),
-        ),
-        isFalse,
-      );
-    });
   });
 
   testWidgets('without its own check it uses the default one', (tester) async {

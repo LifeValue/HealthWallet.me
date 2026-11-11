@@ -7,14 +7,16 @@ Reference for work in `lib/features/processing/`, `lib/features/capture/` and `l
 - Flutter 3.47.7 via FVM (`.fvmrc`); Dart SDK `>=3.13.5 <4.0.0` (`pubspec.yaml`).
 - Mobile: iOS 16.4+ (llamadart 0.15 floor), Android minSdk 24. Package name `com.techstackapps.healthwallet`.
 - Android: Gradle 9.4.1, AGP 9.2.1, Kotlin 2.4.0, compileSdk 37, NDK 28.2. Code compiles to Java 11; CI runs Gradle on Temurin JDK 17. AGP 9 runs in Flutter's compatibility mode (`android.builtInKotlin=false`, `android.newDsl=false` in `android/gradle.properties`); `android/build.gradle.kts` raises plugins compiling below SDK 36 to 37 and fills in missing namespaces.
-- Desktop: macOS 14+ (production; llamadart 0.15 floor) and Windows (Store-packaged MSIX). Linux is not scaffolded; `Platform.isLinux` branches are kept for a future port.
+- Desktop: macOS 14+ (production; llamadart 0.15 floor), Windows 10+ (Store-packaged MSIX and a portable zip) and Linux (a .deb and a portable tarball for Ubuntu 24.04, Debian 13 or newer: llamadart's prebuilt Linux libraries need glibc 2.38).
+- Linux runner (`linux/runner/`): application id `com.techstackapps.healthwallet`; one instance, as on Windows (a second launch activates the first through GApplication, also when it is hidden in the tray, and exits); window icon from the icon theme or the bundle's `data/app_icon.png`. It links Tesseract for OCR, and at run time needs EGL, libsecret with a Secret Service (GNOME Keyring or KWallet; without one the pairing is not kept), AppIndicator for the tray and Avahi for discovery; `scripts/package_linux.sh` declares them in the .deb.
+- PDF pages: pdfx draws them, except on Linux, which pdfx does not support; there `PdfPages` (`lib/core/utils/pdf_pages.dart`) draws them with printing's pdfium rasteriser, the one OCR uses everywhere. The desktop viewers share `DesktopPdfView`.
 
 ## Entry points
 
 | File                    | Platform        | Sets up                                                                                                                                                                                                                                                                                                            |
 | ----------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `lib/main.dart`         | iOS / Android   | Removes the legacy `lww_offline_queue` preference, preserves the native splash, registers `AppPlatform.mobile`, `configureDependencies()`, `ShareIntentService`, `DeepLinkService`, `ProcessingBloc.add(ProcessingInitialised())`, removes the splash                                                                                     |
-| `lib/main_desktop.dart` | macOS / Windows | Registers `AppPlatform.desktop`, `CommunicationBloc` and `TrayBloc` by hand (`BackupBloc`, `HandoverBloc`, `LwwSyncBloc`, `WindowLifecycleService` come from injectable), sends their init events and `ProcessingInitialised`, starts `SafetyCopyExpiryScheduler`, pipes `CommunicationBloc` and `LwwSyncBloc` state into `TrayBloc`. No native splash |
+| `lib/main_desktop.dart` | macOS / Windows / Linux | Registers `AppPlatform.desktop`, `CommunicationBloc` and `TrayBloc` by hand (`BackupBloc`, `HandoverBloc`, `LwwSyncBloc`, `WindowLifecycleService` come from injectable), sends their init events and `ProcessingInitialised`, starts `SafetyCopyExpiryScheduler`, pipes `CommunicationBloc` and `LwwSyncBloc` state into `TrayBloc`. No native splash |
 
 `App` provides the BLoCs through `MultiBlocProvider` and, as a `WidgetsBindingObserver`, starts and stops P2P discovery on resume and pause.
 
@@ -31,7 +33,8 @@ fvm flutter build apk --release
 fvm flutter build appbundle --release
 fvm flutter build ios --release --no-codesign
 fvm flutter build macos --release --target lib/main_desktop.dart
-fvm flutter build windows --release --target lib/main_desktop.dart   # scripts/build_windows.ps1 also zips it
+fvm flutter build windows --release --target lib/main_desktop.dart   # or scripts/build_windows.ps1 [-Msix], which also packages it
+fvm flutter build linux --release --target lib/main_desktop.dart     # on Ubuntu 24.04+; then scripts/package_linux.sh
 fvm flutter run -d <device-id>                                       # add -t lib/main_desktop.dart for desktop
 
 cd ios && bundle exec fastlane beta       # TestFlight
@@ -71,7 +74,7 @@ Fasten sync flow: parse QR → create the default holder if the wallet has no pa
 
 ## Processing pipeline
 
-1. **OCR**: `NativeTextRecognitionService` calls the `dev.lifevalue.healthwallet/ocr` method channel (`processing/data/data_source/platform/ocr_channel.dart`), rasterising PDF pages first at 200 dpi (`OcrProcessingHelper.pdfDpi`; at the previews' 72 dpi small print loses characters, a "D" read as "0"). Native handlers: Apple Vision in `ios/Runner/TextRecognitionHandler.swift` and `macos/Runner/AppDelegate.swift`, ML Kit in `android/app/src/main/kotlin/com/techstackapps/healthwallet/ocr/TextRecognitionHandler.kt`, `Windows.Media.Ocr` in `windows/runner/windows_ocr_plugin.cpp`. No OCR Flutter plugin, so iOS has no ML Kit pods and runs on arm64 simulators.
+1. **OCR**: `NativeTextRecognitionService` calls the `dev.lifevalue.healthwallet/ocr` method channel (`processing/data/data_source/platform/ocr_channel.dart`), rasterising PDF pages first at 200 dpi (`OcrProcessingHelper.pdfDpi`; at the previews' 72 dpi small print loses characters, a "D" read as "0"). Native handlers: Apple Vision in `ios/Runner/TextRecognitionHandler.swift` and `macos/Runner/AppDelegate.swift`, ML Kit in `android/app/src/main/kotlin/com/techstackapps/healthwallet/ocr/TextRecognitionHandler.kt`, `Windows.Media.Ocr` in `windows/runner/windows_ocr_plugin.cpp`, Tesseract in `linux/runner/ocr_channel.cc` (English, plus German, Spanish or Romanian when the user's locale is one of them and its language data is installed). No OCR Flutter plugin, so iOS has no ML Kit pods and runs on arm64 simulators.
 2. **Phase 1, text first**: `ProcessingRepository.mapBasicInfo` (`AiExtractionRepository.processMapBasicInfo`) extracts patient demographics, encounter and a primary diagnostic report. With at least 200 OCR characters it runs `AiInferenceDataSource.runTextPrompt()` (`processing/data/data_source/network/ai_inference_data_source.dart`, implemented in `ai_inference_handler.dart`) on the OCR text; `runVisionPrompt()` on the images is the fallback when that pass fails or finds no patient (no name and no identifier), or when the OCR text is shorter. Without the vision projector (the mmproj file missing, or `isVisionModelAvailable()` false after `initModel`) no images are sent: the text pass's result stands, or no patient. The session still reaches `patientExtracted`; a patient with no name and no identifier is not matched to a holder, so the review opens with empty patient fields and the note `processingNoPatientFound`.
 3. **Phase 2**: `mapRemainingResources` reads the remaining resource types (medications, immunizations, allergies, vitals…) with `runVisionPrompt()` in batches when Deep Scan is on and the projector loaded, otherwise, and when vision gives nothing, with `runTextPrompt()` on the OCR text.
 4. **FHIR mapping**: `ProcessingRepository` (`processing/domain/repository/`, implemented in `processing/data/repository/processing_repository_impl.dart`) maps the staged `MappingResources` (`processing/domain/entity/mapping_resources/`) to FHIR R4 and writes them through Drift.
@@ -166,7 +169,7 @@ Mobile is the client, desktop the server; one phone is paired with one desktop. 
 
 ### Pairing
 
-The desktop makes a pairing on first start (`DevicePairing`: `deviceId` (UUID v4), `deviceName`, `pairingKey` (32 random bytes, base64url), `lastIp`, `lastPort`). Its QR code (`DevicePairing.toQrPayload`) carries `v`, `device_id`, `device_name`, `pairing_key`, `ip`, `port` and `os`; the phone checks it with `DevicePairing.parseQr` (version, a 32-byte key, a valid port). Keys are stored in the platform's secret store (`SecretStore`: Keychain this-device-only, Android Keystore, Windows DPAPI; on macOS the legacy keychain, which needs no entitlement), the rest of the pairing in SharedPreferences (`device_pairing`).
+The desktop makes a pairing on first start (`DevicePairing`: `deviceId` (UUID v4), `deviceName`, `pairingKey` (32 random bytes, base64url), `lastIp`, `lastPort`). Its QR code (`DevicePairing.toQrPayload`) carries `v`, `device_id`, `device_name`, `pairing_key`, `ip`, `port` and `os`; the phone checks it with `DevicePairing.parseQr` (version, a 32-byte key, a valid port). Keys are stored in the platform's secret store (`SecretStore`: Keychain this-device-only, Android Keystore, Windows DPAPI, libsecret on Linux; on macOS the legacy keychain, which needs no entitlement), the rest of the pairing in SharedPreferences (`device_pairing`).
 
 The first phone to complete a handshake becomes the paired phone (`peerDeviceId`). The desktop then gives it a new key over the session (`pairing.rekey` / `pairing.rekey_ack`), accepting both keys until the phone uses the new one, so the QR code that was shown stops working. Once a phone is paired the desktop shows its name, not the QR code; "New QR code" makes a new pairing. Another phone that holds the current key (and proves it) waits until the desktop's user accepts or declines it; accepted, it replaces the paired phone.
 
@@ -180,10 +183,10 @@ Every candidate must pass the handshake, which checks the desktop's id and proof
 
 The desktop listens on every interface (port 49152 or a free one) and checks its address every 30 s, updating the QR code and the advertisements; without a usable address it says so instead of showing a QR code. It holds up to 8 sockets; each must complete the handshake within 15 s, and the newest verified session replaces the previous one, so a phone that reconnects after a drop is never locked out by its own half-open socket.
 
-| Mobile \ Desktop | macOS     | Windows |
-| ---------------- | --------- | ------- |
-| iOS              | MPC + TCP | TCP     |
-| Android          | TCP       | TCP     |
+| Mobile \ Desktop | macOS     | Windows | Linux |
+| ---------------- | --------- | ------- | ----- |
+| iOS              | MPC + TCP | TCP     | TCP   |
+| Android          | TCP       | TCP     | TCP   |
 
 ### Wire format
 
@@ -296,7 +299,7 @@ The phone fetches restored files only for DocumentReference attachments (`sync.f
 - **Desktop.** Files are assembled by index and offset in a temporary folder, a folder per page, under the document's own name without the phone's unique suffix (`safeFileName`: trailing dots and spaces dropped, and a Windows device name such as `CON`, `NUL` or `COM1` given a `_`, on every platform, which the title drops again), so processing's stored copy, and the title read from it, carry that name (a gap or a repeat fails the transfer, 60 s without a chunk times it out) and deleted once processing has its own copies. The session runs through to its draft without anyone at the desktop: with the phone's patient step it continues from it, otherwise it starts from the beginning; while another session processes it waits its turn (`ProcessingBloc.startNextPendingSession` continues handovers first). A failure of that session (`Failure.sessionId`) is reported; the queue doesn't retry a failed handover until the user does. Its draft is sent once (`handover_reported_desktop`), a save there sends `saved` (`Success.sessionId`), a delete sends `cancel`. The Handover tab shows transfers while they arrive and the handover sessions.
 - **Saving on both.** A session's records keep the draft's ids and its documents get ids from the session (`DocumentReferenceService.sessionDocumentId`), so saving the same handover on both devices while apart writes the same rows, which the LWW sync merges.
 
-**Tray** (`desktop/tray/`): `TrayService` owns the macOS/Windows tray icon and menu, `WindowLifecycleService` minimise-to-tray and restore, `TrayBloc` reflects connection and sync state.
+**Tray** (`desktop/tray/`): `TrayService` owns the tray icon and menu (on Linux an AppIndicator: no tooltip, and a click opens the menu), `WindowLifecycleService` minimise-to-tray and restore, `TrayBloc` reflects connection and sync state.
 
 ## Proximity sharing encryption
 
@@ -325,6 +328,6 @@ GitLab CI (`.gitlab-ci.yml`) on `git.lifevalue.com/mobile/health-wallet/app`.
 - **checks**: every push, Linux runners, `debian:bookworm-slim` with Flutter cloned at the pinned tag (cirruslabs images stop at 3.44). Runs `flutter pub get`, `dart run build_runner build`, `flutter analyze --no-fatal-infos --no-fatal-warnings`, `flutter test`. No secrets.
 - **ios:testflight / macos:testflight / android:play-internal**: automatic on `develop`, manual elsewhere (the branch must be protected to see protected variables). `shell-macmini` runner, fastlane `beta`, one `resource_group` each. Automatic signing: certificates in the runner's login keychain, profiles via the App Store Connect API key and `-allowProvisioningUpdates`. Android Gradle runs on Temurin JDK 17 (`ANDROID_JDK_*`, cached per runner, set through `org.gradle.java.home`).
 - **shorebird:patch-android / shorebird:patch-ios**: manual on `master`.
-- **windows:release**: manual on any branch; `master` → `v<version>`, others → `v<version>-dev.<pipeline iid>`; uploads zip + msix to the generic package registry and creates a GitLab Release. Needs a `windows` runner (none registered yet).
+- **windows:release / linux:release**: manual on `develop`, `release/*` and `master`; `master` → `v<version>`, others → `v<version>-dev.<pipeline iid>`. Each uploads its packages to the generic package registry, creates the GitLab Release for the tag if the other job has not, and links its packages to it. Windows runs `scripts/build_windows.ps1 -Msix` on a `windows` runner with FVM (none registered yet); Linux builds in `ubuntu:24.04` on the Linux runners and packages with `scripts/package_linux.sh`.
 - Private pub dependencies are fetched with `CI_JOB_TOKEN` (the project must be on their job-token allowlists).
 - Every `pod` call on the Mac mini runs the CocoaPods pinned in `ios/Gemfile` (1.17), through Bundler. cocoapods-core caps activesupport below 8, and every 7.x has GHSA-8474-xrp6-wh69, so the Gemfile raises that cap with the `bundler-override` plugin and requires activesupport ≥ 8.1.4.1; CocoaPods installs the pods unchanged on it. Bundler installs the plugin into the ignored `.bundle/` folder; nothing of it is committed. Remove the override once a CocoaPods release allows activesupport 8 (CocoaPods/Core#786).

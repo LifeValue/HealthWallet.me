@@ -201,5 +201,8 @@ msix_config:
   capabilities: internetClient, privateNetworkClientServer
   install_certificate: false
   store: true
+  # msix would otherwise run its own `flutter build windows`, which builds the mobile entry
+  # point (lib/main.dart); scripts/build_windows.ps1 builds lib/main_desktop.dart first.
+  build_windows: false
 dependency_overrides:
   fhir_r4: ^0.6.0

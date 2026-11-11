@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:file_picker/file_picker.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/utils/pdf_pages.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
@@ -101,8 +103,8 @@ final class _PickedFile extends PlatformFile {
 
 // pdfx opens files through pigeon on iOS, macOS and Android and through a
 // method channel elsewhere: the tests answer both with an error. On Linux
-// (CI) the app does not reach pdfx at all, because pdfx does not support it;
-// either way the file fails to open.
+// (CI) pdfx refuses to run at all; either way the file fails to open. The
+// tests pin pdfx, which the app uses everywhere but on Linux.
 const _pdfPigeonOpenFile = 'dev.flutter.pigeon.PdfxApi.openDocumentFile';
 const _pdfMethodChannel = MethodChannel('io.scer.pdf_renderer');
 
@@ -110,10 +112,14 @@ void main() {
   final l10n = lookupAppLocalizations(const Locale('en'));
   late FilePickerPlatform realFilePicker;
 
-  setUp(() => realFilePicker = FilePickerPlatform.instance);
+  setUp(() {
+    realFilePicker = FilePickerPlatform.instance;
+    PdfPages.usePdfx = true;
+  });
 
   tearDown(() async {
     FilePickerPlatform.instance = realFilePicker;
+    PdfPages.usePdfx = !Platform.isLinux;
     await getIt.reset();
   });
 

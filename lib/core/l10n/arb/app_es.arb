@@ -1604,6 +1604,7 @@
   "desktopQrInvalid": "Este código QR no sirve para emparejar. Muestra uno nuevo en el escritorio.",
   "desktopNoNetwork": "Este escritorio no está conectado a ninguna red. Conéctalo a una red Wi-Fi para emparejar un teléfono.",
   "desktopFirewallHint": "Si tu teléfono no encuentra este escritorio, permite HealthWallet en el Firewall de Windows para redes privadas.",
+  "desktopFirewallHintLinux": "Si tu teléfono no encuentra este escritorio, comprueba que el servicio Avahi está en ejecución y que tu cortafuegos (ufw o firewalld) permite HealthWallet en tu red local.",
   "desktopApprovePhoneMessage": "\"{phone}\" quiere conectarse a este escritorio.\n\nSustituirá a \"{current}\" y recibirá los historiales médicos guardados aquí.\n\n¿Lo permites?",
   "desktopPairedPhone": "Teléfono emparejado",
   "desktopNewQrUnpairsHint": "Un nuevo código QR desempareja este teléfono; úsalo para emparejar otro.",

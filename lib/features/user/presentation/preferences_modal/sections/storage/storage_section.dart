@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
@@ -21,9 +22,7 @@ class StorageSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!Platform.isMacOS && !Platform.isWindows) {
-      return const SizedBox.shrink();
-    }
+    if (!getIt<AppPlatform>().isDesktop) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: Insets.small),

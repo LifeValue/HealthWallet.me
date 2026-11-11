@@ -4517,6 +4517,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'Dacă telefonul nu găsește acest desktop, permite HealthWallet în Windows Firewall pentru rețelele private.';
 
   @override
+  String get desktopFirewallHintLinux =>
+      'Dacă telefonul nu găsește acest desktop, verifică dacă serviciul Avahi rulează și dacă firewall-ul (ufw sau firewalld) permite HealthWallet în rețeaua locală.';
+
+  @override
   String desktopApprovePhoneMessage(String phone, String current) {
     return '„$phone” vrea să se conecteze la acest desktop.\n\nVa înlocui „$current” și va primi fișele medicale stocate aici.\n\nPermiți?';
   }

@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/utils/pdf_pages.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/checked_pdf_view.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
@@ -339,6 +340,9 @@ void main() {
     await getIt.unregister<AppPlatform>();
     getIt.registerSingleton<AppPlatform>(AppPlatform.desktop);
     CheckedPdfView.defaultCanOpen = (_) async => true;
+    // The pdfx view, whatever the host (CI runs on Linux).
+    PdfPages.usePdfx = true;
+    addTearDown(() => PdfPages.usePdfx = !Platform.isLinux);
     final path = writeFile('report_1a2b3c4d.pdf', utf8.encode('%PDF-1.7'));
     await open(
       tester,

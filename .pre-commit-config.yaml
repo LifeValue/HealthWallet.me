@@ -13,7 +13,7 @@ exclude: |
     (.*/)?build/|
     test/drift/my_database/generated/|
     lib/core/l10n/arb/app_localizations.*\.dart$|
-    windows/flutter/|
+    windows/flutter/|linux/flutter/|
     .*/GeneratedPluginRegistrant\.swift$|
     ios/fastlane/report\.xml$|
     .*\.xcassets/|

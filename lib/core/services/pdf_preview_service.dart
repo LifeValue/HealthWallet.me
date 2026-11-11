@@ -10,14 +10,13 @@ import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/services/temp_file_sweeper.dart';
 import 'package:health_wallet/core/utils/file_url.dart';
 import 'package:health_wallet/core/utils/logger.dart';
-import 'package:health_wallet/core/utils/pdf_open.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/checked_pdf_view.dart';
+import 'package:health_wallet/core/widgets/desktop_pdf_view.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-import 'package:pdfx/pdfx.dart' as pdfx;
 
 @injectable
 class PdfPreviewService {
@@ -246,7 +245,7 @@ class _InAppPdfViewer extends StatelessWidget {
       body: CheckedPdfView(
         filePath: filePath,
         builder: (context) => _isDesktop
-            ? _DesktopPdfBody(filePath: filePath)
+            ? DesktopPdfView(filePath: filePath)
             : PDFView(
                 filePath: filePath,
                 enableSwipe: true,
@@ -262,36 +261,5 @@ class _InAppPdfViewer extends StatelessWidget {
               ),
       ),
     );
-  }
-}
-
-class _DesktopPdfBody extends StatefulWidget {
-  final String filePath;
-  const _DesktopPdfBody({required this.filePath});
-
-  @override
-  State<_DesktopPdfBody> createState() => _DesktopPdfBodyState();
-}
-
-class _DesktopPdfBodyState extends State<_DesktopPdfBody> {
-  late final pdfx.PdfController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = pdfx.PdfController(
-      document: openPdfDocument(widget.filePath),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return pdfx.PdfView(controller: _controller);
   }
 }
