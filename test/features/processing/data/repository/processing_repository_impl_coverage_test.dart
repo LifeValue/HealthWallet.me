@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:flutter_doc_scanner/flutter_doc_scanner_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
@@ -223,6 +224,26 @@ class _FakeNetwork extends Fake implements AiInferenceDataSource {
   }
 }
 
+/// A scanner plugin that passes the native [PlatformException] on as it is
+/// (the method-channel plugin turns it into a `DocScanException`).
+class _FailingScannerPlatform extends FlutterDocScannerPlatform {
+  Never _fail() =>
+      throw PlatformException(code: 'NO_CAMERA', message: 'no camera');
+
+  @override
+  Future<dynamic> getScannedDocumentAsImages(
+    int page,
+    String imageFormat,
+    double quality,
+  ) async => _fail();
+
+  @override
+  Future<dynamic> getScannedDocumentAsPdf(int page) async => _fail();
+
+  @override
+  Future<dynamic> getScanDocuments(int page) async => _fail();
+}
+
 /// A file that exists but cannot be deleted. CI runs as root, so a
 /// permission can't make the delete fail.
 class _UndeletableFile extends Fake implements File {
@@ -351,6 +372,43 @@ void main() {
             allOf(contains('Failed to scan:'), contains('SCAN_FAILED')),
           ),
         ),
+      );
+    });
+  });
+
+  group('a platform error passed on by the plugin', () {
+    setUp(() {
+      final original = FlutterDocScannerPlatform.instance;
+      FlutterDocScannerPlatform.instance = _FailingScannerPlatform();
+      addTearDown(() => FlutterDocScannerPlatform.instance = original);
+    });
+
+    Matcher failsWith(String text) => throwsA(
+      isA<Exception>().having(
+        (e) => '$e',
+        'message',
+        allOf(contains(text), contains('no camera')),
+      ),
+    );
+
+    test('is a scanner platform error for images', () async {
+      await expectLater(
+        repository.scanDocuments(),
+        failsWith('Scanner platform error'),
+      );
+    });
+
+    test('is a PDF scanner platform error for a PDF', () async {
+      await expectLater(
+        repository.scanDocumentsAsPdf(),
+        failsWith('PDF Scanner platform error'),
+      );
+    });
+
+    test('is a default scanner platform error in default mode', () async {
+      await expectLater(
+        repository.scanDocumentsDefault(),
+        failsWith('Default Scanner platform error'),
       );
     });
   });

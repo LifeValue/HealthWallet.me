@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/config/constants/app_constants.dart';
 import 'package:health_wallet/core/services/temp_file_sweeper.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
@@ -121,6 +122,29 @@ class _FakeEngine extends Fake implements LlamaEngine {
   @override
   Future<void> dispose() async => disposed = true;
 
+  ModelParams? loadedWith;
+  Error? projectorError;
+  var projectorLoads = 0;
+
+  @override
+  Future<void> setModel(
+    LlamaModel model, {
+    ModelParams params = const ModelParams(),
+    ModelLoadOptions download = ModelLoadOptions.defaults,
+    ModelDownloadProgressCallback? onProgress,
+  }) async => loadedWith = params;
+
+  @override
+  Future<void> loadMultimodalProjectorSource(
+    ModelSource source, {
+    ModelLoadOptions? download,
+    ModelLoadOptions? options,
+    ModelDownloadProgressCallback? onProgress,
+  }) async {
+    projectorLoads++;
+    if (projectorError != null) throw projectorError!;
+  }
+
   @override
   Future<BackendPerfContextData?> getPerformanceContext() async {
     if (perfFails) throw StateError('no performance counters');
@@ -175,6 +199,8 @@ void main() {
         ..usage = const LlamaGenerationUsage(
           promptTokens: 30,
           completionTokens: 2,
+          timeToFirstToken: Duration(milliseconds: 5),
+          duration: Duration(milliseconds: 40),
         );
 
       final answer = await handler.runTextPromptImpl(
@@ -200,6 +226,8 @@ void main() {
       expect(stats.promptTokens, 30);
       expect(stats.completionTokens, 2);
       expect(stats.finishReason, 'stop');
+      expect(stats.timeToFirstTokenMs, 5.0);
+      expect(stats.durationMs, 40.0);
       expect(handler.isGenerating, isFalse);
       expect(log.getAll(), logged('text done: 2 tokens'));
     });
@@ -548,6 +576,110 @@ void main() {
         useDio: true,
         documentsDirectory: () async => docs,
       )..engine = engine;
+    });
+
+    group('loading the model', () {
+      final desktopHostOnly = Platform.isMacOS || Platform.isLinux
+          ? null
+          : 'free memory is only unknown on macOS and Linux hosts';
+      late AiModelConfig config;
+      late AiInferenceDataSourceImpl loader;
+
+      setUp(() async {
+        final prefs = await SharedPreferences.getInstance();
+        config = AiModelConfig.getActive(prefs);
+        loader = AiInferenceDataSourceImpl(
+          prefs,
+          useDio: true,
+          documentsDirectory: () async => docs,
+          createEngine: () => engine,
+        );
+        File('${docs.path}/ai_models/${config.modelId}')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('GGUF model');
+      });
+
+      File projector() => File('${docs.path}/ai_models/${config.mmprojId}');
+
+      test(
+        'loads the projector next to the model, so vision is '
+        'available',
+        skip: desktopHostOnly,
+        () async {
+          projector().writeAsStringSync('GGUF projector');
+
+          await loader.initModel(contextSize: 2048, gpuLayers: 3, threads: 2);
+
+          expect(loader.engine, same(engine));
+          expect(engine.loadedWith!.contextSize, 2048);
+          expect(engine.loadedWith!.gpuLayers, 3);
+          expect(engine.projectorLoads, 1);
+          expect(loader.isVisionModelAvailable(), isTrue);
+          expect(log.getAll(), logged('model loaded in'));
+          expect(log.getAll(), logged('vision projector loaded in'));
+        },
+      );
+
+      test(
+        'without the projector file the model loads without '
+        'vision',
+        skip: desktopHostOnly,
+        () async {
+          await loader.initModel();
+
+          expect(loader.engine, same(engine));
+          expect(engine.projectorLoads, 0);
+          expect(loader.isVisionModelAvailable(), isFalse);
+          expect(
+            log.getAll(),
+            logged('mmproj file not found, vision disabled'),
+          );
+        },
+      );
+
+      test(
+        'a damaged projector file is deleted and vision stays '
+        'off',
+        skip: desktopHostOnly,
+        () async {
+          projector().writeAsStringSync('NOPE');
+
+          await loader.initModel();
+
+          expect(projector().existsSync(), isFalse);
+          expect(engine.projectorLoads, 0);
+          expect(loader.isVisionModelAvailable(), isFalse);
+          expect(log.getAll(), logged('corrupt mmproj GGUF, deleting'));
+        },
+      );
+
+      test(
+        'a projector that fails to load leaves vision off',
+        skip: desktopHostOnly,
+        () async {
+          projector().writeAsStringSync('GGUF projector');
+          engine.projectorError = StateError('unsupported projector');
+
+          await loader.initModel();
+
+          expect(loader.engine, same(engine));
+          expect(loader.isVisionModelAvailable(), isFalse);
+          expect(log.getAll(), logged('vision projector FAILED'));
+        },
+      );
+
+      test(
+        'a text-only load leaves the projector alone',
+        skip: desktopHostOnly,
+        () async {
+          projector().writeAsStringSync('GGUF projector');
+
+          await loader.initModel(withVision: false);
+
+          expect(engine.projectorLoads, 0);
+          expect(loader.isVisionModelAvailable(), isFalse);
+        },
+      );
     });
 
     test('cancelGeneration reaches the running generation', () async {

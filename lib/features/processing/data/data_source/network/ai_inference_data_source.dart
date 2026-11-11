@@ -163,10 +163,11 @@ class AiInferenceDataSourceImpl
   final FileDownloader? _fileDownloaderOverride;
   final bool _useDio;
   final Future<Directory> Function() _documentsDirectory;
+  final LlamaEngine Function() _createEngine;
 
-  /// [createDio], [fileDownloader], [useDio], [documentsDirectory] and
-  /// [transferEndLimit] are for tests. Desktop downloads with Dio, mobile
-  /// with background_downloader.
+  /// [createDio], [fileDownloader], [useDio], [documentsDirectory],
+  /// [transferEndLimit] and [createEngine] are for tests. Desktop downloads
+  /// with Dio, mobile with background_downloader.
   AiInferenceDataSourceImpl(
     this._prefs, {
     @ignoreParam Dio Function()? createDio,
@@ -174,7 +175,9 @@ class AiInferenceDataSourceImpl
     @ignoreParam bool? useDio,
     @ignoreParam Future<Directory> Function()? documentsDirectory,
     @ignoreParam Duration? transferEndLimit,
+    @ignoreParam LlamaEngine Function()? createEngine,
   }) : _transferEndLimit = transferEndLimit ?? const Duration(seconds: 15),
+       _createEngine = createEngine ?? (() => LlamaEngine(LlamaBackend())),
        _createDio = createDio ?? Dio.new,
        _fileDownloaderOverride = fileDownloader,
        _useDio =
@@ -919,7 +922,7 @@ class AiInferenceDataSourceImpl
       '[$ts][ScanAI] creating engine with backend=$backend',
     );
 
-    _engine = LlamaEngine(LlamaBackend());
+    _engine = _createEngine();
 
     final params = ModelParams(
       contextSize: ctx,
