@@ -429,6 +429,11 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
   }
 
   Future<StagedPatient> _matchOrCreatePatient(MappingPatient patient) async {
+    // No patient found in the document: nobody to match, the user enters
+    // the details in the review.
+    if (!patient.isIdentified) {
+      return StagedPatient(draft: patient, mode: ImportMode.createNew);
+    }
     try {
       final directory = await holderService.load();
       final holder = holderService.matchScanned(patient, directory);

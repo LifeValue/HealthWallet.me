@@ -154,6 +154,17 @@ class _FakeNetwork extends Fake implements AiInferenceDataSource {
 
   var engineCancels = 0;
 
+  /// The active model's vision projector: on the device, and loaded with
+  /// the model.
+  bool projectorOnDisk = true;
+  bool projectorLoaded = true;
+
+  @override
+  Future<bool> checkMmprojExistence() async => projectorOnDisk;
+
+  @override
+  bool isVisionModelAvailable() => projectorLoaded;
+
   @override
   void cancelGeneration() => engineCancels++;
 

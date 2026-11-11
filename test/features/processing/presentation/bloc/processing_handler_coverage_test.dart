@@ -694,6 +694,27 @@ void main() {
       expect(repository.edited, isEmpty);
     });
 
+    test('a document without a patient opens the review with an empty new '
+        'patient, matched to nobody', () async {
+      repository.extractedPatient = const MappingPatient(
+        id: 'p-none',
+        dateOfBirth: MappedProperty(value: '1980-01-01'),
+      );
+      holders.match = _patient('p-known');
+      seed(withPages);
+
+      bloc.add(const MappingInitiated(sessionId: 's'));
+      await settle();
+
+      final staged = session('s');
+      expect(staged.status, ProcessingStatus.patientExtracted);
+      expect(staged.patient.draft?.id, 'p-none');
+      expect(staged.patient.existing, isNull);
+      expect(staged.patient.mode, ImportMode.createNew);
+      expect(holders.candidates, isEmpty);
+      expect(bloc.state.status, isNot(isA<Failure>()));
+    });
+
     test('a cancel while the AI reads the patient stages nothing when the AI '
         'returns', () async {
       repository.basicInfoGate = Completer<void>();

@@ -329,6 +329,13 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
     }
   }
 
+  /// Whether a name or an identifier says who the patient is. A patient
+  /// read from a document without one is no patient found.
+  bool get isIdentified =>
+      familyName.value.isNotEmpty ||
+      givenName.value.isNotEmpty ||
+      patientIdentifier.value.isNotEmpty;
+
   @override
   bool get isValid =>
       familyName.isValid ||
