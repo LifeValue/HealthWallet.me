@@ -130,9 +130,13 @@ void main() {
 
   Future<void> connect() async {
     LinkedTcpService.link(phone.link, desktop.link);
+    // Idle too: the tables can match before a side has the answer to its own
+    // comparison, and that late answer would settle the test's next check.
+    bool settled(_Device d) =>
+        d.bloc.state.isSynced && d.bloc.state.syncStatus == LwwSyncStatus.idle;
     await until(
-      () => phone.bloc.state.isSynced && desktop.bloc.state.isSynced,
-      reason: 'both in sync',
+      () => settled(phone) && settled(desktop),
+      reason: 'both in sync, nothing in flight',
     );
   }
 
@@ -205,9 +209,9 @@ void main() {
   });
 
   test('a check the other device never answers ends with an error', () async {
-    LwwSyncBloc.ackTimeout = const Duration(milliseconds: 500);
     await start();
     await connect();
+    LwwSyncBloc.ackTimeout = const Duration(milliseconds: 500);
     desktop.link.dropTypes.add('sync.digest');
 
     phone.bloc.add(const SyncTriggered());

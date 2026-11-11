@@ -156,9 +156,13 @@ void main() {
 
   Future<void> connect() async {
     LinkedTcpService.link(phone.link, desktop.link);
+    // Idle too: the tables can match before a side has the answer to its own
+    // comparison, and that late answer would settle the test's next check.
+    bool settled(_Device d) =>
+        d.bloc.state.isSynced && d.bloc.state.syncStatus == LwwSyncStatus.idle;
     await _until(
-      () => phone.bloc.state.isSynced && desktop.bloc.state.isSynced,
-      reason: 'both in sync',
+      () => settled(phone) && settled(desktop),
+      reason: 'both in sync, nothing in flight',
     );
   }
 
@@ -198,9 +202,9 @@ void main() {
 
     test('a batch held past the phone\'s ack timeout is sent again and '
         'applied, and nothing is refused', () async {
-      LwwSyncBloc.ackTimeout = const Duration(milliseconds: 300);
       await start();
       await connect();
+      LwwSyncBloc.ackTimeout = const Duration(milliseconds: 300);
 
       await desktop.bloc.pauseApplying();
       await insertFhir(phone.db, id: 'slow', title: 'first');
