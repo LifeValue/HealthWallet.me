@@ -15,7 +15,7 @@ packages:
       path: "."
       ref: main
       resolved-ref: "1c136197270103a938f8755d52330a11b2ba4b02"
-      url: "ssh://git@git.techstackapps.com:2822/mobile/flutter/packages/flutter-airdrop.git"
+      url: "ssh://git@git.lifevalue.com:2822/mobile/flutter/packages/flutter-airdrop.git"
     source: git
     version: "1.0.0"
   analyzer:
@@ -600,7 +600,7 @@ packages:
       path: "."
       ref: HEAD
       resolved-ref: "737b764a12dc27dfcebdda2a58ac0374bee38b85"
-      url: "ssh://git@git.techstackapps.com:2822/mobile/health-wallet/fhir-ips-export.git"
+      url: "ssh://git@git.lifevalue.com:2822/mobile/health-wallet/fhir-ips-export.git"
     source: git
     version: "0.0.1"
   fhir_node:

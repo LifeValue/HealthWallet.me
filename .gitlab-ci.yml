@@ -82,7 +82,7 @@ stages:
   - check
   - deploy
 
-# The pubspec pins the private packages to ssh://git@git.techstackapps.com:2822/... URLs. Rewrite
+# The pubspec pins the private packages to ssh://git@git.lifevalue.com:2822/... URLs. Rewrite
 # them to HTTPS with the job token, through environment-scoped git config only: a `git config
 # --global` on the shared shell runner would persist into other projects' jobs with a dead token.
 .private_deps: &private_deps
