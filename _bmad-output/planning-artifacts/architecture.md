@@ -319,7 +319,7 @@ The commitment makes the sender fix its key before seeing the receiver's, so a m
 
 ## CI/CD
 
-GitLab CI (`.gitlab-ci.yml`) on `git.techstackapps.com/mobile/health-wallet/app`.
+GitLab CI (`.gitlab-ci.yml`) on `git.lifevalue.com/mobile/health-wallet/app`.
 
 - **checks**: every push, Linux runners, `debian:bookworm-slim` with Flutter cloned at the pinned tag (cirruslabs images stop at 3.44). Runs `flutter pub get`, `dart run build_runner build`, `flutter analyze --no-fatal-infos --no-fatal-warnings`, `flutter test`. No secrets.
 - **ios:testflight / macos:testflight / android:play-internal**: automatic on `develop`, manual elsewhere (the branch must be protected to see protected variables). `shell-macmini` runner, fastlane `beta`, one `resource_group` each. Automatic signing: certificates in the runner's login keychain, profiles via the App Store Connect API key and `-allowProvisioningUpdates`. Android Gradle runs on Temurin JDK 17 (`ANDROID_JDK_*`, cached per runner, set through `org.gradle.java.home`).
