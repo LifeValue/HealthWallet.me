@@ -1,6 +1,7 @@
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/holders/domain/entity/holder_patient.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
 
@@ -241,7 +242,15 @@ class FhirPatientExtractor {
     return l10n?.id ?? 'ID';
   }
 
+  /// The patient's main identifier, or '' when there is none. The default
+  /// holder's placeholder ([HolderPatient.placeholderRowId]) is not a real
+  /// identifier, so it reads as none too.
   static String extractPatientIdentifierValue(Patient patient) {
+    final value = _identifierValue(patient);
+    return value == HolderPatient.placeholderRowId ? '' : value;
+  }
+
+  static String _identifierValue(Patient patient) {
     if (patient.identifier == null || patient.identifier!.isEmpty) {
       return '';
     }

@@ -73,7 +73,7 @@ class PatientCardDetails extends StatelessWidget {
                 BlendMode.srcIn,
               ),
             ),
-            '${FhirFieldExtractor.extractPatientIdentifierLabel(displayPatient, l10n: context.l10n)}: ${FhirFieldExtractor.extractPatientIdentifierValue(displayPatient)}',
+            '${FhirFieldExtractor.extractPatientIdentifierLabel(displayPatient, l10n: context.l10n)}: ${_orDash(FhirFieldExtractor.extractPatientIdentifierValue(displayPatient))}',
           ),
           _buildPatientInfoRow(
             context,
@@ -85,7 +85,7 @@ class PatientCardDetails extends StatelessWidget {
                 BlendMode.srcIn,
               ),
             ),
-            '${context.l10n.age}: ${FhirFieldExtractor.extractPatientAge(displayPatient, l10n: context.l10n)} (${_formatBirthDate(context, displayPatient)})',
+            _ageLine(context, displayPatient),
           ),
         ],
       ),
@@ -216,6 +216,20 @@ class PatientCardDetails extends StatelessWidget {
     }
   }
 
+  static String _orDash(String value) => value.isEmpty ? '-' : value;
+
+  /// The age, with the birth date in brackets when there is one.
+  String _ageLine(BuildContext context, Patient patient) {
+    final age = FhirFieldExtractor.extractPatientAge(
+      patient,
+      l10n: context.l10n,
+    );
+    final birthDate = _formatBirthDate(context, patient);
+    return birthDate.isEmpty
+        ? '${context.l10n.age}: $age'
+        : '${context.l10n.age}: $age ($birthDate)';
+  }
+
   String _formatBirthDate(BuildContext context, Patient patient) {
     final birthDate = FhirFieldExtractor.extractPatientBirthDate(patient);
     if (birthDate == null) return patient.birthDate?.toString() ?? '';
@@ -228,9 +242,8 @@ class PatientCardDetails extends StatelessWidget {
       patient.contact?.firstOrNull?.telecom,
       'phone',
     );
-    final display = (phone != null && phone.isNotEmpty)
-        ? PhoneDisplayFormatter.format(phone)
-        : '-';
+    // A saved country code without a number is no number.
+    final display = _orDash(PhoneDisplayFormatter.format(phone));
 
     return _buildPatientInfoRow(
       context,

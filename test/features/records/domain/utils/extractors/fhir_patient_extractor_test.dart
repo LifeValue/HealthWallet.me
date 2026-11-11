@@ -537,6 +537,11 @@ void main() {
         '943 476 5919',
       ),
       (
+        'the default holder placeholder is no identifier',
+        [identifier(value: 'default_patient', typeCode: 'NH')],
+        '',
+      ),
+      (
         'DNI',
         [identifier(value: '12345678Z', typeCode: 'NI', typeText: 'DNI')],
         '12345678Z',

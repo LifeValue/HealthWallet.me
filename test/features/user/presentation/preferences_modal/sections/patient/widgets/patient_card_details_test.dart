@@ -2,6 +2,10 @@ import 'package:bloc_test/bloc_test.dart' show MockBloc, whenListen;
 import 'package:fhir_r4/fhir_r4.dart'
     show
         AdministrativeGender,
+        CodeableConcept,
+        Coding,
+        FhirCode,
+        Identifier,
         ContactPoint,
         ContactPointSystem,
         FhirDate,
@@ -167,14 +171,38 @@ void main() {
     });
   });
 
-  testWidgets('the birth date shows next to the age, and nothing in the '
-      'brackets when there is none', (tester) async {
+  testWidgets('the birth date shows next to the age, and no empty brackets '
+      'when there is none', (tester) async {
     await showDetails(tester, _patient(birthDate: '1980-03-14'));
     expect(find.textContaining('14'), findsWidgets);
     expect(find.textContaining('1980'), findsOne);
 
     await showDetails(tester, _patient());
-    expect(find.textContaining('()'), findsOne);
+    expect(find.textContaining('()'), findsNothing);
+    expect(find.textContaining('${_en.age}: '), findsOne);
+  });
+
+  testWidgets('the default holder\'s placeholder ID shows as a dash', (
+    tester,
+  ) async {
+    await showDetails(
+      tester,
+      Patient(
+        id: 'default_patient',
+        sourceId: 'wallet-default_patient',
+        identifier: [
+          Identifier(
+            type: CodeableConcept(
+              coding: [Coding(code: FhirCode('NH'))],
+            ),
+            value: FhirString('default_patient'),
+          ),
+        ],
+      ),
+    );
+
+    expect(find.textContaining('default_patient'), findsNothing);
+    expect(find.textContaining(': -'), findsWidgets);
   });
 
   testWidgets('the emergency phone shows formatted, and "-" when there is '
@@ -186,6 +214,10 @@ void main() {
     );
 
     await showDetails(tester, _patient());
+    expect(find.text('${_en.emergencyContact}: -'), findsOne);
+
+    // A country code saved without a number is no number.
+    await showDetails(tester, _patient(emergencyPhone: '+40'));
     expect(find.text('${_en.emergencyContact}: -'), findsOne);
   });
 
