@@ -632,6 +632,9 @@ class LwwSyncService {
   /// replaces the local copy, an attachment the incoming url doesn't find
   /// here keeps the local url of the same attachment (same position and
   /// title), so the record doesn't lose a file this device already has.
+  /// When the incoming attachment states its `size`, the local file must
+  /// have it: another size is another file (a backup restore brings back an
+  /// older file under a new name, for one), which this device then requests.
   Future<Map<String, Object?>> _keepLocalAttachmentUrls(
     Map<String, Object?> incoming,
     Map<String, dynamic> local,
@@ -657,7 +660,10 @@ class LwwSyncService {
         final mine = localAttachments[i];
         final minePath = _filePath(mine);
         if (minePath == null || mine['title'] != attachment['title']) continue;
-        if (!await _fileExists(minePath)) continue;
+        final myFile = await _attachmentSync.resolveFile(minePath);
+        if (myFile == null) continue;
+        final size = int.tryParse('${attachment['size']}');
+        if (size != null && await myFile.length() != size) continue;
         attachment['url'] = mine['url'];
         changed = true;
       }
