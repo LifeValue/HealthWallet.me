@@ -20,6 +20,7 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_observation.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_vision_prescription.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
@@ -65,6 +66,9 @@ class _FakeProcessingRepository extends Fake implements ProcessingRepository {
     encounterType: MappedProperty(value: 'Checkup'),
   );
   Exception? basicInfoError;
+
+  /// Holds the step-one AI call until completed, when set.
+  Completer<void>? basicInfoGate;
 
   /// The step-two stream, fed by each test.
   // ignore: close_sinks, closed in the test's tearDown.
@@ -120,6 +124,7 @@ class _FakeProcessingRepository extends Fake implements ProcessingRepository {
       documentCategory: null,
       useVision: null,
     ));
+    await basicInfoGate?.future;
     if (basicInfoError != null) throw basicInfoError!;
     return (extractedPatient, container);
   }
@@ -593,6 +598,66 @@ void main() {
       expect(session('s').status, ProcessingStatus.pending);
     });
 
+    test('a handover whose patient step failed is not reopened when the next '
+        'session ends', () async {
+      repository.basicInfoError = Exception('decode error');
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(
+              id: 'h',
+              filePaths: ['/h.jpg'],
+              origin: ProcessingOrigin.handover,
+            ),
+            ProcessingSession(id: 'q', filePaths: ['/q.jpg']),
+          ],
+          sessionImagePaths: {
+            'h': ['/h.jpg'],
+            'q': ['/q.jpg'],
+          },
+        ),
+      );
+
+      bloc.add(const MappingInitiated(sessionId: 'h'));
+      await settle();
+      expect(session('h').status, ProcessingStatus.pending);
+      expect((bloc.state.status as Failure).sessionId, 'h');
+
+      repository.basicInfoError = null;
+      bloc.add(const MappingInitiated(sessionId: 'q'));
+      await settle();
+
+      expect(session('q').status, ProcessingStatus.patientExtracted);
+      // The handover waits for the user to retry it.
+      expect(session('h').status, ProcessingStatus.pending);
+      expect(bloc.state.displayedSessionId, isNull);
+      expect(repository.basicInfoCalls.map((c) => c.input), [
+        ['/h.jpg'],
+        ['/q.jpg'],
+      ]);
+    });
+
+    test('a session removed while its patient is read is announced as a '
+        'document', () async {
+      repository.basicInfoGate = Completer<void>();
+      seed(withPages);
+      bloc.add(const MappingInitiated(sessionId: 's'));
+      await settle();
+      expect(session('s').status, ProcessingStatus.processingPatient);
+
+      // The session is gone (cleared) before the AI answers.
+      seed(const ProcessingState());
+      repository.basicInfoGate!.complete();
+      await settle();
+
+      expect(bloc.state.sessions, isEmpty);
+      expect(
+        bloc.state.notification!.text,
+        _en.processingPatientInfoExtracted(_en.fhirTypeDocumentReference),
+      );
+      expect(routeSessionId(bloc.state.notification!.route), 's');
+    });
+
     group('OCR pre-match', () {
       Future<void> run() async {
         seed(withPages);
@@ -925,6 +990,25 @@ void main() {
         const PipelineStatus.capacityFailure(sessionId: 's'),
       );
     });
+
+    test('a handover whose records step failed is not continued by the '
+        'queue until the user retries it', () async {
+      seed(withPages(extracted.copyWith(origin: ProcessingOrigin.handover)));
+      bloc.add(const ProcessRemainingResources(sessionId: 's'));
+      await settle();
+      repository.remaining.addError(Exception('decode error'));
+      await settle();
+      expect(session('s').status, ProcessingStatus.patientExtracted);
+
+      bloc.add(
+        const ProcessRemainingResources(sessionId: 's', automatic: true),
+      );
+      await settle();
+
+      expect(session('s').status, ProcessingStatus.patientExtracted);
+      expect(repository.remainingCalls, hasLength(1));
+      expect((bloc.state.status as Failure).sessionId, 's');
+    });
   });
 
   group('cancel', () {
@@ -1206,6 +1290,51 @@ void main() {
       final docs = documents.calls.single;
       expect(docs.encounter, isNull);
       expect(docs.title, 'CBC');
+    });
+
+    test('a prescription already in the wallet without a visit is completed '
+        'with the scanned visit and points at it', () async {
+      records.patients = [
+        const VisionPrescription(
+          id: 'rx-old',
+          sourceId: 'src-old',
+          subjectId: 'p-old',
+          rawResource: {
+            'resourceType': 'VisionPrescription',
+            'id': 'rx-old',
+            'status': 'active',
+          },
+        ),
+      ];
+      await save(
+        const ProcessingSession(
+          id: 's',
+          status: ProcessingStatus.draft,
+          patient: newPatient,
+          encounter: StagedEncounter(draft: MappingEncounter(id: 'enc')),
+          resources: [
+            MappingVisionPrescription(
+              id: 'rx-read',
+              existingId: 'rx-old',
+              provenance: 'optika@1',
+            ),
+          ],
+        ),
+      );
+
+      final [primaries, completions] = sync.saved;
+      expect(primaries.map((r) => r.id), ['p-new', 'enc']);
+      // The stored row is completed, not saved again as the twin.
+      final completed = completions.single;
+      expect(completed.id, 'rx-old');
+      expect(completed.sourceId, 'src-old');
+      expect(completed.encounterId, 'enc');
+      expect(
+        (completed.rawResource['encounter'] as Map)['reference'],
+        'Encounter/enc',
+      );
+      expect(completed.rawResource['status'], 'active');
+      expect(bloc.state.status, const PipelineStatus.success(sessionId: 's'));
     });
 
     test('a failed document save fails the save with its reason', () async {
