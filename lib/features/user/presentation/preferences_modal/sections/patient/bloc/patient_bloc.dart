@@ -19,12 +19,15 @@ part 'patient_state.dart';
 @injectable
 class PatientBloc extends Bloc<PatientEvent, PatientState> {
   /// The steps of switching patient (close the open card, move the new one
-  /// to the top, open it), about 0.9 s in all. Opening takes longer than the
-  /// rest so the details unfold smoothly. They match the card and list
-  /// animations in `UnifiedPatientCard` and `AnimatedReorderableList`.
+  /// to the top, open it), about 0.9 s in all. The new card grows for
+  /// [switchCardOpen] at one speed, and its details start fading in
+  /// [switchDetailsDelay] into that, so both end together. They match the
+  /// card and list animations in `UnifiedPatientCard` and
+  /// `AnimatedReorderableList`.
   static const switchCardMotion = Duration(milliseconds: 140);
   static const switchCardSettle = Duration(milliseconds: 210);
   static const switchCardOpen = Duration(milliseconds: 350);
+  static const switchDetailsDelay = Duration(milliseconds: 120);
   static const switchStepGap = Duration(milliseconds: 35);
 
   final HolderService _holderService;
@@ -246,7 +249,7 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
       ),
     );
 
-    await Future.delayed(switchCardOpen);
+    await Future.delayed(switchDetailsDelay);
 
     emit(
       state.copyWith(
@@ -254,6 +257,7 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
       ),
     );
 
+    await Future.delayed(switchCardOpen - switchDetailsDelay);
     await Future.delayed(switchStepGap);
 
     emit(

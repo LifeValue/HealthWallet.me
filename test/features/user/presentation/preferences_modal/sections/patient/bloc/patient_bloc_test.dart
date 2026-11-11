@@ -515,6 +515,7 @@ void main() {
     const motion = PatientBloc.switchCardMotion;
     const settle = PatientBloc.switchCardSettle;
     const open = PatientBloc.switchCardOpen;
+    const details = PatientBloc.switchDetailsDelay;
     const gap = PatientBloc.switchStepGap;
 
     /// Runs [body] in fake time with the patients read (Jane first, her
@@ -593,7 +594,7 @@ void main() {
                 'list tom,jane, selected tom',
           ),
           (
-            motion * 2 + settle + open + gap,
+            motion * 2 + settle + gap + details,
             'expanding, tapped tom, open {tom}, list tom,jane, selected tom',
           ),
           (whole, 'none, open {tom}, list tom,jane, selected tom'),
@@ -640,7 +641,7 @@ void main() {
                 'list tom,jane, selected tom',
           ),
           (
-            gap + motion + open,
+            gap + motion + details,
             'expanding, tapped tom, open {tom}, list tom,jane, selected tom',
           ),
           (whole, 'none, open {tom}, list tom,jane, selected tom'),

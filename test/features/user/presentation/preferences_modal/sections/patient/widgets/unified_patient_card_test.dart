@@ -131,8 +131,10 @@ void main() {
   double arrowTurns(WidgetTester tester) =>
       tester.widget<AnimatedRotation>(find.byType(AnimatedRotation)).turns;
 
-  double scale(WidgetTester tester) =>
-      tester.widget<AnimatedContainer>(card()).transform!.getMaxScaleOnAxis();
+  /// The card is never scaled: a pulse at the end of opening read as a
+  /// twitch at the switch's speed.
+  bool unscaled(WidgetTester tester) =>
+      tester.widget<AnimatedContainer>(card()).transform == null;
 
   testWidgets('a closed card shows the name family first, an arrow pointing '
       'down and no details', (tester) async {
@@ -144,7 +146,7 @@ void main() {
     expect(find.text(_en.editDetails), findsNothing);
     expect(decoration(tester).color, Colors.transparent);
     expect(borderColor(tester), _border);
-    expect(scale(tester), 1.0);
+    expect(unscaled(tester), isTrue);
   });
 
   testWidgets('a patient without a structured name shows their title', (
@@ -251,12 +253,24 @@ void main() {
     expect(find.text(_en.editDetails), findsOneWidget);
   });
 
-  testWidgets('a card opening shows its details while still closed, grows '
-      'a little and is lightly highlighted', (tester) async {
+  testWidgets('the details grow at one speed, the time the switch gives to '
+      'opening, whether or not the card is still opening', (tester) async {
+    Duration growth() =>
+        tester.widget<AnimatedSize>(find.byType(AnimatedSize)).duration;
+
+    await showCard(tester, isExpanding: true);
+    expect(growth(), PatientBloc.switchCardOpen);
+
+    await showCard(tester);
+    expect(growth(), PatientBloc.switchCardOpen);
+  });
+
+  testWidgets('a card opening shows its details while still closed, keeps '
+      'its size and is lightly highlighted', (tester) async {
     await showCard(tester, isExpanding: true);
 
     expect(find.byType(PatientCardDetails), findsOneWidget);
-    expect(scale(tester), closeTo(1.02, 0.0001));
+    expect(unscaled(tester), isTrue);
     expect(
       decoration(tester).color,
       AppColors.primary.withValues(alpha: 0.05),
