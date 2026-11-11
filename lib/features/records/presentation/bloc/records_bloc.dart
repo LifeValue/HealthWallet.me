@@ -173,6 +173,28 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     );
   }
 
+  /// [from] with [personId]'s own filters, or none, when they are not the
+  /// person shown; the app adds no filters itself. A new person ends a
+  /// visit a Home card filtered.
+  RecordsState _showPerson(RecordsState from, String? personId) {
+    if (personId == _personId) return from;
+    _personId = personId;
+    _visitOnly = false;
+    final store = _filterStore;
+    if (store == null) return from;
+    final saved = personId == null ? RecordsFilters.none : store.load(personId);
+    return from.copyWith(
+      activeFilters: saved.types,
+      activeSpecialties: saved.specialties,
+      dateFilter: saved.dateFilter,
+    );
+  }
+
+  /// The state a filter event changes: a Home card's person's own filters
+  /// when the card names someone else than the person shown.
+  RecordsState _baseFor(String? personId) =>
+      personId == null ? state : _showPerson(state, personId);
+
   Future<void> _onInitialised(
     RecordsInitialised event,
     Emitter<RecordsState> emit,
@@ -197,30 +219,19 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsSourceChanged event,
     Emitter<RecordsState> emit,
   ) async {
-    var nextState = state.copyWith(
-      sourceId: event.sourceId,
-      sourceIds: event.sourceIds,
-      resources: [],
-      hasMorePages: true,
+    // The same person again (each visit, a sync) keeps the filters shown,
+    // also those a Home card set for this visit.
+    emit(
+      _showPerson(
+        state.copyWith(
+          sourceId: event.sourceId,
+          sourceIds: event.sourceIds,
+          resources: [],
+          hasMorePages: true,
+        ),
+        event.isShareContext ? null : event.personId,
+      ),
     );
-
-    // Another person: their own filters, or none. The app adds none itself.
-    final personId = event.isShareContext ? null : event.personId;
-    final store = _filterStore;
-    if (personId != _personId && store != null) {
-      final saved = personId == null
-          ? RecordsFilters.none
-          : store.load(personId);
-      nextState = nextState.copyWith(
-        activeFilters: saved.types,
-        activeSpecialties: saved.specialties,
-        dateFilter: saved.dateFilter,
-      );
-    }
-    _personId = personId;
-    _visitOnly = false;
-
-    emit(nextState);
 
     await _loadResources(emit);
   }
@@ -230,7 +241,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     Emitter<RecordsState> emit,
   ) async {
     emit(
-      state.copyWith(
+      _baseFor(event.personId).copyWith(
         status: const RecordsStatus.loading(),
         activeFilters: event.filters,
         dateFilter: event.dateFilter,
@@ -555,7 +566,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     Emitter<RecordsState> emit,
   ) async {
     emit(
-      state.copyWith(
+      _baseFor(event.personId).copyWith(
         status: const RecordsStatus.loading(),
         activeSpecialties: event.specialties,
         resources: [],

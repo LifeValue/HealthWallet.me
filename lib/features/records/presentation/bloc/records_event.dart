@@ -42,11 +42,13 @@ abstract class RecordsFiltersApplied extends RecordsEvent
   const RecordsFiltersApplied._();
 
   /// [remember] false (a Home card) filters this visit only: the person's
-  /// saved filters stay as they were.
+  /// saved filters stay as they were. [personId] is the person the card
+  /// was shown for, whose records Records opens on next.
   const factory RecordsFiltersApplied(
     List<FhirType> filters, {
     DateFilter? dateFilter,
     @Default(true) bool remember,
+    String? personId,
   }) = _RecordsFiltersApplied;
 }
 
@@ -162,10 +164,12 @@ abstract class RecordsSpecialtyApplied extends RecordsEvent
   const RecordsSpecialtyApplied._();
 
   /// [remember] false (a Home card) filters this visit only: the person's
-  /// saved filters stay as they were.
+  /// saved filters stay as they were. [personId] is the person the card
+  /// was shown for, whose records Records opens on next.
   const factory RecordsSpecialtyApplied(
     List<MedicalSpecialty> specialties, {
     @Default(true) bool remember,
+    String? personId,
   }) = _RecordsSpecialtyApplied;
 }
 

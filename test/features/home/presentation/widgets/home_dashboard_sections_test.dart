@@ -11,6 +11,8 @@ import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_dialog.dart';
 import 'package:health_wallet/core/widgets/overlay_annotations/overlay_annotations.dart';
+import 'package:health_wallet/features/holders/domain/entity/holder.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
 import 'package:health_wallet/features/home/core/constants/home_constants.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
@@ -26,6 +28,7 @@ import 'package:health_wallet/features/home/presentation/widgets/home_overview_t
 import 'package:health_wallet/features/home/presentation/widgets/home_section_header.dart';
 import 'package:health_wallet/features/home/presentation/widgets/section_info_modal.dart';
 import 'package:health_wallet/features/home/presentation/widgets/source/source_selector_widget.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
@@ -732,6 +735,49 @@ void main() {
 
       expect(pageController.page, 1);
       expect(recordsBloc.added, isEmpty);
+    });
+  });
+
+  group('a Home card names the person shown', () {
+    const jane = Holder(
+      id: 'jane',
+      representativePatient: Patient(id: 'jane', sourceId: 'wallet-jane'),
+      sourceIds: ['wallet-jane'],
+      allPatientInstances: [Patient(id: 'jane', sourceId: 'wallet-jane')],
+    );
+    HomeState shownFor(OverviewViewMode mode) => _loaded(
+      mode: mode,
+    ).copyWith(scope: const HolderScope(holder: jane, loaded: true));
+
+    testWidgets('a specialty card', (tester) async {
+      await pump(tester, shownFor(OverviewViewMode.specialties));
+
+      await tester.tap(find.text(_dental));
+      await tester.pumpAndSettle();
+
+      expect(recordsBloc.added, [
+        const RecordsSpecialtyApplied(
+          [MedicalSpecialty.dental],
+          remember: false,
+          personId: 'jane',
+        ),
+      ]);
+    });
+
+    testWidgets('a records card', (tester) async {
+      await pump(tester, shownFor(OverviewViewMode.resources));
+
+      await tester.tap(find.text(_allergies));
+      await tester.pumpAndSettle();
+
+      expect(recordsBloc.added, [
+        const RecordsSpecialtyApplied([], remember: false, personId: 'jane'),
+        RecordsFiltersApplied(
+          HomeRecordsCategory.allergies.resourceTypes,
+          remember: false,
+          personId: 'jane',
+        ),
+      ]);
     });
   });
 }
