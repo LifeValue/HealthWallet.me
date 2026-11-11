@@ -514,6 +514,7 @@ void main() {
   group('switching patient by tapping their card', () {
     const motion = PatientBloc.switchCardMotion;
     const settle = PatientBloc.switchCardSettle;
+    const open = PatientBloc.switchCardOpen;
     const gap = PatientBloc.switchStepGap;
 
     /// Runs [body] in fake time with the patients read (Jane first, her
@@ -551,17 +552,17 @@ void main() {
     }
 
     test('closes the open card, moves the tapped patient first, selects '
-        'their person and opens their card, in under 0.8 s', () {
+        'their person and opens their card, in under 1 s', () {
       inFakeTime((async, bloc, shown) {
         bloc.add(const PatientReorder('tom'));
-        final whole = (motion + settle + gap) * 2;
+        final whole = motion * 2 + settle + open + gap * 2;
         async.elapse(whole - const Duration(milliseconds: 1));
         expect(bloc.state.animationPhase, isNot(PatientAnimationPhase.none));
 
         async.elapse(const Duration(milliseconds: 1));
 
-        expect(whole, const Duration(milliseconds: 770));
-        expect(whole, lessThanOrEqualTo(const Duration(milliseconds: 800)));
+        expect(whole, const Duration(milliseconds: 910));
+        expect(whole, lessThan(const Duration(seconds: 1)));
         expect(shown, [
           (
             Duration.zero,
@@ -592,7 +593,7 @@ void main() {
                 'list tom,jane, selected tom',
           ),
           (
-            (motion + settle) * 2 + gap,
+            motion * 2 + settle + open + gap,
             'expanding, tapped tom, open {tom}, list tom,jane, selected tom',
           ),
           (whole, 'none, open {tom}, list tom,jane, selected tom'),
@@ -616,7 +617,7 @@ void main() {
     test('with no card open, skips closing one', () {
       inFakeTime(cardOpen: false, (async, bloc, shown) {
         bloc.add(const PatientReorder('tom'));
-        final whole = motion + settle + gap * 2;
+        final whole = motion + open + gap * 2;
         async.elapse(whole - const Duration(milliseconds: 1));
         expect(bloc.state.animationPhase, isNot(PatientAnimationPhase.none));
 
@@ -639,7 +640,7 @@ void main() {
                 'list tom,jane, selected tom',
           ),
           (
-            gap + motion + settle,
+            gap + motion + open,
             'expanding, tapped tom, open {tom}, list tom,jane, selected tom',
           ),
           (whole, 'none, open {tom}, list tom,jane, selected tom'),

@@ -90,7 +90,7 @@ class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
                   _buildCardHeader(context, displayPatient, currentPatient),
                   AnimatedSize(
                     duration: Duration(
-                      milliseconds: widget.isExpanding ? 300 : 200,
+                      milliseconds: widget.isExpanding ? 500 : 300,
                     ),
                     curve: Curves.easeInOutCubic,
                     child: (isExpanded || widget.isExpanding)

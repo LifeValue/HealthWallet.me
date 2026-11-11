@@ -57,8 +57,9 @@ class PatientCardDetails extends StatelessWidget {
   Widget _buildIdentifierAndAgeRows(BuildContext context) {
     return AnimatedOpacity(
       duration: Duration(
-        milliseconds: isExpanding ? 100 : (isCollapsing ? 150 : 50),
+        milliseconds: isExpanding ? 100 : (isCollapsing ? 150 : 120),
       ),
+      curve: Curves.easeOut,
       opacity: (isExpanding || isCollapsing) ? 0.0 : 1.0,
       child: Column(
         children: [
@@ -94,8 +95,9 @@ class PatientCardDetails extends StatelessWidget {
   Widget _buildGenderBloodAndContactRows(BuildContext context) {
     return AnimatedOpacity(
       duration: Duration(
-        milliseconds: isExpanding ? 150 : (isCollapsing ? 100 : 75),
+        milliseconds: isExpanding ? 150 : (isCollapsing ? 100 : 180),
       ),
+      curve: Curves.easeOut,
       opacity: (isExpanding || isCollapsing) ? 0.0 : 1.0,
       child: Column(
         children: [
@@ -125,8 +127,9 @@ class PatientCardDetails extends StatelessWidget {
   Widget _buildEditButton(BuildContext context) {
     return AnimatedOpacity(
       duration: Duration(
-        milliseconds: isExpanding ? 200 : (isCollapsing ? 50 : 100),
+        milliseconds: isExpanding ? 200 : (isCollapsing ? 50 : 240),
       ),
+      curve: Curves.easeOut,
       opacity: (isExpanding || isCollapsing) ? 0.0 : 1.0,
       child: SizedBox(
         width: double.infinity,
