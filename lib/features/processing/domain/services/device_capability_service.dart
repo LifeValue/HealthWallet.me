@@ -24,17 +24,24 @@ class DeviceProfile {
 }
 
 class DeviceCapabilityService {
+  /// The RAM of an iPhone or iPad from its model identifier (iOS does not
+  /// report it). The only table in the app: every capability check reads it.
   static int estimateIosRam(String machine) {
     final iphone = RegExp(r'iPhone(\d+),(\d+)').firstMatch(machine);
     if (iphone != null) {
       final major = int.tryParse(iphone.group(1)!) ?? 0;
       final minor = int.tryParse(iphone.group(2)!) ?? 0;
-      if (major >= 17) return 8192;
-      if (major >= 15) return 6144;
+      // iPhone 15 Pro (16,x) and every model after it.
+      if (major >= 16) return 8192;
+      // iPhone 14 Pro, 15 and 15 Plus.
+      if (major == 15) return 6144;
+      // iPhone 13 Pro and Pro Max, 14 and 14 Plus; 13, 13 mini and SE are 4 GB.
       if (major == 14) {
         if (minor == 2 || minor == 3 || minor == 7 || minor == 8) return 6144;
         return 4096;
       }
+      // iPhone 12 Pro and Pro Max; 12 and 12 mini are 4 GB.
+      if (major == 13 && (minor == 3 || minor == 4)) return 6144;
       return 4096;
     }
 

@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
+import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart'
+    as processing;
 
 import '../../helpers/log_capture.dart';
 
@@ -24,6 +26,77 @@ void main() {
 
     test('falls back to 4096 MB for an unknown machine', () {
       expect(DeviceCapabilityService.estimateIosRam('arm64'), 4096);
+    });
+
+    test('knows the 6 GB iPhone 13 Pro Max from the 4 GB iPhone 13', () {
+      expect(DeviceCapabilityService.estimateIosRam('iPhone14,3'), 6144);
+      expect(DeviceCapabilityService.estimateIosRam('iPhone14,2'), 6144);
+      expect(DeviceCapabilityService.estimateIosRam('iPhone14,5'), 4096);
+    });
+
+    test('reads the same table as the AI pipeline', () {
+      for (final machine in [
+        'iPhone13,4',
+        'iPhone14,3',
+        'iPhone14,6',
+        'iPhone15,4',
+        'iPhone16,1',
+        'iPhone18,3',
+        'iPad13,4',
+        'arm64',
+      ]) {
+        expect(
+          DeviceCapabilityService.estimateIosRam(machine),
+          processing.DeviceCapabilityService.estimateIosRam(machine),
+          reason: machine,
+        );
+      }
+    });
+  });
+
+  group('classifyCapability', () {
+    DeviceAiCapability iPhone(String machine) =>
+        DeviceCapabilityService.classifyCapability(
+          DeviceCapabilityService.estimateIosRam(machine),
+          platform: 'ios',
+        );
+
+    test('gives a 6 GB iPhone Deep Scan', () {
+      expect(iPhone('iPhone14,3'), DeviceAiCapability.full);
+      expect(iPhone('iPhone15,2'), DeviceAiCapability.full);
+    });
+
+    test('gives a 4 GB iPhone text processing only', () {
+      expect(iPhone('iPhone14,5'), DeviceAiCapability.basicOnly);
+      expect(iPhone('iPhone12,1'), DeviceAiCapability.basicOnly);
+    });
+
+    test('gives an iPhone under 4 GB no AI', () {
+      expect(
+        DeviceCapabilityService.classifyCapability(3072, platform: 'ios'),
+        DeviceAiCapability.unsupported,
+      );
+    });
+
+    test('asks an Android phone for 10 GB, and 11 GB for Deep Scan', () {
+      DeviceAiCapability android(int ramMB) =>
+          DeviceCapabilityService.classifyCapability(
+            ramMB,
+            platform: 'android',
+          );
+
+      expect(android(8192), DeviceAiCapability.unsupported);
+      expect(android(10240), DeviceAiCapability.basicOnly);
+      expect(android(11264), DeviceAiCapability.full);
+    });
+
+    test('lets a desktop run everything', () {
+      for (final platform in ['macos', 'windows', 'linux']) {
+        expect(
+          DeviceCapabilityService.classifyCapability(2048, platform: platform),
+          DeviceAiCapability.full,
+        );
+      }
     });
   });
 
