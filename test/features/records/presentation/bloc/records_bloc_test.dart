@@ -28,6 +28,9 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
   List<IFhirResource> patients = const [Patient(id: 'p')];
   List<IFhirResource> searchResults = [];
   List<IFhirResource> related = [];
+
+  /// What one record's related query returns instead of [related].
+  final relatedOf = <String, List<IFhirResource>>{};
   Exception? error;
   bool demoLoaded = false;
   final queries = <_Query>[];
@@ -100,7 +103,10 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
   @override
   Future<List<IFhirResource>> getRelatedResources({
     required IFhirResource resource,
-  }) async => related;
+  }) async {
+    await _answer();
+    return relatedOf[resource.id] ?? related;
+  }
 
   @override
   Future<void> loadDemoData() async {
@@ -217,6 +223,24 @@ void main() {
       expect(repository.queries.last.offset, 20);
       expect(state.resources, hasLength(25));
       expect(state.hasMorePages, isFalse);
+    });
+
+    test('scrolling on while the next page loads loads it once', () async {
+      repository.page = encounters(20);
+      await run(const RecordsInitialised());
+      repository.hold = true;
+
+      bloc
+        ..add(const RecordsLoadMore())
+        ..add(const RecordsLoadMore());
+      await pumpEventQueue();
+      for (final answer in repository.held) {
+        answer.complete();
+      }
+      await pumpEventQueue();
+
+      expect(repository.queries.map((q) => q.offset), [0, 20]);
+      expect(bloc.state.resources, hasLength(40));
     });
 
     test('no next page is loaded after the last one', () async {
@@ -722,6 +746,24 @@ void main() {
       final state = await run(const RecordDetailLoaded(Observation(id: 'o')));
 
       expect(state.relatedResources, hasLength(1));
+    });
+
+    test('only the last record opened shows its related records', () async {
+      repository
+        ..relatedOf['o1'] = encounters(1)
+        ..relatedOf['o2'] = encounters(2)
+        ..hold = true;
+
+      bloc
+        ..add(const RecordDetailLoaded(Observation(id: 'o1')))
+        ..add(const RecordDetailLoaded(Observation(id: 'o2')));
+      await pumpEventQueue();
+      repository.held[1].complete();
+      await pumpEventQueue();
+      repository.held[0].complete();
+      await pumpEventQueue();
+
+      expect(bloc.state.relatedResources, hasLength(2));
     });
 
     test('a failed load fails the detail', () async {

@@ -51,25 +51,50 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     this._specialtyClassifier, [
     this._filterStore,
   ]) : super(const RecordsState()) {
-    on<RecordsInitialised>(_onInitialised);
-    on<RecordsLoadMore>(_onLoadMore);
-    on<RecordsSourceChanged>(_onSourceChanged);
-    on<RecordsFiltersApplied>(_onFiltersApplied);
-    on<RecordsFilterRemoved>(_onFilterRemoved);
-    on<RecordDetailLoaded>(_onRecordDetailLoaded);
-    on<LoadDemoData>(_onLoadDemoData);
-    on<ClearDemoData>(_onClearDemoData);
-    on<RecordsSearch>(_onSearch);
-    on<RecordsSearchExecuted>(_onSearchExecuted);
+    // A newer event of the same kind replaces one still loading; across
+    // kinds, _loadResources keeps only the latest load's records.
+    on<RecordsInitialised>(_onInitialised, transformer: restartable());
+    // A page asked for again while it loads would be listed twice.
+    on<RecordsLoadMore>(_onLoadMore, transformer: droppable());
+    on<RecordsSourceChanged>(_onSourceChanged, transformer: restartable());
+    on<RecordsFiltersApplied>(_onFiltersApplied, transformer: restartable());
+    on<RecordsFilterRemoved>(_onFilterRemoved, transformer: restartable());
+    on<RecordDetailLoaded>(_onRecordDetailLoaded, transformer: restartable());
+    on<LoadDemoData>(_onLoadDemoData, transformer: droppable());
+    on<ClearDemoData>(_onClearDemoData, transformer: droppable());
+    on<RecordsSearch>(_onSearch, transformer: restartable());
+    on<RecordsSearchExecuted>(_onSearchExecuted, transformer: restartable());
     on<RecordsSharePressed>(_onRecordsSharePressed, transformer: droppable());
-    on<RecordsSelectionToggled>(_onSelectionToggled);
-    on<RecordsSelectionCleared>(_onSelectionCleared);
-    on<RecordsSelectionModeToggled>(_onSelectionModeToggled);
-    on<RecordsDateRangeCleared>(_onDateRangeCleared);
-    on<RecordsResourceDeleted>(_onResourceDeleted);
-    on<RecordsSpecialtyApplied>(_onSpecialtyApplied);
-    on<RecordsRefreshRequested>(_onRefreshRequested);
-    on<RecordsClearAllFilters>(_onClearAllFilters);
+    on<RecordsSelectionToggled>(
+      _onSelectionToggled,
+      transformer: sequential(),
+    );
+    on<RecordsSelectionCleared>(
+      _onSelectionCleared,
+      transformer: sequential(),
+    );
+    on<RecordsSelectionModeToggled>(
+      _onSelectionModeToggled,
+      transformer: sequential(),
+    );
+    on<RecordsDateRangeCleared>(
+      _onDateRangeCleared,
+      transformer: restartable(),
+    );
+    // Every deletion asked for is made, one after the other.
+    on<RecordsResourceDeleted>(_onResourceDeleted, transformer: sequential());
+    on<RecordsSpecialtyApplied>(
+      _onSpecialtyApplied,
+      transformer: restartable(),
+    );
+    on<RecordsRefreshRequested>(
+      _onRefreshRequested,
+      transformer: restartable(),
+    );
+    on<RecordsClearAllFilters>(
+      _onClearAllFilters,
+      transformer: restartable(),
+    );
     // One leave at a time: the next waits for the reload the last started.
     on<RecordsVisitEnded>(_onVisitEnded, transformer: sequential());
   }
