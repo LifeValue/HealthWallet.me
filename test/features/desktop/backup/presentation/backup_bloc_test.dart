@@ -8,6 +8,7 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/desktop/backup/data/services/backup_service.dart';
+import 'package:health_wallet/features/desktop/backup/data/services/safety_copy_expiry_scheduler.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/restore_result.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
@@ -605,4 +606,101 @@ void main() {
       expect(bloc.state.error, isNull);
     });
   });
+
+  group('on the desktop, with the safety copy expiry scheduler', () {
+    late List<String> calls;
+    late FakeBackupService service;
+    late FakeExpiryScheduler expiry;
+
+    setUp(() async {
+      calls = [];
+      service = FakeBackupService(calls)
+        ..add('b1', name: 'October')
+        ..add('s1', name: 'Before restore');
+      expiry = FakeExpiryScheduler(calls);
+      getIt.registerSingleton<LwwSyncBloc>(FakeLwwSyncBloc(calls));
+      getIt.registerSingleton<AppPlatform>(AppPlatform.desktop);
+      bloc = BackupBloc(
+        service,
+        tcp,
+        AppStringsProvider.forLocale(locale),
+        expiry: expiry,
+      );
+      bloc.add(const BackupHistoryLoaded());
+      await bloc.stream.firstWhere((s) => s.hasUserSelectedPath);
+      calls.clear();
+    });
+
+    test('a restore keeps the backup it restores from the expiry until it '
+        'is over', () async {
+      bloc.add(const RestoreRequested(backupId: 's1'));
+      await bloc.stream.firstWhere((s) => !s.isRestoring);
+      await pumpEventQueue();
+
+      expect(calls.first, 'list');
+      expect(calls[1], 'keep s1');
+      expect(calls.indexOf('restore'), greaterThan(1));
+      expect(calls.last, 'release s1');
+    });
+
+    test('copies the scheduler deleted leave the list, and the selection '
+        'when it was one of them', () async {
+      bloc.add(BackupSelected(service.backups.last));
+      await bloc.stream.firstWhere((s) => s.selectedBackup?.id == 's1');
+      service.backups.removeWhere((b) => b.id == 's1');
+
+      expiry.expire(1);
+      final shown = await bloc.stream.firstWhere(
+        (s) => s.backupHistory.length == 1,
+      );
+
+      expect(shown.backupHistory.single.id, 'b1');
+      expect(shown.selectedBackup, isNull);
+    });
+
+    test('a selection the scheduler did not delete stays', () async {
+      bloc.add(BackupSelected(service.backups.first));
+      await bloc.stream.firstWhere((s) => s.selectedBackup?.id == 'b1');
+      service.backups.removeWhere((b) => b.id == 's1');
+
+      expiry.expire(1);
+      final shown = await bloc.stream.firstWhere(
+        (s) => s.backupHistory.length == 1,
+      );
+
+      expect(shown.selectedBackup?.id, 'b1');
+    });
+
+    test('stops listening to the scheduler once closed', () async {
+      await bloc.close();
+
+      expect(expiry.hasListener, isFalse);
+    });
+  });
+}
+
+/// Records the backups a restore keeps, in the same [calls], and lets a test
+/// say that copies expired.
+class FakeExpiryScheduler extends Fake implements SafetyCopyExpiryScheduler {
+  FakeExpiryScheduler(this.calls);
+
+  final List<String> calls;
+  final _expired = StreamController<int>.broadcast();
+
+  bool get hasListener => _expired.hasListener;
+
+  void expire(int count) => _expired.add(count);
+
+  @override
+  Stream<int> get expired => _expired.stream;
+
+  @override
+  Future<T> keepWhile<T>(String backupId, Future<T> Function() work) async {
+    calls.add('keep $backupId');
+    try {
+      return await work();
+    } finally {
+      calls.add('release $backupId');
+    }
+  }
 }

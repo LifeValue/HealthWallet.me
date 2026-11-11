@@ -63,6 +63,28 @@ class HookedDatabase extends AppDatabase {
   }
 }
 
+/// The real service, except that its expiry deletes nothing while
+/// [failDeletes] is set.
+class ExpiryFailingBackupService extends BackupService {
+  ExpiryFailingBackupService(
+    super.database,
+    super.folderAccess,
+    super.pathResolver,
+    super.references,
+    super.attachments,
+    super.legacyFolders,
+  );
+
+  bool failDeletes = true;
+
+  @override
+  Future<int> deleteExpiredSafetyCopies({
+    DateTime? now,
+    Set<String> keep = const {},
+  }) async =>
+      failDeletes ? 0 : super.deleteExpiredSafetyCopies(now: now, keep: keep);
+}
+
 /// A backup folder, a documents folder and an in-memory database, in a real
 /// temporary directory, with helpers for records and their files.
 class BackupFixture {
@@ -98,6 +120,21 @@ class BackupFixture {
       AttachmentReferences(db),
       AttachmentSyncService(resolver),
       FixedLegacyFolders(legacyFolders),
+    );
+  }
+
+  /// A service on this fixture whose expiry deletes nothing while
+  /// [ExpiryFailingBackupService.failDeletes] is set, as when every expired
+  /// copy is locked.
+  ExpiryFailingBackupService failingExpiryService() {
+    final resolver = DocsPathResolver(docs.path);
+    return ExpiryFailingBackupService(
+      db,
+      FakeFolderAccess(),
+      resolver,
+      AttachmentReferences(db),
+      AttachmentSyncService(resolver),
+      FixedLegacyFolders(),
     );
   }
 

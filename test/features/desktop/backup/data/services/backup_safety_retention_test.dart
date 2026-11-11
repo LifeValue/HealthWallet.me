@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -137,7 +138,7 @@ void main() {
     });
 
     test(
-      'a shorter value deletes the older copies at the next start-up',
+      'a shorter value deletes the older copies at the next expiry run',
       () async {
         final day10 = await backupMade(const Duration(days: 10));
         final day2 = await backupMade(const Duration(days: 2));
@@ -193,6 +194,35 @@ void main() {
       expect(File(copy.filePath).existsSync(), isFalse);
     });
 
+    test('a copy expires at the very moment its retention ends', () async {
+      await service.setSafetyCopyRetentionDays(1);
+      final copy = await backupMade(Duration.zero);
+      final expiry = copy.timestamp.add(const Duration(days: 1));
+
+      expect(
+        await service.deleteExpiredSafetyCopies(
+          now: expiry.subtract(const Duration(microseconds: 1)),
+        ),
+        0,
+      );
+      expect(await service.deleteExpiredSafetyCopies(now: expiry), 1);
+      expect(File(copy.filePath).existsSync(), isFalse);
+    });
+
+    test('runs one at a time, so calls made together delete a copy '
+        'once', () async {
+      final old = await backupMade(const Duration(days: 40));
+
+      final counts = await Future.wait([
+        service.deleteExpiredSafetyCopies(),
+        service.deleteExpiredSafetyCopies(),
+        service.deleteExpiredSafetyCopies(),
+      ]);
+
+      expect(counts, [1, 0, 0]);
+      expect(await listedIds(), isNot(contains(old.id)));
+    });
+
     test('keeps the copy being restored even past the retention', () async {
       final old = await backupMade(const Duration(days: 10));
       await service.setSafetyCopyRetentionDays(1);
@@ -200,6 +230,76 @@ void main() {
       expect(await service.deleteExpiredSafetyCopies(keep: {old.id}), 0);
 
       expect(await listedIds(), {old.id});
+    });
+  });
+
+  group('safetyCopyExpiries', () {
+    test('is when each safety copy expires, without user backups and the '
+        'ids kept', () async {
+      await service.setSafetyCopyRetentionDays(2);
+      final a = await backupMade(const Duration(days: 1));
+      final b = await backupMade(const Duration(hours: 1));
+      await backupMade(const Duration(hours: 2), isSafetyCopy: false);
+
+      expect(
+        await service.safetyCopyExpiries(),
+        unorderedEquals([
+          a.timestamp.add(const Duration(days: 2)),
+          b.timestamp.add(const Duration(days: 2)),
+        ]),
+      );
+      expect(await service.safetyCopyExpiries(keep: {a.id}), [
+        b.timestamp.add(const Duration(days: 2)),
+      ]);
+    });
+  });
+
+  group('changes', () {
+    late List<int> fired;
+    late StreamSubscription<void> sub;
+    var count = 0;
+
+    setUp(() {
+      fired = [];
+      count = 0;
+      sub = service.changes.listen((_) => fired.add(++count));
+    });
+    tearDown(() => sub.cancel());
+
+    Future<int> firedAfter(Future<void> Function() action) async {
+      fired.clear();
+      await action();
+      await pumpEventQueue();
+      return fired.length;
+    }
+
+    test('fires after a backup, a delete, a retention or folder change and '
+        'an expiry that deleted a copy', () async {
+      late BackupEntry entry;
+      expect(
+        await firedAfter(() async => entry = await service.createSnapshot()),
+        greaterThan(0),
+      );
+      expect(await firedAfter(() => service.deleteBackup(entry.id)), 1);
+      expect(
+        await firedAfter(() => service.setSafetyCopyRetentionDays(3)),
+        1,
+      );
+      expect(
+        await firedAfter(() => service.setBackupDirectory(fx.backups.path)),
+        1,
+      );
+      expect(await firedAfter(service.resetBackupDirectory), 1);
+      await service.setBackupDirectory(fx.backups.path);
+
+      await backupMade(const Duration(days: 4));
+      expect(await firedAfter(service.deleteExpiredSafetyCopies), 1);
+    });
+
+    test('does not fire for an expiry that deleted nothing', () async {
+      await backupMade(const Duration(days: 1));
+
+      expect(await firedAfter(service.deleteExpiredSafetyCopies), 0);
     });
   });
 
