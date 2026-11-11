@@ -145,6 +145,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
       _onSessionSavedElsewhere,
       transformer: sequential(),
     );
+    on<SessionTakenBack>(_onSessionTakenBack, transformer: sequential());
   }
 
   @override
@@ -554,6 +555,34 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
         ),
       ),
     );
+  }
+
+  Future<void> _onSessionTakenBack(
+    SessionTakenBack event,
+    Emitter<ProcessingState> emit,
+  ) async {
+    final session = state.sessions.firstWhereOrNull(
+      (s) => s.id == event.sessionId,
+    );
+    if (session == null) return;
+    await _stopLocalProcessing(session);
+    _layoutExtraction.forget(session.id);
+    _haltedHandovers.remove(session.id);
+    emit(
+      state.copyWith(
+        sessions: [
+          for (final s in state.sessions)
+            if (s.id != session.id) s,
+        ],
+        sessionImagePaths: {...state.sessionImagePaths}..remove(session.id),
+        status: _withoutFailureOf(session.id),
+        notification: Notification(
+          text: _strings.l10n.handoverTakenBack,
+          time: DateTime.now(),
+        ),
+      ),
+    );
+    await _repository.deleteProcessingSession(session);
   }
 
   Future<void> _onSessionSavedElsewhere(

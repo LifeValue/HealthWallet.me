@@ -305,6 +305,17 @@ abstract class HandoverReturned extends ProcessingEvent
 
 /// The records of a handover were saved on the paired device, so this
 /// device's copy of the session is removed.
+/// The device that sent this document took it back (deleted it there): it
+/// goes from this one, with a notification saying so.
+@freezed
+abstract class SessionTakenBack extends ProcessingEvent
+    with _$SessionTakenBack {
+  const SessionTakenBack._();
+
+  const factory SessionTakenBack({required String sessionId}) =
+      _SessionTakenBack;
+}
+
 @freezed
 abstract class SessionSavedElsewhere extends ProcessingEvent
     with _$SessionSavedElsewhere {

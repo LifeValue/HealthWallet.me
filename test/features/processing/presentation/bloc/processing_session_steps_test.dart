@@ -1029,5 +1029,36 @@ void main() {
       expect(repository.deleted.single.id, 's');
       expect(bloc.state.notification!.route.routeName, isEmpty);
     });
+
+    test('a session the phone took back is removed and says so', () async {
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(id: 's', status: ProcessingStatus.draft),
+            ProcessingSession(id: 'other', status: ProcessingStatus.draft),
+          ],
+        ),
+      );
+
+      bloc.add(const SessionTakenBack(sessionId: 's'));
+      await settle();
+
+      expect(bloc.state.sessions.map((s) => s.id), ['other']);
+      expect(repository.deleted.single.id, 's');
+      expect(
+        bloc.state.notification!.text,
+        'The phone took this document back.',
+      );
+    });
+
+    test('taking back a session that is already gone does nothing', () async {
+      seed(const ProcessingState());
+
+      bloc.add(const SessionTakenBack(sessionId: 's'));
+      await settle();
+
+      expect(bloc.state.notification, isNull);
+      expect(repository.deleted, isEmpty);
+    });
   });
 }

@@ -14,6 +14,7 @@ import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/widgets/app_message_card.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/utils/handover_utils.dart';
@@ -56,6 +57,10 @@ class _ProcessingPageState extends State<ProcessingPage> {
   final _encounterNameController = TextEditingController();
   final _pageController = PageController();
   DeviceAiCapability _deviceCapability = DeviceAiCapability.full;
+
+  /// Set once this page clears its own session (after saving), so its
+  /// going isn't taken for the other device taking it back.
+  bool _leaving = false;
 
   /// Whether the document was filed without being read, here or from the
   /// pages-only view, so the saved message names the visit it went to.
@@ -229,6 +234,34 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
   @override
   Widget build(BuildContext context) {
+    return BlocListener<ProcessingBloc, ProcessingState>(
+      listenWhen: (previous, current) =>
+          _shows(previous) && !_shows(current) && !_leaving,
+      listener: _onSessionGone,
+      child: _buildPage(context),
+    );
+  }
+
+  bool _shows(ProcessingState state) =>
+      state.sessions.any((s) => s.id == widget.sessionId);
+
+  /// The session went while this page showed it, not through this page: the
+  /// other device took it back or saved it. Back to the list, saying why.
+  void _onSessionGone(BuildContext context, ProcessingState state) {
+    _leaving = true;
+    final message = state.notification?.text;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    Navigator.of(context).maybePop();
+    if (message != null && messenger != null) {
+      AppSnackBar.showOn(
+        messenger,
+        message: message,
+        type: AppSnackBarType.info,
+      );
+    }
+  }
+
+  Widget _buildPage(BuildContext context) {
     return BlocConsumer<ProcessingBloc, ProcessingState>(
       listener: (context, state) async {
         final displayedSession = state.sessions.firstWhereOrNull(
@@ -273,6 +306,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
               if (isDesktop) {
                 navController.jumpToPage(1);
               }
+              _leaving = true;
               scanBloc.add(SessionCleared(session: sessionToClear));
               Navigator.of(context).popUntil((route) => route.isFirst);
             },
@@ -280,6 +314,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 ? null
                 : () {
                     navController.jumpToPage(1);
+                    _leaving = true;
                     scanBloc.add(SessionCleared(session: sessionToClear));
                     Navigator.of(context).popUntil((route) => route.isFirst);
                   },
@@ -287,6 +322,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
           // Tapped outside or backed out: the records are saved, so the
           // session goes as with Continue and can't be saved twice.
           if (dialogResult == null && context.mounted) {
+            _leaving = true;
             scanBloc.add(SessionCleared(session: sessionToClear));
             Navigator.of(context).popUntil((route) => route.isFirst);
           }

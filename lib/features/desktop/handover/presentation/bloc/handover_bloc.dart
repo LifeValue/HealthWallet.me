@@ -118,10 +118,9 @@ class HandoverBloc extends Bloc<HandoverEvent, HandoverState> {
           ),
         );
       case IncomingHandoverCancelled(:final sessionId):
-        final session = _session(sessionId);
-        if (session != null) {
+        if (_session(sessionId) != null) {
           _quiet.add(sessionId);
-          _processing.add(SessionCleared(session: session));
+          _processing.add(SessionTakenBack(sessionId: sessionId));
         }
         await _service.forget(sessionId);
       case IncomingHandoverSaved(:final sessionId):

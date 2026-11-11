@@ -13,6 +13,8 @@ import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/widgets/app_message_card.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
+import 'package:health_wallet/features/notifications/domain/entities/notification.dart'
+    as app;
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
@@ -91,6 +93,38 @@ const _picked = (
   StagedEncounter(draft: MappingEncounter(id: 'e-picked')),
 );
 
+/// A list screen that opens [page] over itself once it is shown.
+class _ListThatOpens extends StatefulWidget {
+  const _ListThatOpens({required this.page});
+
+  final Widget page;
+
+  @override
+  State<_ListThatOpens> createState() => _ListThatOpensState();
+}
+
+class _ListThatOpensState extends State<_ListThatOpens> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final bloc = context.read<ProcessingBloc>();
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => BlocProvider<ProcessingBloc>.value(
+            value: bloc,
+            child: widget.page,
+          ),
+        ),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      const Scaffold(body: Text('import list'));
+}
+
 void main() {
   late _MockProcessingBloc bloc;
   late StreamController<ProcessingState> states;
@@ -120,6 +154,7 @@ void main() {
     ProcessingState initial, {
     AppPlatform platform = AppPlatform.mobile,
     bool attachOnly = false,
+    bool overList = false,
   }) async {
     tester.view.physicalSize = const Size(800, 2400);
     tester.view.devicePixelRatio = 1;
@@ -165,7 +200,16 @@ void main() {
             BlocProvider<ProcessingBloc>.value(value: bloc),
             BlocProvider<UserBloc>.value(value: userBloc),
           ],
-          child: ProcessingPage(sessionId: sessionId, attachOnly: attachOnly),
+          // Opened over a list, as the app opens it from Import, so it can
+          // go back to it.
+          child: overList
+              ? _ListThatOpens(
+                  page: ProcessingPage(
+                    sessionId: sessionId,
+                    attachOnly: attachOnly,
+                  ),
+                )
+              : ProcessingPage(sessionId: sessionId, attachOnly: attachOnly),
         ),
       ),
     );
@@ -717,6 +761,65 @@ void main() {
       expect(bloc.events.single, isA<SessionCleared>());
       expect((bloc.events.single as SessionCleared).session.id, 's1');
       expect(navigation.jumps, isEmpty);
+    });
+
+    testPage('a session the other device took back goes back to the list '
+        'and says so', (tester) async {
+      const session = ProcessingSession(
+        id: 's1',
+        status: ProcessingStatus.draft,
+        origin: ProcessingOrigin.handover,
+      );
+      await pumpPage(tester, stateWith(session), overList: true);
+      await frames(tester);
+      expect(find.byType(ProcessingPage), findsOne);
+
+      states.add(
+        ProcessingState(
+          notification: app.Notification(
+            text: _en.handoverTakenBack,
+            time: DateTime(2026, 11, 11),
+          ),
+        ),
+      );
+      await frames(tester);
+      // The page's closing transition.
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.byType(ProcessingPage), findsNothing);
+      expect(find.text('import list'), findsOne);
+      expect(find.text(_en.handoverTakenBack), findsOne);
+      expect(find.text(_en.sessionNotFound), findsNothing);
+    });
+
+    testPage('a session that goes without a reason just goes back to the '
+        'list', (tester) async {
+      const session = ProcessingSession(
+        id: 's1',
+        status: ProcessingStatus.draft,
+        origin: ProcessingOrigin.import,
+      );
+      await pumpPage(tester, stateWith(session), overList: true);
+      await frames(tester);
+
+      states.add(const ProcessingState());
+      await frames(tester);
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.byType(ProcessingPage), findsNothing);
+      expect(find.text('import list'), findsOne);
+      expect(find.text(_en.sessionNotFound), findsNothing);
+    });
+
+    testPage('saving and continuing does not count as the other device '
+        'taking it back', (tester) async {
+      await saved(tester, ProcessingOrigin.scan);
+
+      await tapText(tester, _en.continueScanning);
+      states.add(const ProcessingState());
+      await frames(tester);
+
+      expect(find.text(_en.handoverTakenBack), findsNothing);
     });
 
     testPage('after a scan the user can go to the records', (

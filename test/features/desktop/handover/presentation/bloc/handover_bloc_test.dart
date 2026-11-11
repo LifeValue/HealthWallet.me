@@ -223,16 +223,18 @@ void main() {
     expect(tcp.sentOf(HandoverMessage.cancel), isEmpty);
   });
 
-  test('the phone taking it back clears the desktop\'s session', () async {
+  test('the phone taking it back removes the desktop\'s session as taken '
+      'back, not as a plain clear', () async {
     processing.push(withSessions([handover('s1', ProcessingStatus.pending)]));
     await settle();
     tcp.deliver(HandoverMessage.cancel, {'session_id': 's1'});
     await settle();
 
     expect(
-      processing.events.whereType<SessionCleared>().single.session.id,
+      processing.events.whereType<SessionTakenBack>().single.sessionId,
       's1',
     );
+    expect(processing.events.whereType<SessionCleared>(), isEmpty);
   });
 
   test('a transfer shows while it arrives and goes when it is done', () async {
