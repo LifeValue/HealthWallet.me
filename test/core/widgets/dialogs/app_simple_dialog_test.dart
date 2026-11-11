@@ -100,6 +100,7 @@ void main() {
       WidgetTester tester, {
       String? message,
       String? subtitle,
+      bool showCloseButton = true,
     }) async {
       calls = [];
       result = null;
@@ -120,6 +121,7 @@ void main() {
                     cancelText: 'Cancel',
                     onConfirm: () => calls.add('confirm'),
                     onCancel: () => calls.add('cancel'),
+                    showCloseButton: showCloseButton,
                   );
                 },
                 child: const Text('open'),
@@ -166,6 +168,16 @@ void main() {
       expect(find.byType(Dialog), findsNothing);
       expect(result, isNull);
       expect(calls, isEmpty);
+    });
+
+    testWidgets('a dialog that only informs can leave out the X', (
+      tester,
+    ) async {
+      await openConfirmation(tester, showCloseButton: false);
+
+      expect(find.text('Disable the lock?'), findsOne);
+      expect(close, findsNothing);
+      expect(find.text('Disable'), findsOne);
     });
 
     testWidgets('Cancel and the action still work', (tester) async {

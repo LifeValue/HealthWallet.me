@@ -265,7 +265,10 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 ? context.l10n.continueImporting
                 : context.l10n.continueScanning,
             cancelText: isDesktop ? '' : context.l10n.goToRecords,
+            // It only reports the save: no close button, and closing it
+            // any other way counts as continuing.
             barrierDismissible: true,
+            showCloseButton: false,
             onConfirm: () {
               if (isDesktop) {
                 navController.jumpToPage(1);
@@ -281,7 +284,12 @@ class _ProcessingPageState extends State<ProcessingPage> {
                     Navigator.of(context).popUntil((route) => route.isFirst);
                   },
           );
-          if (dialogResult == null) {}
+          // Tapped outside or backed out: the records are saved, so the
+          // session goes as with Continue and can't be saved twice.
+          if (dialogResult == null && context.mounted) {
+            scanBloc.add(SessionCleared(session: sessionToClear));
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          }
         }
       },
       builder: (context, state) {

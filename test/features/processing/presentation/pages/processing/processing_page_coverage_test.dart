@@ -701,6 +701,24 @@ void main() {
       expect(navigation.jumps, isEmpty);
     });
 
+    testPage('the saved message has no X, and closing it by tapping outside '
+        'clears the saved session like Continue, so it can\'t be saved '
+        'twice', (tester) async {
+      await saved(tester, ProcessingOrigin.scan);
+      expect(
+        find.byKey(const Key('confirmation_dialog_close')),
+        findsNothing,
+      );
+
+      await tester.tapAt(const Offset(5, 5));
+      await frames(tester);
+
+      expect(find.text(_en.recordsSavedTitle), findsNothing);
+      expect(bloc.events.single, isA<SessionCleared>());
+      expect((bloc.events.single as SessionCleared).session.id, 's1');
+      expect(navigation.jumps, isEmpty);
+    });
+
     testPage('after a scan the user can go to the records', (
       tester,
     ) async {

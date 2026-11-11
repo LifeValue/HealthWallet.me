@@ -24,6 +24,7 @@ class AppSimpleDialog {
     VoidCallback? onCancel,
     Color? confirmColor,
     bool barrierDismissible = false,
+    bool showCloseButton = true,
   }) {
     return showDialog<bool>(
       context: context,
@@ -53,22 +54,24 @@ class AppSimpleDialog {
                         ),
                       ),
                     ),
-                    const SizedBox(width: Insets.small),
                     // Closes without choosing: unlike Cancel, it doesn't run
                     // onCancel, which some dialogs use as a second action.
-                    IconButton(
-                      key: const Key('confirmation_dialog_close'),
-                      tooltip: dialogContext.l10n.close,
-                      visualDensity: VisualDensity.compact,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () => Navigator.of(dialogContext).pop(),
-                      icon: Icon(
-                        Icons.close,
-                        size: 18,
-                        color: textColor.withValues(alpha: 0.5),
+                    if (showCloseButton) ...[
+                      const SizedBox(width: Insets.small),
+                      IconButton(
+                        key: const Key('confirmation_dialog_close'),
+                        tooltip: dialogContext.l10n.close,
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        icon: Icon(
+                          Icons.close,
+                          size: 18,
+                          color: textColor.withValues(alpha: 0.5),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
                 if (message != null) ...[
