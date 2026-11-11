@@ -8,6 +8,7 @@ import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/services/temp_file_sweeper.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/stored_file_name.dart';
+import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
@@ -43,6 +44,15 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
   });
 
   void startNextPendingSession();
+
+  /// Removes [session] with its row, pages and files, once the AI has
+  /// stopped on it; [notification] says why when this device's user didn't
+  /// delete it.
+  Future<void> removeSession(
+    Emitter<ProcessingState> emit,
+    ProcessingSession session, {
+    Notification? notification,
+  });
 
   Future<void> onCaptureButtonPressed(
     CaptureButtonPressed event,
@@ -241,55 +251,30 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     SessionCleared event,
     Emitter<ProcessingState> emit,
   ) async {
+    // As it is now: it may have started processing since the list was shown.
+    final session =
+        state.sessions.firstWhereOrNull((s) => s.id == event.session.id) ??
+        event.session;
+    final wasProcessing = session.isProcessing;
     try {
-      if (event.session.isProcessing) {
+      if (wasProcessing) {
         emit(
           state.copyWith(
             status: const PipelineStatus.loading(),
-            deletingSessionId: event.session.id,
+            deletingSessionId: session.id,
           ),
         );
-
-        try {
-          await processingRepository.cancelGeneration();
-          await processingRepository.waitForStreamCompletion();
-        } catch (_) {
-          // Generation may already have stopped; nothing left to cancel.
-        }
       }
-
-      final newSessions = [...state.sessions]
-        ..removeWhere((session) => session.id == event.session.id);
-      layoutExtraction.forget(event.session.id);
-
-      final previews = state.sessionImagePaths[event.session.id] ?? const [];
-      final ocrPages = _ocrPagesOf(previews);
-      final updatedImageMap = Map<String, List<String>>.from(
-        state.sessionImagePaths,
-      )..remove(event.session.id);
-
+      await removeSession(emit, session);
       emit(
         state.copyWith(
-          sessions: newSessions,
-          sessionImagePaths: updatedImageMap,
-          ocrPageByPreviewPath: _withoutOcrPages(previews),
           status: const PipelineStatus.initial(),
           deletingSessionId: null,
         ),
       );
-
-      await processingRepository.deleteProcessingSession(event.session);
-      await _discardSessionPages(
-        event.session,
-        pages: [...previews, ...ocrPages],
-      );
-
-      final hasPendingSessions = newSessions.any(
-        (s) => s.status == ProcessingStatus.pending,
-      );
-
-      if (hasPendingSessions) {
-        await Future.delayed(const Duration(milliseconds: 100));
+      // It held the queue, or the queue waits: the next document goes on.
+      if (wasProcessing ||
+          state.sessions.any((s) => s.status == ProcessingStatus.pending)) {
         startNextPendingSession();
       }
     } on Exception catch (e, s) {

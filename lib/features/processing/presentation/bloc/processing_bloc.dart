@@ -619,16 +619,27 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     );
   }
 
-  /// Removes [session], which the other device took back or saved, with its
-  /// pages and files, and says so with [notification].
+  /// Removes [session], which the other device took back or saved, and says
+  /// so with [notification].
   Future<void> _removeForOtherDevice(
     Emitter<ProcessingState> emit,
     ProcessingSession session,
     Notification notification,
   ) async {
     final wasProcessing = session.isProcessing;
-    if (wasProcessing) {
-      // Marked first, so the step being stopped stages and announces
+    await removeSession(emit, session, notification: notification);
+    // It held the queue: the next document goes on.
+    if (wasProcessing) startNextPendingSession();
+  }
+
+  @override
+  Future<void> removeSession(
+    Emitter<ProcessingState> emit,
+    ProcessingSession session, {
+    Notification? notification,
+  }) async {
+    if (session.isProcessing) {
+      // Marked first, so the step being stopped stages, saves and announces
       // nothing; stopping, so it can't be retried meanwhile.
       _replaceSession(
         emit,
@@ -656,12 +667,10 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
         ],
         stoppingSessionIds: {...state.stoppingSessionIds}..remove(session.id),
         status: _withoutFailureOf(session.id),
-        notification: notification,
+        notification: notification ?? state.notification,
       ),
     );
     await _repository.deleteProcessingSession(session);
     await discardPagesOf(emit, session);
-    // It held the queue: the next document goes on.
-    if (wasProcessing) startNextPendingSession();
   }
 }
