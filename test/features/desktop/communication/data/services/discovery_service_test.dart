@@ -31,6 +31,7 @@ class _FakeSsdp extends Fake implements SsdpService {
     required String ip,
     required int port,
     required String deviceId,
+    int listenPort = 1900,
   }) async {
     calls.add('advertise $ip:$port $deviceId');
     if (advertiseError != null) throw advertiseError!;
