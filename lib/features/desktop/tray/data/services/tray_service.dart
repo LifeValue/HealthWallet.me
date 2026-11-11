@@ -42,7 +42,10 @@ class TrayService with TrayListener {
         : 'assets/icons/tray_icon.png';
 
     await trayManager.setIcon(iconPath);
-    await trayManager.setToolTip(_appName);
+    // Linux trays (AppIndicator) have no tooltip, and tray_manager's Linux
+    // plugin does not implement it: the call would throw before the menu is
+    // built.
+    if (!Platform.isLinux) await trayManager.setToolTip(_appName);
     trayManager.addListener(this);
     // init() runs again to recreate the tray; keep a single listener.
     _strings
