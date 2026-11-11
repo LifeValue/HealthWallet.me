@@ -669,6 +669,7 @@
   "desktopHandoverProcessingMessage": "Verarbeitung läuft. Die Übergabe wird die aktuelle Verarbeitung abbrechen und Dateien an den Desktop senden.",
   "desktopHandover": "Übergabe",
   "attachedDocuments": "Angehängte Dokumente",
+  "documentAttachedTo": "An {visit} angehängt.",
   "cameraPermissionRequired": "Kamerazugriff erforderlich",
   "cameraPermissionRequiredMessage": "Diese App benötigt Kamerazugriff zum Scannen. Bitte erteile die Berechtigung.",
   "cameraPermissionDenied": "Kamerazugriff verweigert",
@@ -1720,6 +1721,18 @@
     }
   },
   "backupRestorePhoneOffline": "Dein Telefon ist nicht verbunden. Seit der letzten Synchronisierung darauf hinzugefügte Aufzeichnungen kommen zurück, sobald es sich wieder verbindet; Änderungen an vorhandenen Aufzeichnungen werden durch das Backup ersetzt.",
+  "backupRestoreRemovesScans": "{count, plural, =1{1 Scan, der auf Überprüfung wartet, wird entfernt.} other{{count} Scans, die auf Überprüfung warten, werden entfernt.}}",
   "aiModelDeleteTitle": "{name} löschen?",
-  "aiModelDeleteMessage": "Das Modell und seine Tiefenscan-Dateien werden von diesem Gerät entfernt. Um wieder damit zu scannen, musst du es erneut herunterladen (~{size} MB)."
+  "aiModelDeleteMessage": "Das Modell und seine Tiefenscan-Dateien werden von diesem Gerät entfernt. Um wieder damit zu scannen, musst du es erneut herunterladen (~{size} MB).",
+  "processingNoPatientFound": "Kein Patient im Dokument gefunden. Gib die Daten ein.",
+  "processingStopping": "Wird gestoppt…",
+  "handoverTakenBack": "Das Telefon hat dieses Dokument zurückgenommen.",
+  "aiModelSwitchedToLiteTitle": "Jetzt mit dem Lite-Modell",
+  "aiModelSwitchedToLiteMessage": "Das Modell {modelName} benötigt mehr Arbeitsspeicher, als dieses Gerät hat, daher wird das Lite-Modell verwendet.",
+  "backupSafetyRetention": "{count, plural, =1{Wird 1 Tag aufbewahrt} other{Wird {count} Tage aufbewahrt}}",
+  "backupSafetyRetentionTitle": "Kopie vor einer Wiederherstellung",
+  "backupSafetyRetentionDaysUnit": "{count, plural, =1{Tag} other{Tage}}",
+  "backupSafetyRetentionHint": "Gilt auch für vorhandene Kopien. Ältere Kopien werden jetzt gelöscht.",
+  "backupSafetyRetentionInvalid": "Gib eine ganze Zahl von Tagen zwischen {min} und {max} ein.",
+  "backupSafetyRetentionSaveFailed": "Die Aufbewahrungsdauer der Kopie vor einer Wiederherstellung konnte nicht gespeichert werden. Bitte versuche es erneut."
 }

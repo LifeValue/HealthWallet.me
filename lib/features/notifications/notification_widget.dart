@@ -247,7 +247,7 @@ class _NotificationWidgetState extends State<NotificationWidget> {
     }
 
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         if (notification.type == NotificationType.progress) {
           return;
         }
@@ -258,7 +258,9 @@ class _NotificationWidgetState extends State<NotificationWidget> {
         _hideOverlay();
         try {
           if (notification.route.routeName.isNotEmpty) {
-            context.router.push(notification.route);
+            // Awaited, so a route the router can't open (e.g. one saved by an
+            // older version) is caught here rather than left unhandled.
+            await context.router.push(notification.route);
           }
         } catch (e, s) {
           logger.w('Opening the notification route failed', e, s);

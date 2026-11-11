@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/utils/file_url.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
@@ -68,9 +69,7 @@ class FhirBundleMapper {
       final attachment = item['attachment'] as Map<String, dynamic>?;
       final url = attachment?['url'] as String?;
       if (url != null && url.startsWith('file://')) {
-        final resolvedFile = await _resolveFile(
-          Uri.decodeComponent(url.substring(7)),
-        );
+        final resolvedFile = await _resolveFile(filePathOfUrl(url));
         if (resolvedFile != null) {
           final bytes = await resolvedFile.readAsBytes();
           attachment!['data'] = base64Encode(bytes);

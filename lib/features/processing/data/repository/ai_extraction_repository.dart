@@ -71,6 +71,11 @@ mixin AiExtractionRepository {
   bool get shouldCancelGeneration;
   Future<void> disposeModel();
 
+  /// Unloads the model from inside the AI run that is using it. A repository
+  /// whose [disposeModel] waits for the runs in progress overrides this to
+  /// unload at once, since the run would otherwise wait for itself.
+  Future<void> disposeModelInRun() => disposeModel();
+
   String get _ts => DateTime.now().toIso8601String().substring(11, 23);
 
   String _stripMarkdownFences(String text) {
@@ -150,6 +155,8 @@ mixin AiExtractionRepository {
     required String schemaName,
     String? documentCategory,
   }) {
+    // Cancelled after an earlier call of the same step (a draft): no answer.
+    if (shouldCancelGeneration) return Future.value();
     if (!mode.usesSchema) {
       return networkDataSource.runTextPrompt(
         prompt: prompt,
@@ -396,12 +403,6 @@ mixin AiExtractionRepository {
     return results;
   }
 
-  bool _isUsableResult(MappingPatient patient) {
-    return patient.familyName.value.isNotEmpty ||
-        patient.givenName.value.isNotEmpty ||
-        patient.patientIdentifier.value.isNotEmpty;
-  }
-
   Future<(MappingPatient, MappingResource)> processMapBasicInfo(
     List<String> imagePaths, {
     int? maxTokens,
@@ -420,7 +421,11 @@ mixin AiExtractionRepository {
     ProcessingLogBuffer.instance.log(
       '[$_ts][ScanAI] OCR: ${ocrText.length} chars in ${(ocrSw.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s',
     );
+    if (shouldCancelGeneration) return _cancelledBasicInfo();
 
+    // What the text pass read when it found no patient; without a vision
+    // pass it is the result.
+    (MappingPatient, MappingResource)? textOnly;
     if (ocrText.trim().length >= _minOcrCharsForTextOnly) {
       ProcessingLogBuffer.instance.log(
         '[$_ts][ScanAI] OCR has enough text, trying text-only (fast path)...',
@@ -443,7 +448,7 @@ mixin AiExtractionRepository {
             regionDefaultLabel: CountryIdentifier.forDocument(ocrText)
                 .identifierLabel,
           );
-          if (_isUsableResult(postProcessed)) {
+          if (postProcessed.isIdentified) {
             final containerType = container is MappingDiagnosticReport
                 ? 'DiagnosticReport'
                 : 'Encounter';
@@ -452,8 +457,9 @@ mixin AiExtractionRepository {
             );
             return (postProcessed, container);
           }
+          textOnly = (postProcessed, container);
           ProcessingLogBuffer.instance.log(
-            '[$_ts][ScanAI] text-only result was empty, falling back to vision...',
+            '[$_ts][ScanAI] text-only found no patient, falling back to vision...',
           );
         }
       } catch (e) {
@@ -461,12 +467,24 @@ mixin AiExtractionRepository {
           '[$_ts][ScanAI] text-only failed: $e, falling back to vision...',
         );
       } finally {
-        await disposeModel();
+        await disposeModelInRun();
       }
     } else {
       ProcessingLogBuffer.instance.log(
         '[$_ts][ScanAI] OCR too short (${ocrText.trim().length} < $_minOcrCharsForTextOnly chars), using vision directly...',
       );
+    }
+    // Cancelled during the text pass: no vision pass after it.
+    if (shouldCancelGeneration) return _cancelledBasicInfo();
+
+    final withoutVision = textOnly ?? _noPatientFound();
+    // Without the vision projector the images can't be read: the text
+    // pass's result stands, and the user enters the patient.
+    if (!await networkDataSource.checkMmprojExistence()) {
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][ScanAI] no vision projector on this device, no patient found',
+      );
+      return withoutVision;
     }
 
     return _visionBasicInfo(
@@ -477,7 +495,19 @@ mixin AiExtractionRepository {
       threads,
       contextSize,
       outputMode,
+      withoutVision: withoutVision,
     );
+  }
+
+  /// No patient and an empty container, for the user to fill in.
+  static (MappingPatient, MappingResource) _noPatientFound() =>
+      (MappingPatient.empty(), MappingEncounter.empty());
+
+  /// No patient and an empty container: what a cancelled patient step
+  /// returns, which the caller drops.
+  (MappingPatient, MappingResource) _cancelledBasicInfo() {
+    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] cancelled');
+    return _noPatientFound();
   }
 
   Future<MappingResource> mapContainerOnly(
@@ -488,6 +518,7 @@ mixin AiExtractionRepository {
     int? contextSize,
     ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
   }) async {
+    if (shouldCancelGeneration) return _cancelledBasicInfo().$2;
     ProcessingLogBuffer.instance.log(
       '[$_ts][ScanAI] === CONTAINER-ONLY EXTRACTION (pre-matched patient) === (output=${outputMode.name})',
     );
@@ -555,7 +586,7 @@ Rules:
       schemaName: 'container',
     );
 
-    await disposeModel();
+    await disposeModelInRun();
 
     if (response == null || response.isEmpty) {
       ProcessingLogBuffer.instance.log(
@@ -657,9 +688,12 @@ Rules:
     int? gpuLayers,
     int? threads,
     int? contextSize,
-    ExtractionOutputMode outputMode,
-  ) async {
+    ExtractionOutputMode outputMode, {
+    required (MappingPatient, MappingResource) withoutVision,
+  }) async {
     ProcessingLogBuffer.instance.log('[$_ts][ScanAI] --- VISION FALLBACK ---');
+    // Cancelled while the projector was looked for: the model isn't loaded.
+    if (shouldCancelGeneration) return _cancelledBasicInfo();
     ProcessingLogBuffer.instance.log(
       '[$_ts][ScanAI] loading model + vision projector...',
     );
@@ -670,6 +704,15 @@ Rules:
     );
 
     try {
+      // The projector failed to load (a damaged file is deleted): images
+      // can't be sent, so [withoutVision] stands.
+      if (!networkDataSource.isVisionModelAvailable()) {
+        ProcessingLogBuffer.instance.log(
+          '[$_ts][ScanAI] vision projector not loaded, no patient found',
+        );
+        return withoutVision;
+      }
+      if (shouldCancelGeneration) return _cancelledBasicInfo();
       final String? response;
       if (outputMode == ExtractionOutputMode.schemaDraft) {
         // Draft from the image, then the constrained pass text-only on the
@@ -682,7 +725,7 @@ Rules:
           ),
           maxTokens,
         );
-        await disposeModel();
+        await disposeModelInRun();
         await networkDataSource.initModel(
           withVision: false,
           gpuLayers: gpuLayers,
@@ -758,7 +801,7 @@ Rules:
 
       return (postProcessed, container);
     } finally {
-      await disposeModel();
+      await disposeModelInRun();
     }
   }
 
@@ -776,6 +819,10 @@ Rules:
     final ocrPages = OcrPages.withoutRepeatedLines(rawPages);
     final ocrText = ocrPages.join('\n');
     final rawLength = rawPages.join('\n').length;
+    if (shouldCancelGeneration) {
+      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] cancelled');
+      return;
+    }
 
     ProcessingLogBuffer.instance.log(
       '[$_ts][ScanAI] === REMAINING RESOURCES EXTRACTION ===',
@@ -801,7 +848,14 @@ Rules:
           threads: threads,
           contextSize: contextSize,
         );
-        visionLoaded = true;
+        // Without the projector (no file, or it failed to load) images
+        // can't be sent: the text fallback reads the pages.
+        visionLoaded = networkDataSource.isVisionModelAvailable();
+        if (!visionLoaded) {
+          ProcessingLogBuffer.instance.log(
+            '[$_ts][ScanAI] vision projector not loaded, switching to text fallback',
+          );
+        }
       } catch (e) {
         // E.g. model + projector over the memory limit: text-only still fits.
         ProcessingLogBuffer.instance.log(
@@ -912,7 +966,7 @@ Rules:
       }
 
       if (drafting && !shouldCancelGeneration) {
-        await disposeModel();
+        await disposeModelInRun();
         final ctx = await _loadRemainingTextModel(
           contextSize,
           gpuLayers,
@@ -953,11 +1007,14 @@ Rules:
       );
     }
 
-    if (allResources.isEmpty && ocrText.trim().isNotEmpty && !textPassRan) {
+    if (allResources.isEmpty &&
+        ocrText.trim().isNotEmpty &&
+        !textPassRan &&
+        !shouldCancelGeneration) {
       ProcessingLogBuffer.instance.log(
         '[$_ts][ScanAI] --- TEXT-ONLY FALLBACK ---',
       );
-      await disposeModel();
+      await disposeModelInRun();
 
       try {
         final ctx = await _loadRemainingTextModel(

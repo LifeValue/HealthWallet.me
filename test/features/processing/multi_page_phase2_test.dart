@@ -44,6 +44,9 @@ class _FakeDataSource extends Fake implements AiInferenceDataSource {
   PromptFamily get promptFamily => PromptFamily.standard;
 
   @override
+  bool isVisionModelAvailable() => loads.lastOrNull?.withVision == true;
+
+  @override
   final int visionPagesPerBatch;
 
   @override

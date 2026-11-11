@@ -1526,6 +1526,11 @@ class AppLocalizationsRo extends AppLocalizations {
   String get attachedDocuments => 'Documente atașate';
 
   @override
+  String documentAttachedTo(String visit) {
+    return 'Atașat la $visit.';
+  }
+
+  @override
   String get cameraPermissionRequired => 'Permisiune cameră necesară';
 
   @override
@@ -4790,6 +4795,18 @@ class AppLocalizationsRo extends AppLocalizations {
       'Telefonul nu este conectat. Înregistrările adăugate pe el de la ultima sincronizare vor reveni după ce se reconectează; modificările făcute la înregistrările existente vor fi înlocuite de copie.';
 
   @override
+  String backupRestoreRemovesScans(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de scanări care așteaptă revizuirea vor fi eliminate.',
+      few: '$count scanări care așteaptă revizuirea vor fi eliminate.',
+      one: '1 scanare care așteaptă revizuirea va fi eliminată.',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String aiModelDeleteTitle(String name) {
     return 'Ștergi $name?';
   }
@@ -4798,4 +4815,62 @@ class AppLocalizationsRo extends AppLocalizations {
   String aiModelDeleteMessage(int size) {
     return 'Modelul și fișierele pentru Scanarea Profundă sunt șterse de pe acest dispozitiv. Ca să scanezi din nou cu el, va trebui să-l descarci din nou (~$size MB).';
   }
+
+  @override
+  String get processingNoPatientFound =>
+      'Niciun pacient găsit în document. Introdu datele.';
+
+  @override
+  String get processingStopping => 'Se oprește…';
+
+  @override
+  String get handoverTakenBack => 'Telefonul a preluat înapoi acest document.';
+
+  @override
+  String get aiModelSwitchedToLiteTitle => 'Acum se folosește modelul Lite';
+
+  @override
+  String aiModelSwitchedToLiteMessage(String modelName) {
+    return 'Modelul $modelName are nevoie de mai multă memorie decât are acest dispozitiv, așa că se folosește modelul Lite.';
+  }
+
+  @override
+  String backupSafetyRetention(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Se păstrează $count de zile',
+      few: 'Se păstrează $count zile',
+      one: 'Se păstrează 1 zi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSafetyRetentionTitle => 'Copia făcută înainte de restaurare';
+
+  @override
+  String backupSafetyRetentionDaysUnit(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'de zile',
+      few: 'zile',
+      one: 'zi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSafetyRetentionHint =>
+      'Se aplică și copiilor existente. Copiile mai vechi de atât sunt șterse acum.';
+
+  @override
+  String backupSafetyRetentionInvalid(int min, int max) {
+    return 'Introdu un număr întreg de zile între $min și $max.';
+  }
+
+  @override
+  String get backupSafetyRetentionSaveFailed =>
+      'Nu s-a putut salva cât timp se păstrează copia făcută înainte de restaurare. Încearcă din nou.';
 }

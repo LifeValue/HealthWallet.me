@@ -14,6 +14,7 @@ import 'package:health_wallet/features/home/domain/entities/medical_specialty.da
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/records/domain/services/records_filter_store.dart';
 import 'package:health_wallet/features/records/domain/services/specialty_matcher.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
@@ -31,14 +32,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   RecordsRepository get recordsRepository => _recordsRepository;
   Timer? _searchDebounceTimer;
 
-  /// Whether [RecordsState.activeFilters] are the defaults the bloc chose,
-  /// not filters the user picked. Defaults that match nothing are dropped.
-  bool _onDefaultFilters = false;
-
-  /// Whether the user has set the filters (types, dates or specialties) at
-  /// least once; from then on the defaults are never put back.
-  bool _filtersChosen = false;
-
   /// Counts loads; a load whose number is no longer the latest drops its
   /// result, so an earlier, slower load can't replace a newer one.
   int _loadGeneration = 0;
@@ -48,38 +41,72 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
 
   /// The specialty filter of the current list, kept for its next pages.
   SpecialtyMatcher? _specialtyMatcher;
+
+  /// Keeps each person's chosen filters; without it (tests, previews) the
+  /// filters last only as long as this bloc.
+  final RecordsFilterStore? _filterStore;
+
+  /// The person whose filters are shown and saved, or null in a share.
+  String? _personId;
+
+  /// Whether the filters shown were set by a Home card for this visit only,
+  /// so the person's own come back when Records is left.
+  bool _visitOnly = false;
   String? _lastIpsPdfPath;
 
   static const _pageSize = 20;
   static const _searchLimit = 100;
   static const _minSearchLength = 2;
 
-  static const _defaultFilters = [
-    FhirType.Encounter,
-    FhirType.DiagnosticReport,
-  ];
-
   RecordsBloc(
     this._recordsRepository,
-    this._specialtyClassifier,
-  ) : super(const RecordsState()) {
-    on<RecordsInitialised>(_onInitialised);
-    on<RecordsLoadMore>(_onLoadMore);
-    on<RecordsSourceChanged>(_onSourceChanged);
-    on<RecordsFiltersApplied>(_onFiltersApplied);
-    on<RecordsFilterRemoved>(_onFilterRemoved);
-    on<RecordDetailLoaded>(_onRecordDetailLoaded);
-    on<RecordsSearch>(_onSearch);
-    on<RecordsSearchExecuted>(_onSearchExecuted);
+    this._specialtyClassifier, [
+    this._filterStore,
+  ]) : super(const RecordsState()) {
+    // A newer event of the same kind replaces one still loading; across
+    // kinds, _loadResources keeps only the latest load's records.
+    on<RecordsInitialised>(_onInitialised, transformer: restartable());
+    // A page asked for again while it loads would be listed twice.
+    on<RecordsLoadMore>(_onLoadMore, transformer: droppable());
+    on<RecordsSourceChanged>(_onSourceChanged, transformer: restartable());
+    on<RecordsFiltersApplied>(_onFiltersApplied, transformer: restartable());
+    on<RecordsFilterRemoved>(_onFilterRemoved, transformer: restartable());
+    on<RecordDetailLoaded>(_onRecordDetailLoaded, transformer: restartable());
+    on<RecordsSearch>(_onSearch, transformer: restartable());
+    on<RecordsSearchExecuted>(_onSearchExecuted, transformer: restartable());
     on<RecordsSharePressed>(_onRecordsSharePressed, transformer: droppable());
-    on<RecordsSelectionToggled>(_onSelectionToggled);
-    on<RecordsSelectionCleared>(_onSelectionCleared);
-    on<RecordsSelectionModeToggled>(_onSelectionModeToggled);
-    on<RecordsDateRangeCleared>(_onDateRangeCleared);
-    on<RecordsResourceDeleted>(_onResourceDeleted);
-    on<RecordsSpecialtyApplied>(_onSpecialtyApplied);
-    on<RecordsRefreshRequested>(_onRefreshRequested);
-    on<RecordsClearAllFilters>(_onClearAllFilters);
+    on<RecordsSelectionToggled>(
+      _onSelectionToggled,
+      transformer: sequential(),
+    );
+    on<RecordsSelectionCleared>(
+      _onSelectionCleared,
+      transformer: sequential(),
+    );
+    on<RecordsSelectionModeToggled>(
+      _onSelectionModeToggled,
+      transformer: sequential(),
+    );
+    on<RecordsDateRangeCleared>(
+      _onDateRangeCleared,
+      transformer: restartable(),
+    );
+    // Every deletion asked for is made, one after the other.
+    on<RecordsResourceDeleted>(_onResourceDeleted, transformer: sequential());
+    on<RecordsSpecialtyApplied>(
+      _onSpecialtyApplied,
+      transformer: restartable(),
+    );
+    on<RecordsRefreshRequested>(
+      _onRefreshRequested,
+      transformer: restartable(),
+    );
+    on<RecordsClearAllFilters>(
+      _onClearAllFilters,
+      transformer: restartable(),
+    );
+    // One leave at a time: the next waits for the reload the last started.
+    on<RecordsVisitEnded>(_onVisitEnded, transformer: sequential());
   }
 
   @override
@@ -164,18 +191,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       );
       if (!isLatest()) return;
 
-      // The default filters found nothing for this scope, while it may hold
-      // other records: show everything rather than an empty list.
-      if (_onDefaultFilters &&
-          !more &&
-          page.resources.isEmpty &&
-          state.dateFilter == null &&
-          state.activeSpecialties.isEmpty) {
-        _onDefaultFilters = false;
-        emit(state.copyWith(activeFilters: []));
-        return await _loadResources(emit);
-      }
-
       _nextOffset = page.nextOffset;
       emit(
         state.copyWith(
@@ -196,21 +211,47 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     }
   }
 
-  /// Puts the default filters back unless the user has chosen filters or
-  /// this is the share screen, which starts without any.
-  RecordsState _withDefaultFilters(RecordsState state, bool isShareContext) {
-    if (_filtersChosen || isShareContext || state.activeFilters.isNotEmpty) {
-      return state;
-    }
-    _onDefaultFilters = true;
-    return state.copyWith(activeFilters: _defaultFilters);
+  /// Keeps the filters now shown for this person, for their next visit.
+  Future<void> _saveFilters() async {
+    final personId = _personId;
+    final store = _filterStore;
+    if (personId == null || store == null) return;
+    await store.save(
+      personId,
+      RecordsFilters(
+        types: state.activeFilters,
+        specialties: state.activeSpecialties,
+        dateFilter: state.dateFilter,
+      ),
+    );
   }
+
+  /// [from] with [personId]'s own filters, or none, when they are not the
+  /// person shown; the app adds no filters itself. A new person ends a
+  /// visit a Home card filtered.
+  RecordsState _showPerson(RecordsState from, String? personId) {
+    if (personId == _personId) return from;
+    _personId = personId;
+    _visitOnly = false;
+    final store = _filterStore;
+    if (store == null) return from;
+    final saved = personId == null ? RecordsFilters.none : store.load(personId);
+    return from.copyWith(
+      activeFilters: saved.types,
+      activeSpecialties: saved.specialties,
+      dateFilter: saved.dateFilter,
+    );
+  }
+
+  /// The state a filter event changes: a Home card's person's own filters
+  /// when the card names someone else than the person shown.
+  RecordsState _baseFor(String? personId) =>
+      personId == null ? state : _showPerson(state, personId);
 
   Future<void> _onInitialised(
     RecordsInitialised event,
     Emitter<RecordsState> emit,
   ) async {
-    emit(_withDefaultFilters(state, event.isShareContext));
     await _loadResources(emit);
   }
 
@@ -232,9 +273,11 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsSourceChanged event,
     Emitter<RecordsState> emit,
   ) async {
+    final personId = event.isShareContext ? null : event.personId;
     final sameScope =
         event.sourceId == state.sourceId &&
-        listEquals(event.sourceIds, state.sourceIds);
+        listEquals(event.sourceIds, state.sourceIds) &&
+        personId == _personId;
 
     // The same scope again is a refresh: the list stays until the new one
     // arrives. Another person's or source's list starts over, without the
@@ -249,7 +292,9 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
             selectedResourceIds: {},
           );
 
-    emit(_withDefaultFilters(nextState, event.isShareContext));
+    // The same person again (each visit, a sync) keeps the filters shown,
+    // also those a Home card set for this visit.
+    emit(_showPerson(nextState, personId));
 
     await _loadResources(emit);
   }
@@ -258,16 +303,17 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsFiltersApplied event,
     Emitter<RecordsState> emit,
   ) async {
-    _onDefaultFilters = false;
-    _filtersChosen = true;
     emit(
-      state.copyWith(
+      _baseFor(event.personId).copyWith(
         activeFilters: event.filters,
         dateFilter: event.dateFilter,
         activeSpecialties: event.specialties,
         resources: [],
       ),
     );
+
+    _visitOnly = !event.remember;
+    if (event.remember) await _saveFilters();
 
     await _loadResources(emit);
   }
@@ -276,8 +322,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsFilterRemoved event,
     Emitter<RecordsState> emit,
   ) async {
-    _onDefaultFilters = false;
-    _filtersChosen = true;
     final updatedFilters = [...state.activeFilters]..remove(event.filter);
     emit(
       state.copyWith(
@@ -285,6 +329,9 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         resources: [],
       ),
     );
+
+    _visitOnly = false;
+    await _saveFilters();
 
     await _loadResources(emit);
   }
@@ -464,13 +511,15 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsDateRangeCleared event,
     Emitter<RecordsState> emit,
   ) async {
-    _filtersChosen = true;
     emit(
       state.copyWith(
         dateFilter: null,
         resources: [],
       ),
     );
+
+    _visitOnly = false;
+    await _saveFilters();
 
     await _loadResources(emit);
   }
@@ -521,14 +570,15 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsSpecialtyApplied event,
     Emitter<RecordsState> emit,
   ) async {
-    _onDefaultFilters = false;
-    _filtersChosen = true;
     emit(
-      state.copyWith(
+      _baseFor(event.personId).copyWith(
         activeSpecialties: event.specialties,
         resources: [],
       ),
     );
+
+    _visitOnly = !event.remember;
+    if (event.remember) await _saveFilters();
 
     await _loadResources(emit);
   }
@@ -546,8 +596,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsClearAllFilters event,
     Emitter<RecordsState> emit,
   ) async {
-    _onDefaultFilters = false;
-    _filtersChosen = true;
     emit(
       state.copyWith(
         activeFilters: [],
@@ -557,6 +605,29 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       ),
     );
 
+    _visitOnly = false;
+    await _saveFilters();
+
+    await _loadResources(emit);
+  }
+
+  Future<void> _onVisitEnded(
+    RecordsVisitEnded event,
+    Emitter<RecordsState> emit,
+  ) async {
+    final personId = _personId;
+    final store = _filterStore;
+    if (!_visitOnly || personId == null || store == null) return;
+    _visitOnly = false;
+    final saved = store.load(personId);
+    emit(
+      state.copyWith(
+        activeFilters: saved.types,
+        activeSpecialties: saved.specialties,
+        dateFilter: saved.dateFilter,
+        resources: [],
+      ),
+    );
     await _loadResources(emit);
   }
 }

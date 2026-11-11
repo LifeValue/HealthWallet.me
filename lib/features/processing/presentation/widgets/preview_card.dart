@@ -184,7 +184,7 @@ class _PageIndicator extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            '${currentPage + 1} of $totalPages',
+            context.l10n.pageOfTotal('${currentPage + 1}', '$totalPages'),
             style: AppTextStyle.bodySmall.copyWith(
               fontWeight: FontWeight.w500,
               color: context.colorScheme.onSurface,

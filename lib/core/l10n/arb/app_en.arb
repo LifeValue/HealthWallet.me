@@ -703,6 +703,15 @@
   "desktopHandoverProcessingMessage": "Processing is in progress. Handover will cancel the current processing and send files to desktop.",
   "desktopHandover": "Handover",
   "attachedDocuments": "Attached Documents",
+  "documentAttachedTo": "Attached to {visit}.",
+  "@documentAttachedTo": {
+    "description": "Says which visit a document attached without the AI was filed under, for example \"Checkup, 03/11/2026\".",
+    "placeholders": {
+      "visit": {
+        "type": "String"
+      }
+    }
+  },
   "cameraPermissionRequired": "Camera Permission Required",
   "cameraPermissionRequiredMessage": "This app needs camera access to scan. Please grant permission to continue.",
   "cameraPermissionDenied": "Camera Permission Denied",
@@ -2489,6 +2498,15 @@
     }
   },
   "backupRestorePhoneOffline": "Your phone isn't connected. Records added on it since its last sync will come back after it reconnects; changes it made to existing records will be replaced by the backup.",
+  "backupRestoreRemovesScans": "{count, plural, =1{1 scan waiting for review will be removed.} other{{count} scans waiting for review will be removed.}}",
+  "@backupRestoreRemovesScans": {
+    "description": "Restore confirmation: the scans not saved yet on this computer, which the restore removes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "aiModelDeleteTitle": "Delete {name}?",
   "aiModelDeleteMessage": "The model and its Deep Scan files are removed from this device. To scan with it again, you'll need to download it again (~{size} MB).",
   "@aiModelDeleteTitle": {
@@ -2505,5 +2523,73 @@
         "type": "int"
       }
     }
+  },
+  "processingNoPatientFound": "No patient found in the document. Enter the details.",
+  "@processingNoPatientFound": {
+    "description": "Shown on the review when the AI found no patient and the user fills the fields in."
+  },
+  "processingStopping": "Stopping…",
+  "@processingStopping": {
+    "description": "Shown after Cancel while the AI finishes stopping; Continue waits until it has."
+  },
+  "handoverTakenBack": "The phone took this document back.",
+  "@handoverTakenBack": {
+    "description": "Shown on the desktop when the phone takes back a document that was open for review."
+  },
+  "aiModelSwitchedToLiteTitle": "Now using the Lite model",
+  "@aiModelSwitchedToLiteTitle": {
+    "description": "Notification title when the selected AI model is replaced by Lite because the device lacks the memory for it."
+  },
+  "aiModelSwitchedToLiteMessage": "The {modelName} model needs more memory than this device has, so the Lite model is used.",
+  "@aiModelSwitchedToLiteMessage": {
+    "description": "Notification text when the selected AI model is replaced by Lite because the device lacks the memory for it.",
+    "placeholders": {
+      "modelName": {
+        "type": "String",
+        "example": "Advanced"
+      }
+    }
+  },
+  "backupSafetyRetention": "{count, plural, =1{Kept for 1 day} other{Kept for {count} days}}",
+  "@backupSafetyRetention": {
+    "description": "Desktop Backup card, under the backup folder: how many days the automatic copy made before every restore is kept.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSafetyRetentionTitle": "Copy made before a restore",
+  "@backupSafetyRetentionTitle": {
+    "description": "Desktop Backup card: heading of the section with how long the copy made before a restore is kept, like the Location heading above it."
+  },
+  "backupSafetyRetentionDaysUnit": "{count, plural, =1{day} other{days}}",
+  "@backupSafetyRetentionDaysUnit": {
+    "description": "The word after the number of days in the safety copy retention field.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSafetyRetentionHint": "Applies to existing copies too. Copies older than this are deleted now.",
+  "@backupSafetyRetentionHint": {
+    "description": "Desktop Backup card, under the retention field: the new value counts for copies already made, and copies older than it are deleted as soon as it is saved."
+  },
+  "backupSafetyRetentionInvalid": "Enter a whole number of days from {min} to {max}.",
+  "@backupSafetyRetentionInvalid": {
+    "description": "Desktop Backup card: the typed number of days isn't a whole number in the allowed range.",
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSafetyRetentionSaveFailed": "Couldn't save how long to keep the copy made before a restore. Please try again.",
+  "@backupSafetyRetentionSaveFailed": {
+    "description": "Desktop Backup card: saving the number of days the copy made before a restore is kept failed."
   }
 }

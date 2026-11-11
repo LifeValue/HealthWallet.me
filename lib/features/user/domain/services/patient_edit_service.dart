@@ -4,6 +4,7 @@ import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart'
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/blood_observation_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/holders/domain/entity/holder_patient.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
@@ -359,6 +360,18 @@ class PatientEditService {
           ) ??
           false,
     );
+
+    // The default holder's placeholder reads as no ID, so an empty value
+    // never means the user cleared it. It is kept, under the chosen
+    // country's code, or the unnamed holder would no longer be known as
+    // one (see HolderPatient.isPlaceholder).
+    final isPlaceholder =
+        primaryIndex >= 0 &&
+        identifiers[primaryIndex].value?.valueString ==
+            HolderPatient.placeholderRowId;
+    if ((value == null || value.isEmpty) && isPlaceholder) {
+      value = HolderPatient.placeholderRowId;
+    }
 
     if (value != null && value.isNotEmpty) {
       final identifier = fhir_r4.Identifier(

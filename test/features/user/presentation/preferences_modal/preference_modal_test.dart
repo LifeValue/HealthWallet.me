@@ -280,6 +280,44 @@ void main() {
     await letSnackBarTimeOut(tester);
   });
 
+  testWidgets('a setting saved or saving shows no message', (tester) async {
+    await pumpPage(tester);
+    await openModal(tester);
+
+    userStates.add(const UserState(status: UserStatus.loading()));
+    await tester.pump();
+    userStates.add(const UserState(status: UserStatus.success()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byKey(AppSnackBar.cardKey), findsNothing);
+  });
+
+  testWidgets('shows the app version and build', (tester) async {
+    await pumpPage(tester);
+    await openModal(tester);
+
+    expect(find.text('${_en.version}: v1.2.1 (42)'), findsOne);
+  });
+
+  testWidgets('the close button closes it', (tester) async {
+    await pumpPage(tester);
+    await openModal(tester);
+
+    await tester.tap(
+      find
+          .descendant(
+            of: find.byType(PreferenceModal),
+            matching: find.byType(IconButton),
+          )
+          .first,
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byType(PreferenceModal), findsNothing);
+  });
+
   testWidgets('a tap outside the dialog still closes it, a tap inside does '
       'not', (tester) async {
     await pumpPage(tester);

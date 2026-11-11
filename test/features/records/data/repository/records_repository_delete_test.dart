@@ -15,7 +15,7 @@ void main() {
   setUp(() async {
     db = openTestDatabase();
     docs = Directory.systemTemp.createTempSync('records_delete_docs');
-    repository = await openRepository(db, documentsPath: docs.path);
+    repository = await openRepository(db);
   });
 
   tearDown(() async {

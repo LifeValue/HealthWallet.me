@@ -26,9 +26,12 @@ abstract class RecordsSourceChanged extends RecordsEvent
     with _$RecordsSourceChanged {
   const RecordsSourceChanged._();
 
+  /// [personId] is the holder whose records these are: their own saved
+  /// filters apply. Without one (a share), no filters are kept.
   const factory RecordsSourceChanged(
     String? sourceId, {
     List<String>? sourceIds,
+    String? personId,
     @Default(false) bool isShareContext,
   }) = _RecordsSourceChanged;
 }
@@ -39,10 +42,15 @@ abstract class RecordsFiltersApplied extends RecordsEvent
   const RecordsFiltersApplied._();
 
   /// Sets every filter at once: the types, the dates and the specialties.
+  /// [remember] false (a Home card) filters this visit only: the person's
+  /// saved filters stay as they were. [personId] is the person the card
+  /// was shown for, whose records Records opens on next.
   const factory RecordsFiltersApplied(
     List<FhirType> filters, {
     DateFilter? dateFilter,
     @Default([]) List<MedicalSpecialty> specialties,
+    @Default(true) bool remember,
+    String? personId,
   }) = _RecordsFiltersApplied;
 }
 
@@ -143,10 +151,20 @@ abstract class RecordsSpecialtyApplied extends RecordsEvent
   const RecordsSpecialtyApplied._();
 
   /// Sets the specialties and keeps the type and date filters.
-  const factory RecordsSpecialtyApplied(List<MedicalSpecialty> specialties) =
-      _RecordsSpecialtyApplied;
+  /// [remember] false (a Home card) filters this visit only: the person's
+  /// saved filters stay as they were. [personId] is the person the card
+  /// was shown for, whose records Records opens on next.
+  const factory RecordsSpecialtyApplied(
+    List<MedicalSpecialty> specialties, {
+    @Default(true) bool remember,
+    String? personId,
+  }) = _RecordsSpecialtyApplied;
 }
 
 class RecordsRefreshRequested extends RecordsEvent {}
+
+/// The Records tab was left: filters a Home card set for that visit give
+/// way to the person's own.
+class RecordsVisitEnded extends RecordsEvent {}
 
 class RecordsClearAllFilters extends RecordsEvent {}

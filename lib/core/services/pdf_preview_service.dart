@@ -8,6 +8,7 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/services/temp_file_sweeper.dart';
+import 'package:health_wallet/core/utils/file_url.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/pdf_open.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
@@ -41,9 +42,7 @@ class PdfPreviewService {
     final attachment = (contentList[0] as Map?)?['attachment'] as Map?;
     final url = attachment?['url'] as String?;
     if (url == null) return null;
-    final rawPath = Uri.decodeComponent(
-      url.startsWith('file://') ? url.substring(7) : url,
-    );
+    final rawPath = filePathOfUrl(url);
     final resolved = await _pathResolver.toAbsolute(rawPath);
     return resolved;
   }

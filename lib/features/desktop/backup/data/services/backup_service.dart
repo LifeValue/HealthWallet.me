@@ -1,15 +1,19 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/services/attachment_files_lock.dart';
 import 'package:health_wallet/core/services/attachment_references.dart';
 import 'package:health_wallet/core/services/folder_access_service.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/desktop/backup/data/services/scan_file_sweeper.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/restore_result.dart';
+import 'package:health_wallet/features/desktop/backup/domain/utils/safety_copy_retention.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/attachment_sync_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
@@ -36,11 +40,19 @@ class BackupService {
     this._pathResolver,
     this._references,
     this._attachments,
-    this._legacyFolders,
-  );
+    this._legacyFolders, {
+    AttachmentFilesLock? filesLock,
+    ScanFileSweeper? scanFiles,
+  }) : _filesLock = filesLock ?? AttachmentFilesLock(),
+       _scanFiles = scanFiles ?? ScanFileSweeper(_database, _pathResolver);
 
-  /// "Before restore" copies older than this are deleted automatically.
-  static const safetyCopyRetention = Duration(days: 30);
+  /// Held from placing a restore's files to its commit, so the attachment
+  /// cleaner never deletes a file the restore decided to reuse.
+  final AttachmentFilesLock _filesLock;
+
+  /// Deletes the files of the scans a restore removed (see
+  /// [removeDroppedScanFiles]).
+  final ScanFileSweeper _scanFiles;
 
   /// The tables that sync with the phone, parents first. A restore makes
   /// them the backup's state at a fresh stamp (see [restoreFromFile]).
@@ -51,6 +63,33 @@ class BackupService {
 
   static const _stagingPrefix = '.restore-';
   static const _metaSuffix = '.meta.json';
+
+  /// How long the parts of a backup without metadata must have been left
+  /// alone before [removeBackupLeftovers] takes them for an interrupted one.
+  static const leftoverMinAge = Duration(minutes: 10);
+
+  /// A part of a backup as [createSnapshot] names it: `<prefix><ms>` and
+  /// `.db`, `.files` or the metadata's `.tmp`. Group 1 is the base name.
+  static final _backupPart = RegExp(
+    r'^(.*_\d{13})(\.db|\.files|\.db\.meta\.json\.tmp)$',
+  );
+
+  /// The base names of the backups this run is writing.
+  final _writing = <String>{};
+
+  final _changes = StreamController<void>.broadcast();
+
+  /// The last [deleteExpiredSafetyCopies] run queued, so runs never overlap.
+  Future<void> _expiryQueue = Future.value();
+
+  /// Fires after anything that can move the next safety copy expiry: a
+  /// backup written, a backup deleted (expired copies included), the folder
+  /// or the retention changed. `SafetyCopyExpiryScheduler` listens.
+  Stream<void> get changes => _changes.stream;
+
+  void _changed() {
+    if (!_changes.isClosed) _changes.add(null);
+  }
 
   /// Whether this run has already reopened the chosen folder from its
   /// bookmark (macOS only; see [FolderAccessService]).
@@ -120,12 +159,53 @@ class BackupService {
       await prefs.remove(SharedPrefsConstants.backupDirectoryBookmark);
     }
     _folderAccessRestored = true;
+    _changed();
   }
 
   Future<void> resetBackupDirectory() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(SharedPrefsConstants.backupDirectory);
     await prefs.remove(SharedPrefsConstants.backupDirectoryBookmark);
+    _changed();
+  }
+
+  /// The whole days a "Before restore" copy is kept, as set on this desktop:
+  /// [SafetyCopyRetention.defaultDays] when nothing is stored or the stored
+  /// value isn't a valid number of days.
+  Future<int> getSafetyCopyRetentionDays() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.get(SharedPrefsConstants.safetyCopyRetentionDays);
+    if (stored is int && SafetyCopyRetention.isValid(stored)) return stored;
+    if (stored != null) {
+      logger.w(
+        '[Backup] ignored the invalid safety copy retention $stored; '
+        'keeping copies ${SafetyCopyRetention.defaultDays} days',
+      );
+    }
+    return SafetyCopyRetention.defaultDays;
+  }
+
+  /// Saves how many whole days "Before restore" copies are kept on this
+  /// desktop. It deletes nothing itself: [changes] fires, and the scheduler
+  /// then deletes the copies older than that at once. Throws an
+  /// [ArgumentError] for a value outside [SafetyCopyRetention.minDays] to
+  /// [SafetyCopyRetention.maxDays], and a [StateError] when it isn't saved.
+  Future<void> setSafetyCopyRetentionDays(int days) async {
+    if (!SafetyCopyRetention.isValid(days)) {
+      throw ArgumentError.value(
+        days,
+        'days',
+        'must be from ${SafetyCopyRetention.minDays} to '
+            '${SafetyCopyRetention.maxDays}',
+      );
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final saved = await prefs.setInt(
+      SharedPrefsConstants.safetyCopyRetentionDays,
+      days,
+    );
+    if (!saved) throw StateError('The safety copy retention was not saved');
+    _changed();
   }
 
   // ---------------------------------------------------------------------------
@@ -136,10 +216,10 @@ class BackupService {
   /// metadata. A failure removes what was written and rethrows. [name] is
   /// shown as given; the file name keeps its letters (any script), digits
   /// and the date's punctuation. With [isSafetyCopy] it is the automatic
-  /// "Before restore" copy, deleted after [safetyCopyRetention]. Nothing is
-  /// sent to the phone. The expired safety copies it deletes afterwards
-  /// never include [keepId]: the backup about to be restored, which may be
-  /// an old safety copy itself.
+  /// "Before restore" copy, deleted after [getSafetyCopyRetentionDays] days.
+  /// Nothing is sent to the phone. The expired safety copies it deletes
+  /// afterwards never include [keepId]: the backup about to be restored,
+  /// which may be an old safety copy itself.
   Future<BackupEntry> createSnapshot({
     String? name,
     bool isSafetyCopy = false,
@@ -169,6 +249,7 @@ class BackupService {
     final filesDir = Directory(_filesPathFor(dbPath));
 
     final BackupEntry entry;
+    _writing.add(p.basename(base));
     try {
       await _database.customStatement('VACUUM INTO ?', [dbPath]);
       final snapshot = await _readSnapshot(dbPath);
@@ -195,6 +276,8 @@ class BackupService {
       await _deleteQuietly(File(dbPath));
       await _deleteQuietly(filesDir);
       rethrow;
+    } finally {
+      _writing.remove(p.basename(base));
     }
 
     if (entry.missing.isNotEmpty) {
@@ -204,6 +287,7 @@ class BackupService {
       );
     }
     await deleteExpiredSafetyCopies(keep: {?keepId});
+    _changed();
     return entry;
   }
 
@@ -342,6 +426,12 @@ class BackupService {
       throw StateError('Backup checksum mismatch — file may be corrupted');
     }
 
+    // A file already in Documents may be reused, and only the commit makes
+    // the restored rows refer to it: the cleaner must not run until then.
+    return _filesLock.exclusive(() => _restore(backupPath, entry));
+  }
+
+  Future<RestoreResult> _restore(String backupPath, BackupEntry? entry) async {
     final docs = await _pathResolver.getDocumentsPath();
     final staging = Directory(
       p.join(
@@ -378,6 +468,19 @@ class BackupService {
       filesNotRestored: plan.notRestored,
       filesMissingFromBackup: entry?.missing.length ?? 0,
     );
+  }
+
+  /// The scans on this device not saved yet, which a restore removes (it
+  /// replaces `processing_sessions` with the backup's): every session,
+  /// whatever its status, since saving one deletes it.
+  Future<int> countUnsavedScans() async {
+    final row = await _database
+        .customSelect(
+          'SELECT COUNT(*) AS c FROM processing_sessions',
+          readsFrom: {_database.processingSessions},
+        )
+        .getSingle();
+    return row.data['c'] as int;
   }
 
   /// Stages, checks and moves the backup's files into [docs], and works out
@@ -447,6 +550,7 @@ class BackupService {
 
     return _FilePlan(
       files: entry.files,
+      missing: {for (final url in entry.missing) AttachmentRef(url).path},
       destinations: destinations,
       added: addedCount,
       alreadyPresent: alreadyPresent,
@@ -695,23 +799,17 @@ class BackupService {
     if (!tables.contains('fhir_resource')) return const {};
     if (plan.destinations.values.every((d) => d == null)) return const {};
 
-    // Every file the backup lists, restored or not, so a url of a file that
-    // wasn't restored never goes to another file of the same name.
-    final byPath = <String, BackupFile>{};
-    final byName = <String, List<BackupFile>>{};
-    for (final file in plan.files) {
-      for (final path in file.sourcePaths) {
-        byPath[path] = file;
-        (byName[AttachmentReferences.basenameOf(path).toLowerCase()] ??= [])
-            .add(file);
-      }
-    }
-    BackupFile? fileFor(AttachmentRef ref) {
-      final exact = byPath[ref.path];
-      if (exact != null) return exact;
-      final named = byName[ref.basename.toLowerCase()]?.toSet();
-      return named != null && named.length == 1 ? named.single : null;
-    }
+    // Only by the paths the backup's own rows store: the metadata comes from
+    // the same snapshot (its checksum covers the `.db`), so every url the
+    // backup copied a file for is listed there. Never by name: a url whose
+    // file wasn't on the device (`missing`), or one the metadata doesn't
+    // list, would take another record's file of the same name.
+    final byPath = <String, BackupFile>{
+      for (final file in plan.files)
+        for (final path in file.sourcePaths) path: file,
+    };
+    BackupFile? fileFor(AttachmentRef ref) =>
+        plan.missing.contains(ref.path) ? null : byPath[ref.path];
 
     final rows = await _database
         .customSelect('SELECT id, resource_raw FROM backup_db.fhir_resource')
@@ -823,7 +921,12 @@ class BackupService {
       (b) => b.id == backupId,
       orElse: () => throw StateError('Backup not found: $backupId'),
     );
-    await _deleteEntry(target);
+    try {
+      await _deleteEntry(target);
+    } finally {
+      // Even a delete that failed half-way may have unlisted it.
+      _changed();
+    }
   }
 
   /// Removes the metadata first, so a backup is never listed half deleted,
@@ -854,19 +957,29 @@ class BackupService {
     logger.i('[Backup] deleted ${p.basename(dbPath)}');
   }
 
-  /// Deletes "Before restore" copies older than [safetyCopyRetention] and
-  /// returns how many. User backups and the ids in [keep] are never deleted.
-  /// Failures are logged.
+  /// Deletes the "Before restore" copies expired at [now] (default: the
+  /// current time), existing ones included, and returns how many. A copy
+  /// expires [getSafetyCopyRetentionDays] days after it was made, at that
+  /// very moment. User backups and the ids in [keep] are never deleted.
+  /// Runs one at a time: a call made while one runs waits for it. Failures
+  /// are logged; when the setting can't be read nothing is deleted.
   Future<int> deleteExpiredSafetyCopies({
     DateTime? now,
     Set<String> keep = const {},
-  }) async {
-    final cutoff = (now ?? DateTime.now()).subtract(safetyCopyRetention);
+  }) {
+    final run = _expiryQueue.then((_) => _deleteExpired(now, keep));
+    _expiryQueue = run;
+    return run;
+  }
+
+  Future<int> _deleteExpired(DateTime? now, Set<String> keep) async {
     var deleted = 0;
     try {
+      final days = await getSafetyCopyRetentionDays();
+      final at = now ?? DateTime.now();
       for (final entry in await listBackups()) {
         if (!entry.isSafetyCopy ||
-            !entry.timestamp.isBefore(cutoff) ||
+            safetyCopyExpiry(entry.timestamp, days).isAfter(at) ||
             keep.contains(entry.id)) {
           continue;
         }
@@ -881,8 +994,39 @@ class BackupService {
     } catch (e, s) {
       logger.e('[Backup] could not look for expired safety copies', e, s);
     }
+    if (deleted > 0) _changed();
     return deleted;
   }
+
+  /// When each safety copy in the folder expires (made plus
+  /// [getSafetyCopyRetentionDays] days), leaving out the ids in [keep].
+  /// Throws when the folder can't be listed.
+  Future<List<DateTime>> safetyCopyExpiries({
+    Set<String> keep = const {},
+  }) async {
+    final days = await getSafetyCopyRetentionDays();
+    return [
+      for (final entry in await listBackups())
+        if (entry.isSafetyCopy && !keep.contains(entry.id))
+          safetyCopyExpiry(entry.timestamp, days),
+    ];
+  }
+
+  /// When a safety copy made at [made] expires: [days] calendar days later,
+  /// at the same time of day, so a change to or from summer time in between
+  /// doesn't move it by an hour.
+  static DateTime safetyCopyExpiry(DateTime made, int days) => made.isUtc
+      ? made.add(Duration(days: days))
+      : DateTime(
+          made.year,
+          made.month,
+          made.day + days,
+          made.hour,
+          made.minute,
+          made.second,
+          made.millisecond,
+          made.microsecond,
+        );
 
   /// Removes `Documents/.restore-*` staging folders a crashed restore left
   /// behind and returns how many. Failures are logged.
@@ -910,11 +1054,96 @@ class BackupService {
     return removed;
   }
 
-  /// Start-up housekeeping: restore leftovers and expired safety copies.
-  /// Never throws.
+  /// Removes what an interrupted backup (the app killed while writing it)
+  /// left in the backup folder, and returns how many backups. A backup's
+  /// `.db`, `.files/` and metadata `.tmp` are removed together, only when it
+  /// has no metadata (it was never complete, so never listed), this run
+  /// isn't writing it, and none of its parts (nor a file in `.files/`) was
+  /// modified in the last [leftoverMinAge]. Names that aren't a backup's
+  /// parts are never touched. Failures are logged.
+  Future<int> removeBackupLeftovers({DateTime? now}) async {
+    final cutoff = (now ?? DateTime.now()).subtract(leftoverMinAge);
+    var removed = 0;
+    try {
+      final backupDir = await getBackupDirectory();
+      final parts = <String, List<FileSystemEntity>>{};
+      await for (final entity in backupDir.list(followLinks: false)) {
+        final match = _backupPart.firstMatch(p.basename(entity.path));
+        if (match == null) continue;
+        final isDir = match[2] == '.files';
+        if (isDir ? entity is! Directory : entity is! File) continue;
+        (parts[match[1]!] ??= []).add(entity);
+      }
+      for (final MapEntry(key: base, value: entities) in parts.entries) {
+        if (_writing.contains(base)) continue;
+        final meta = p.join(backupDir.path, '$base.db$_metaSuffix');
+        if (await _exists(meta)) continue;
+        if (!await _untouchedSince(entities, cutoff)) continue;
+        for (final entity in entities) {
+          await _deleteQuietly(entity);
+        }
+        removed++;
+        logger.i('[Backup] removed the interrupted backup $base');
+      }
+    } catch (e, s) {
+      logger.e('[Backup] could not look for interrupted backups', e, s);
+    }
+    return removed;
+  }
+
+  /// Whether [entities], and the entries directly in those that are folders,
+  /// were last modified before [cutoff]. A folder's own time moves with each
+  /// file added to it, which matters because a copy may keep its source's
+  /// modified time.
+  static Future<bool> _untouchedSince(
+    List<FileSystemEntity> entities,
+    DateTime cutoff,
+  ) async {
+    for (final entity in entities) {
+      final inside = entity is Directory
+          ? await entity.list(followLinks: false).toList()
+          : const <FileSystemEntity>[];
+      for (final e in [entity, ...inside]) {
+        final stat = await e.stat();
+        if (!stat.modified.isBefore(cutoff)) return false;
+      }
+    }
+    return true;
+  }
+
+  /// Deletes the working files (in `imports/` and the page cache) of the
+  /// scans a restore removed, once neither this database nor a kept safety
+  /// copy holds them, so restoring that safety copy still finds them. See
+  /// [ScanFileSweeper]. Returns how many files went; never throws.
+  Future<int> removeDroppedScanFiles({DateTime? now}) async {
+    final List<BackupEntry> backups;
+    try {
+      backups = await listBackups();
+    } catch (e, s) {
+      logger.e(
+        '[Backup] could not list the safety copies; no scan file '
+        'deleted',
+        e,
+        s,
+      );
+      return 0;
+    }
+    return _scanFiles.sweep(
+      keepSessionsOf: [
+        for (final backup in backups)
+          if (backup.isSafetyCopy) backup.filePath,
+      ],
+      now: now,
+    );
+  }
+
+  /// Start-up housekeeping: restore and backup leftovers, expired safety
+  /// copies, then the files of the scans no kept data holds. Never throws.
   Future<void> cleanUpOnStartup() async {
     await removeRestoreLeftovers();
+    await removeBackupLeftovers();
     await deleteExpiredSafetyCopies();
+    await removeDroppedScanFiles();
   }
 
   // ---------------------------------------------------------------------------
@@ -1024,6 +1253,7 @@ class BackupService {
 class _FilePlan {
   const _FilePlan({
     required this.files,
+    required this.missing,
     required this.destinations,
     required this.added,
     required this.alreadyPresent,
@@ -1033,6 +1263,7 @@ class _FilePlan {
 
   static final none = _FilePlan(
     files: const [],
+    missing: const {},
     destinations: const {},
     added: 0,
     alreadyPresent: 0,
@@ -1042,6 +1273,10 @@ class _FilePlan {
 
   /// Every file the backup lists, restored or not.
   final List<BackupFile> files;
+
+  /// The paths of the urls whose file wasn't on the device at backup time;
+  /// they are never pointed at a restored file.
+  final Set<String> missing;
 
   /// Each restored file's name in Documents; null when the records already
   /// find its content where they point. Files that couldn't be restored

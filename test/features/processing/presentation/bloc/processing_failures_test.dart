@@ -24,6 +24,7 @@ import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../helpers/fake_device_capability_service.dart';
 import '../../../../helpers/log_capture.dart';
 import '../../../share_records/share_test_helpers.dart';
 
@@ -161,6 +162,7 @@ void main() {
         _FakeHolderService(),
         _FakeRecordsRepository(),
       ),
+      FakeDeviceCapabilityService(),
     );
   });
 

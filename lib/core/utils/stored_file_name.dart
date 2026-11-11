@@ -5,27 +5,14 @@ import 'package:path/path.dart';
 import 'package:uuid/uuid.dart';
 
 /// A file name for [originalName] in [directory] that no file has yet: the
-/// sanitised name with an 8-character unique suffix, so two attachments
-/// with the same name never replace each other. The original name stays
-/// the attachment's title.
-///
-/// Letters and digits of any script, accents, spaces, `_`, `.`, `-`, `(` and
-/// `)` are kept, so a title read back from the name ([originalFileStem])
-/// stays readable; path separators and every other character become `_`.
+/// sanitised name ([safeFileName]) with an 8-character unique suffix, so two
+/// attachments with the same name never replace each other. The original
+/// name stays the attachment's title.
 Future<String> uniqueStoredFileName(
   String directory,
   String originalName,
 ) async {
-  final base = originalName.replaceAll(_unsafeCharacter, '_');
-  final dot = base.lastIndexOf('.');
-  final hasExtension =
-      dot >= 0 && dot < base.length - 1 && base.length - dot <= 16;
-  var stem = (hasExtension ? base.substring(0, dot) : base)
-      .replaceFirst(RegExp(r'^[. ]+'), '')
-      .trimRight();
-  if (!stem.contains(RegExp(r'[\p{L}\p{N}]', unicode: true))) stem = 'file';
-  if (stem.length > 100) stem = stem.substring(0, 100);
-  final extension = hasExtension ? base.substring(dot) : '';
+  final (:stem, :extension) = _safeParts(originalName);
   while (true) {
     final name = '${stem}_${const Uuid().v4().substring(0, 8)}$extension';
     final type = await FileSystemEntity.type(
@@ -36,14 +23,67 @@ Future<String> uniqueStoredFileName(
   }
 }
 
+/// [originalName] reduced to one path segment that is safe to store, without
+/// the unique suffix: for a file that gets a folder of its own, so the name
+/// a later [uniqueStoredFileName] gives it carries a single suffix.
+///
+/// Letters and digits of any script, accents, spaces, `_`, `.`, `-`, `(` and
+/// `)` are kept, so a title read back from the name ([originalFileStem])
+/// stays readable; path separators and every other character become `_`.
+/// The name never starts with a dot or a space and is never empty.
+///
+/// It is also a name Windows opens as that file, on every platform so a name
+/// means the same file everywhere: trailing dots and spaces, which Windows
+/// drops, are dropped, and a device name (`CON`, `PRN`, `AUX`, `NUL`, `COM0`
+/// to `COM9`, `LPT0` to `LPT9`, with any extension) gets a `_` after it,
+/// which [originalFileStem] removes again.
+String safeFileName(String originalName) {
+  final (:stem, :extension) = _safeParts(originalName);
+  // Never empty: the stem holds a letter or a digit.
+  final name = '$stem$extension'.replaceFirst(RegExp(r'[. ]+$'), '');
+  // Windows reads the device name up to the first dot, ignoring trailing
+  // spaces: `CON.pdf`, `con .tar.gz`.
+  final dot = name.indexOf('.');
+  final device = (dot < 0 ? name : name.substring(0, dot)).trimRight();
+  if (!_deviceName.hasMatch(device)) return name;
+  return '${device}_${dot < 0 ? '' : name.substring(dot)}';
+}
+
+final _deviceName = RegExp(
+  r'^(CON|PRN|AUX|NUL|COM[0-9¹²³]|LPT[0-9¹²³])$',
+  caseSensitive: false,
+);
+
+/// A device name as [safeFileName] stores it.
+final _storedDeviceName = RegExp(
+  r'^(CON|PRN|AUX|NUL|COM[0-9¹²³]|LPT[0-9¹²³])_(?=\.|$)',
+  caseSensitive: false,
+);
+
+({String stem, String extension}) _safeParts(String originalName) {
+  final base = originalName.replaceAll(_unsafeCharacter, '_');
+  final dot = base.lastIndexOf('.');
+  final hasExtension =
+      dot >= 0 && dot < base.length - 1 && base.length - dot <= 16;
+  var stem = (hasExtension ? base.substring(0, dot) : base)
+      .replaceFirst(RegExp(r'^[. ]+'), '')
+      .trimRight();
+  if (!stem.contains(RegExp(r'[\p{L}\p{N}]', unicode: true))) stem = 'file';
+  if (stem.length > 100) stem = stem.substring(0, 100);
+  return (stem: stem, extension: hasExtension ? base.substring(dot) : '');
+}
+
 final _unsafeCharacter = RegExp(r'[^\p{L}\p{M}\p{N}_.\- ()]', unicode: true);
 
 final _uniqueSuffix = RegExp(r'_[0-9a-f]{8}$');
 
 /// The name of the file at [path] without its extension and without the
-/// suffix [uniqueStoredFileName] added, for use as a title.
+/// suffix [uniqueStoredFileName] added, for use as a title. A device name
+/// reads as itself, without the `_` [safeFileName] gave it.
 String originalFileStem(String path) =>
-    basenameWithoutExtension(path).replaceFirst(_uniqueSuffix, '');
+    basenameWithoutExtension(path)
+        .replaceFirst(_uniqueSuffix, '')
+        .replaceFirstMapped(_storedDeviceName, (m) => m[1]!);
 
 /// Copies [source] to [destination] and marks the copy as modified now.
 ///

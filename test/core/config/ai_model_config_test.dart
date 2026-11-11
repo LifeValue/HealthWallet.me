@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:health_wallet/core/services/device_capability_service.dart'
+    as core;
 import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -11,13 +13,26 @@ const _candidates = [
   AiModelVariant.medGemma15,
 ];
 
-DeviceProfile _phone(int ramMB) => DeviceProfile(
+DeviceProfile _desktop(
+  int ramMB, {
+  GpuType gpuType = GpuType.appleSilicon,
+  int cores = 8,
+}) => DeviceProfile(
+  ramMB: ramMB,
+  logicalCores: cores,
+  physicalCores: cores,
+  gpuType: gpuType,
+  isDesktop: true,
+  platform: 'macos',
+);
+
+DeviceProfile _phone(int ramMB, {String platform = 'ios'}) => DeviceProfile(
   ramMB: ramMB,
   logicalCores: 6,
   physicalCores: 6,
   gpuType: GpuType.appleSilicon,
   isDesktop: false,
-  platform: 'ios',
+  platform: platform,
 );
 
 void main() {
@@ -45,13 +60,100 @@ void main() {
     ]);
   });
 
-  test('a 6 GB+ phone is recommended Qwen3.5-4B, a smaller one Lite', () {
+  test('an 8 GB+ phone is recommended Qwen3.5-4B, a smaller one Lite', () {
     expect(
       AiModelConfig.recommendedVariant(_phone(8192)),
       AiModelVariant.qwen35x4b,
     );
+    expect(AiModelConfig.recommendedVariant(_phone(6144)), AiModelVariant.qwen);
     expect(AiModelConfig.recommendedVariant(_phone(4096)), AiModelVariant.qwen);
   });
+
+  test('an Android phone is recommended Qwen3.5-4B only from 11 GB, where '
+      'Deep Scan runs', () {
+    for (final ramMB in [8192, 10240, 11263]) {
+      expect(
+        AiModelConfig.recommendedVariant(_phone(ramMB, platform: 'android')),
+        AiModelVariant.qwen,
+        reason: '$ramMB MB',
+      );
+    }
+    expect(
+      AiModelConfig.recommendedVariant(_phone(12288, platform: 'android')),
+      AiModelVariant.qwen35x4b,
+    );
+  });
+
+  test('a phone is recommended Qwen3.5-4B exactly where it is offered', () {
+    for (final platform in ['ios', 'android']) {
+      for (var ramMB = 2048; ramMB <= 16384; ramMB += 512) {
+        expect(
+          AiModelConfig.recommendedVariant(
+                _phone(ramMB, platform: platform),
+              ) ==
+              AiModelVariant.qwen35x4b,
+          core.DeviceCapabilityService.supportsAdvancedModelFor(
+            ramMB,
+            platform: platform,
+          ),
+          reason: '$platform, $ramMB MB',
+        );
+      }
+    }
+  });
+
+  test('a desktop is recommended the largest model its memory and GPU '
+      'run', () {
+    expect(
+      AiModelConfig.recommendedVariant(_desktop(16384)),
+      AiModelVariant.qwen7b,
+    );
+    expect(
+      AiModelConfig.recommendedVariant(_desktop(8192)),
+      AiModelVariant.qwen35x4b,
+    );
+    expect(
+      AiModelConfig.recommendedVariant(
+        _desktop(16384, gpuType: GpuType.discrete),
+      ),
+      AiModelVariant.qwen7b,
+    );
+    expect(
+      AiModelConfig.recommendedVariant(
+        _desktop(16384, gpuType: GpuType.integratedOnly),
+      ),
+      AiModelVariant.qwen35x4b,
+    );
+    expect(
+      AiModelConfig.recommendedVariant(
+        _desktop(16384, gpuType: GpuType.integratedOnly, cores: 2),
+      ),
+      AiModelVariant.qwen,
+    );
+    expect(
+      AiModelConfig.recommendedVariant(
+        _desktop(8192, gpuType: GpuType.none),
+      ),
+      AiModelVariant.qwen,
+    );
+  });
+
+  test(
+    'with no model chosen, the device\'s recommendation is active',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      expect(
+        AiModelConfig.getActive(prefs, profile: _phone(6144)).variant,
+        AiModelVariant.qwen,
+      );
+      expect(
+        AiModelConfig.getActive(prefs, profile: _phone(8192)).variant,
+        AiModelVariant.qwen35x4b,
+      );
+    },
+  );
 
   test('every variant resolves from the selected-model pref', () async {
     for (final variant in AiModelVariant.values) {

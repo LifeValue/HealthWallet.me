@@ -10,6 +10,7 @@ import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
@@ -53,6 +54,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   final SharedPreferences _prefs;
   final AppStringsProvider _strings;
   final LayoutExtractionService _layoutExtraction;
+  final DeviceCapabilityService _deviceCapabilityService;
 
   @override
   ProcessingRepository get processingRepository => _repository;
@@ -85,6 +87,10 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   @override
   LayoutExtractionService get layoutExtraction => _layoutExtraction;
 
+  @override
+  DeviceCapabilityService get deviceCapabilityService =>
+      _deviceCapabilityService;
+
   final Set<String> _haltedHandovers = {};
 
   @override
@@ -101,6 +107,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     this._prefs,
     this._strings,
     this._layoutExtraction,
+    this._deviceCapabilityService,
   ) : super(const ProcessingState()) {
     on<ProcessingInitialised>(
       onProcessingInitialised,
@@ -145,6 +152,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
       _onSessionSavedElsewhere,
       transformer: sequential(),
     );
+    on<SessionTakenBack>(_onSessionTakenBack, transformer: sequential());
   }
 
   @override
@@ -243,22 +251,29 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     await _resetMistakenAiSettingsOnce(isDesktop: isDesktop);
 
     try {
-      final sessions = [
-        for (final s in await _repository.getProcessingSessions())
-          // A step the app was closed in the middle of starts again; left
-          // "processing", the session would hold up every other one.
-          switch (s.status) {
-            ProcessingStatus.processingPatient => s.copyWith(
-              status: ProcessingStatus.pending,
-              progress: 0,
-            ),
-            ProcessingStatus.processing => s.copyWith(
+      final sessions = <ProcessingSession>[];
+      for (final s in await _repository.getProcessingSessions()) {
+        // A step the app was closed in the middle of starts again; left
+        // "processing", the session would hold up every other one.
+        switch (s.status) {
+          case ProcessingStatus.processingPatient:
+            sessions.add(
+              s.copyWith(status: ProcessingStatus.pending, progress: 0),
+            );
+          case ProcessingStatus.processing:
+            // As after a cancel: step two saved each result as it went, and
+            // Done would save the partial ones, or its next run add to them.
+            final restarted = s.copyWith(
               status: ProcessingStatus.patientExtracted,
               progress: 0,
-            ),
-            _ => s,
-          },
-      ];
+              resources: const [],
+            );
+            sessions.add(restarted);
+            await _saveRestarted(restarted);
+          default:
+            sessions.add(s);
+        }
+      }
 
       final useVision =
           _prefs.getBool(SharedPrefsConstants.aiUseVision) ??
@@ -284,6 +299,16 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
           ),
         ),
       );
+    }
+  }
+
+  /// A failed save is logged: the session still loads at step one, and the
+  /// next start clears its results again.
+  Future<void> _saveRestarted(ProcessingSession session) async {
+    try {
+      await _repository.editProcessingSession(session);
+    } on Exception catch (e, s) {
+      logger.e('Saving a session restarted at step one failed', e, s);
     }
   }
 
@@ -471,8 +496,15 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     // The desktop processes it: a failure of this phone's attempt (no model)
     // no longer applies.
     emit(state.copyWith(status: _withoutFailureOf(session.id)));
-    await _stopLocalProcessing(session);
+    try {
+      await _stopLocalProcessing(session);
+    } on Exception catch (e, s) {
+      // It is the desktop's now; the next run waits for the AI to end.
+      logger.e('[ProcessingBloc] stopping the AI for a handover failed', e, s);
+    }
     _layoutExtraction.forget(session.id);
+    // It held the queue: the next document goes on.
+    if (session.isProcessing) startNextPendingSession();
   }
 
   Future<void> _onHandoverDraftReceived(
@@ -556,6 +588,24 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     );
   }
 
+  Future<void> _onSessionTakenBack(
+    SessionTakenBack event,
+    Emitter<ProcessingState> emit,
+  ) async {
+    final session = state.sessions.firstWhereOrNull(
+      (s) => s.id == event.sessionId,
+    );
+    if (session == null) return;
+    await _removeForOtherDevice(
+      emit,
+      session,
+      Notification(
+        text: _strings.l10n.handoverTakenBack,
+        time: DateTime.now(),
+      ),
+    );
+  }
+
   Future<void> _onSessionSavedElsewhere(
     SessionSavedElsewhere event,
     Emitter<ProcessingState> emit,
@@ -564,7 +614,56 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
       (s) => s.id == event.sessionId,
     );
     if (session == null) return;
-    await _stopLocalProcessing(session);
+    // The records come through the sync; this copy and its files go.
+    await _removeForOtherDevice(
+      emit,
+      session,
+      Notification(
+        text: _savedElsewhereText(session, byDesktop: event.byDesktop),
+        time: DateTime.now(),
+        type: NotificationType.success,
+      ),
+    );
+  }
+
+  /// Removes [session], which the other device took back or saved, and says
+  /// so with [notification].
+  Future<void> _removeForOtherDevice(
+    Emitter<ProcessingState> emit,
+    ProcessingSession session,
+    Notification notification,
+  ) async {
+    final wasProcessing = session.isProcessing;
+    await removeSession(emit, session, notification: notification);
+    // It held the queue: the next document goes on.
+    if (wasProcessing) startNextPendingSession();
+  }
+
+  @override
+  Future<void> removeSession(
+    Emitter<ProcessingState> emit,
+    ProcessingSession session, {
+    Notification? notification,
+  }) async {
+    if (session.isProcessing) {
+      // Marked first, so the step being stopped stages, saves and announces
+      // nothing; stopping, so it can't be retried meanwhile.
+      _replaceSession(
+        emit,
+        session.copyWith(status: ProcessingStatus.cancelled, progress: 0),
+      );
+      emit(
+        state.copyWith(
+          stoppingSessionIds: {...state.stoppingSessionIds, session.id},
+        ),
+      );
+    }
+    try {
+      await _stopLocalProcessing(session);
+    } on Exception catch (e, s) {
+      // The session goes anyway; the next run waits for the AI to end.
+      logger.e('[ProcessingBloc] stopping the AI for a removal failed', e, s);
+    }
     _layoutExtraction.forget(session.id);
     _haltedHandovers.remove(session.id);
     emit(
@@ -573,16 +672,12 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
           for (final s in state.sessions)
             if (s.id != session.id) s,
         ],
-        sessionImagePaths: {...state.sessionImagePaths}..remove(session.id),
+        stoppingSessionIds: {...state.stoppingSessionIds}..remove(session.id),
         status: _withoutFailureOf(session.id),
-        notification: Notification(
-          text: _savedElsewhereText(session, byDesktop: event.byDesktop),
-          time: DateTime.now(),
-          type: NotificationType.success,
-        ),
+        notification: notification ?? state.notification,
       ),
     );
-    // The records come through the sync; this copy and its files go.
     await _repository.deleteProcessingSession(session);
+    await discardPagesOf(emit, session);
   }
 }

@@ -5,6 +5,8 @@ class PhoneDisplayFormatter {
     if (raw == null || raw.trim().isEmpty) return '';
     try {
       final phone = PhoneNumber.parse(raw);
+      // Only a country code: there is no number to show.
+      if (phone.nsn.isEmpty) return '';
       return '+${phone.countryCode} ${phone.formatNsn()}';
     } catch (_) {
       return raw;

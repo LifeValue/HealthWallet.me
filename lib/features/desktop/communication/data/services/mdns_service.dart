@@ -37,24 +37,28 @@ class MdnsService {
     debugPrint('[mDNS] Advertising $_serviceType on port $port');
   }
 
-  /// The first desktop advertising [token], resolved to an address.
-  Future<({String ip, int port})?> search({
+  /// Every address advertising [token] that resolved within [timeout], in the
+  /// order they resolved.
+  ///
+  /// Not just the first: a desktop that restarted can leave its old
+  /// registration behind for a while, on a port nothing answers on any more,
+  /// and it may resolve before the live one. The caller tries each.
+  Future<List<({String ip, int port})>> search({
     required String token,
     Duration timeout = const Duration(seconds: 3),
   }) async {
     await stopDiscovery();
-    final completer = Completer<({String ip, int port})?>();
+    final found = <({String ip, int port})>{};
+    final done = Completer<void>();
     final discovery = BonsoirDiscovery(type: _serviceType);
     _discovery = discovery;
     await discovery.ready;
 
-    final timer = Timer(timeout, () {
-      if (!completer.isCompleted) completer.complete(null);
-    });
+    final timer = Timer(timeout, done.complete);
 
     final sub = discovery.eventStream?.listen((event) {
       final service = event.service;
-      if (service == null || completer.isCompleted) return;
+      if (service == null || done.isCompleted) return;
       switch (event.type) {
         case BonsoirDiscoveryEventType.discoveryServiceFound:
           // Bonsoir doesn't resolve by itself: without this the host never
@@ -68,19 +72,25 @@ class MdnsService {
           if (service.attributes[tokenAttribute] != token) return;
           final host = service.host;
           if (host != null && host.isNotEmpty) {
-            completer.complete((ip: host, port: service.port));
+            found.add((ip: host, port: service.port));
           }
         default:
           break;
       }
     });
 
-    await discovery.start();
-    final result = await completer.future;
-    timer.cancel();
-    await sub?.cancel();
-    await stopDiscovery();
-    return result;
+    try {
+      await discovery.start();
+      await done.future;
+    } finally {
+      timer.cancel();
+      await sub?.cancel();
+      // Only this search's browse: a start that returned late must not stop
+      // a newer search's.
+      if (identical(_discovery, discovery)) _discovery = null;
+      if (!discovery.isStopped) await discovery.stop();
+    }
+    return found.toList();
   }
 
   Future<void> stopAdvertising() async {

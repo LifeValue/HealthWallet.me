@@ -68,6 +68,7 @@ void main() {
     int recommendedThreads = 1,
     int recommendedContextSize = 2048,
     bool useVision = false,
+    Brightness brightness = Brightness.light,
   }) async {
     tester.view.physicalSize = const Size(800, 2000);
     tester.view.devicePixelRatio = 1;
@@ -76,27 +77,30 @@ void main() {
     closed = false;
     await tester.pumpWidget(
       testApp(
-        Builder(
-          builder: (context) => TextButton(
-            onPressed: () async {
-              result = await showDialog<AiSettingsResult>(
-                context: context,
-                builder: (_) => AiTokenSettingsDialog(
-                  currentTokens: tokens,
-                  currentGpuLayers: gpuLayers,
-                  currentThreads: threads,
-                  currentContextSize: contextSize,
-                  recommendedGpuLayers: recommendedGpuLayers,
-                  recommendedThreads: recommendedThreads,
-                  recommendedContextSize: recommendedContextSize,
-                  deviceRamMB: 8192,
-                  activeModelConfig: _model,
-                  currentUseVision: useVision,
-                ),
-              );
-              closed = true;
-            },
-            child: const Text('open'),
+        Theme(
+          data: ThemeData(brightness: brightness),
+          child: Builder(
+            builder: (context) => TextButton(
+              onPressed: () async {
+                result = await showDialog<AiSettingsResult>(
+                  context: context,
+                  builder: (_) => AiTokenSettingsDialog(
+                    currentTokens: tokens,
+                    currentGpuLayers: gpuLayers,
+                    currentThreads: threads,
+                    currentContextSize: contextSize,
+                    recommendedGpuLayers: recommendedGpuLayers,
+                    recommendedThreads: recommendedThreads,
+                    recommendedContextSize: recommendedContextSize,
+                    deviceRamMB: 8192,
+                    activeModelConfig: _model,
+                    currentUseVision: useVision,
+                  ),
+                );
+                closed = true;
+              },
+              child: const Text('open'),
+            ),
           ),
         ),
       ),
@@ -477,6 +481,42 @@ void main() {
 
       expect(vision(tester).isMmprojDownloading, isTrue);
       expect(vision(tester).mmprojProgress, 20);
+    });
+  });
+
+  group('theme', () {
+    testWidgets('in dark mode the card takes the dark surface', (tester) async {
+      await open(tester, brightness: Brightness.dark);
+
+      final dialogContext = tester.element(find.byType(AiTokenSettingsDialog));
+      final card = tester.widget<Container>(
+        find
+            .descendant(
+              of: find.byType(Dialog),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+
+      expect(
+        (card.decoration! as BoxDecoration).color,
+        Theme.of(dialogContext).colorScheme.surface,
+      );
+    });
+
+    testWidgets('in light mode the card is white', (tester) async {
+      await open(tester);
+
+      final card = tester.widget<Container>(
+        find
+            .descendant(
+              of: find.byType(Dialog),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+
+      expect((card.decoration! as BoxDecoration).color, Colors.white);
     });
   });
 }

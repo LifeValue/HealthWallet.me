@@ -42,6 +42,22 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   @visibleForTesting
   static Duration initialReconnectDelay = const Duration(seconds: 3);
   static const _maxReconnectAttempts = 5;
+
+  /// The longest one connection attempt may take, every address and MPC
+  /// included. A step that never returns (a lookup, a platform call) then
+  /// ends it like a desktop not found, instead of leaving the phone
+  /// connecting until the app restarts.
+  @visibleForTesting
+  static Duration connectionAttemptTimeout = const Duration(seconds: 60);
+
+  /// Counts connection attempts; an attempt that is no longer the current
+  /// one (given up, replaced by a new pairing, or the bloc closed) tries
+  /// nothing more.
+  int _attempt = 0;
+
+  /// Completed when a new QR code is scanned, so the running attempt ends at
+  /// once instead of when the step it waits on returns.
+  Completer<void> _attemptReplaced = Completer<void>();
   static const _networkCheckInterval = Duration(seconds: 30);
   int _reconnectAttempts = 0;
 
@@ -355,8 +371,12 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
         previous.deviceId != event.pairing.deviceId ||
         previous.pairingKey != event.pairing.pairingKey;
     if (changed) {
-      // Still on the old desktop otherwise, until that link drops.
+      // A running attempt uses the old key: it ends now, tries nothing more
+      // and reports nothing.
+      _attempt++;
+      if (!_attemptReplaced.isCompleted) _attemptReplaced.complete();
       _reconnectTimer?.cancel();
+      // Still on the old desktop otherwise, until that link drops.
       await _tcpService.disconnect();
       await _mpcTransport?.disconnect();
     }
@@ -364,7 +384,12 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     _reconnectAttempts = 0;
     _stayDisconnected = false;
     emit(state.copyWith(pairedDevice: event.pairing, issue: null));
-    if (!_platform.isDesktop) add(const CommunicationConnectionRequested());
+    if (_platform.isDesktop) return;
+    // Added once the microtasks that end the replaced attempt's handler have
+    // run; while that handler runs, droppable() would drop the request.
+    Timer.run(() {
+      if (!isClosed) add(const CommunicationConnectionRequested());
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -390,7 +415,38 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
       ),
     );
 
+    final attempt = ++_attempt;
+    final replaced = _attemptReplaced = Completer<void>();
+    final ({bool connected, LinkFailure? failure})? outcome;
+    try {
+      outcome = await Future.any([
+        _connect(pairing, attempt).timeout(connectionAttemptTimeout),
+        replaced.future.then((_) => null),
+      ]);
+    } on TimeoutException {
+      logger.w('[Communication] no desktop found in time; trying again later');
+      _attempt++;
+      _stopMpcClient();
+      return _failed(emit, null);
+    }
+    // Replaced by a new pairing, which gets an attempt of its own, or the
+    // bloc closed: nothing to report.
+    if (outcome == null || attempt != _attempt) return;
+    if (!outcome.connected) _failed(emit, outcome.failure);
+  }
+
+  /// One attempt to reach the desktop: the saved address, then every address
+  /// discovery finds, then MPC. Once [attempt] is given up it tries nothing
+  /// more, whatever step it is waiting on returns.
+  Future<({bool connected, LinkFailure? failure})> _connect(
+    DevicePairing pairing,
+    int attempt,
+  ) async {
+    bool abandoned() => attempt != _attempt;
+    const notConnected = (connected: false, failure: null);
+
     final localId = await _pairingStorage.localDeviceId();
+    if (abandoned()) return notConnected;
     final candidates = <({String ip, int port})>[
       if (pairing.lastIp.isNotEmpty)
         (ip: pairing.lastIp, port: pairing.lastPort),
@@ -426,18 +482,21 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     };
 
     for (final c in candidates) {
-      if (await tryTcp(c.ip, c.port)) return;
-      if (stop()) return _failed(emit, failure);
+      if (await tryTcp(c.ip, c.port)) return (connected: true, failure: null);
+      if (stop()) return (connected: false, failure: failure);
+      if (abandoned()) return notConnected;
     }
 
     final found = await _discoveryService.discoverViaNetwork(
       deviceId: pairing.deviceId,
       token: discoveryToken(pairing.pairingKey, pairing.deviceId),
     );
+    if (abandoned()) return notConnected;
     for (final c in found) {
       if (candidates.any((k) => k.ip == c.ip && k.port == c.port)) continue;
-      if (await tryTcp(c.ip, c.port)) return;
-      if (stop()) return _failed(emit, failure);
+      if (await tryTcp(c.ip, c.port)) return (connected: true, failure: null);
+      if (stop()) return (connected: false, failure: failure);
+      if (abandoned()) return notConnected;
     }
 
     final mpc = _mpcTransport;
@@ -448,25 +507,41 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
           port: 0,
           token: discoveryToken(pairing.pairingKey, pairing.deviceId),
         );
+        if (abandoned()) return notConnected;
         await _tcpService.connectOverMpc(
           pairingKey: pairing.pairingKey,
           expectedDeviceId: pairing.deviceId,
           localDeviceId: localId,
           timeout: const Duration(seconds: 12),
         );
-        return;
+        return (connected: true, failure: null);
       } on LinkException catch (e) {
         failure = e.failure;
       } catch (e) {
         debugPrint('[Communication] MPC: $e');
       }
+      // Given up, it was stopped already; a newer attempt may be using MPC.
+      if (abandoned()) return notConnected;
       // Not found: stop browsing, so a desktop found later can't take over
       // a link made some other way.
       _tcpService.cancelMpcClient();
       await mpc.disconnect();
     }
 
-    _failed(emit, failure);
+    return (connected: false, failure: failure);
+  }
+
+  /// Phone: stops browsing for the Mac over MPC without waiting, so a
+  /// platform call that hangs can't hold up the next attempt.
+  void _stopMpcClient() {
+    final mpc = _mpcTransport;
+    if (mpc == null) return;
+    _tcpService.cancelMpcClient();
+    unawaited(
+      mpc.disconnect().catchError(
+        (Object e) => logger.w('[Communication] MPC not stopped', e),
+      ),
+    );
   }
 
   void _failed(Emitter<DesktopSyncState> emit, LinkFailure? failure) {
@@ -737,6 +812,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
 
   @override
   Future<void> close() {
+    _attempt++;
     _reconnectTimer?.cancel();
     _networkTimer?.cancel();
     _vpnRecheckTimer?.cancel();

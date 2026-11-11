@@ -12,6 +12,7 @@ import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_dialog.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/utils/handover_utils.dart';
+import 'package:health_wallet/features/processing/domain/deep_scan_defaults.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
@@ -230,13 +231,20 @@ class _ScannedBasicButtons extends StatelessWidget {
     final anotherSessionProcessing = state.sessions.any(
       (s) => s.id != session.id && s.isProcessing,
     );
-    final isVisionOnBasicDevice =
-        deviceCapability == DeviceAiCapability.basicOnly && state.useVision;
-    final isStep2Blocked = anotherSessionProcessing || isVisionOnBasicDevice;
+    // Step two still runs, from the text, when the device can't Deep Scan.
+    final deepScanUnavailable =
+        state.useVision &&
+        !deepScanRuns(
+          deepScanOn: state.useVision,
+          capability: deviceCapability,
+        );
+    // Also blocked while the AI is still stopping after a cancel.
+    final isStep2Blocked =
+        anotherSessionProcessing || state.isStopping(session.id);
 
     return Column(
       children: [
-        if (isVisionOnBasicDevice) ...[
+        if (deepScanUnavailable) ...[
           _VisionNotAvailableBanner(),
           const SizedBox(height: Insets.smallNormal),
         ],

@@ -20,9 +20,15 @@ import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_b
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/info_row.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/safety_copy_retention_row.dart';
 import 'package:intl/intl.dart';
 
 class BackupCard extends StatefulWidget {
+  /// Which folder picker to use: the app's own macOS one (null: on macOS).
+  /// Tests set it, so the picker they check is the same on every host.
+  @visibleForTesting
+  static bool? useMacOsFolderPicker;
+
   final DesktopSyncState syncState;
   final BackupState backupState;
 
@@ -319,6 +325,28 @@ class _BackupCardState extends State<BackupCard> {
               left: Insets.medium,
               right: Insets.medium,
               top: Insets.normal,
+            ),
+            child: Text(
+              context.l10n.backupSafetyRetentionTitle,
+              style: AppTextStyle.labelSmall.copyWith(
+                color: context.colorScheme.onSurface.withValues(alpha: 0.5),
+                fontSize: 11,
+              ),
+            ),
+          ),
+          const SizedBox(height: Insets.extraSmall),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
+            child: SafetyCopyRetentionRow(
+              days: widget.backupState.safetyCopyRetentionDays,
+              isWorking: isWorking,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(
+              left: Insets.medium,
+              right: Insets.medium,
+              top: Insets.normal,
               bottom: Insets.small,
             ),
             child: Text(
@@ -338,6 +366,7 @@ class _BackupCardState extends State<BackupCard> {
                         backup: selected,
                         isWorking: isWorking,
                         isPhoneOffline: isPhoneOffline,
+                        unsavedScanCount: widget.backupState.unsavedScanCount,
                         onRestoreConfirmed: (backup) => _restoring = backup,
                       ),
                     )
@@ -662,6 +691,9 @@ class _BackupPreview extends StatelessWidget {
   /// after it reconnects.
   final bool isPhoneOffline;
 
+  /// Scans on this computer not saved yet, which the restore removes.
+  final int unsavedScanCount;
+
   /// Called when the user confirms the restore, before it starts.
   final ValueChanged<BackupEntry> onRestoreConfirmed;
 
@@ -669,6 +701,7 @@ class _BackupPreview extends StatelessWidget {
     required this.backup,
     required this.isWorking,
     required this.isPhoneOffline,
+    required this.unsavedScanCount,
     required this.onRestoreConfirmed,
   });
 
@@ -752,6 +785,8 @@ class _BackupPreview extends StatelessWidget {
         ),
         if (!backup.hasFiles) context.l10n.backupOldNoFiles,
         if (isPhoneOffline) context.l10n.backupRestorePhoneOffline,
+        if (unsavedScanCount > 0)
+          context.l10n.backupRestoreRemovesScans(unsavedScanCount),
       ].join('\n\n'),
       cancelText: context.l10n.cancel,
       confirmText: context.l10n.desktopRestore,
@@ -842,7 +877,7 @@ class _BackupLocationRow extends StatelessWidget {
     String? initialPath,
   }) async {
     String? result;
-    if (Platform.isMacOS) {
+    if (BackupCard.useMacOsFolderPicker ?? Platform.isMacOS) {
       result = await _fsChannel.invokeMethod<String>('pickDirectory', {
         'initialDirectory': ?initialPath,
         'title': context.l10n.desktopChooseBackupLocation,

@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
+import 'package:health_wallet/features/sync/ehrs/fasten/domain/entities/sync_qr_data.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/user/domain/entity/user.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
@@ -40,12 +41,15 @@ void main() {
 
   tearDown(() => userStates.close());
 
-  Future<void> pumpSection(WidgetTester tester) async {
+  Future<void> pumpSection(
+    WidgetTester tester, {
+    SyncState syncState = const SyncState(),
+  }) async {
     final syncBloc = _MockSyncBloc();
     whenListen(
       syncBloc,
       const Stream<SyncState>.empty(),
-      initialState: const SyncState(),
+      initialState: syncState,
     );
     await tester.pumpWidget(
       MaterialApp(
@@ -206,6 +210,63 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.byKey(AppSnackBar.cardKey), findsNothing);
+  });
+
+  group('without a name of its own', () {
+    SyncState syncedAs(String fullName) => SyncState(
+      syncQrData: SyncQrData(
+        token: 't',
+        tokenMeta: SyncTokenMetaData(fullName: fullName),
+        serverBaseUrls: const [],
+        syncEndpoint: '',
+      ),
+    );
+
+    setUp(() {
+      whenListen(
+        userBloc,
+        userStates.stream,
+        initialState: const UserState(),
+      );
+    });
+
+    testWidgets('shows the name the sync account gives, and edits from it', (
+      tester,
+    ) async {
+      await pumpSection(tester, syncState: syncedAs('Ana Pop'));
+
+      expect(find.text('Ana Pop'), findsOne);
+
+      await tester.tap(find.byType(IconButton));
+      await tester.pump();
+      expect(find.widgetWithText(TextField, 'Ana Pop'), findsOne);
+    });
+
+    testWidgets('shows the default name when the sync account has none', (
+      tester,
+    ) async {
+      await pumpSection(tester, syncState: syncedAs(''));
+
+      expect(find.text(_en.homeDefaultUserName), findsOne);
+    });
+  });
+
+  testWidgets('a save that starts while editing keeps the field open', (
+    tester,
+  ) async {
+    await pumpSection(tester);
+
+    await editName(tester, 'Ana Pop');
+    userStates.add(
+      const UserState(
+        user: User(name: 'Ana'),
+        status: UserStatus.loading(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TextField), findsOne);
     expect(find.byKey(AppSnackBar.cardKey), findsNothing);
   });
 }

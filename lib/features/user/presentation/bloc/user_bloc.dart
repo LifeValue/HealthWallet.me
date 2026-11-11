@@ -73,44 +73,9 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   Future<void> _getCurrentUser(Emitter<UserState> emit) async {
     emit(state.copyWith(status: const UserStatus.loading()));
 
-    final isBiometricAuthEnabled = await _userRepository
-        .isBiometricAuthEnabled();
-
-    final prefs = await SharedPreferences.getInstance();
-    final savedRegionString = prefs.getString(
-      SharedPrefsConstants.regionPreset,
-    );
-    final RegionPreset savedRegion;
-    if (savedRegionString == null) {
-      savedRegion = _detectRegionFromLocale();
-      await prefs.setString(
-        SharedPrefsConstants.regionPreset,
-        savedRegion.name,
-      );
-    } else {
-      savedRegion = RegionPreset.fromString(savedRegionString);
-    }
-
-    var savedCountryCode = prefs.getString(SharedPrefsConstants.countryCode);
-    if (savedCountryCode == null) {
-      savedCountryCode = WidgetsBinding
-          .instance
-          .platformDispatcher
-          .locale
-          .countryCode
-          ?.toUpperCase();
-      if (savedCountryCode != null) {
-        await prefs.setString(
-          SharedPrefsConstants.countryCode,
-          savedCountryCode,
-        );
-      }
-    }
-
-    final savedLocaleCode = prefs.getString(SharedPrefsConstants.appLocale);
-    final Locale? savedLocale = savedLocaleCode != null
-        ? Locale(savedLocaleCode)
-        : null;
+    final isBiometricAuthEnabled = await _readBiometricAuthEnabled();
+    final (savedRegion, savedCountryCode, savedLocale) =
+        await _readSavedPreferences();
 
     try {
       User user;
@@ -160,6 +125,69 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       );
     }
   }
+
+  /// The lock setting, or on when it can't be read: the app lock fails
+  /// closed on the same read, so the switch shows the lock that applies, and
+  /// turning it off still asks for authentication.
+  Future<bool> _readBiometricAuthEnabled() async {
+    try {
+      return await _userRepository.isBiometricAuthEnabled();
+    } catch (e, s) {
+      logger.e('Failed to read the biometric lock setting', e, s);
+      return true;
+    }
+  }
+
+  /// The saved region, country and language, detecting and saving the
+  /// region and country on first run. When they can't be read, the region
+  /// and country come from the device, the language follows the device, and
+  /// nothing is saved over what is stored.
+  Future<(RegionPreset, String?, Locale?)> _readSavedPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedRegionString = prefs.getString(
+        SharedPrefsConstants.regionPreset,
+      );
+      final RegionPreset savedRegion;
+      if (savedRegionString == null) {
+        savedRegion = _detectRegionFromLocale();
+        await prefs.setString(
+          SharedPrefsConstants.regionPreset,
+          savedRegion.name,
+        );
+      } else {
+        savedRegion = RegionPreset.fromString(savedRegionString);
+      }
+
+      var savedCountryCode = prefs.getString(SharedPrefsConstants.countryCode);
+      if (savedCountryCode == null) {
+        savedCountryCode = _deviceCountryCode();
+        if (savedCountryCode != null) {
+          await prefs.setString(
+            SharedPrefsConstants.countryCode,
+            savedCountryCode,
+          );
+        }
+      }
+
+      final savedLocaleCode = prefs.getString(SharedPrefsConstants.appLocale);
+      return (
+        savedRegion,
+        savedCountryCode,
+        savedLocaleCode != null ? Locale(savedLocaleCode) : null,
+      );
+    } catch (e, s) {
+      logger.e('Failed to read the saved preferences', e, s);
+      return (_detectRegionFromLocale(), _deviceCountryCode(), null);
+    }
+  }
+
+  static String? _deviceCountryCode() => WidgetsBinding
+      .instance
+      .platformDispatcher
+      .locale
+      .countryCode
+      ?.toUpperCase();
 
   Future<void> _onThemeToggled(
     UserThemeToggled event,

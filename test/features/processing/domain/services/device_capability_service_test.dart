@@ -20,8 +20,25 @@ void main() {
   group('estimateIosRam', () {
     test('maps iPhone generations to their RAM', () {
       expect(DeviceCapabilityService.estimateIosRam('iPhone18,1'), 8192);
-      expect(DeviceCapabilityService.estimateIosRam('iPhone16,2'), 6144);
       expect(DeviceCapabilityService.estimateIosRam('iPhone13,1'), 4096);
+      expect(DeviceCapabilityService.estimateIosRam('iPhone12,1'), 4096);
+    });
+
+    test('gives the iPhone 15 Pro 8 GB, the iPhone 14 Pro and 15 6 GB', () {
+      expect(DeviceCapabilityService.estimateIosRam('iPhone16,1'), 8192);
+      expect(DeviceCapabilityService.estimateIosRam('iPhone16,2'), 8192);
+      for (final minor in [2, 3, 4, 5]) {
+        expect(
+          DeviceCapabilityService.estimateIosRam('iPhone15,$minor'),
+          6144,
+        );
+      }
+    });
+
+    test('tells the 6 GB iPhone 12 Pro models from the 4 GB ones', () {
+      expect(DeviceCapabilityService.estimateIosRam('iPhone13,3'), 6144);
+      expect(DeviceCapabilityService.estimateIosRam('iPhone13,4'), 6144);
+      expect(DeviceCapabilityService.estimateIosRam('iPhone13,2'), 4096);
     });
 
     test('tells the 6 GB iPhone 13 Pro models from the 4 GB ones', () {
@@ -35,9 +52,9 @@ void main() {
     });
 
     test('maps iPad generations and unknown machines', () {
-      expect(DeviceCapabilityService.estimateIosRam('iPad16,1'), 16384);
-      expect(DeviceCapabilityService.estimateIosRam('iPad14,1'), 8192);
-      expect(DeviceCapabilityService.estimateIosRam('iPad11,1'), 6144);
+      expect(DeviceCapabilityService.estimateIosRam('iPad16,1'), 8192);
+      expect(DeviceCapabilityService.estimateIosRam('iPad14,1'), 4096);
+      expect(DeviceCapabilityService.estimateIosRam('iPad11,1'), 3072);
       expect(DeviceCapabilityService.estimateIosRam('iPad6,1'), 4096);
       expect(DeviceCapabilityService.estimateIosRam('x86_64'), 4096);
     });

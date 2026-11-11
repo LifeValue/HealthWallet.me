@@ -207,9 +207,15 @@ class HomeDashboardSections extends StatelessWidget {
               );
             },
             onTapCard: (specialty) {
-              // Only this specialty: no type or date filter hides part of it.
+              // Only this specialty, for this visit: no type or date filter
+              // hides part of it, and the person's own Records filters stay.
               context.read<RecordsBloc>().add(
-                RecordsFiltersApplied(const [], specialties: [specialty]),
+                RecordsFiltersApplied(
+                  const [],
+                  specialties: [specialty],
+                  remember: false,
+                  personId: state.scope.holder?.id,
+                ),
               );
               pageController.animateToPage(
                 1,
@@ -231,8 +237,14 @@ class HomeDashboardSections extends StatelessWidget {
               );
             },
             onTapCard: (card) {
+              // Only these types, for this visit: no date or specialty filter
+              // hides part of them, and the person's own Records filters stay.
               context.read<RecordsBloc>().add(
-                RecordsFiltersApplied(card.category.resourceTypes),
+                RecordsFiltersApplied(
+                  card.category.resourceTypes,
+                  remember: false,
+                  personId: state.scope.holder?.id,
+                ),
               );
               pageController.animateToPage(
                 1,

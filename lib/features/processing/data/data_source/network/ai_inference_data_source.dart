@@ -23,6 +23,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 abstract class AiInferenceDataSource {
   Future<bool> checkModelExistence();
 
+  /// Whether the active model's vision projector (mmproj) is on the device.
+  Future<bool> checkMmprojExistence();
+
   Future<void> downloadModelForVariant(
     AiModelVariant variant, {
     required void Function(int) onProgress,
@@ -48,6 +51,7 @@ abstract class AiInferenceDataSource {
 
   Future<void> deleteModelForVariant(AiModelVariant variant);
 
+  /// Whether a model is loaded with its vision projector.
   bool isVisionModelAvailable();
 
   /// [grammar] (GBNF) or [responseFormat] (llamadart `json_schema` response
@@ -82,6 +86,9 @@ abstract class AiInferenceDataSource {
   /// failed or none has run.
   GenerationStats? get lastGenerationStats;
 
+  /// Loads the model, unless one is loaded. With [withVision] it also loads
+  /// the vision projector when its file is on the device and valid;
+  /// [isVisionModelAvailable] says whether it did.
   Future<void> initModel({
     bool withVision = true,
     int? contextSize,
@@ -89,7 +96,13 @@ abstract class AiInferenceDataSource {
     int? threads,
   });
 
+  /// Disposes the engine; while a generation runs, once it has ended.
   Future<void> disposeModel();
+
+  /// Stops the running generation, if there is one: its [runTextPrompt] or
+  /// [runVisionPrompt] call returns the text generated so far. A load or a
+  /// prompt started meanwhile waits for it to end.
+  void cancelGeneration();
 
   Future<({int availableMB, int requiredMB, bool canProceed})>
   checkMemoryHealth({
@@ -143,10 +156,11 @@ class AiInferenceDataSourceImpl
   final FileDownloader? _fileDownloaderOverride;
   final bool _useDio;
   final Future<Directory> Function() _documentsDirectory;
+  final LlamaEngine Function() _createEngine;
 
-  /// [createDio], [fileDownloader], [useDio], [documentsDirectory] and
-  /// [transferEndLimit] are for tests. Desktop downloads with Dio, mobile
-  /// with background_downloader.
+  /// [createDio], [fileDownloader], [useDio], [documentsDirectory],
+  /// [transferEndLimit] and [createEngine] are for tests. Desktop downloads
+  /// with Dio, mobile with background_downloader.
   AiInferenceDataSourceImpl(
     this._prefs, {
     @ignoreParam Dio Function()? createDio,
@@ -154,7 +168,9 @@ class AiInferenceDataSourceImpl
     @ignoreParam bool? useDio,
     @ignoreParam Future<Directory> Function()? documentsDirectory,
     @ignoreParam Duration? transferEndLimit,
+    @ignoreParam LlamaEngine Function()? createEngine,
   }) : _transferEndLimit = transferEndLimit ?? const Duration(seconds: 15),
+       _createEngine = createEngine ?? (() => LlamaEngine(LlamaBackend())),
        _createDio = createDio ?? Dio.new,
        _fileDownloaderOverride = fileDownloader,
        _useDio =
@@ -376,6 +392,12 @@ class AiInferenceDataSourceImpl
   Future<bool> checkModelExistence() async {
     final modelPath = await _getModelFilePath();
     return File(modelPath).existsSync();
+  }
+
+  @override
+  Future<bool> checkMmprojExistence() async {
+    final mmprojPath = await _getMmprojFilePath();
+    return File(mmprojPath).existsSync();
   }
 
   @override
@@ -797,6 +819,9 @@ class AiInferenceDataSourceImpl
     int? gpuLayers,
     int? threads,
   }) async {
+    // A generation still ending (a cancelled one) finishes, and disposes the
+    // engine when asked to, before the engine is reused or replaced.
+    await waitForGeneration();
     if (_engine != null) return;
 
     final modelPath = await _getModelFilePath();
@@ -866,7 +891,7 @@ class AiInferenceDataSourceImpl
       '[$ts][ScanAI] creating engine with backend=$backend',
     );
 
-    _engine = LlamaEngine(LlamaBackend());
+    _engine = _createEngine();
 
     final params = ModelParams(
       contextSize: ctx,

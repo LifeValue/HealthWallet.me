@@ -10,19 +10,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 export '../desktop/lww_sync/lww_sync_test_helpers.dart' show openTestDatabase;
 
-/// The real repository on [db], with in-memory preferences and attachment
-/// files in [documentsPath].
-Future<RecordsRepositoryImpl> openRepository(
-  AppDatabase db, {
-  String documentsPath = '/nonexistent',
-}) async {
+/// The real repository on [db], with in-memory preferences.
+Future<RecordsRepositoryImpl> openRepository(AppDatabase db) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   return RecordsRepositoryImpl(
     db,
     SyncLocalDataSourceImpl(db, prefs),
     SharedNotesDatasource(),
-    DocumentsPathResolver(documentsPath),
   );
 }
 

@@ -14,7 +14,6 @@ import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../desktop/lww_sync/lww_sync_test_helpers.dart';
-import '../../records_test_helpers.dart' show DocumentsPathResolver;
 
 void main() {
   late TestDirs dirs;
@@ -30,12 +29,7 @@ void main() {
       db,
       await SharedPreferences.getInstance(),
     );
-    repository = RecordsRepositoryImpl(
-      db,
-      syncLocal,
-      SharedNotesDatasource(),
-      DocumentsPathResolver('/nonexistent'),
-    );
+    repository = RecordsRepositoryImpl(db, syncLocal, SharedNotesDatasource());
   });
 
   tearDown(() async {

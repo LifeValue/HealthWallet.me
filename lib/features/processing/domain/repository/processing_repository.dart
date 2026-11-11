@@ -62,12 +62,21 @@ abstract class ProcessingRepository {
     ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
   });
 
+  /// Whether the AI run in progress was cancelled; false between runs. The
+  /// AI runs ([mapContainerOnly], [mapBasicInfo], [mapRemainingResources])
+  /// take turns: each starts once those started before it have ended.
   bool get shouldCancelGeneration;
 
+  /// Cancels the AI runs started so far and stops the running generation; a
+  /// run started afterwards is not affected.
   Future<void> cancelGeneration();
 
+  /// Completes once the AI runs started so far have ended.
   Future<void> waitForStreamCompletion();
 
+  /// Unloads the model in its turn, once the AI runs started so far have
+  /// ended, so it never unloads an engine a run is using; a run started
+  /// afterwards waits for it.
   Future disposeModel();
 }
 

@@ -34,9 +34,12 @@ class ProcessingRepositoryImpl extends Object
   final TextRecognitionService _textRecognitionService;
   final PathResolver _pathResolver;
 
-  bool _isStreamActive = false;
-  Completer<void>? _streamCompleter;
-  bool _shouldCancelGeneration = false;
+  /// AI runs started and not yet ended, oldest first. Each waits for the
+  /// one before it, so two never share the engine.
+  final List<_AiRun> _runs = [];
+
+  /// The run that holds the engine.
+  _AiRun? _activeRun;
 
   @override
   AiInferenceDataSource get networkDataSource => _networkDataSource;
@@ -44,8 +47,40 @@ class ProcessingRepositoryImpl extends Object
   @override
   TextRecognitionService get textRecognitionService => _textRecognitionService;
 
+  /// Whether the run holding the engine was cancelled; false between runs.
   @override
-  bool get shouldCancelGeneration => _shouldCancelGeneration;
+  bool get shouldCancelGeneration => _activeRun?.cancelled ?? false;
+
+  /// Registers a run behind the ones still running; [_takeTurn] waits for
+  /// them and [_endRun] lets the next one start.
+  _AiRun _enqueueRun() {
+    final run = _AiRun(_runs.lastOrNull);
+    _runs.add(run);
+    return run;
+  }
+
+  Future<void> _takeTurn(_AiRun run) async {
+    await run.previous?.ended;
+    run.previous = null;
+    _activeRun = run;
+  }
+
+  void _endRun(_AiRun run) {
+    if (identical(_activeRun, run)) _activeRun = null;
+    _runs.remove(run);
+    run.end();
+  }
+
+  /// Runs [body] in its turn, after the AI runs started before it.
+  Future<T> _inTurn<T>(Future<T> Function() body) async {
+    final run = _enqueueRun();
+    try {
+      await _takeTurn(run);
+      return await body();
+    } finally {
+      _endRun(run);
+    }
+  }
 
   @override
   Future<String> saveScannedDocument(String sourcePath) async {
@@ -226,16 +261,35 @@ class ProcessingRepositoryImpl extends Object
     int? threads,
     int? contextSize,
     ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
-  }) async {
-    return processMapBasicInfo(
+  }) => _inTurn(
+    () => processMapBasicInfo(
       imagePaths,
       maxTokens: maxTokens,
       gpuLayers: gpuLayers,
       threads: threads,
       contextSize: contextSize,
       outputMode: outputMode,
-    );
-  }
+    ),
+  );
+
+  @override
+  Future<MappingResource> mapContainerOnly(
+    String ocrText, {
+    int? maxTokens,
+    int? gpuLayers,
+    int? threads,
+    int? contextSize,
+    ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
+  }) => _inTurn(
+    () => super.mapContainerOnly(
+      ocrText,
+      maxTokens: maxTokens,
+      gpuLayers: gpuLayers,
+      threads: threads,
+      contextSize: contextSize,
+      outputMode: outputMode,
+    ),
+  );
 
   @override
   Stream<MappingResourcesWithProgress> mapRemainingResources(
@@ -248,11 +302,9 @@ class ProcessingRepositoryImpl extends Object
     int? contextSize,
     ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
   }) async* {
+    final run = _enqueueRun();
     try {
-      _isStreamActive = true;
-      _streamCompleter = Completer<void>();
-      _shouldCancelGeneration = false;
-
+      await _takeTurn(run);
       yield* processMapRemainingResources(
         imagePaths,
         documentCategory: documentCategory,
@@ -264,28 +316,58 @@ class ProcessingRepositoryImpl extends Object
         outputMode: outputMode,
       );
     } finally {
-      await disposeModel();
-
-      _isStreamActive = false;
-      _shouldCancelGeneration = false;
-      _streamCompleter?.complete();
+      try {
+        await disposeModelInRun();
+      } finally {
+        _endRun(run);
+      }
     }
   }
 
+  /// Waits for the AI runs started so far to end; a run started later is
+  /// not waited for.
   @override
   Future<void> waitForStreamCompletion() async {
-    if (_isStreamActive &&
-        _streamCompleter != null &&
-        !_streamCompleter!.isCompleted) {
-      await _streamCompleter!.future;
-    }
+    final last = _runs.lastOrNull;
+    if (last != null) await last.ended;
   }
 
+  /// Cancels the AI runs started so far, the one holding the engine and the
+  /// ones waiting for it, and stops the running generation. A run started
+  /// later is not affected.
   @override
   Future<void> cancelGeneration() async {
-    _shouldCancelGeneration = true;
+    if (_runs.isEmpty) return;
+    for (final run in _runs) {
+      run.cancelled = true;
+    }
+    _networkDataSource.cancelGeneration();
   }
 
+  /// Waits for the AI runs started so far, so a run that is using the
+  /// engine (another session's, say) keeps it until it ends.
   @override
-  Future disposeModel() => _networkDataSource.disposeModel();
+  Future disposeModel() => _inTurn(_networkDataSource.disposeModel);
+
+  @override
+  Future<void> disposeModelInRun() => _networkDataSource.disposeModel();
+}
+
+/// One call that uses the AI engine: a patient step, a container-only step or
+/// a records stream.
+class _AiRun {
+  _AiRun(this.previous);
+
+  /// The run started before this one, until this one's turn has come.
+  _AiRun? previous;
+
+  bool cancelled = false;
+
+  final _ended = Completer<void>();
+
+  Future<void> get ended => _ended.future;
+
+  void end() {
+    if (!_ended.isCompleted) _ended.complete();
+  }
 }

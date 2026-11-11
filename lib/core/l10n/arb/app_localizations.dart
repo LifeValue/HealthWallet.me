@@ -2778,6 +2778,12 @@ abstract class AppLocalizations {
   /// **'Attached Documents'**
   String get attachedDocuments;
 
+  /// Says which visit a document attached without the AI was filed under, for example "Checkup, 03/11/2026".
+  ///
+  /// In en, this message translates to:
+  /// **'Attached to {visit}.'**
+  String documentAttachedTo(String visit);
+
   /// No description provided for @cameraPermissionRequired.
   ///
   /// In en, this message translates to:
@@ -8387,6 +8393,12 @@ abstract class AppLocalizations {
   /// **'Your phone isn\'t connected. Records added on it since its last sync will come back after it reconnects; changes it made to existing records will be replaced by the backup.'**
   String get backupRestorePhoneOffline;
 
+  /// Restore confirmation: the scans not saved yet on this computer, which the restore removes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 scan waiting for review will be removed.} other{{count} scans waiting for review will be removed.}}'**
+  String backupRestoreRemovesScans(int count);
+
   /// Asks before deleting a downloaded AI model.
   ///
   /// In en, this message translates to:
@@ -8398,6 +8410,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The model and its Deep Scan files are removed from this device. To scan with it again, you\'ll need to download it again (~{size} MB).'**
   String aiModelDeleteMessage(int size);
+
+  /// Shown on the review when the AI found no patient and the user fills the fields in.
+  ///
+  /// In en, this message translates to:
+  /// **'No patient found in the document. Enter the details.'**
+  String get processingNoPatientFound;
+
+  /// Shown after Cancel while the AI finishes stopping; Continue waits until it has.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopping…'**
+  String get processingStopping;
+
+  /// Shown on the desktop when the phone takes back a document that was open for review.
+  ///
+  /// In en, this message translates to:
+  /// **'The phone took this document back.'**
+  String get handoverTakenBack;
+
+  /// Notification title when the selected AI model is replaced by Lite because the device lacks the memory for it.
+  ///
+  /// In en, this message translates to:
+  /// **'Now using the Lite model'**
+  String get aiModelSwitchedToLiteTitle;
+
+  /// Notification text when the selected AI model is replaced by Lite because the device lacks the memory for it.
+  ///
+  /// In en, this message translates to:
+  /// **'The {modelName} model needs more memory than this device has, so the Lite model is used.'**
+  String aiModelSwitchedToLiteMessage(String modelName);
+
+  /// Desktop Backup card, under the backup folder: how many days the automatic copy made before every restore is kept.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Kept for 1 day} other{Kept for {count} days}}'**
+  String backupSafetyRetention(int count);
+
+  /// Desktop Backup card: heading of the section with how long the copy made before a restore is kept, like the Location heading above it.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy made before a restore'**
+  String get backupSafetyRetentionTitle;
+
+  /// The word after the number of days in the safety copy retention field.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{day} other{days}}'**
+  String backupSafetyRetentionDaysUnit(int count);
+
+  /// Desktop Backup card, under the retention field: the new value counts for copies already made, and copies older than it are deleted as soon as it is saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies to existing copies too. Copies older than this are deleted now.'**
+  String get backupSafetyRetentionHint;
+
+  /// Desktop Backup card: the typed number of days isn't a whole number in the allowed range.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a whole number of days from {min} to {max}.'**
+  String backupSafetyRetentionInvalid(int min, int max);
+
+  /// Desktop Backup card: saving the number of days the copy made before a restore is kept failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save how long to keep the copy made before a restore. Please try again.'**
+  String get backupSafetyRetentionSaveFailed;
 }
 
 class _AppLocalizationsDelegate

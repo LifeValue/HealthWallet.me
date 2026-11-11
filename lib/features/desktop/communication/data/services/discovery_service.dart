@@ -30,48 +30,49 @@ class DiscoveryService {
   /// find the desktop through Bonjour (and MPC) instead.
   static bool get _ssdpAvailable => !Platform.isIOS;
 
-  /// Addresses where the paired desktop may be listening, Bonjour first. They
-  /// are only candidates: the handshake proves which one is the desktop, and
-  /// only an address that passed it is saved.
+  /// Addresses where the paired desktop may be listening, every Bonjour
+  /// answer first. They are only candidates: the handshake proves which one
+  /// is the desktop, and only an address that passed it is saved.
   Future<List<DiscoveryResult>> discoverViaNetwork({
     required String deviceId,
     required String token,
   }) async {
     debugPrint('[Discovery] mDNS + SSDP search');
 
-    Future<DiscoveryResult?> mdns() async {
+    Future<List<DiscoveryResult>> mdns() async {
       try {
-        final r = await _mdnsService.search(token: token);
-        return r == null
-            ? null
-            : DiscoveryResult(ip: r.ip, port: r.port, method: 'mdns');
+        return [
+          for (final r in await _mdnsService.search(token: token))
+            DiscoveryResult(ip: r.ip, port: r.port, method: 'mdns'),
+        ];
       } catch (e) {
         logger.w('[Discovery] mDNS search failed', e);
-        return null;
+        return const [];
       }
     }
 
-    Future<DiscoveryResult?> ssdp() async {
-      if (!_ssdpAvailable) return null;
+    Future<List<DiscoveryResult>> ssdp() async {
+      if (!_ssdpAvailable) return const [];
       try {
         final r = await _ssdpService.search(
           timeout: const Duration(seconds: 3),
           expectedDeviceId: deviceId,
         );
-        return r == null
-            ? null
-            : DiscoveryResult(ip: r.ip, port: r.port, method: 'ssdp');
+        return [
+          if (r != null)
+            DiscoveryResult(ip: r.ip, port: r.port, method: 'ssdp'),
+        ];
       } catch (e) {
         logger.w('[Discovery] SSDP search failed', e);
-        return null;
+        return const [];
       }
     }
 
     final results = await Future.wait([mdns(), ssdp()]);
     final seen = <String>{};
     return [
-      for (final r in results)
-        if (r != null && seen.add('${r.ip}:${r.port}')) r,
+      for (final r in results.expand((list) => list))
+        if (seen.add('${r.ip}:${r.port}')) r,
     ];
   }
 

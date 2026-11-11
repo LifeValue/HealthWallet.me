@@ -61,6 +61,8 @@ class ProcessingMappingSection extends StatelessWidget {
       content = _buildFailure(context, failure);
     } else if (displayedSession.status == ProcessingStatus.cancelled) {
       content = _buildCancelled(context);
+    } else if (state.isStopping(displayedSession.id)) {
+      content = const _StoppingMessage();
     } else if (displayedSession.isProcessing) {
       content = _buildProcessing(context);
     } else if (displayedSession.status == ProcessingStatus.pending) {
@@ -187,6 +189,7 @@ class ProcessingMappingSection extends StatelessWidget {
   }
 
   Widget _buildCancelled(BuildContext context) {
+    final stopping = state.isStopping(displayedSession.id);
     return Column(
       children: [
         Container(
@@ -210,7 +213,9 @@ class ProcessingMappingSection extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                context.l10n.processingCancelled,
+                stopping
+                    ? context.l10n.processingStopping
+                    : context.l10n.processingCancelled,
                 style: AppTextStyle.bodyMedium.copyWith(
                   color: context.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
@@ -223,6 +228,8 @@ class ProcessingMappingSection extends StatelessWidget {
         AppButton(
           label: context.l10n.retry,
           variant: AppButtonVariant.outlined,
+          // Retried only once the AI has stopped.
+          enabled: !stopping,
           onPressed: onRetryStep1,
         ),
       ],
@@ -333,6 +340,34 @@ class ProcessingMappingSection extends StatelessWidget {
           label: context.l10n.goBack,
           variant: AppButtonVariant.transparent,
           onPressed: () => context.router.maybePop(),
+        ),
+      ],
+    );
+  }
+}
+
+/// Shown after Cancel until the AI has stopped.
+class _StoppingMessage extends StatelessWidget {
+  const _StoppingMessage();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox.square(
+          dimension: Insets.normal,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: context.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(width: Insets.small),
+        Text(
+          context.l10n.processingStopping,
+          style: AppTextStyle.bodyMedium.copyWith(
+            color: context.colorScheme.primary,
+          ),
         ),
       ],
     );

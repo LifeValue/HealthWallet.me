@@ -160,6 +160,25 @@ void main() {
     debugDefaultTargetPlatformOverride = null;
   });
 
+  testWidgets('media whose inline data is not valid base64 shows the '
+      'translated message', (tester) async {
+    await preview(
+      tester,
+      const Media(
+        id: 'media-1',
+        rawResource: {
+          'resourceType': 'Media',
+          'content': {'contentType': 'application/pdf', 'data': 'not base64!'},
+        },
+      ),
+    );
+
+    expect(messageCard(_l10n.fileOpenFailed), findsOne);
+    expect(find.textContaining('base64'), findsNothing);
+    expect(dirs.temp.listSync(), isEmpty);
+    debugDefaultTargetPlatformOverride = null;
+  });
+
   group('the viewer title', () {
     setUp(() {
       CheckedPdfView.defaultCanOpen = (_) async => true;
@@ -181,6 +200,25 @@ void main() {
       expect(find.widgetWithText(AppBar, 'report.pdf'), findsOne);
       expect(find.text('report_1a2b3c4d.pdf'), findsNothing);
       expect(find.byType(PDFView), findsOne);
+      debugDefaultTargetPlatformOverride = null;
+    });
+
+    testWidgets('a stored name with unencoded accents opens its file', (
+      tester,
+    ) async {
+      store('Scrisoare medicală_1a2b3c4d.pdf', utf8.encode('%PDF-1.7'));
+
+      await preview(
+        tester,
+        _document(
+          storedName: 'Scrisoare medicală_1a2b3c4d.pdf',
+          attachmentTitle: 'PDF: Scrisoare medicală',
+        ),
+      );
+
+      final view = tester.widget<PDFView>(find.byType(PDFView));
+      expect(view.filePath, endsWith('/Scrisoare medicală_1a2b3c4d.pdf'));
+      expect(find.widgetWithText(AppBar, 'PDF: Scrisoare medicală'), findsOne);
       debugDefaultTargetPlatformOverride = null;
     });
 
@@ -206,6 +244,30 @@ void main() {
     );
 
     expect(find.byType(InteractiveViewer), findsOne);
+    expect(find.widgetWithText(AppBar, 'photo.png'), findsOne);
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('an image that cannot be decoded shows that it failed to load', (
+    tester,
+  ) async {
+    store('photo_1a2b3c4d.png', utf8.encode('not an image'));
+
+    await preview(
+      tester,
+      _document(storedName: 'photo_1a2b3c4d.png', attachmentTitle: 'photo.png'),
+    );
+    // The image is decoded by the engine: give it real time to fail.
+    for (var i = 0; i < 150; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pump();
+      if (find.text(_l10n.failedToLoadImage).evaluate().isNotEmpty) break;
+    }
+
+    expect(find.text(_l10n.failedToLoadImage), findsOne);
+    expect(find.byIcon(Icons.broken_image), findsOne);
     expect(find.widgetWithText(AppBar, 'photo.png'), findsOne);
     debugDefaultTargetPlatformOverride = null;
   });

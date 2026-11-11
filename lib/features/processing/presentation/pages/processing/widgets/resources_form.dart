@@ -848,6 +848,15 @@ class _ResourcesFormState extends State<ResourcesForm> {
     final isNewWithExisting = hasBoth && patient.mode == ImportMode.createNew;
     final isModified = hasBoth && patient.mode == ImportMode.linkExisting;
 
+    if (isNewPatient && !patient.draft!.isIdentified) {
+      return _buildBanner(
+        context,
+        icon: Icons.person_search_outlined,
+        color: context.colorScheme.tertiary,
+        text: context.l10n.processingNoPatientFound,
+      );
+    }
+
     if (isNewPatient) {
       final draftName = patient.draft != null
           ? '${patient.draft!.givenName.value} ${patient.draft!.familyName.value}'

@@ -7,6 +7,7 @@ import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart'
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_matcher.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
@@ -45,6 +46,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
   SharedPreferences get prefs;
   AppStringsProvider get strings;
   LayoutExtractionService get layoutExtraction;
+  DeviceCapabilityService get deviceCapabilityService;
 
   void updateSession(
     Emitter<ProcessingState> emit, {
@@ -165,11 +167,11 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           holderPatient: stagedPatient.existing,
         );
         // Cancelled while reading: nothing is staged.
-        final current = state.sessions.firstWhereOrNull(
-          (s) => s.id == event.sessionId,
-        );
-        if (processingRepository.shouldCancelGeneration ||
-            current?.status != ProcessingStatus.processingPatient) {
+        if (_leftStep(
+          event.sessionId,
+          ProcessingStatus.processingPatient,
+          emit,
+        )) {
           return;
         }
         updateSession(
@@ -202,6 +204,13 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           existing: ocrPreMatch,
           mode: ImportMode.linkExisting,
         );
+        if (_leftStep(
+          event.sessionId,
+          ProcessingStatus.processingPatient,
+          emit,
+        )) {
+          return;
+        }
         final container = await processingRepository.mapContainerOnly(
           medicalText,
           maxTokens: isDesktop
@@ -220,9 +229,13 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
             prefs.getString(SharedPrefsConstants.aiOutputMode),
           ),
         );
-        final finalSession = state.sessions.firstWhereOrNull(
-          (s) => s.id == event.sessionId,
-        );
+        if (_leftStep(
+          event.sessionId,
+          ProcessingStatus.processingPatient,
+          emit,
+        )) {
+          return;
+        }
         if (container is MappingDiagnosticReport) {
           updateSession(
             emit,
@@ -247,7 +260,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
             state.copyWith(
               notification: Notification(
                 text: strings.l10n.processingPatientMatched(
-                  _originName(finalSession),
+                  _originName(session),
                 ),
                 route: ProcessingRoute(sessionId: event.sessionId),
                 time: DateTime.now(),
@@ -259,6 +272,13 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         return;
       }
 
+      if (_leftStep(
+        event.sessionId,
+        ProcessingStatus.processingPatient,
+        emit,
+      )) {
+        return;
+      }
       final (patient, container) = await processingRepository.mapBasicInfo(
         sessionImages,
         maxTokens: isDesktop
@@ -278,9 +298,13 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         ),
       );
       final stagedPatient = await _matchOrCreatePatient(patient);
-      final finalSession = state.sessions.firstWhereOrNull(
-        (s) => s.id == event.sessionId,
-      );
+      if (_leftStep(
+        event.sessionId,
+        ProcessingStatus.processingPatient,
+        emit,
+      )) {
+        return;
+      }
       if (container is MappingDiagnosticReport) {
         updateSession(
           emit,
@@ -305,7 +329,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           state.copyWith(
             notification: Notification(
               text: strings.l10n.processingPatientInfoExtracted(
-                _originName(finalSession),
+                _originName(session),
               ),
               route: ProcessingRoute(sessionId: event.sessionId),
               time: DateTime.now(),
@@ -316,6 +340,22 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
 
       startNextPendingSession();
     } on Exception catch (e, s) {
+      // Cancelled, handed over or removed meanwhile: the failure of a step
+      // the session already left changes nothing (it would put a cancelled
+      // document back in the queue).
+      if (_leftStep(
+        event.sessionId,
+        ProcessingStatus.processingPatient,
+        emit,
+      )) {
+        logger.w(
+          '[ProcessingBloc] patient extraction failed after the session left '
+          'its step',
+          e,
+          s,
+        );
+        return;
+      }
       logger.e('[ProcessingBloc] patient extraction failed', e, s);
       if (session.origin == ProcessingOrigin.handover) {
         haltedHandovers.add(event.sessionId);
@@ -350,9 +390,18 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     }
   }
 
-  String _originName(ProcessingSession? session) =>
-      session?.origin.localizedName(strings.l10n) ??
-      strings.l10n.fhirTypeDocumentReference;
+  /// Whether [sessionId] is no longer in the [step] it started (cancelled,
+  /// handed over, removed or started again): the step stages nothing more.
+  bool _leftStep(
+    String sessionId,
+    ProcessingStatus step,
+    Emitter<ProcessingState> emit,
+  ) =>
+      emit.isDone ||
+      state.sessions.firstWhereOrNull((s) => s.id == sessionId)?.status != step;
+
+  String _originName(ProcessingSession session) =>
+      session.origin.localizedName(strings.l10n);
 
   /// The person whose identifier appears in the scanned text, before the AI
   /// reads the patient.
@@ -389,6 +438,11 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
   }
 
   Future<StagedPatient> _matchOrCreatePatient(MappingPatient patient) async {
+    // No patient found in the document: nobody to match, the user enters
+    // the details in the review.
+    if (!patient.isIdentified) {
+      return StagedPatient(draft: patient, mode: ImportMode.createNew);
+    }
     try {
       final directory = await holderService.load();
       final holder = holderService.matchScanned(patient, directory);
@@ -446,6 +500,10 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       await sessionImagesFor(event.sessionId, emit);
       await ensureOcrPages(emit, event.sessionId);
       final sessionImages = state.ocrPagesFor(event.sessionId);
+      // Cancelled while the pages were prepared: the AI does not start.
+      if (_leftStep(event.sessionId, ProcessingStatus.processing, emit)) {
+        return;
+      }
       final activeSession = state.sessions.firstWhereOrNull(
         (s) => s.id == event.sessionId,
       );
@@ -466,9 +524,13 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       final savedContextSize = isDesktop
           ? null
           : prefs.getInt(SharedPrefsConstants.aiContextSize);
-      final useVision =
-          prefs.getBool(SharedPrefsConstants.aiUseVision) ??
-          defaultDeepScan(isDesktop);
+      // Deep Scan on a device without the memory for it reads the text.
+      final useVision = deepScanRuns(
+        deepScanOn:
+            prefs.getBool(SharedPrefsConstants.aiUseVision) ??
+            defaultDeepScan(isDesktop),
+        capability: await deviceCapabilityService.getCapability(),
+      );
       final Stream<MappingResourcesWithProgress> stream = processingRepository
           .mapRemainingResources(
             sessionImages,
@@ -532,6 +594,17 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       );
       startNextPendingSession();
     } catch (e, s) {
+      // Cancelled, handed over or removed meanwhile: no failure to show, and
+      // no handover to halt.
+      if (_leftStep(event.sessionId, ProcessingStatus.processing, emit)) {
+        logger.w(
+          '[ProcessingBloc] resource extraction failed after the session '
+          'left its step',
+          e,
+          s,
+        );
+        return;
+      }
       logger.e('[ProcessingBloc] resource extraction failed', e, s);
       final failedSession = state.sessions.firstWhereOrNull(
         (s) => s.id == event.sessionId,
@@ -539,11 +612,14 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       if (failedSession?.origin == ProcessingOrigin.handover) {
         haltedHandovers.add(event.sessionId);
       }
+      // Its partial results go, or the next run would add its own to them
+      // and the review show each record twice; what it started with stays.
       updateSession(
         emit,
         sessionId: event.sessionId,
         status: ProcessingStatus.patientExtracted,
-        resources: failedSession?.resources,
+        resources: session.resources,
+        progress: 0,
         updateDb: true,
       );
       if (!emit.isDone) {
@@ -583,14 +659,44 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         (session.status == ProcessingStatus.processing || hasPatientData)
         ? ProcessingStatus.patientExtracted
         : ProcessingStatus.cancelled;
+    // Saved too: step 2 already wrote its results to the session, and they
+    // would come back with the next start.
     updateSession(
       emit,
       sessionId: event.sessionId,
       status: newStatus,
       resources: [],
       progress: 0.0,
+      updateDb: true,
     );
-    await processingRepository.disposeModel();
+    // The AI really stops before the session can be processed again; until
+    // then the screen says it is stopping.
+    final stopping = session.isProcessing;
+    if (stopping) {
+      emit(
+        state.copyWith(
+          stoppingSessionIds: {...state.stoppingSessionIds, event.sessionId},
+        ),
+      );
+    }
+    try {
+      if (stopping) {
+        await processingRepository.cancelGeneration();
+        await processingRepository.waitForStreamCompletion();
+      }
+      await processingRepository.disposeModel();
+    } catch (e, s) {
+      logger.e('[ProcessingBloc] stopping the AI after a cancel failed', e, s);
+    } finally {
+      if (stopping) {
+        emit(
+          state.copyWith(
+            stoppingSessionIds: {...state.stoppingSessionIds}
+              ..remove(event.sessionId),
+          ),
+        );
+      }
+    }
   }
 
   void onResourceCreationInitiated(

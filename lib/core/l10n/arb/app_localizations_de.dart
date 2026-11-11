@@ -1527,6 +1527,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get attachedDocuments => 'Angehängte Dokumente';
 
   @override
+  String documentAttachedTo(String visit) {
+    return 'An $visit angehängt.';
+  }
+
+  @override
   String get cameraPermissionRequired => 'Kamerazugriff erforderlich';
 
   @override
@@ -4789,6 +4794,17 @@ class AppLocalizationsDe extends AppLocalizations {
       'Dein Telefon ist nicht verbunden. Seit der letzten Synchronisierung darauf hinzugefügte Aufzeichnungen kommen zurück, sobald es sich wieder verbindet; Änderungen an vorhandenen Aufzeichnungen werden durch das Backup ersetzt.';
 
   @override
+  String backupRestoreRemovesScans(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Scans, die auf Überprüfung warten, werden entfernt.',
+      one: '1 Scan, der auf Überprüfung wartet, wird entfernt.',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String aiModelDeleteTitle(String name) {
     return '$name löschen?';
   }
@@ -4797,4 +4813,61 @@ class AppLocalizationsDe extends AppLocalizations {
   String aiModelDeleteMessage(int size) {
     return 'Das Modell und seine Tiefenscan-Dateien werden von diesem Gerät entfernt. Um wieder damit zu scannen, musst du es erneut herunterladen (~$size MB).';
   }
+
+  @override
+  String get processingNoPatientFound =>
+      'Kein Patient im Dokument gefunden. Gib die Daten ein.';
+
+  @override
+  String get processingStopping => 'Wird gestoppt…';
+
+  @override
+  String get handoverTakenBack =>
+      'Das Telefon hat dieses Dokument zurückgenommen.';
+
+  @override
+  String get aiModelSwitchedToLiteTitle => 'Jetzt mit dem Lite-Modell';
+
+  @override
+  String aiModelSwitchedToLiteMessage(String modelName) {
+    return 'Das Modell $modelName benötigt mehr Arbeitsspeicher, als dieses Gerät hat, daher wird das Lite-Modell verwendet.';
+  }
+
+  @override
+  String backupSafetyRetention(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Wird $count Tage aufbewahrt',
+      one: 'Wird 1 Tag aufbewahrt',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSafetyRetentionTitle => 'Kopie vor einer Wiederherstellung';
+
+  @override
+  String backupSafetyRetentionDaysUnit(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Tage',
+      one: 'Tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSafetyRetentionHint =>
+      'Gilt auch für vorhandene Kopien. Ältere Kopien werden jetzt gelöscht.';
+
+  @override
+  String backupSafetyRetentionInvalid(int min, int max) {
+    return 'Gib eine ganze Zahl von Tagen zwischen $min und $max ein.';
+  }
+
+  @override
+  String get backupSafetyRetentionSaveFailed =>
+      'Die Aufbewahrungsdauer der Kopie vor einer Wiederherstellung konnte nicht gespeichert werden. Bitte versuche es erneut.';
 }

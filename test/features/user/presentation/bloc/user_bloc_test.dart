@@ -12,6 +12,7 @@ import 'package:health_wallet/features/user/domain/repository/user_repository.da
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../helpers/log_capture.dart';
 import '../../../app_lock/app_lock_test_fakes.dart';
 
 class _FakeUserRepository extends Fake implements UserRepository {
@@ -20,6 +21,7 @@ class _FakeUserRepository extends Fake implements UserRepository {
   Exception? getUserError;
   Exception? updateUserError;
   Exception? saveLockError;
+  Exception? readLockError;
   final List<User> updatedUsers = [];
   final List<bool> savedLockValues = [];
 
@@ -55,7 +57,11 @@ class _FakeUserRepository extends Fake implements UserRepository {
   }
 
   @override
-  Future<bool> isBiometricAuthEnabled() async => lockEnabled;
+  Future<bool> isBiometricAuthEnabled() async {
+    final error = readLockError;
+    if (error != null) throw error;
+    return lockEnabled;
+  }
 
   @override
   Future<void> saveBiometricAuth(bool isEnabled) async {
@@ -116,6 +122,7 @@ TypeMatcher<UserState> _failure(UserSetting setting) => isA<UserState>().having(
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
   final dispatcher = binding.platformDispatcher;
+  final logs = captureLogs();
 
   late _FakeUserRepository users;
   late FakeLockAuthService auth;
@@ -284,6 +291,56 @@ void main() {
             .having((s) => s.user, 'user', const User())
             .having((s) => s.isBiometricAuthEnabled, 'lock', isTrue),
       ],
+    );
+
+    blocTest<UserBloc, UserState>(
+      'shows the user with the lock on when the lock setting cannot be read',
+      setUp: () {
+        users
+          ..storedUser = const User(name: 'Ana')
+          ..readLockError = Exception('keychain locked');
+      },
+      build: buildBloc,
+      act: (bloc) => bloc.add(const UserInitialised()),
+      expect: () => [
+        _state(status: const UserStatus.loading()),
+        isA<UserState>()
+            .having((s) => s.status, 'status', const UserStatus.success())
+            .having((s) => s.user.name, 'name', 'Ana')
+            // The app lock fails closed on the same read, so the switch
+            // shows it on rather than off.
+            .having((s) => s.isBiometricAuthEnabled, 'lock', isTrue),
+      ],
+      verify: (_) =>
+          expect(logs, loggedWarning('Failed to read the biometric lock')),
+    );
+
+    blocTest<UserBloc, UserState>(
+      'shows the user with the device region when the saved preferences '
+      'cannot be read',
+      setUp: () {
+        // A value of the wrong type, as a corrupt preferences file leaves.
+        SharedPreferences.setMockInitialValues({
+          SharedPrefsConstants.regionPreset: 1,
+          SharedPrefsConstants.countryCode: 2,
+          SharedPrefsConstants.appLocale: 3,
+        });
+        users.storedUser = const User(name: 'Ana');
+        dispatcher.localeTestValue = const Locale('en', 'GB');
+      },
+      build: buildBloc,
+      act: (bloc) => bloc.add(const UserInitialised()),
+      expect: () => [
+        _state(status: const UserStatus.loading()),
+        isA<UserState>()
+            .having((s) => s.status, 'status', const UserStatus.success())
+            .having((s) => s.user.name, 'name', 'Ana')
+            .having((s) => s.regionPreset, 'region', RegionPreset.uk)
+            .having((s) => s.countryCode, 'country', 'GB')
+            .having((s) => s.appLocale, 'locale', isNull),
+      ],
+      verify: (_) =>
+          expect(logs, loggedWarning('Failed to read the saved preferences')),
     );
 
     blocTest<UserBloc, UserState>(
@@ -803,6 +860,61 @@ void main() {
       ],
       verify: (_) => expect(users.updatedUsers, isEmpty),
     );
+  });
+
+  blocTest<UserBloc, UserState>(
+    'puts listening back on when turning it off cannot be saved, and still '
+    'reports the failure when it cannot start again',
+    setUp: () {
+      receiveMode.isListening = true;
+      users.updateUserError = Exception('disk full');
+    },
+    build: buildBloc,
+    seed: () => const UserState(user: User(isReceiveModeEnabled: true)),
+    act: (bloc) {
+      // Stopping works; starting again, to undo it, fails.
+      receiveMode.startError = Exception('Bluetooth off');
+      bloc.add(const UserReceiveModeToggled(false));
+    },
+    expect: () => [
+      _state(status: const UserStatus.loading()),
+      _failure(
+        UserSetting.receiveMode,
+      ).having((s) => s.user.isReceiveModeEnabled, 'on', isTrue),
+    ],
+    verify: (_) {
+      expect(receiveMode.stops, 1);
+      expect(receiveMode.isListening, isFalse);
+    },
+  );
+
+  test('a sync reload that cannot read the lock setting shows the user and '
+      'does not hold up the saves queued after it', () async {
+    users
+      ..lockEnabled = true
+      ..storedUser = const User(name: 'Synced');
+    final errors = <Object>[];
+    late UserBloc bloc;
+
+    // The bloc rethrows a handler's error into the zone it was built in.
+    await runZonedGuarded(() async {
+      bloc = buildBloc()..add(const UserInitialised());
+      await pumpEventQueue();
+      users.readLockError = Exception('keychain locked');
+      bloc
+        ..add(const UserDataUpdatedFromSync())
+        ..add(const UserThemeToggled());
+      await pumpEventQueue();
+    }, (error, _) => errors.add(error));
+
+    expect(errors, isEmpty);
+    expect(bloc.state.user.name, 'Synced');
+    expect(bloc.state.isBiometricAuthEnabled, isTrue);
+    expect(users.storedUser?.isDarkMode, isTrue);
+    expect(bloc.state.user.isDarkMode, isTrue);
+    expect(bloc.state.status, const UserStatus.success());
+    expect(logs, loggedWarning('Failed to read the biometric lock'));
+    await bloc.close();
   });
 
   group('preferences', () {

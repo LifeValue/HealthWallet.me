@@ -318,6 +318,31 @@ void main() {
       },
     );
 
+    test('a file name with unencoded accents still gives the thumbnail and '
+        'the detail', () async {
+      File('${root.path}/docs/Scrisoare medicală_1a2b3c4d.pdf')
+          .writeAsStringSync('%PDF');
+      const url = 'file://docs/Scrisoare medicală_1a2b3c4d.pdf';
+      final encounter = _resource({'resourceType': 'Encounter', 'id': 'enc-1'});
+      repository.records = [encounter];
+      repository.documents = [
+        _document('doc-1', url: url, encounterId: 'enc-1'),
+        _document('doc-2', encounterId: 'enc-1'),
+      ];
+
+      final entries = await service.loadEntries();
+      final detail = await service.loadDetail(encounter);
+
+      const path = 'docs/Scrisoare medicală_1a2b3c4d.pdf';
+      expect(entries.single.attachmentCount, 2);
+      expect(entries.single.thumbnailPath, '${root.path}/$path');
+      expect(detail.attachments.map((a) => a.filePath), [
+        '${root.path}/$path',
+        '${root.path}/docs/report.pdf',
+      ]);
+      expect(logs, isEmpty);
+    });
+
     test('a thumbnail path that cannot be resolved is logged', () async {
       pathResolver.failing.add('docs/report.pdf');
       repository.records = [
@@ -390,6 +415,53 @@ void main() {
       expect(detail.attachments.first.filePath, '${root.path}/docs/report.pdf');
       expect(detail.attachments.first.title, 'doc-1 title');
       expect(logs, isEmpty);
+    });
+
+    test('an organization named in a list and a practitioner with only a '
+        'given name are still named', () async {
+      // An organization name list can't go through fhir_r4, so build it.
+      repository.related = [
+        const Organization(
+          id: 'org-1',
+          rawResource: {
+            'name': ['Riverside Hospital', 'Riverside'],
+          },
+        ),
+        _resource({
+          'resourceType': 'Practitioner',
+          'id': 'pr-1',
+          'name': [
+            {
+              'given': ['Gregory'],
+            },
+          ],
+        }),
+      ];
+
+      final detail = await service.loadDetail(encounter);
+
+      expect(detail.organizationName, 'Riverside Hospital');
+      expect(detail.practitionerName, 'Gregory');
+    });
+
+    test('an encounter document that belongs to another record of the visit '
+        'is not shown as the encounter\'s own', () async {
+      repository.related = [
+        _document(
+          'doc-own',
+          encounterId: 'enc-1',
+          related: ['Encounter/enc-1'],
+        ),
+        _document(
+          'doc-of-condition',
+          encounterId: 'enc-1',
+          related: ['Condition/cond-1'],
+        ),
+      ];
+
+      final detail = await service.loadDetail(encounter);
+
+      expect(detail.attachments.map((a) => a.id), ['doc-own']);
     });
 
     test(

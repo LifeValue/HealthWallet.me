@@ -14,19 +14,30 @@ class SsdpService {
   RawDatagramSocket? _socket;
   Timer? _notifyTimer;
 
+  /// The port the advertiser listens on, null while it isn't advertising.
+  @visibleForTesting
+  int? get listeningPort => _socket?.port;
+
+  /// Answers searches on [listenPort]: the SSDP port, or in tests a port of
+  /// their own (0 for a free one) that another advertiser on the machine
+  /// doesn't share. Tests can pass [bind] to supply a socket that fails.
   Future<void> startAdvertising({
     required String ip,
     required int port,
     required String deviceId,
+    @visibleForTesting int listenPort = _multicastPort,
+    @visibleForTesting Future<RawDatagramSocket> Function()? bind,
   }) async {
     await stopAdvertising();
 
-    _socket = await RawDatagramSocket.bind(
-      InternetAddress.anyIPv4,
-      _multicastPort,
-      reuseAddress: true,
-      reusePort: !Platform.isWindows,
-    );
+    _socket = await (bind != null
+        ? bind()
+        : RawDatagramSocket.bind(
+            InternetAddress.anyIPv4,
+            listenPort,
+            reuseAddress: true,
+            reusePort: !Platform.isWindows,
+          ));
 
     _socket!.joinMulticast(InternetAddress(_multicastAddress));
     _socket!.broadcastEnabled = true;
@@ -58,18 +69,22 @@ class SsdpService {
     debugPrint('[SSDP] Advertising on $_multicastAddress:$_multicastPort');
   }
 
+  /// Tests can pass [bind] to supply a socket that fails.
   Future<({String ip, int port, String deviceId})?> search({
     Duration timeout = const Duration(seconds: 3),
     String? expectedDeviceId,
     @visibleForTesting (InternetAddress, int)? target,
+    @visibleForTesting Future<RawDatagramSocket> Function()? bind,
   }) async {
     RawDatagramSocket? socket;
     try {
-      socket = await RawDatagramSocket.bind(
-        InternetAddress.anyIPv4,
-        0,
-        reuseAddress: true,
-      );
+      socket = await (bind != null
+          ? bind()
+          : RawDatagramSocket.bind(
+              InternetAddress.anyIPv4,
+              0,
+              reuseAddress: true,
+            ));
     } catch (e) {
       debugPrint('[SSDP] Bind failed: $e');
       return null;

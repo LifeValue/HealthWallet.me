@@ -72,6 +72,14 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
   Timer? _digestTimer;
   bool _sentSinceVerify = false;
   final _manifestsSent = <String>{};
+
+  /// The peer could not save a batch. The error stays shown, through the
+  /// sending and checking that follow and through a reconnect, until both
+  /// sides' tables match or the user presses Sync Now.
+  bool _peerRejected = false;
+  static const _peerRejectedError =
+      'the other device could not save some changes';
+
   final _awaitingFiles = <String>{};
   Future<void> _fileQueue = Future.value();
   final _drainWaiters = <Completer<void>>[];
@@ -101,8 +109,8 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
       switch (event) {
         case LwwSyncInitialised():
           await _onInitialised(emit);
-        case SyncTriggered():
-          await _onTriggered(emit);
+        case SyncTriggered(:final userRequested):
+          await _onTriggered(userRequested, emit);
         case LwwLocalChanged():
           await _refreshPending(emit);
           await _push(emit);
@@ -202,9 +210,13 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
   @visibleForTesting
   Future<void> get initialised => _initialised.future;
 
-  Future<void> _onTriggered(Emitter<LwwSyncState> emit) async {
+  Future<void> _onTriggered(
+    bool userRequested,
+    Emitter<LwwSyncState> emit,
+  ) async {
     await _refreshPending(emit);
     if (!state.connected) return;
+    if (userRequested && _peerRejected) _clearPeerRejected(emit);
     _sentSinceVerify = true;
     await _push(emit);
   }
@@ -249,8 +261,8 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
         tablesMatch: false,
         sentRows: 0,
         receivedRows: 0,
-        error: null,
-        syncStatus: LwwSyncStatus.idle,
+        error: _peerRejected ? _peerRejectedError : null,
+        syncStatus: _peerRejected ? LwwSyncStatus.error : LwwSyncStatus.idle,
         lastSyncTime: _peer?.lastSyncAt,
         lastSyncPeerName: _peer?.peerName,
       ),
@@ -298,7 +310,7 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
       emit(
         state.copyWith(
           sending: true,
-          syncStatus: LwwSyncStatus.syncing,
+          syncStatus: _busyStatus,
           sentRows: state.sentRows + rows,
         ),
       );
@@ -389,10 +401,11 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
         _inFlight = null;
         if (payload['ok'] == false) {
           logger.w('[LwwSync] the peer could not apply batch $id');
+          _peerRejected = true;
           emit(
             state.copyWith(
               syncStatus: LwwSyncStatus.error,
-              error: 'the other device could not save some changes',
+              error: _peerRejectedError,
             ),
           );
         }
@@ -447,7 +460,7 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
       await paused.future;
     }
     _applying = Completer<void>();
-    emit(state.copyWith(receiving: true, syncStatus: LwwSyncStatus.syncing));
+    emit(state.copyWith(receiving: true, syncStatus: _busyStatus));
     final AppliedBatch applied;
     try {
       applied = await _syncService.applyBatch(batch);
@@ -508,8 +521,11 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
     }
     emit(state.copyWith(tablesMatch: differing.isEmpty));
     // Both devices hold the same rows: that is a sync, even with nothing to
-    // move.
-    if (differing.isEmpty) await _confirmedInSync(emit);
+    // move, and whatever the peer could not save has reached it since.
+    if (differing.isEmpty) {
+      await _confirmedInSync(emit);
+      if (_peerRejected) _clearPeerRejected(emit);
+    }
 
     for (final table in differing) {
       // Once per connection: a row that keeps failing on one side would
@@ -606,13 +622,30 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
     }
   }
 
+  bool get _busy =>
+      _inFlight != null ||
+      _digestTimer != null ||
+      state.receiving ||
+      _awaitingFiles.isNotEmpty;
+
+  /// The status while work is under way: the error stays while the peer's
+  /// failure to save hasn't been resolved.
+  LwwSyncStatus get _busyStatus =>
+      _peerRejected ? LwwSyncStatus.error : LwwSyncStatus.syncing;
+
+  void _clearPeerRejected(Emitter<LwwSyncState> emit) {
+    _peerRejected = false;
+    emit(
+      state.copyWith(
+        syncStatus: _busy ? LwwSyncStatus.syncing : LwwSyncStatus.idle,
+        error: null,
+      ),
+    );
+  }
+
   void _syncStatusFromWork(Emitter<LwwSyncState> emit) {
-    final busy =
-        _inFlight != null ||
-        _digestTimer != null ||
-        state.receiving ||
-        _awaitingFiles.isNotEmpty;
-    if (busy) {
+    if (_peerRejected) return;
+    if (_busy) {
       if (state.syncStatus != LwwSyncStatus.syncing) {
         emit(state.copyWith(syncStatus: LwwSyncStatus.syncing));
       }

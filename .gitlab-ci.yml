@@ -426,7 +426,7 @@ scan:secrets:
 
 # Every `pod` call in an iOS or macOS job must use the CocoaPods pinned in ios/Gemfile: the
 # runner's Homebrew CocoaPods (1.15) cannot read the Share Extension's synchronized folder groups,
-# and both Podfile.locks are written by 1.16. A wrapper first on PATH also covers the implicit
+# and both Podfile.locks are written by 1.17. A wrapper first on PATH also covers the implicit
 # `pod install` inside `flutter build ios/macos` and `shorebird release/patch`. It sets BUNDLE_* itself because fastlane runs the Flutter build with
 # Bundler's environment stripped (Bundler.with_unbundled_env).
 .ios_cocoapods: &ios_cocoapods
@@ -439,7 +439,7 @@ scan:secrets:
     EOF
   - chmod +x "$CI_PROJECT_DIR/.ci-bin/pod"
   - export PATH="$CI_PROJECT_DIR/.ci-bin:$PATH"
-  - pod --version | grep -q '^1\.16\.' || { echo "pod on PATH is not the CocoaPods pinned in ios/Gemfile"; exit 1; }
+  - pod --version | grep -q '^1\.17\.' || { echo "pod on PATH is not the CocoaPods pinned in ios/Gemfile"; exit 1; }
 
 # Run from ios/ or macos/. Keeps the committed Podfile.lock, so the pod versions are the reviewed
 # ones and CocoaPods only fetches the specs it needs. Retried because the CocoaPods CDN

@@ -18,6 +18,18 @@ part 'patient_state.dart';
 
 @injectable
 class PatientBloc extends Bloc<PatientEvent, PatientState> {
+  /// The steps of switching patient (close the open card, move the new one
+  /// to the top, open it), about 0.9 s in all. The new card grows for
+  /// [switchCardOpen] at one speed, and its details start fading in
+  /// [switchDetailsDelay] into that, so both end together. They match the
+  /// card and list animations in `UnifiedPatientCard` and
+  /// `AnimatedReorderableList`.
+  static const switchCardMotion = Duration(milliseconds: 140);
+  static const switchCardSettle = Duration(milliseconds: 210);
+  static const switchCardOpen = Duration(milliseconds: 350);
+  static const switchDetailsDelay = Duration(milliseconds: 120);
+  static const switchStepGap = Duration(milliseconds: 35);
+
   final HolderService _holderService;
   final HolderSelection _selection;
   final PatientEditService _patientEditService;
@@ -190,7 +202,7 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
         ),
       );
 
-      await Future.delayed(const Duration(milliseconds: 560));
+      await Future.delayed(switchCardMotion);
 
       currentExpandedIds.clear();
       emit(
@@ -200,7 +212,7 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
         ),
       );
 
-      await Future.delayed(const Duration(milliseconds: 840));
+      await Future.delayed(switchCardSettle);
     }
 
     emit(
@@ -211,7 +223,7 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
       ),
     );
 
-    await Future.delayed(const Duration(milliseconds: 140));
+    await Future.delayed(switchStepGap);
 
     currentPatients.remove(selectedPatient);
     currentPatients.insert(0, selectedPatient);
@@ -226,7 +238,7 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
     );
     await _selection.select(_holderIdOf(selectedPatient.id));
 
-    await Future.delayed(const Duration(milliseconds: 560));
+    await Future.delayed(switchCardMotion);
 
     currentExpandedIds.add(event.patientId);
     emit(
@@ -237,7 +249,7 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
       ),
     );
 
-    await Future.delayed(const Duration(milliseconds: 840));
+    await Future.delayed(switchDetailsDelay);
 
     emit(
       state.copyWith(
@@ -245,7 +257,8 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
       ),
     );
 
-    await Future.delayed(const Duration(milliseconds: 140));
+    await Future.delayed(switchCardOpen - switchDetailsDelay);
+    await Future.delayed(switchStepGap);
 
     emit(
       state.copyWith(

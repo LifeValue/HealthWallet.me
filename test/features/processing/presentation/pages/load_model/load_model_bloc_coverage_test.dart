@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:bloc_test/bloc_test.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
@@ -14,6 +15,8 @@ import 'package:health_wallet/features/notifications/domain/entities/notificatio
 import 'package:health_wallet/features/processing/domain/services/ai_model_download_service.dart';
 import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../../helpers/fake_device_capability_service.dart';
 
 /// A download service whose files, running downloads and reported state the
 /// test sets, and which records what the bloc asks of it.
@@ -77,14 +80,6 @@ class _FakeNotificationBloc extends Fake implements NotificationBloc {
   void add(NotificationEvent event) => events.add(event);
 }
 
-class _FakeDeviceCapabilityService extends Fake
-    implements DeviceCapabilityService {
-  DeviceAiCapability capability = DeviceAiCapability.full;
-
-  @override
-  Future<DeviceAiCapability> getCapability() async => capability;
-}
-
 final _en = lookupAppLocalizations(const Locale('en'));
 
 String _notificationId(AiModelVariant variant) =>
@@ -122,7 +117,7 @@ Future<bool> _online() async {
 void main() {
   late _FakeDownloadService service;
   late _FakeNotificationBloc notifications;
-  late _FakeDeviceCapabilityService capability;
+  late FakeDeviceCapabilityService capability;
   late SharedPreferences prefs;
 
   // The host running the tests decides the offered variants (desktop has
@@ -148,7 +143,7 @@ void main() {
   setUp(() async {
     service = _FakeDownloadService();
     notifications = _FakeNotificationBloc();
-    capability = _FakeDeviceCapabilityService();
+    capability = FakeDeviceCapabilityService()..advancedModelSupported = false;
     await setUpWith();
   });
 
@@ -193,8 +188,53 @@ void main() {
     );
 
     blocTest<LoadModelBloc, LoadModelState>(
+      'says whether the device has the memory for the Advanced model',
+      setUp: () => capability.advancedModelSupported = true,
+      build: build,
+      act: (bloc) => bloc.add(const LoadModelInitialized()),
+      verify: (bloc) => expect(bloc.state.advancedModelSupported, isTrue),
+    );
+
+    blocTest<LoadModelBloc, LoadModelState>(
       'the only model on the device is selected and saved',
-      setUp: () => service.onDisk.add(AiModelVariant.qwen35x4b),
+      setUp: () => service.onDisk.add(AiModelVariant.qwen),
+      build: build,
+      act: (bloc) => bloc.add(const LoadModelInitialized()),
+      verify: (bloc) {
+        expect(bloc.state.selectedVariant, AiModelVariant.qwen);
+        expect(bloc.state.status, LoadModelStatus.modelLoaded);
+        expect(
+          prefs.getString(SharedPrefsConstants.aiSelectedModel),
+          AiModelVariant.qwen.name,
+        );
+      },
+    );
+
+    for (final variant in [AiModelVariant.qwen35x4b, AiModelVariant.medGemma]) {
+      blocTest<LoadModelBloc, LoadModelState>(
+        'the ${variant.name} model, the only one on the device, is not '
+        'selected where the device cannot run it',
+        setUp: () => service.onDisk.add(variant),
+        build: build,
+        act: (bloc) => bloc.add(const LoadModelInitialized()),
+        verify: (bloc) {
+          expect(bloc.state.selectedVariant, isNull);
+          expect(bloc.state.status, LoadModelStatus.modelAbsent);
+          expect(
+            prefs.getString(SharedPrefsConstants.aiSelectedModel),
+            isNull,
+          );
+        },
+      );
+    }
+
+    blocTest<LoadModelBloc, LoadModelState>(
+      'the Advanced model, the only one on the device, is selected and saved '
+      'where the device runs it',
+      setUp: () {
+        capability.advancedModelSupported = true;
+        service.onDisk.add(AiModelVariant.qwen35x4b);
+      },
       build: build,
       act: (bloc) => bloc.add(const LoadModelInitialized()),
       verify: (bloc) {
@@ -212,8 +252,12 @@ void main() {
     );
 
     blocTest<LoadModelBloc, LoadModelState>(
-      'a retired model that is the only one on the device is selected',
-      setUp: () => service.onDisk.add(AiModelVariant.medGemma),
+      'a retired model that is the only one on the device is selected where '
+      'the device runs it',
+      setUp: () {
+        capability.advancedModelSupported = true;
+        service.onDisk.add(AiModelVariant.medGemma);
+      },
       build: build,
       act: (bloc) => bloc.add(const LoadModelInitialized()),
       verify: (bloc) {
@@ -553,6 +597,37 @@ void main() {
     );
   });
 
+  test('a connection check that does not answer in 5 s counts as no '
+      'internet: the error is shown and nothing starts', () {
+    fakeAsync((async) {
+      final bloc = build();
+      bloc.emit(
+        const LoadModelState(
+          status: LoadModelStatus.error,
+          errorMessage: 'old',
+          selectedVariant: AiModelVariant.qwen,
+        ),
+      );
+      final states = <LoadModelState>[];
+      final sub = bloc.stream.listen(states.add);
+
+      bloc.add(const LoadModelDownloadInitiated());
+      // The real lookup can't answer on the fake clock: its 5 s limit ends it.
+      async.elapse(const Duration(seconds: 6));
+
+      expect(states.map((s) => (s.status, s.errorMessage)), [
+        (LoadModelStatus.modelAbsent, null),
+        (LoadModelStatus.error, kNoInternetErrorKey),
+      ]);
+      expect(service.started, isEmpty);
+      expect(notifications.events, isEmpty);
+
+      sub.cancel();
+      bloc.close();
+      async.flushMicrotasks();
+    });
+  });
+
   group('a service report', () {
     LoadModelBloc reportTo(LoadModelBloc bloc, AiModelDownloadState s) =>
         bloc..add(LoadModelServiceStateChanged(serviceState: s));
@@ -649,6 +724,55 @@ void main() {
             ),
           ),
         ]);
+      },
+    );
+
+    blocTest<LoadModelBloc, LoadModelState>(
+      'of completion of the Advanced model, the only one, does not select it '
+      'where the device cannot run it',
+      build: build,
+      seed: () => const LoadModelState(
+        isBackgroundDownload: true,
+        downloadingVariants: {AiModelVariant.qwen35x4b: true},
+      ),
+      act: (bloc) => reportTo(
+        bloc,
+        _report(
+          AiModelDownloadStatus.completed,
+          variant: AiModelVariant.qwen35x4b,
+        ),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.selectedVariant, isNull);
+        expect(bloc.state.status, LoadModelStatus.modelAbsent);
+        expect(bloc.state.isVariantDownloaded(AiModelVariant.qwen35x4b), true);
+        expect(prefs.getString(SharedPrefsConstants.aiSelectedModel), isNull);
+      },
+    );
+
+    blocTest<LoadModelBloc, LoadModelState>(
+      'of completion of the Advanced model, the only one, selects it where '
+      'the device runs it',
+      setUp: () => capability.advancedModelSupported = true,
+      build: build,
+      seed: () => const LoadModelState(
+        isBackgroundDownload: true,
+        downloadingVariants: {AiModelVariant.qwen35x4b: true},
+      ),
+      act: (bloc) => reportTo(
+        bloc,
+        _report(
+          AiModelDownloadStatus.completed,
+          variant: AiModelVariant.qwen35x4b,
+        ),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.selectedVariant, AiModelVariant.qwen35x4b);
+        expect(bloc.state.status, LoadModelStatus.modelLoaded);
+        expect(
+          prefs.getString(SharedPrefsConstants.aiSelectedModel),
+          AiModelVariant.qwen35x4b.name,
+        );
       },
     );
 

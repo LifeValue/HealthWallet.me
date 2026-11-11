@@ -100,6 +100,100 @@ void main() {
     expect(find.text(_en.aiModelDeleteTitle(name)), findsNothing);
   });
 
+  group('the model list', () {
+    Future<void> open(WidgetTester tester, LoadModelState state) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await getIt.reset();
+      bloc = _MockLoadModelBloc();
+      whenListen(
+        bloc,
+        const Stream<LoadModelState>.empty(),
+        initialState: state,
+      );
+      getIt.registerSingleton<LoadModelBloc>(bloc);
+      await tester.pumpWidget(testApp(const ModelManagementDialog()));
+      await tester.pump();
+    }
+
+    testWidgets('a downloaded model that is not active is selected on tap', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        const LoadModelState(
+          status: LoadModelStatus.modelLoaded,
+          deviceCapability: DeviceAiCapability.full,
+          advancedModelSupported: true,
+          selectedVariant: AiModelVariant.qwen35x4b,
+          downloadedVariants: {
+            AiModelVariant.qwen: true,
+            AiModelVariant.qwen35x4b: true,
+          },
+        ),
+      );
+
+      expect(find.text(_en.active), findsOne);
+      await tester.tap(find.text(_en.tapToSelect));
+
+      expect(
+        bloc.events,
+        contains(const LoadModelVariantSelected(AiModelVariant.qwen)),
+      );
+    });
+
+    testWidgets('an error is shown under the models', (tester) async {
+      await open(
+        tester,
+        const LoadModelState(
+          status: LoadModelStatus.error,
+          errorMessage: 'Download failed',
+          deviceCapability: DeviceAiCapability.full,
+        ),
+      );
+
+      expect(find.text('Download failed'), findsOne);
+    });
+
+    testWidgets('no internet is not shown as an error text', (tester) async {
+      await open(
+        tester,
+        const LoadModelState(
+          status: LoadModelStatus.error,
+          errorMessage: kNoInternetErrorKey,
+          deviceCapability: DeviceAiCapability.full,
+        ),
+      );
+
+      expect(find.text(kNoInternetErrorKey), findsNothing);
+    });
+
+    testWidgets('the close icon closes the dialog', (tester) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        testApp(
+          Builder(
+            builder: (context) => TextButton(
+              onPressed: () => ModelManagementDialog.show(context),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ModelManagementDialog), findsOne);
+
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ModelManagementDialog), findsNothing);
+    });
+  });
+
   group('a model that is downloading', () {
     Future<void> openDownloading(WidgetTester tester) async {
       tester.view.physicalSize = const Size(800, 1400);
@@ -159,6 +253,118 @@ void main() {
       expect(cancels(), [
         const LoadModelDownloadCancelled(variant: AiModelVariant.qwen),
       ]);
+    });
+  });
+
+  group('the Advanced model', () {
+    final advanced = AiModelConfig.fromVariant(AiModelVariant.qwen35x4b);
+
+    Future<void> open(
+      WidgetTester tester, {
+      required DeviceAiCapability capability,
+      required bool advancedModelSupported,
+    }) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await getIt.reset();
+      bloc = _MockLoadModelBloc();
+      whenListen(
+        bloc,
+        const Stream<LoadModelState>.empty(),
+        initialState: LoadModelState(
+          status: LoadModelStatus.modelAbsent,
+          deviceCapability: capability,
+          advancedModelSupported: advancedModelSupported,
+        ),
+      );
+      getIt.registerSingleton<LoadModelBloc>(bloc);
+      await tester.pumpWidget(testApp(const ModelManagementDialog()));
+      await tester.pump();
+    }
+
+    Finder advancedCard() => find.ancestor(
+      of: find.text(advanced.localizedName(_en)),
+      matching: find.byType(GestureDetector),
+    );
+
+    Iterable<LoadModelEvent> downloads() =>
+        bloc.events.whereType<LoadModelDownloadInitiated>();
+
+    testWidgets('is offered on an iPhone with 8 GB', (tester) async {
+      await open(
+        tester,
+        capability: DeviceAiCapability.full,
+        advancedModelSupported: true,
+      );
+
+      expect(find.text(_en.medGemmaIncompatibleDevice), findsNothing);
+      final download = find.descendant(
+        of: advancedCard().first,
+        matching: find.text(_en.download),
+      );
+      expect(download, findsOne);
+      await tester.tap(download);
+      expect(downloads(), [
+        const LoadModelDownloadInitiated(variant: AiModelVariant.qwen35x4b),
+      ]);
+    });
+
+    testWidgets('needs more memory on a 6 GB iPhone, where Lite still '
+        'downloads', (tester) async {
+      await open(
+        tester,
+        capability: DeviceAiCapability.full,
+        advancedModelSupported: false,
+      );
+
+      expect(
+        find.descendant(
+          of: advancedCard().first,
+          matching: find.text(_en.medGemmaIncompatibleDevice),
+        ),
+        findsOne,
+      );
+      expect(
+        find.descendant(
+          of: advancedCard().first,
+          matching: find.text(_en.download),
+        ),
+        findsNothing,
+      );
+      expect(find.text(_en.download), findsWidgets, reason: 'Lite');
+    });
+
+    testWidgets('needs more memory on a phone without Deep Scan', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        capability: DeviceAiCapability.basicOnly,
+        advancedModelSupported: false,
+      );
+
+      expect(find.text(_en.medGemmaIncompatibleDevice), findsOne);
+    });
+
+    testWidgets('on an unsupported device only the notice above explains', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        capability: DeviceAiCapability.unsupported,
+        advancedModelSupported: false,
+      );
+
+      expect(find.text(_en.aiModelNotAvailableForDeviceDescription), findsOne);
+      expect(find.text(_en.medGemmaIncompatibleDevice), findsNothing);
+      expect(
+        find.descendant(
+          of: advancedCard().first,
+          matching: find.text(_en.download),
+        ),
+        findsNothing,
+      );
     });
   });
 }

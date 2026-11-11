@@ -221,6 +221,9 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
   Future<void> disposeModel() => _inner.disposeModel();
 
   @override
+  void cancelGeneration() => _inner.cancelGeneration();
+
+  @override
   Future<({int availableMB, int requiredMB, bool canProceed})>
   checkMemoryHealth({
     bool withVision = true,
@@ -235,6 +238,9 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
 
   @override
   Future<bool> checkModelExistence() => _inner.checkModelExistence();
+
+  @override
+  Future<bool> checkMmprojExistence() => _inner.checkMmprojExistence();
 
   @override
   Future<bool> checkModelExistenceForVariant(AiModelVariant variant) =>

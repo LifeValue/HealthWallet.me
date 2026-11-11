@@ -9,6 +9,8 @@ import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/services/attachment_file_cleaner.dart';
 import 'package:health_wallet/core/services/attachment_references.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/features/desktop/backup/data/services/backup_service.dart'
+    show LegacyAttachmentFolders;
 import 'package:health_wallet/features/desktop/lww_sync/data/services/attachment_sync_service.dart';
 import 'package:path/path.dart' as p;
 
@@ -741,4 +743,146 @@ void main() {
       expect(trashNames(), ['orphan.pdf']);
     });
   });
+
+  group('failures', () {
+    AttachmentFileCleaner withPaths(PathResolver paths) =>
+        AttachmentFileCleaner.forTesting(
+          db,
+          paths,
+          refs,
+          operatingSystem: 'android',
+          now: () => now(),
+        );
+
+    test('a documents directory that can\'t be found deletes and moves '
+        'nothing', () async {
+      final cleaner = withPaths(_FailingPaths());
+
+      expect(await cleaner.deleteUnreferenced(['file://scan.pdf']), 0);
+      expect(await cleaner.sweep(), 0);
+    });
+
+    test('a missing documents directory deletes and moves nothing', () async {
+      final missing = p.join(root.path, 'missing');
+
+      expect(
+        await cleaner(docsPath: missing).deleteUnreferenced([
+          'file://scan.pdf',
+        ]),
+        0,
+      );
+      expect(await cleaner(docsPath: missing).sweep(), 0);
+      expect(Directory(missing).existsSync(), isFalse);
+    });
+
+    test('a failed check keeps the file and the purge goes on with the '
+        'next', () async {
+      await writeDoc('first.pdf');
+      await writeDoc('second.pdf');
+      refs.onCheck = () async => throw StateError('database closed');
+
+      final deleted = await cleaner().deleteUnreferenced([
+        'file://first.pdf',
+        'file://second.pdf',
+      ]);
+
+      // The one checked first failed; the other was deleted.
+      expect(deleted, 1);
+      expect(
+        [doc('first.pdf'), doc('second.pdf')].where((f) => f.existsSync()),
+        hasLength(1),
+      );
+    });
+
+    test('a failed check keeps the file in place and the sweep goes on with '
+        'the next', () async {
+      await writeDoc('first.pdf');
+      await writeDoc('second.pdf');
+      refs.onCheck = () async => throw StateError('database closed');
+
+      expect(await cleaner().sweep(), 1);
+
+      final left = [
+        doc('first.pdf'),
+        doc('second.pdf'),
+      ].where((f) => f.existsSync());
+      expect(left, hasLength(1));
+      expect(
+        Directory(p.join(docs.path, '.trash')).listSync().map(
+          (e) => p.basename(e.path),
+        ),
+        hasLength(1),
+      );
+    });
+
+    test('a .trash that is a file, not a folder, quarantines nothing and is '
+        'left as it is', () async {
+      await writeDoc('orphan.pdf');
+      await writeDoc('.trash');
+
+      expect(await cleaner().sweep(), 0);
+
+      expect(doc('orphan.pdf').existsSync(), isTrue);
+      expect(doc('.trash').readAsStringSync(), 'content of .trash');
+    });
+
+    test('an expired file in .trash that can\'t be checked is kept and the '
+        'others still go', () async {
+      await writeDoc('.trash/stuck.pdf');
+      await writeDoc('.trash/expired.pdf');
+      now = () => DateTime.now().add(const Duration(days: 31));
+      final stuck = p.join(docs.path, '.trash', 'stuck.pdf');
+
+      await IOOverrides.runZoned(
+        () async => expect(await cleaner().sweep(), 0),
+        fseGetType: (path, followLinks) => path == stuck
+            ? throw FileSystemException('Resource busy', path)
+            // Outside the overrides' zone, so the real type is read.
+            : Zone.root.run(
+                () => FileSystemEntity.type(path, followLinks: followLinks),
+              ),
+      );
+
+      expect(File(stuck).existsSync(), isTrue);
+      expect(doc('.trash/expired.pdf').existsSync(), isFalse);
+    });
+  });
+
+  group('construction', () {
+    test('the production cleaner acts as this host and on the real clock: a '
+        'file written now is too young to delete', () async {
+      await writeDoc('scan.pdf');
+      final cleaner = AttachmentFileCleaner(
+        db,
+        _FakePaths(docs.path),
+        refs,
+        LegacyAttachmentFolders(_FakePaths(docs.path)),
+      );
+
+      expect(await cleaner.deleteUnreferenced(['file://scan.pdf']), 0);
+
+      expect(doc('scan.pdf').existsSync(), isTrue);
+    });
+
+    test('a test cleaner without an operating system or clock acts as this '
+        'host and on the real clock', () async {
+      await writeDoc('scan.pdf');
+      final cleaner = AttachmentFileCleaner.forTesting(
+        db,
+        _FakePaths(docs.path),
+        refs,
+      );
+
+      expect(await cleaner.sweep(), 0);
+
+      expect(doc('scan.pdf').existsSync(), isTrue);
+    });
+  });
+}
+
+/// A [PathResolver] whose documents directory can't be found.
+class _FailingPaths extends Fake implements PathResolver {
+  @override
+  Future<String> getDocumentsPath() async =>
+      throw const FileSystemException('No documents directory');
 }

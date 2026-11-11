@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:path/path.dart' as p;
@@ -76,6 +78,29 @@ class TempFileSweeper {
   /// from.
   static String sessionPageMapName(String sessionId) =>
       '$sessionId$sessionPageMapSuffix';
+
+  /// The session id of a page map named [name] (or of its `.tmp`), or null
+  /// when [name] isn't one.
+  static String? sessionIdOfPageMap(String name) {
+    final id = _sessionPageMap.firstMatch(name)?.group(1);
+    return id != null && _isUuid(id) ? id : null;
+  }
+
+  /// The cache key of the pages of the PDF at [pdfPath] (as the session
+  /// stores it, made absolute) rendered at [dpi]: their images are
+  /// `<key>_page_<n>.jpg` in [ocrCacheDirName], listed in `<key>.json`.
+  static String pdfPageCacheKey(
+    String pdfPath,
+    int fileSize,
+    DateTime modified,
+    double dpi,
+  ) => sha256
+      .convert(
+        utf8.encode(
+          '$pdfPath|$fileSize|${modified.millisecondsSinceEpoch}|$dpi',
+        ),
+      )
+      .toString();
 
   /// Debug logs older builds wrote to the documents directory.
   static const shareDebugLogName = 'share_debug.log';

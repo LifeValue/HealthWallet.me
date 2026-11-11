@@ -204,9 +204,12 @@ class OcrProcessingHelper {
     await _writePageMap(cacheDir, sessionId, map.copyWith(pages: pages));
   });
 
-  /// Deletes the session's 200 dpi OCR pages and its page map, once its
-  /// records are saved. [ocrPages] are OCR pages the caller knows of, for a
-  /// session whose page map is gone.
+  /// Deletes the session's 200 dpi OCR pages once its records are saved.
+  /// [ocrPages] are OCR pages the caller knows of, for a session whose page
+  /// map is gone. The rest of the page map stays for
+  /// [discardSessionPages]: the preview pages, and the imported original
+  /// that a session whose pages were edited knows only from there (the saved
+  /// documents are copies, so they don't need it).
   Future<void> discardOcrPages({
     required String sessionId,
     Iterable<String> ocrPages = const [],
@@ -214,7 +217,12 @@ class OcrProcessingHelper {
     final cacheDir = await _cacheDirectory();
     final map = await _readPageMap(cacheDir, sessionId);
     await _deleteCacheKeys(cacheDir, {...map.ocrKeys, ..._keysOf(ocrPages)});
-    await _deletePageMap(cacheDir, sessionId);
+    final rest = map.copyWith(ocrKeys: const {});
+    if (rest.isEmpty) {
+      await _deletePageMap(cacheDir, sessionId);
+    } else {
+      await _writePageMap(cacheDir, sessionId, rest);
+    }
   });
 
   /// Deletes every page image of the session, 72 dpi previews and 200 dpi

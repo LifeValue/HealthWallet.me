@@ -61,23 +61,16 @@ class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
               currentPatient.id,
             );
 
-            final cardScale = widget.isExpanding ? 1.02 : 1.0;
-
             final bloodTypes = blocState.bloodTypes;
             final bloodTypeDisplay = bloodTypes.containsKey(currentPatient.id)
                 ? bloodTypes[currentPatient.id] ?? context.l10n.homeNA
                 : context.l10n.loading;
 
             return AnimatedContainer(
-              duration: const Duration(milliseconds: 800),
+              duration: const Duration(milliseconds: 200),
               curve: Curves.easeInOutCubic,
               padding: const EdgeInsets.all(Insets.small),
               margin: const EdgeInsets.only(bottom: Insets.small),
-              transform: Matrix4.diagonal3Values(
-                cardScale,
-                cardScale,
-                cardScale,
-              ),
               decoration: BoxDecoration(
                 color: _getCardColor(context, currentPatient),
                 border: Border.all(
@@ -88,11 +81,11 @@ class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
               child: Column(
                 children: [
                   _buildCardHeader(context, displayPatient, currentPatient),
+                  // One speed for the whole opening: a duration that
+                  // changed mid-way would make the card jump.
                   AnimatedSize(
-                    duration: Duration(
-                      milliseconds: widget.isExpanding ? 1200 : 800,
-                    ),
-                    curve: Curves.easeInOutCubic,
+                    duration: PatientBloc.switchCardOpen,
+                    curve: Curves.easeOutCubic,
                     child: (isExpanded || widget.isExpanding)
                         ? PatientCardDetails(
                             displayPatient: displayPatient,
@@ -152,7 +145,7 @@ class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
           ],
         ),
         AnimatedRotation(
-          duration: const Duration(milliseconds: 600),
+          duration: const Duration(milliseconds: 150),
           curve: Curves.easeInOut,
           turns: _getRotationTurns(context, currentPatient),
           child: Icon(

@@ -17,7 +17,10 @@ class DeviceCapabilityService {
   Future<DeviceAiCapability> getCapability() async {
     if (_cachedCapability != null) return _cachedCapability!;
     final ramMB = await getDeviceRamMB();
-    _cachedCapability = _classifyCapability(ramMB);
+    _cachedCapability = classifyCapability(
+      ramMB,
+      platform: Platform.operatingSystem,
+    );
     return _cachedCapability!;
   }
 
@@ -63,13 +66,29 @@ class DeviceCapabilityService {
   static const int _minRamForVisionIosMB = 6144;
   static const int _minRamForVisionAndroidMB = 11264;
 
-  DeviceAiCapability _classifyCapability(int ramMB) {
-    if (Platform.isIOS) {
+  /// The Advanced model needs about 3.6 GB for text and 4.3 GB with Deep
+  /// Scan, more than iOS lets one app use on a 6 GB iPhone.
+  static const int _minRamForAdvancedIosMB = 8192;
+
+  /// Whether the Advanced model is offered: on a device with
+  /// [DeviceAiCapability.full], and on an iPhone or iPad only from 8 GB.
+  Future<bool> supportsAdvancedModel() async => supportsAdvancedModelFor(
+    await getDeviceRamMB(),
+    platform: Platform.operatingSystem,
+  );
+
+  /// What [ramMB] of memory allows on [platform] (as
+  /// [Platform.operatingSystem] names it); desktops can run every model.
+  static DeviceAiCapability classifyCapability(
+    int ramMB, {
+    required String platform,
+  }) {
+    if (platform == 'ios') {
       if (ramMB < _minRamIosMB) return DeviceAiCapability.unsupported;
       if (ramMB < _minRamForVisionIosMB) return DeviceAiCapability.basicOnly;
       return DeviceAiCapability.full;
     }
-    if (Platform.isAndroid) {
+    if (platform == 'android') {
       if (ramMB < _minRamAndroidMB) return DeviceAiCapability.unsupported;
       if (ramMB < _minRamForVisionAndroidMB) {
         return DeviceAiCapability.basicOnly;
@@ -77,6 +96,15 @@ class DeviceCapabilityService {
       return DeviceAiCapability.full;
     }
     return DeviceAiCapability.full;
+  }
+
+  /// [supportsAdvancedModel] for [ramMB] of memory on [platform].
+  static bool supportsAdvancedModelFor(int ramMB, {required String platform}) {
+    if (classifyCapability(ramMB, platform: platform) !=
+        DeviceAiCapability.full) {
+      return false;
+    }
+    return platform != 'ios' || ramMB >= _minRamForAdvancedIosMB;
   }
 
   static Future<int?> readAndroidRamMB() async {
@@ -90,26 +118,10 @@ class DeviceCapabilityService {
     return null;
   }
 
-  static int estimateIosRam(String machine) {
-    final iphone = RegExp(r'iPhone(\d+),').firstMatch(machine);
-    if (iphone != null) {
-      final major = int.tryParse(iphone.group(1)!) ?? 0;
-      if (major >= 17) return 8192;
-      if (major >= 15) return 6144;
-      return 4096;
-    }
-
-    final ipad = RegExp(r'iPad(\d+),').firstMatch(machine);
-    if (ipad != null) {
-      final major = int.tryParse(ipad.group(1)!) ?? 0;
-      if (major >= 16) return 16384;
-      if (major >= 13) return 8192;
-      if (major >= 8) return 6144;
-      return 4096;
-    }
-
-    return 4096;
-  }
+  /// The RAM of an iPhone or iPad from its model identifier, from the one
+  /// table the AI pipeline also reads.
+  static int estimateIosRam(String machine) =>
+      processing.DeviceCapabilityService.estimateIosRam(machine);
 
   static Future<int?> _readMacOsRamMB() async {
     try {

@@ -16,7 +16,23 @@ import '../../../share_records/share_test_helpers.dart';
 
 class _Converter extends Fake
     with PdfConversionMixin
-    implements TextRecognitionService {}
+    implements TextRecognitionService {
+  /// The files each reader was asked for.
+  final pdfsRead = <String>[];
+  final imagesRead = <String>[];
+
+  @override
+  Future<String> extractTextFromPDF(String pdfPath) async {
+    pdfsRead.add(pdfPath);
+    return 'pdf text';
+  }
+
+  @override
+  Future<String> recognizeTextFromImage(String imagePath) async {
+    imagesRead.add(imagePath);
+    return 'image text';
+  }
+}
 
 /// A rendered page whose PNG comes from [png], or fails when it is null.
 class _Page extends PdfRaster {
@@ -40,6 +56,15 @@ class _FakePrinting extends PrintingPlatform {
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// A PDF engine whose rendering fails before the first page.
+class _FailingPrinting extends _FakePrinting {
+  _FailingPrinting() : super(const []);
+
+  @override
+  Stream<PdfRaster> raster(Uint8List document, List<int>? pages, double dpi) =>
+      Stream.error(Exception('engine down'));
 }
 
 void main() {
@@ -225,5 +250,74 @@ void main() {
     expect(pages.single, endsWith('_2.png'));
     expect(File(pages.single).existsSync(), isTrue);
     expect(logs, loggedWarning('Could not convert PDF page 1'));
+  });
+
+  test('a page that is no PNG is skipped and logged', () async {
+    final realPrinting = PrintingPlatform.instance;
+    addTearDown(() => PrintingPlatform.instance = realPrinting);
+    final goodPng = img.encodePng(img.Image(width: 2, height: 2));
+    PrintingPlatform.instance = _FakePrinting([
+      _Page(Uint8List.fromList([1, 2, 3])),
+      _Page(goodPng),
+    ]);
+    final pdf = File('${root.path}/scan.pdf')..writeAsBytesSync([1, 2, 3]);
+
+    final pages = await converter.convertPdfToImages(pdf.path);
+
+    expect(pages, hasLength(1));
+    expect(pages.single, endsWith('_2.png'));
+    expect(logs, loggedWarning('Could not convert PDF page 1'));
+  });
+
+  test('a PDF the engine cannot render gives no preview pages and is '
+      'logged', () async {
+    final realPrinting = PrintingPlatform.instance;
+    addTearDown(() => PrintingPlatform.instance = realPrinting);
+    PrintingPlatform.instance = _FailingPrinting();
+    final pdf = File('${root.path}/scan.pdf')..writeAsBytesSync([1, 2, 3]);
+
+    final pages = await converter.convertPdfToImagesForPreview(pdf.path);
+
+    expect(pages, isEmpty);
+    expect(logs, loggedWarning('Conversion failed'));
+    expect(
+      Directory('${root.path}/Documents/pdf_preview_cache')
+          .listSync()
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.json')),
+      isEmpty,
+    );
+  });
+
+  group('file type', () {
+    test('PDFs and images are told apart by extension, in any case', () {
+      expect(converter.isPDF('/a/Report.PDF'), isTrue);
+      expect(converter.isPDF('/a/report.png'), isFalse);
+      for (final ext in ['jpg', 'JPEG', 'png', 'gif', 'bmp', 'webp', 'tiff']) {
+        expect(converter.isImage('/a/scan.$ext'), isTrue, reason: ext);
+      }
+      expect(converter.isImage('/a/scan.pdf'), isFalse);
+    });
+
+    test('a PDF is read as a PDF', () async {
+      expect(await converter.extractTextFromFile('/a/r.pdf'), 'pdf text');
+      expect(converter.pdfsRead, ['/a/r.pdf']);
+      expect(converter.imagesRead, isEmpty);
+    });
+
+    test('an image is read by text recognition', () async {
+      expect(await converter.extractTextFromFile('/a/r.JPG'), 'image text');
+      expect(converter.imagesRead, ['/a/r.JPG']);
+      expect(converter.pdfsRead, isEmpty);
+    });
+
+    test('any other file is refused with a message', () async {
+      expect(
+        await converter.extractTextFromFile('/a/notes.txt'),
+        'Unsupported file type. Please select a PDF or image file.',
+      );
+      expect(converter.pdfsRead, isEmpty);
+      expect(converter.imagesRead, isEmpty);
+    });
   });
 }

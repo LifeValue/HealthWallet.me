@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/holders/domain/entity/holder_patient.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -417,10 +418,12 @@ abstract class Patient with _$Patient implements IFhirResource {
               typeCode;
           final value = id.value?.valueString;
           if (value != null) {
+            // The default holder's placeholder is not a real identifier.
+            final shown = value == HolderPatient.placeholderRowId ? '-' : value;
             infoLines.add(
               RecordInfoLine(
                 icon: Assets.icons.identification,
-                info: '$typeDisplay: $value',
+                info: '$typeDisplay: $shown',
               ),
             );
           }

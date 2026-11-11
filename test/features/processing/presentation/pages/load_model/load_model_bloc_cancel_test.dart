@@ -185,11 +185,16 @@ void main() {
     bloc.add(const LoadModelDownloadCancelled());
     await settle();
     await settle();
+    // A download started again.
+    service.downloading.add(AiModelVariant.qwen);
+    serviceReports(AiModelDownloadStatus.downloading, AiModelVariant.qwen);
+    await settle();
     bloc.add(const LoadModelDownloadCancelled());
     await settle();
     await settle();
 
     expect(service.cancelCalls, 2);
+    expect(bloc.state.isAnyDownloading, isFalse);
   });
 
   test(
@@ -341,6 +346,65 @@ void main() {
       await settle();
 
       expect(bloc.state.isVariantDownloaded(one), isTrue);
+    });
+  });
+
+  group('a cancel asked for while another one is stopping', () {
+    const one = AiModelVariant.qwen;
+    const other = AiModelVariant.qwen35x2b;
+
+    test('for another model stops that model too', () async {
+      bloc
+        ..add(const LoadModelDownloadCancelled(variant: one))
+        ..add(const LoadModelDownloadCancelled(variant: other));
+      await settle();
+      // The first waits for its transfer to end.
+      expect(service.cancelledOne, [one]);
+
+      service.transfersEnded.complete();
+      await settle();
+      await settle();
+
+      expect(service.cancelledOne, [one, other]);
+      expect(
+        notifications.events
+            .whereType<NotificationRemovedById>()
+            .map((e) => e.id)
+            .toSet(),
+        {_notificationId(one), _notificationId(other)},
+      );
+      expect(bloc.state.isAnyDownloading, isFalse);
+      expect(bloc.state.status, LoadModelStatus.modelAbsent);
+    });
+
+    test('for every model stops the others too', () async {
+      bloc
+        ..add(const LoadModelDownloadCancelled(variant: one))
+        ..add(const LoadModelDownloadCancelled());
+      await settle();
+
+      service.transfersEnded.complete();
+      await settle();
+      await settle();
+
+      expect(service.cancelledOne, [one]);
+      expect(service.cancelCalls, 1);
+      expect(bloc.state.isVariantDownloading(other), isFalse);
+      expect(bloc.state.isAnyDownloading, isFalse);
+    });
+
+    test('for the same model does nothing more', () async {
+      bloc
+        ..add(const LoadModelDownloadCancelled(variant: one))
+        ..add(const LoadModelDownloadCancelled(variant: one));
+      await settle();
+
+      service.transfersEnded.complete();
+      await settle();
+      await settle();
+
+      expect(service.cancelledOne, [one]);
+      expect(bloc.state.isVariantDownloading(other), isTrue);
     });
   });
 }

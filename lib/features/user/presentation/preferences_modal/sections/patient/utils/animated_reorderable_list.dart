@@ -25,9 +25,9 @@ class AnimatedReorderableList<T> extends StatefulWidget {
     required this.itemIdExtractor,
     this.itemHeight = 120.0,
     this.itemSpacing = Insets.small,
-    this.animationDuration = const Duration(milliseconds: 900),
-    this.slideDelay = const Duration(milliseconds: 720),
-    this.fadeDelay = const Duration(milliseconds: 360),
+    this.animationDuration = const Duration(milliseconds: 225),
+    this.slideDelay = const Duration(milliseconds: 180),
+    this.fadeDelay = const Duration(milliseconds: 90),
     this.onReorder,
   });
 

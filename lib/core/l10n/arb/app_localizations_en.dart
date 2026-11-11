@@ -1506,6 +1506,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get attachedDocuments => 'Attached Documents';
 
   @override
+  String documentAttachedTo(String visit) {
+    return 'Attached to $visit.';
+  }
+
+  @override
   String get cameraPermissionRequired => 'Camera Permission Required';
 
   @override
@@ -4719,6 +4724,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your phone isn\'t connected. Records added on it since its last sync will come back after it reconnects; changes it made to existing records will be replaced by the backup.';
 
   @override
+  String backupRestoreRemovesScans(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count scans waiting for review will be removed.',
+      one: '1 scan waiting for review will be removed.',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String aiModelDeleteTitle(String name) {
     return 'Delete $name?';
   }
@@ -4727,4 +4743,60 @@ class AppLocalizationsEn extends AppLocalizations {
   String aiModelDeleteMessage(int size) {
     return 'The model and its Deep Scan files are removed from this device. To scan with it again, you\'ll need to download it again (~$size MB).';
   }
+
+  @override
+  String get processingNoPatientFound =>
+      'No patient found in the document. Enter the details.';
+
+  @override
+  String get processingStopping => 'Stopping…';
+
+  @override
+  String get handoverTakenBack => 'The phone took this document back.';
+
+  @override
+  String get aiModelSwitchedToLiteTitle => 'Now using the Lite model';
+
+  @override
+  String aiModelSwitchedToLiteMessage(String modelName) {
+    return 'The $modelName model needs more memory than this device has, so the Lite model is used.';
+  }
+
+  @override
+  String backupSafetyRetention(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Kept for $count days',
+      one: 'Kept for 1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSafetyRetentionTitle => 'Copy made before a restore';
+
+  @override
+  String backupSafetyRetentionDaysUnit(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'days',
+      one: 'day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupSafetyRetentionHint =>
+      'Applies to existing copies too. Copies older than this are deleted now.';
+
+  @override
+  String backupSafetyRetentionInvalid(int min, int max) {
+    return 'Enter a whole number of days from $min to $max.';
+  }
+
+  @override
+  String get backupSafetyRetentionSaveFailed =>
+      'Couldn\'t save how long to keep the copy made before a restore. Please try again.';
 }

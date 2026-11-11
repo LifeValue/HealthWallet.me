@@ -43,9 +43,11 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
       _onServiceStateChanged,
       transformer: sequential(),
     );
+    // In turn, so a cancel of another model (or of all) asked for while one
+    // is stopping is not lost.
     on<LoadModelDownloadCancelled>(
       _onLoadModelDownloadCancelled,
-      transformer: droppable(),
+      transformer: sequential(),
     );
     on<LoadModelVariantSelected>(_onVariantSelected);
     on<LoadModelDeleteRequested>(_onDeleteRequested);
@@ -90,8 +92,11 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     }
 
     final capability = await _deviceCapabilityService.getCapability();
+    final advancedModelSupported = await _deviceCapabilityService
+        .supportsAdvancedModel();
 
-    final autoSelected = selectedVariant ?? _autoSelectSingleModel(downloaded);
+    final autoSelected =
+        selectedVariant ?? await _autoSelectSingleModel(downloaded);
 
     final downloading = <AiModelVariant, bool>{};
     for (final config in AiModelConfig.availableVariants) {
@@ -105,6 +110,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         selectedVariant: autoSelected,
         downloadedVariants: downloaded,
         deviceCapability: capability,
+        advancedModelSupported: advancedModelSupported,
         downloadingVariants: downloading,
       ),
     );
@@ -180,22 +186,25 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     );
   }
 
-  AiModelVariant? _autoSelectSingleModel(
+  /// Selects and saves the only downloaded model, unless the device can't run
+  /// it (the rule `AiModelSelectionGuard` applies at start-up): the user then
+  /// picks or downloads one the device runs.
+  Future<AiModelVariant?> _autoSelectSingleModel(
     Map<AiModelVariant, bool> downloadedMap,
-  ) {
+  ) async {
     final downloaded = downloadedMap.entries
         .where((e) => e.value)
         .map((e) => e.key)
         .toList();
 
-    if (downloaded.length == 1) {
-      _prefs.setString(
-        SharedPrefsConstants.aiSelectedModel,
-        downloaded.first.name,
-      );
-      return downloaded.first;
+    if (downloaded.length != 1) return null;
+    final only = downloaded.single;
+    if (AiModelConfig.fromVariant(only).needsAdvancedSupport &&
+        !await _deviceCapabilityService.supportsAdvancedModel()) {
+      return null;
     }
-    return null;
+    await _prefs.setString(SharedPrefsConstants.aiSelectedModel, only.name);
+    return only;
   }
 
   Future<bool> _hasInternetConnection() async {
@@ -265,10 +274,10 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     unawaited(_downloadService.startDownloadForVariant(variant));
   }
 
-  void _onServiceStateChanged(
+  Future<void> _onServiceStateChanged(
     LoadModelServiceStateChanged event,
     Emitter<LoadModelState> emit,
-  ) {
+  ) async {
     final serviceState = event.serviceState;
     final variant = serviceState.variant;
 
@@ -304,6 +313,14 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         break;
 
       case AiModelDownloadStatus.completed:
+        // First, so the state below is read after the device check.
+        final autoSelected = state.selectedVariant == null
+            ? await _autoSelectSingleModel({
+                ...state.downloadedVariants,
+                ?variant: true,
+              })
+            : null;
+
         final updatedDownloaded = variant != null
             ? {...state.downloadedVariants, variant: true}
             : state.downloadedVariants;
@@ -321,8 +338,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
           (e) => e.value && e.key != variant,
         );
 
-        var effectiveSelected = state.selectedVariant;
-        effectiveSelected ??= _autoSelectSingleModel(updatedDownloaded);
+        final effectiveSelected = state.selectedVariant ?? autoSelected;
 
         final selectedIsLoaded =
             effectiveSelected != null &&
@@ -455,8 +471,9 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         .where(_downloadService.isVariantDownloading)
         .where((variant) => only == null || variant == only)
         .toSet();
-    // That model's download already ended: nothing to stop.
-    if (only != null && cancelled.isEmpty) return;
+    // Those downloads already ended, or a cancel before this one stopped
+    // them: nothing to stop.
+    if (cancelled.isEmpty) return;
 
     // Returns once the transfers have ended and their partial files are gone.
     if (only == null) {

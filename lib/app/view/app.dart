@@ -11,7 +11,6 @@ import 'package:health_wallet/core/navigation/observers/order_route_observer.dar
 import 'package:health_wallet/core/services/bluetooth_state_service.dart';
 import 'package:health_wallet/core/theme/theme.dart';
 import 'package:health_wallet/core/utils/logger.dart';
-import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/app_lock/presentation/bloc/app_lock_bloc.dart';
 import 'package:health_wallet/features/app_lock/presentation/widgets/app_lock_overlay.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
@@ -21,6 +20,7 @@ import 'package:health_wallet/features/holders/presentation/widgets/holder_quest
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/ai_model_switch_notice_listener.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/capture_error_listener.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/ips_export_error_listener.dart';
@@ -224,7 +224,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                       child: WalletPassErrorListener(
                         child: CaptureErrorListener(
                           child: SyncErrorListener(
-                            child: HolderQuestionListener(child: child!),
+                            child: AiModelSwitchNoticeListener(
+                              child: HolderQuestionListener(child: child!),
+                            ),
                           ),
                         ),
                       ),
@@ -260,14 +262,10 @@ void _handleSyncBlocStateChange(BuildContext context, SyncState state) {
       context.read<RecordsBloc>().add(const RecordsInitialised());
       context.read<UserBloc>().add(const UserDataUpdatedFromSync());
       context.read<PatientBloc>().add(const PatientPatientsLoaded());
-
-      AppSimpleDialog.showSuccess(
-        context: context,
-        title: context.l10n.success,
-        message: context.l10n.syncDataLoadedSuccessfully,
-      );
     });
     // Reading the people again (PatientPatientsLoaded) moves Home to the
-    // new records through the selection.
+    // new records through the selection. The sync page tells the user the
+    // data loaded; `synced` also comes at every start after a sync, when
+    // there is nothing to tell.
   }
 }
