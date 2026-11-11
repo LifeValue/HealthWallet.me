@@ -320,6 +320,20 @@ class _BackupCardState extends State<BackupCard> {
               isWorking: isWorking,
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.only(
+              left: Insets.medium,
+              right: Insets.medium,
+              top: Insets.normal,
+            ),
+            child: Text(
+              context.l10n.backupSafetyRetentionTitle,
+              style: AppTextStyle.labelSmall.copyWith(
+                color: context.colorScheme.onSurface.withValues(alpha: 0.5),
+                fontSize: 11,
+              ),
+            ),
+          ),
           const SizedBox(height: Insets.extraSmall),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: Insets.medium),

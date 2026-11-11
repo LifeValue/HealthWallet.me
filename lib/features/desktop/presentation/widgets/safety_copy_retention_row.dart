@@ -126,8 +126,6 @@ class _SafetyCopyRetentionRowState extends State<SafetyCopyRetentionRow> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(context.l10n.backupSafetyRetentionEditLabel, style: smallStyle),
-        const SizedBox(height: Insets.small),
         Row(
           children: [
             SizedBox(
@@ -156,7 +154,7 @@ class _SafetyCopyRetentionRowState extends State<SafetyCopyRetentionRow> {
               key: SafetyCopyRetentionRow.cancelKey,
               label: context.l10n.cancel,
               onPressed: _cancel,
-              variant: AppButtonVariant.transparent,
+              variant: AppButtonVariant.outlined,
               fullWidth: false,
               height: SafetyCopyRetentionRow.controlHeight,
               padding: const EdgeInsets.symmetric(horizontal: Insets.small),

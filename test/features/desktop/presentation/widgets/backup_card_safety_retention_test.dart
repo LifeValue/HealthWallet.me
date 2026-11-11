@@ -84,7 +84,7 @@ void main() {
   testWidgets('shows the retention under the backup folder', (tester) async {
     await pumpCard(tester);
 
-    final row = find.text('Keep the copy made before a restore: 30 days');
+    final row = find.text('Kept for 30 days');
     expect(row, findsOneWidget);
     expect(
       tester.getTopLeft(row).dy,
@@ -101,7 +101,7 @@ void main() {
     await pumpCard(tester, days: 1);
 
     expect(
-      find.text('Keep the copy made before a restore: 1 day'),
+      find.text('Kept for 1 day'),
       findsOneWidget,
     );
   });
@@ -110,7 +110,7 @@ void main() {
     await pumpCard(tester, days: 30);
 
     await openEditor(tester);
-    expect(find.text(en.backupSafetyRetentionEditLabel), findsOneWidget);
+    expect(find.text(en.backupSafetyRetentionTitle), findsOneWidget);
     expect(find.text(en.backupSafetyRetentionHint), findsOneWidget);
     expect(tester.widget<TextField>(field).controller!.text, '30');
 
@@ -183,7 +183,7 @@ void main() {
     expect(bloc.events, isEmpty);
     expect(field, findsNothing);
     expect(
-      find.text('Keep the copy made before a restore: 30 days'),
+      find.text('Kept for 30 days'),
       findsOneWidget,
     );
   });
@@ -261,10 +261,10 @@ void main() {
   test('Romanian uses its few form below 20 days', () {
     final ro = lookupAppLocalizations(const Locale('ro'));
 
-    expect(ro.backupSafetyRetention(1), endsWith(': 1 zi'));
-    expect(ro.backupSafetyRetention(2), endsWith(': 2 zile'));
-    expect(ro.backupSafetyRetention(19), endsWith(': 19 zile'));
-    expect(ro.backupSafetyRetention(20), endsWith(': 20 de zile'));
-    expect(ro.backupSafetyRetention(101), endsWith(': 101 zile'));
+    expect(ro.backupSafetyRetention(1), endsWith(' 1 zi'));
+    expect(ro.backupSafetyRetention(2), endsWith(' 2 zile'));
+    expect(ro.backupSafetyRetention(19), endsWith(' 19 zile'));
+    expect(ro.backupSafetyRetention(20), endsWith(' 20 de zile'));
+    expect(ro.backupSafetyRetention(101), endsWith(' 101 zile'));
   });
 }
