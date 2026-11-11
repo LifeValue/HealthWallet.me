@@ -238,7 +238,9 @@ class _ScannedBasicButtons extends StatelessWidget {
           deepScanOn: state.useVision,
           capability: deviceCapability,
         );
-    final isStep2Blocked = anotherSessionProcessing;
+    // Also blocked while the AI is still stopping after a cancel.
+    final isStep2Blocked =
+        anotherSessionProcessing || state.isStopping(session.id);
 
     return Column(
       children: [

@@ -94,7 +94,14 @@ abstract class ProcessingState with _$ProcessingState {
     @Default({}) Map<String, String> ocrPageByPreviewPath,
     Notification? notification,
     @Default(false) bool useVision,
+
+    /// Sessions cancelled while the AI is still stopping; they can't be
+    /// processed again until it has.
+    @Default({}) Set<String> stoppingSessionIds,
   }) = _ProcessingState;
+
+  /// Whether the AI is still stopping after [sessionId] was cancelled.
+  bool isStopping(String sessionId) => stoppingSessionIds.contains(sessionId);
 
   /// The pages OCR and the AI read for [sessionId], in the preview's order.
   List<String> ocrPagesFor(String sessionId) => [
@@ -105,6 +112,7 @@ abstract class ProcessingState with _$ProcessingState {
   bool canRetrySession(String sessionId) {
     final session = sessions.firstWhereOrNull((s) => s.id == sessionId);
     return session != null &&
+        !isStopping(sessionId) &&
         (session.status == ProcessingStatus.draft ||
             session.status == ProcessingStatus.patientExtracted ||
             session.status == ProcessingStatus.cancelled ||

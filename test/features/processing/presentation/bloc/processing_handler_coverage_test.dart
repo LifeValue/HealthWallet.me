@@ -88,6 +88,22 @@ class _FakeProcessingRepository extends Fake implements ProcessingRepository {
   @override
   Future<void> disposeModel() async => disposes++;
 
+  int cancels = 0;
+
+  /// Holds [waitForStreamCompletion] until completed, when set.
+  Completer<void>? stopGate;
+
+  Exception? cancelError;
+
+  @override
+  Future<void> cancelGeneration() async {
+    cancels++;
+    if (cancelError != null) throw cancelError!;
+  }
+
+  @override
+  Future<void> waitForStreamCompletion() async => stopGate?.future;
+
   @override
   Future<bool> checkModelExistence() async => modelExists;
 
@@ -107,8 +123,12 @@ class _FakeProcessingRepository extends Fake implements ProcessingRepository {
       documentCategory: null,
       useVision: null,
     ));
+    await containerGate?.future;
     return container;
   }
+
+  /// Holds the container-only AI call until completed, when set.
+  Completer<void>? containerGate;
 
   @override
   Future<(MappingPatient, MappingResource)> mapBasicInfo(
@@ -156,14 +176,24 @@ class _FakeProcessingRepository extends Fake implements ProcessingRepository {
 class _FakeOcrProcessingHelper extends Fake implements OcrProcessingHelper {
   String text = 'Discharge letter';
 
+  /// Hold the OCR and the page preparation until completed, when set.
+  Completer<void>? ocrGate;
+  Completer<void>? prepareGate;
+
   @override
-  Future<String> processOcrForImages(List<String> imagePaths) async => text;
+  Future<String> processOcrForImages(List<String> imagePaths) async {
+    await ocrGate?.future;
+    return text;
+  }
 
   @override
   Future<List<String>> prepareAllImages({
     required List<String> filePaths,
     double dpi = 72,
-  }) async => filePaths;
+  }) async {
+    await prepareGate?.future;
+    return filePaths;
+  }
 
   @override
   Future<Map<String, String>> prepareOcrPages({
@@ -184,6 +214,9 @@ class _FakeOcrProcessingHelper extends Fake implements OcrProcessingHelper {
 class _FakeRecordsRepository extends Fake implements RecordsRepository {
   List<IFhirResource> patients = const [];
   Exception? error;
+
+  /// Holds the holder lookups until completed, when set.
+  Completer<void>? gate;
 
   @override
   Future<List<IFhirResource>> getResources({
@@ -213,6 +246,7 @@ class _FakeHolderService extends Fake implements HolderService {
 
   @override
   Future<HolderDirectory> load() async {
+    await records.gate?.future;
     if (records.error != null) throw records.error!;
     return HolderDirectory(
       holders: [
@@ -642,8 +676,8 @@ void main() {
       ]);
     });
 
-    test('a session removed while its patient is read is announced as a '
-        'document', () async {
+    test('a session removed while its patient is read is neither staged nor '
+        'announced', () async {
       repository.basicInfoGate = Completer<void>();
       seed(withPages);
       bloc.add(const MappingInitiated(sessionId: 's'));
@@ -656,11 +690,47 @@ void main() {
       await settle();
 
       expect(bloc.state.sessions, isEmpty);
+      expect(bloc.state.notification, isNull);
+      expect(repository.edited, isEmpty);
+    });
+
+    test('a cancel while the AI reads the patient stages nothing when the AI '
+        'returns', () async {
+      repository.basicInfoGate = Completer<void>();
+      seed(withPages);
+      bloc.add(const MappingInitiated(sessionId: 's'));
+      await settle();
+      expect(session('s').status, ProcessingStatus.processingPatient);
+
+      bloc.add(const MappingCancelled(sessionId: 's'));
+      await settle();
+      expect(repository.cancels, 1);
+      repository.basicInfoGate!.complete();
+      await settle();
+
+      expect(session('s').status, ProcessingStatus.cancelled);
+      expect(session('s').patient.hasSelection, isFalse);
+      expect(bloc.state.notification, isNull);
       expect(
-        bloc.state.notification!.text,
-        _en.processingPatientInfoExtracted(_en.fhirTypeDocumentReference),
+        repository.edited.map((s) => s.status),
+        isNot(contains(ProcessingStatus.patientExtracted)),
       );
-      expect(routeSessionId(bloc.state.notification!.route), 's');
+    });
+
+    test('a cancel while the page is read does not start the AI', () async {
+      ocr.ocrGate = Completer<void>();
+      seed(withPages);
+      bloc.add(const MappingInitiated(sessionId: 's'));
+      await settle();
+
+      bloc.add(const MappingCancelled(sessionId: 's'));
+      await settle();
+      ocr.ocrGate!.complete();
+      await settle();
+
+      expect(session('s').status, ProcessingStatus.cancelled);
+      expect(repository.basicInfoCalls, isEmpty);
+      expect(repository.containerOnlyCalls, isEmpty);
     });
 
     group('OCR pre-match', () {
@@ -729,6 +799,42 @@ void main() {
         expect(staged.diagnosticReport?.draft, repository.container);
         expect(staged.encounter.draft, isNull);
         expect(bloc.state.notification, isNull);
+      });
+
+      test('a cancel while the container is read stages nothing', () async {
+        final known = _patient('p-known', identifier: '1850101123456');
+        records.patients = [known];
+        ocr.text = 'Patient: Ana Pop CNP: 1850101123456';
+        repository.containerGate = Completer<void>();
+
+        await run();
+        expect(repository.containerOnlyCalls, hasLength(1));
+        bloc.add(const MappingCancelled(sessionId: 's'));
+        await settle();
+        repository.containerGate!.complete();
+        await settle();
+
+        expect(session('s').status, ProcessingStatus.cancelled);
+        expect(session('s').patient.hasSelection, isFalse);
+        expect(bloc.state.notification, isNull);
+      });
+
+      test('a cancel while the identifiers are matched does not start the '
+          'AI', () async {
+        records.patients = [_patient('p-known', identifier: '1850101123456')];
+        ocr.text = 'Patient: Ana Pop CNP: 1850101123456';
+        final lookup = Completer<void>();
+        records.gate = lookup;
+
+        await run();
+        bloc.add(const MappingCancelled(sessionId: 's'));
+        await settle();
+        lookup.complete();
+        await settle();
+
+        expect(session('s').status, ProcessingStatus.cancelled);
+        expect(repository.containerOnlyCalls, isEmpty);
+        expect(repository.basicInfoCalls, isEmpty);
       });
 
       test('short, missing or unmatched identifiers fall back to the AI '
@@ -940,6 +1046,25 @@ void main() {
     });
 
     test(
+      'a cancel while the pages are prepared does not start the AI',
+      () async {
+        ocr.prepareGate = Completer<void>();
+        seed(const ProcessingState(sessions: [extracted]));
+        bloc.add(const ProcessRemainingResources(sessionId: 's'));
+        await settle();
+        expect(session('s').status, ProcessingStatus.processing);
+
+        bloc.add(const MappingCancelled(sessionId: 's'));
+        await settle();
+        ocr.prepareGate!.complete();
+        await settle();
+
+        expect(session('s').status, ProcessingStatus.patientExtracted);
+        expect(repository.remainingCalls, isEmpty);
+      },
+    );
+
+    test(
       'a stream that ends after a cancel leaves the session at step one',
       () async {
         seed(withPages(extracted));
@@ -1072,6 +1197,65 @@ void main() {
       expect(session('s').progress, 0.0);
       expect(session('s').patient.draft?.id, 'p');
       expect(repository.disposes, 1);
+    });
+
+    const running = ProcessingSession(
+      id: 's',
+      status: ProcessingStatus.processing,
+      patient: StagedPatient(draft: MappingPatient(id: 'p')),
+    );
+
+    test('a cancelled step is stopping, and is not retried, until the AI '
+        'has stopped', () async {
+      repository.stopGate = Completer<void>();
+      seed(const ProcessingState(sessions: [running]));
+
+      bloc.add(const MappingCancelled(sessionId: 's'));
+      await settle();
+
+      expect(session('s').status, ProcessingStatus.patientExtracted);
+      expect(bloc.state.isStopping('s'), isTrue);
+      expect(bloc.state.canRetrySession('s'), isFalse);
+      expect(repository.cancels, 1);
+      expect(repository.disposes, 0);
+
+      repository.stopGate!.complete();
+      await settle();
+
+      expect(bloc.state.isStopping('s'), isFalse);
+      expect(bloc.state.canRetrySession('s'), isTrue);
+      expect(repository.disposes, 1);
+    });
+
+    test('a cancel of a session the AI is not reading has nothing to '
+        'stop', () async {
+      seed(
+        ProcessingState(
+          sessions: [running.copyWith(status: ProcessingStatus.cancelled)],
+        ),
+      );
+
+      bloc.add(const MappingCancelled(sessionId: 's'));
+      await settle();
+
+      expect(repository.cancels, 0);
+      expect(repository.disposes, 1);
+      expect(
+        states.map((s) => s.stoppingSessionIds),
+        everyElement(isEmpty),
+      );
+    });
+
+    test('a stop that fails is logged and the session can be processed '
+        'again', () async {
+      repository.cancelError = Exception('engine gone');
+      seed(const ProcessingState(sessions: [running]));
+
+      bloc.add(const MappingCancelled(sessionId: 's'));
+      await settle();
+
+      expect(bloc.state.isStopping('s'), isFalse);
+      expect(session('s').status, ProcessingStatus.patientExtracted);
     });
   });
 

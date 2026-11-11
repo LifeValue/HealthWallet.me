@@ -58,6 +58,7 @@ abstract class AiInferenceDataSource {
 
   Future<void> deleteModelForVariant(AiModelVariant variant);
 
+  /// Whether a model is loaded with its vision projector.
   bool isVisionModelAvailable();
 
   /// [grammar] (GBNF) or [responseFormat] (llamadart `json_schema` response
@@ -92,6 +93,9 @@ abstract class AiInferenceDataSource {
   /// failed or none has run.
   GenerationStats? get lastGenerationStats;
 
+  /// Loads the model, unless one is loaded. With [withVision] it also loads
+  /// the vision projector when its file is on the device and valid;
+  /// [isVisionModelAvailable] says whether it did.
   Future<void> initModel({
     bool withVision = true,
     int? contextSize,
@@ -99,7 +103,13 @@ abstract class AiInferenceDataSource {
     int? threads,
   });
 
+  /// Disposes the engine; while a generation runs, once it has ended.
   Future<void> disposeModel();
+
+  /// Stops the running generation, if there is one: its [runTextPrompt] or
+  /// [runVisionPrompt] call returns the text generated so far. A load or a
+  /// prompt started meanwhile waits for it to end.
+  void cancelGeneration();
 
   Future<({int availableMB, int requiredMB, bool canProceed})>
   checkMemoryHealth({
@@ -837,6 +847,9 @@ class AiInferenceDataSourceImpl
     int? gpuLayers,
     int? threads,
   }) async {
+    // A generation still ending (a cancelled one) finishes, and disposes the
+    // engine when asked to, before the engine is reused or replaced.
+    await waitForGeneration();
     if (_engine != null) return;
 
     final modelPath = await _getModelFilePath();

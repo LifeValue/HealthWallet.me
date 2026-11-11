@@ -21,8 +21,31 @@ mixin AiInferenceHandler {
   static final int maxImageDimension =
       (Platform.isMacOS || Platform.isLinux || Platform.isWindows) ? 1120 : 560;
 
-  bool isGenerating = false;
+  /// Completes when the running generation has ended (and, when one was
+  /// asked for meanwhile, the engine is disposed); null when none runs.
+  Completer<void>? _generation;
+
+  bool get isGenerating => _generation != null;
   bool pendingDisposal = false;
+
+  /// Completes once no generation runs. A load or a new prompt waits for a
+  /// generation that is still ending (a cancelled one), so the engine is
+  /// never used by two at once.
+  Future<void> waitForGeneration() async {
+    while (_generation != null) {
+      await _generation!.future;
+    }
+  }
+
+  /// Stops the running generation: its prompt call returns the text
+  /// generated so far. A generation started afterwards is not affected.
+  void cancelGeneration() {
+    if (!isGenerating) return;
+    ProcessingLogBuffer.instance.log(
+      '[$ts][ScanAI] cancelling the running generation',
+    );
+    engine?.cancelGeneration();
+  }
 
   /// Stats of the most recent generation; null until it completes.
   GenerationStats? lastGenerationStats;
@@ -53,14 +76,37 @@ mixin AiInferenceHandler {
     );
   }
 
+  /// Disposes the engine; while a generation runs, once it has ended.
   Future<void> disposeModel() async {
     pendingDisposal = true;
 
-    if (isGenerating) {
+    final running = _generation;
+    if (running != null) {
+      // The generation disposes the engine as it ends.
+      await running.future;
       return;
     }
 
     await performActualDisposal();
+  }
+
+  /// Marks a generation as running; the engine must be loaded.
+  Completer<void> _startGeneration() {
+    if (engine == null) {
+      throw Exception('Model not initialized. Call initModel() first.');
+    }
+    return _generation = Completer<void>();
+  }
+
+  /// Ends [generation], disposing the engine first when that was asked for
+  /// while it ran.
+  Future<void> _endGeneration(Completer<void> generation) async {
+    try {
+      if (pendingDisposal) await performActualDisposal();
+    } finally {
+      _generation = null;
+      generation.complete();
+    }
   }
 
   Future<void> performActualDisposal() async {
@@ -170,7 +216,9 @@ mixin AiInferenceHandler {
       ),
     ];
 
-    isGenerating = true;
+    // A generation still ending (a cancelled one) finishes first.
+    await waitForGeneration();
+    final generation = _startGeneration();
     final sw = Stopwatch()..start();
     Timer? heartbeat;
     try {
@@ -264,10 +312,7 @@ mixin AiInferenceHandler {
       rethrow;
     } finally {
       heartbeat?.cancel();
-      isGenerating = false;
-      if (pendingDisposal) {
-        await performActualDisposal();
-      }
+      await _endGeneration(generation);
     }
   }
 
@@ -304,7 +349,9 @@ mixin AiInferenceHandler {
             ),
           ];
 
-    isGenerating = true;
+    // A generation still ending (a cancelled one) finishes first.
+    await waitForGeneration();
+    final generation = _startGeneration();
     final sw = Stopwatch()..start();
     Timer? heartbeat;
     try {
@@ -390,10 +437,7 @@ mixin AiInferenceHandler {
       rethrow;
     } finally {
       heartbeat?.cancel();
-      isGenerating = false;
-      if (pendingDisposal) {
-        await performActualDisposal();
-      }
+      await _endGeneration(generation);
     }
   }
 }

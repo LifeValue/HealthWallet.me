@@ -489,6 +489,57 @@ void main() {
       expect(bloc.events, isEmpty);
     });
 
+    AppButton button(WidgetTester tester, String label) =>
+        tester.widget<AppButton>(find.widgetWithText(AppButton, label));
+
+    testPage('after a cancel, step two can be continued once the AI has '
+        'stopped', (tester) async {
+      const session = ProcessingSession(
+        id: 's1',
+        status: ProcessingStatus.patientExtracted,
+        patient: StagedPatient(draft: MappingPatient(id: 'p1')),
+      );
+      await pumpPage(
+        tester,
+        stateWith(session).copyWith(stoppingSessionIds: {'s1'}),
+      );
+
+      expect(find.text(_en.processingStopping), findsOne);
+      expect(button(tester, _en.continueProcessing).enabled, isFalse);
+      expect(retryButton(), findsNothing);
+
+      states.add(stateWith(session));
+      await frames(tester);
+
+      expect(find.text(_en.processingStopping), findsNothing);
+      expect(button(tester, _en.continueProcessing).enabled, isTrue);
+      await tapText(tester, _en.continueProcessing);
+      expect(bloc.events, [const ProcessRemainingResources(sessionId: 's1')]);
+    });
+
+    testPage('a cancelled patient step is retried once the AI has '
+        'stopped', (tester) async {
+      const session = ProcessingSession(
+        id: 's1',
+        status: ProcessingStatus.cancelled,
+      );
+      await pumpPage(
+        tester,
+        stateWith(session).copyWith(stoppingSessionIds: {'s1'}),
+      );
+
+      expect(find.text(_en.processingStopping), findsOne);
+      expect(find.text(_en.processingCancelled), findsNothing);
+      expect(button(tester, _en.retry).enabled, isFalse);
+
+      states.add(stateWith(session));
+      await frames(tester);
+
+      expect(find.text(_en.processingCancelled), findsOne);
+      await tapText(tester, _en.retry);
+      expect(bloc.events, [const MappingInitiated(sessionId: 's1')]);
+    });
+
     testPage('the section and the preview send their changes for this '
         'session', (tester) async {
       await pumpPage(tester, stateWith(const ProcessingSession(id: 's1')));

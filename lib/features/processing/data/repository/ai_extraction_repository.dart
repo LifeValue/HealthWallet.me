@@ -150,6 +150,8 @@ mixin AiExtractionRepository {
     required String schemaName,
     String? documentCategory,
   }) {
+    // Cancelled after an earlier call of the same step (a draft): no answer.
+    if (shouldCancelGeneration) return Future.value();
     if (!mode.usesSchema) {
       return networkDataSource.runTextPrompt(
         prompt: prompt,
@@ -420,6 +422,7 @@ mixin AiExtractionRepository {
     ProcessingLogBuffer.instance.log(
       '[$_ts][ScanAI] OCR: ${ocrText.length} chars in ${(ocrSw.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s',
     );
+    if (shouldCancelGeneration) return _cancelledBasicInfo();
 
     if (ocrText.trim().length >= _minOcrCharsForTextOnly) {
       ProcessingLogBuffer.instance.log(
@@ -468,6 +471,8 @@ mixin AiExtractionRepository {
         '[$_ts][ScanAI] OCR too short (${ocrText.trim().length} < $_minOcrCharsForTextOnly chars), using vision directly...',
       );
     }
+    // Cancelled during the text pass: no vision pass after it.
+    if (shouldCancelGeneration) return _cancelledBasicInfo();
 
     return _visionBasicInfo(
       imagePaths,
@@ -480,6 +485,13 @@ mixin AiExtractionRepository {
     );
   }
 
+  /// No patient and an empty container: what a cancelled patient step
+  /// returns, which the caller drops.
+  (MappingPatient, MappingResource) _cancelledBasicInfo() {
+    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] cancelled');
+    return (MappingPatient.empty(), MappingEncounter.empty());
+  }
+
   Future<MappingResource> mapContainerOnly(
     String ocrText, {
     int? maxTokens,
@@ -488,6 +500,7 @@ mixin AiExtractionRepository {
     int? contextSize,
     ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
   }) async {
+    if (shouldCancelGeneration) return _cancelledBasicInfo().$2;
     ProcessingLogBuffer.instance.log(
       '[$_ts][ScanAI] === CONTAINER-ONLY EXTRACTION (pre-matched patient) === (output=${outputMode.name})',
     );
@@ -776,6 +789,10 @@ Rules:
     final ocrPages = OcrPages.withoutRepeatedLines(rawPages);
     final ocrText = ocrPages.join('\n');
     final rawLength = rawPages.join('\n').length;
+    if (shouldCancelGeneration) {
+      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] cancelled');
+      return;
+    }
 
     ProcessingLogBuffer.instance.log(
       '[$_ts][ScanAI] === REMAINING RESOURCES EXTRACTION ===',
@@ -953,7 +970,10 @@ Rules:
       );
     }
 
-    if (allResources.isEmpty && ocrText.trim().isNotEmpty && !textPassRan) {
+    if (allResources.isEmpty &&
+        ocrText.trim().isNotEmpty &&
+        !textPassRan &&
+        !shouldCancelGeneration) {
       ProcessingLogBuffer.instance.log(
         '[$_ts][ScanAI] --- TEXT-ONLY FALLBACK ---',
       );

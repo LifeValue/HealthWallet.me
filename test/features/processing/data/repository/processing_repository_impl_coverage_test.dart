@@ -13,6 +13,7 @@ import 'package:health_wallet/features/processing/data/model/generation_stats.da
 import 'package:health_wallet/features/processing/data/repository/processing_repository_impl.dart';
 import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_condition.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
 
@@ -151,6 +152,11 @@ class _FakeNetwork extends Fake implements AiInferenceDataSource {
   @override
   Future<void> disposeModel() async => disposes++;
 
+  var engineCancels = 0;
+
+  @override
+  void cancelGeneration() => engineCancels++;
+
   @override
   PromptFamily get promptFamily => PromptFamily.standard;
 
@@ -188,6 +194,9 @@ class _FakeNetwork extends Fake implements AiInferenceDataSource {
     return '[]';
   }
 
+  /// Holds each text prompt until completed, when set.
+  Completer<void>? textGate;
+
   @override
   Future<String?> runTextPrompt({
     required String prompt,
@@ -197,6 +206,7 @@ class _FakeNetwork extends Fake implements AiInferenceDataSource {
     Map<String, dynamic>? chatTemplateKwargs,
   }) async {
     textPrompts++;
+    await textGate?.future;
     return '[{"resourceType":"Condition","conditionName":"Vorhofflimmern",'
         '"onsetDateTime":"2019","clinicalStatus":"active"}]';
   }
@@ -960,8 +970,8 @@ void main() {
       );
     });
 
-    test('cancelGeneration stops before the next vision batch and is reset '
-        'when the stream ends', () async {
+    test('cancelGeneration stops the stream before the model loads and is '
+        'reset when the stream ends', () async {
       ocr.gate = Completer<void>();
       final events = repository
           .mapRemainingResources(
@@ -977,7 +987,8 @@ void main() {
       ocr.gate!.complete();
 
       expect(await events, isEmpty);
-      expect(network.initLoads.single.withVision, isTrue);
+      expect(network.engineCancels, 1);
+      expect(network.initLoads, isEmpty);
       expect(network.visionPrompts, 0);
       expect(network.textPrompts, 0);
       expect(network.disposes, 1);
@@ -986,6 +997,8 @@ void main() {
 
     test('a new stream clears an earlier cancel', () async {
       await repository.cancelGeneration();
+      // Nothing was running: the engine is not asked to stop.
+      expect(network.engineCancels, 0);
 
       final events = await repository.mapRemainingResources(
         const ['page-1.png'],
@@ -994,6 +1007,121 @@ void main() {
 
       expect(events, isNotEmpty);
       expect(events.last.$1.single, isA<MappingCondition>());
+    });
+  });
+
+  group('AI runs take turns', () {
+    test('a records stream started while another runs waits for it to '
+        'end', () async {
+      ocr.gate = Completer<void>();
+      final first = repository.mapRemainingResources(
+        const ['page-1.png'],
+        outputMode: ExtractionOutputMode.grammar,
+      ).toList();
+      await pumpEventQueue();
+      final second = repository.mapRemainingResources(
+        const ['page-2.png'],
+        outputMode: ExtractionOutputMode.grammar,
+      ).toList();
+      await pumpEventQueue();
+
+      // The second has not started reading its page.
+      expect(ocr.calls, 1);
+
+      ocr.gate!.complete();
+      expect((await first).last.$1.single, isA<MappingCondition>());
+      expect((await second).last.$1.single, isA<MappingCondition>());
+      expect(ocr.calls, 2);
+      expect(network.disposes, greaterThanOrEqualTo(2));
+    });
+
+    test('a cancel stops the running stream and the generation, not a patient '
+        'step started after it', () async {
+      ocr.gate = Completer<void>();
+      final records = repository.mapRemainingResources(
+        const ['page-1.png'],
+        outputMode: ExtractionOutputMode.grammar,
+      ).toList();
+      await pumpEventQueue();
+
+      await repository.cancelGeneration();
+      expect(network.engineCancels, 1);
+      final patient = repository.mapBasicInfo(
+        const ['page-1.png'],
+        outputMode: ExtractionOutputMode.grammar,
+      );
+      await pumpEventQueue();
+      expect(ocr.calls, 1);
+
+      ocr.gate!.complete();
+      expect(await records, isEmpty);
+      await patient;
+      // The patient step ran its AI call: the cancel was not for it.
+      expect(network.initLoads, isNotEmpty);
+      expect(repository.shouldCancelGeneration, isFalse);
+    });
+
+    test('a patient step cancelled during its text pass returns no patient '
+        'and skips the vision pass', () async {
+      repository = ProcessingRepositoryImpl(
+        network,
+        local,
+        _FakeOcr('Diagnosen: Vorhofflimmern seit 2019. ' * 10),
+        PathResolver(),
+      );
+      network.textGate = Completer<void>();
+      final step = repository.mapBasicInfo(
+        const ['page-1.png'],
+        outputMode: ExtractionOutputMode.grammar,
+      );
+      await pumpEventQueue();
+      expect(network.textPrompts, 1);
+
+      await repository.cancelGeneration();
+      expect(repository.shouldCancelGeneration, isTrue);
+      network.textGate!.complete();
+      final (patient, container) = await step;
+
+      expect(patient.givenName.value, isEmpty);
+      expect(patient.familyName.value, isEmpty);
+      expect((container as MappingEncounter).encounterType.value, isEmpty);
+      expect(network.visionPrompts, 0);
+      expect(network.initLoads.map((l) => l.withVision), [false]);
+      expect(repository.shouldCancelGeneration, isFalse);
+    });
+
+    test('a container-only step cancelled while it waits for its turn loads '
+        'no model', () async {
+      ocr.gate = Completer<void>();
+      final records = repository.mapRemainingResources(
+        const ['page-1.png'],
+        outputMode: ExtractionOutputMode.grammar,
+      ).toList();
+      await pumpEventQueue();
+      final container = repository.mapContainerOnly(
+        'Discharge letter',
+        outputMode: ExtractionOutputMode.grammar,
+      );
+
+      await repository.cancelGeneration();
+      var stopped = false;
+      final wait = repository.waitForStreamCompletion().then(
+        (_) => stopped = true,
+      );
+      await pumpEventQueue();
+      // Both runs are cancelled, and the wait covers the one waiting too.
+      expect(stopped, isFalse);
+
+      ocr.gate!.complete();
+      expect(await records, isEmpty);
+      expect(
+        ((await container) as MappingEncounter).encounterType.value,
+        isEmpty,
+      );
+      await wait;
+      expect(stopped, isTrue);
+      expect(network.initLoads, isEmpty);
+      expect(network.textPrompts, 0);
     });
   });
 }
