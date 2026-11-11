@@ -19,6 +19,7 @@ import 'package:health_wallet/features/sync/domain/repository/sync_repository.da
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../helpers/fake_device_capability_service.dart';
+import '../../../../helpers/log_capture.dart';
 import '../../../share_records/share_test_helpers.dart';
 
 class _FakeProcessingRepository extends Fake implements ProcessingRepository {
@@ -46,6 +47,31 @@ class _FakeHolderService extends Fake implements HolderService {}
 
 class _FakeHolderSelection extends Fake implements HolderSelection {}
 
+/// Saved preferences whose removal fails, as a full disk would make it.
+class _RemoveFailsPrefs extends Fake implements SharedPreferences {
+  _RemoveFailsPrefs(this._values);
+
+  final Map<String, Object> _values;
+
+  @override
+  bool? getBool(String key) => _values[key] as bool?;
+
+  @override
+  int? getInt(String key) => _values[key] as int?;
+
+  @override
+  String? getString(String key) => _values[key] as String?;
+
+  @override
+  Future<bool> remove(String key) => Future.error(Exception('disk full'));
+
+  @override
+  Future<bool> setBool(String key, bool value) async {
+    _values[key] = value;
+    return true;
+  }
+}
+
 /// The bloc reads the platform from `dart:io`, so on a test host it runs as
 /// the desktop; the mobile side of the reset is covered by
 /// `ai_settings_reset_test.dart`.
@@ -57,6 +83,7 @@ void main() {
 
   late _FakeProcessingRepository repository;
   final blocs = <ProcessingBloc>[];
+  final logs = captureLogs();
 
   setUp(() {
     mockPathProvider();
@@ -70,7 +97,7 @@ void main() {
     blocs.clear();
   });
 
-  Future<ProcessingBloc> newBloc() async {
+  Future<ProcessingBloc> newBloc([SharedPreferences? prefs]) async {
     final bloc = ProcessingBloc(
       repository,
       _FakeOcrProcessingHelper(),
@@ -79,7 +106,7 @@ void main() {
       _FakeHolderService(),
       _FakeHolderSelection(),
       _FakeRecordsRepository(),
-      await SharedPreferences.getInstance(),
+      prefs ?? await SharedPreferences.getInstance(),
       AppStringsProvider.forLocale(const Locale('en')),
       LayoutExtractionService(
         repository,
@@ -95,8 +122,8 @@ void main() {
   }
 
   /// Starts the app once: a new bloc over the same saved preferences.
-  Future<ProcessingBloc> start() async {
-    final bloc = await newBloc();
+  Future<ProcessingBloc> start([SharedPreferences? prefs]) async {
+    final bloc = await newBloc(prefs);
     final loaded = bloc.stream.firstWhere(
       (s) => s.status is Initial && s.sessions.isNotEmpty,
     );
@@ -161,6 +188,20 @@ void main() {
       expect(prefs.getInt(SharedPrefsConstants.aiMaxTokens), 500);
       expect(prefs.getBool(SharedPrefsConstants.aiUseVision), isFalse);
       expect(second.state.useVision, isFalse);
+    });
+
+    test('a reset that fails is logged, tried again on the next start, and '
+        'never keeps the sessions from loading', () async {
+      final saved = <String, Object>{SharedPrefsConstants.aiMaxTokens: 500};
+
+      final bloc = await start(_RemoveFailsPrefs(saved));
+
+      expect(bloc.state.sessions.single.id, 'saved');
+      expect(
+        saved.containsKey(SharedPrefsConstants.aiMistakenSettingsReset),
+        isFalse,
+      );
+      expect(logs, loggedWarning('Resetting the mistakenly saved AI settings'));
     });
 
     test('other saved values are kept', () async {

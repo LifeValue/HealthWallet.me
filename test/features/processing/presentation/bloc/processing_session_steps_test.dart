@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart' hide Notification;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
 import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
@@ -24,6 +25,7 @@ import 'package:health_wallet/features/processing/domain/services/layout_extract
 import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extractor_registry.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,11 +37,16 @@ import '../../../share_records/share_test_helpers.dart';
 const _docScanner = MethodChannel('flutter_doc_scanner');
 
 class _FakeProcessingRepository extends Fake implements ProcessingRepository {
+  /// The sessions saved before the app started.
+  List<ProcessingSession> saved = const [];
   final created = <List<String>>[];
   final edited = <ProcessingSession>[];
   final deleted = <ProcessingSession>[];
   int cancels = 0;
   int disposes = 0;
+
+  @override
+  Future<List<ProcessingSession>> getProcessingSessions() async => saved;
 
   @override
   Future<ProcessingSession> createProcessingSession({
@@ -136,6 +143,8 @@ class _FakeDocumentReferenceService extends Fake
 class _FakeHolderSelection extends Fake implements HolderSelection {}
 
 class _FakeHolderService extends Fake implements HolderService {}
+
+final _en = lookupAppLocalizations(const Locale('en'));
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -753,6 +762,32 @@ void main() {
       expect(session('s').encounter.draft, isNull);
     });
 
+    test('a visit picked from the wallet becomes a report', () async {
+      seed(
+        ProcessingState(
+          sessions: [
+            ProcessingSession(
+              id: 's',
+              encounter: StagedEncounter(
+                existing: Encounter(
+                  id: 'e1',
+                  title: 'Checkup',
+                  date: DateTime(2024, 3),
+                ),
+                mode: ImportMode.linkExisting,
+              ),
+            ),
+          ],
+        ),
+      );
+
+      bloc.add(const ContainerTypeSwitched(sessionId: 's'));
+      await settle();
+
+      expect(session('s').diagnosticReport?.draft?.id, 'e1');
+      expect(session('s').encounter.existing, isNull);
+    });
+
     test('an unknown session is ignored', () async {
       bloc.add(const ContainerTypeSwitched(sessionId: 'x'));
       await settle();
@@ -1013,6 +1048,138 @@ void main() {
         bloc.state.notification!.text,
         'Scan: there is no AI model on the desktop. It\'s back on this phone.',
       );
+    });
+
+    test(
+      'a session the desktop failed, or deleted, comes back with why',
+      () async {
+        seed(
+          const ProcessingState(
+            sessions: [
+              ProcessingSession(id: 'a', status: ProcessingStatus.handedOver),
+              ProcessingSession(id: 'b', status: ProcessingStatus.handedOver),
+            ],
+          ),
+        );
+        final scan = _en.processingOriginScan;
+
+        bloc.add(
+          const HandoverReturned(
+            sessionId: 'a',
+            reason: HandoverReturnReason.failedOnDesktop,
+          ),
+        );
+        await settle();
+        expect(
+          bloc.state.notification!.text,
+          _en.handoverFailedOnDesktop(scan),
+        );
+        expect(bloc.state.notification!.type, NotificationType.error);
+
+        bloc.add(
+          const HandoverReturned(
+            sessionId: 'b',
+            reason: HandoverReturnReason.deletedOnDesktop,
+          ),
+        );
+        await settle();
+        expect(
+          bloc.state.notification!.text,
+          _en.handoverDeletedOnDesktop(scan),
+        );
+        expect(session('a').status, ProcessingStatus.pending);
+        expect(session('b').status, ProcessingStatus.pending);
+      },
+    );
+
+    test('a session being read here stops when it is handed over', () async {
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(id: 's', status: ProcessingStatus.processing),
+          ],
+        ),
+      );
+
+      bloc.add(const SessionHandedOver(sessionId: 's'));
+      await settle();
+
+      expect(session('s').status, ProcessingStatus.handedOver);
+      expect(repository.cancels, 1);
+      expect(repository.disposes, 1);
+    });
+
+    test('the message for a session saved elsewhere names where, and '
+        'whether a draft was dropped', () async {
+      final scan = _en.processingOriginScan;
+      Future<String> savedElsewhere(
+        ProcessingStatus status, {
+        required bool byDesktop,
+      }) async {
+        seed(
+          ProcessingState(
+            sessions: [ProcessingSession(id: 's', status: status)],
+          ),
+        );
+        bloc.add(SessionSavedElsewhere(sessionId: 's', byDesktop: byDesktop));
+        await settle();
+        return bloc.state.notification!.text;
+      }
+
+      expect(
+        await savedElsewhere(ProcessingStatus.draft, byDesktop: false),
+        _en.handoverDraftSavedOnPhone(scan),
+      );
+      expect(
+        await savedElsewhere(ProcessingStatus.handedOver, byDesktop: true),
+        _en.handoverSavedOnDesktop(scan),
+      );
+      expect(
+        await savedElsewhere(ProcessingStatus.handedOver, byDesktop: false),
+        _en.handoverSavedOnPhone(scan),
+      );
+    });
+
+    test(
+      'on start, a waiting handover is opened before other documents',
+      () async {
+        repository.saved = const [
+          ProcessingSession(
+            id: 'scan',
+            filePaths: ['scan.jpg'],
+            status: ProcessingStatus.pending,
+          ),
+          ProcessingSession(
+            id: 'h',
+            filePaths: ['h.jpg'],
+            status: ProcessingStatus.pending,
+            origin: ProcessingOrigin.handover,
+          ),
+        ];
+
+        bloc.add(const ProcessingInitialised());
+        await eventually(() => bloc.state.sessionImagePaths.containsKey('h'));
+
+        expect(bloc.state.sessionImagePaths.keys, ['h']);
+      },
+    );
+
+    test('on start, a halted handover is left for the user', () async {
+      repository.saved = const [
+        ProcessingSession(
+          id: 'h',
+          filePaths: ['h.jpg'],
+          status: ProcessingStatus.pending,
+          origin: ProcessingOrigin.handover,
+        ),
+      ];
+      bloc.haltedHandovers.add('h');
+
+      bloc.add(const ProcessingInitialised());
+      await eventually(() => bloc.state.sessions.isNotEmpty);
+      await settle();
+
+      expect(bloc.state.sessionImagePaths, isEmpty);
     });
 
     test('a session saved on the other device is removed', () async {
