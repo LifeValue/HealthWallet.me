@@ -244,9 +244,17 @@ class _FakeHolderService extends Fake implements HolderService {
 
   static String holderOf(String patientId) => 'holder-$patientId';
 
+  var loads = 0;
+
+  /// Holds the loads after the first (the OCR pre-match's) until completed,
+  /// when set.
+  Completer<void>? laterLoadGate;
+
   @override
   Future<HolderDirectory> load() async {
+    loads++;
     await records.gate?.future;
+    if (loads > 1) await laterLoadGate?.future;
     if (records.error != null) throw records.error!;
     return HolderDirectory(
       holders: [
@@ -713,6 +721,23 @@ void main() {
       expect(staged.patient.mode, ImportMode.createNew);
       expect(holders.candidates, isEmpty);
       expect(bloc.state.status, isNot(isA<Failure>()));
+    });
+
+    test('a session removed while its patient is matched is neither staged '
+        'nor announced', () async {
+      final lookup = Completer<void>();
+      holders.laterLoadGate = lookup;
+      seed(withPages);
+      bloc.add(const MappingInitiated(sessionId: 's'));
+      await settle();
+      expect(repository.basicInfoCalls, hasLength(1));
+
+      seed(const ProcessingState());
+      lookup.complete();
+      await settle();
+
+      expect(bloc.state.notification, isNull);
+      expect(repository.edited, isEmpty);
     });
 
     test('a cancel while the AI reads the patient stages nothing when the AI '

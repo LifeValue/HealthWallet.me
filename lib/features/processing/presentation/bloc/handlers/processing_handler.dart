@@ -236,9 +236,6 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         )) {
           return;
         }
-        final finalSession = state.sessions.firstWhereOrNull(
-          (s) => s.id == event.sessionId,
-        );
         if (container is MappingDiagnosticReport) {
           updateSession(
             emit,
@@ -263,7 +260,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
             state.copyWith(
               notification: Notification(
                 text: strings.l10n.processingPatientMatched(
-                  _originName(finalSession),
+                  _originName(session),
                 ),
                 route: ProcessingRoute(sessionId: event.sessionId),
                 time: DateTime.now(),
@@ -300,6 +297,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           prefs.getString(SharedPrefsConstants.aiOutputMode),
         ),
       );
+      final stagedPatient = await _matchOrCreatePatient(patient);
       if (_leftStep(
         event.sessionId,
         ProcessingStatus.processingPatient,
@@ -307,10 +305,6 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       )) {
         return;
       }
-      final stagedPatient = await _matchOrCreatePatient(patient);
-      final finalSession = state.sessions.firstWhereOrNull(
-        (s) => s.id == event.sessionId,
-      );
       if (container is MappingDiagnosticReport) {
         updateSession(
           emit,
@@ -335,7 +329,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           state.copyWith(
             notification: Notification(
               text: strings.l10n.processingPatientInfoExtracted(
-                _originName(finalSession),
+                _originName(session),
               ),
               route: ProcessingRoute(sessionId: event.sessionId),
               time: DateTime.now(),
@@ -390,9 +384,8 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       emit.isDone ||
       state.sessions.firstWhereOrNull((s) => s.id == sessionId)?.status != step;
 
-  String _originName(ProcessingSession? session) =>
-      session?.origin.localizedName(strings.l10n) ??
-      strings.l10n.fhirTypeDocumentReference;
+  String _originName(ProcessingSession session) =>
+      session.origin.localizedName(strings.l10n);
 
   /// The person whose identifier appears in the scanned text, before the AI
   /// reads the patient.
