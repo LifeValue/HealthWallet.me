@@ -583,12 +583,15 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         (session.status == ProcessingStatus.processing || hasPatientData)
         ? ProcessingStatus.patientExtracted
         : ProcessingStatus.cancelled;
+    // Saved too: step 2 already wrote its results to the session, and they
+    // would come back with the next start.
     updateSession(
       emit,
       sessionId: event.sessionId,
       status: newStatus,
       resources: [],
       progress: 0.0,
+      updateDb: true,
     );
     await processingRepository.disposeModel();
   }

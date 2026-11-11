@@ -644,6 +644,50 @@ void main() {
       expect(session('s').resources, isEmpty);
     });
 
+    test('a cancelled step two is saved as cancelled, so its results do not '
+        'come back when the app restarts', () async {
+      seed(
+        ProcessingState(
+          sessions: [
+            ProcessingSession(
+              id: 's',
+              status: ProcessingStatus.processing,
+              resources: [MappingObservation.empty()],
+              progress: 0.6,
+            ),
+          ],
+        ),
+      );
+
+      bloc.add(const MappingCancelled(sessionId: 's'));
+      await settle();
+
+      final saved = repository.edited.last;
+      expect(saved.id, 's');
+      expect(saved.status, ProcessingStatus.patientExtracted);
+      expect(saved.resources, isEmpty);
+      expect(saved.progress, 0.0);
+    });
+
+    test('cancelling a session that has no patient yet is saved as '
+        'cancelled', () async {
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(
+              id: 's',
+              status: ProcessingStatus.processingPatient,
+            ),
+          ],
+        ),
+      );
+
+      bloc.add(const MappingCancelled(sessionId: 's'));
+      await settle();
+
+      expect(repository.edited.last.status, ProcessingStatus.cancelled);
+    });
+
     test('attaching the document is saved on the session', () async {
       seed(const ProcessingState(sessions: [ProcessingSession(id: 's')]));
 
