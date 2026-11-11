@@ -185,14 +185,14 @@ lib/
 
 Gitflow. Every push runs the checks in parallel: `dart format`, `flutter analyze` and `flutter test`; the formatters on the changed files; dependency (osv-scanner) and secret (gitleaks) scans. Any failure fails the pipeline, and deploys start only after every check passes. Commit messages are checked by commitlint on working branches only (not on `develop`, `release/*` or `master`, where rewording a commit would need a force-push), and no deploy waits for that check.
 
-| Branch      | From      | Purpose               | Deploys                                                      |
-| ----------- | --------- | --------------------- | ------------------------------------------------------------ |
-| `master`    | —         | Production            | Manual: TestFlight / Play internal, Shorebird patch, Windows |
-| `develop`   | —         | Staging               | Manual beta to TestFlight and Play internal                  |
-| `release/*` | `develop` | Release stabilization | Manual beta for testers                                      |
-| `feature/*` | `develop` | New features          | None, checks only                                            |
-| `bugfix/*`  | `develop` | Fixes for develop     | None, checks only                                            |
-| `hotfix/*`  | `master`  | Urgent fixes          | None, checks only                                            |
+| Branch      | From      | Purpose               | Deploys                                                               |
+| ----------- | --------- | --------------------- | --------------------------------------------------------------------- |
+| `master`    | —         | Production            | Manual: TestFlight / Play internal, Shorebird patch, Windows, Linux   |
+| `develop`   | —         | Staging               | Manual beta to TestFlight and Play internal, Windows and Linux builds |
+| `release/*` | `develop` | Release stabilization | Manual beta for testers                                               |
+| `feature/*` | `develop` | New features          | None, checks only                                                     |
+| `bugfix/*`  | `develop` | Fixes for develop     | None, checks only                                                     |
+| `hotfix/*`  | `master`  | Urgent fixes          | None, checks only                                                     |
 
 Production releases are promoted from a tested beta in App Store Connect and Play Console.
 
