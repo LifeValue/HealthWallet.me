@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:health_wallet/core/services/device_capability_service.dart'
+    as core;
 import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -24,13 +26,13 @@ DeviceProfile _desktop(
   platform: 'macos',
 );
 
-DeviceProfile _phone(int ramMB) => DeviceProfile(
+DeviceProfile _phone(int ramMB, {String platform = 'ios'}) => DeviceProfile(
   ramMB: ramMB,
   logicalCores: 6,
   physicalCores: 6,
   gpuType: GpuType.appleSilicon,
   isDesktop: false,
-  platform: 'ios',
+  platform: platform,
 );
 
 void main() {
@@ -65,6 +67,39 @@ void main() {
     );
     expect(AiModelConfig.recommendedVariant(_phone(6144)), AiModelVariant.qwen);
     expect(AiModelConfig.recommendedVariant(_phone(4096)), AiModelVariant.qwen);
+  });
+
+  test('an Android phone is recommended Qwen3.5-4B only from 11 GB, where '
+      'Deep Scan runs', () {
+    for (final ramMB in [8192, 10240, 11263]) {
+      expect(
+        AiModelConfig.recommendedVariant(_phone(ramMB, platform: 'android')),
+        AiModelVariant.qwen,
+        reason: '$ramMB MB',
+      );
+    }
+    expect(
+      AiModelConfig.recommendedVariant(_phone(12288, platform: 'android')),
+      AiModelVariant.qwen35x4b,
+    );
+  });
+
+  test('a phone is recommended Qwen3.5-4B exactly where it is offered', () {
+    for (final platform in ['ios', 'android']) {
+      for (var ramMB = 2048; ramMB <= 16384; ramMB += 512) {
+        expect(
+          AiModelConfig.recommendedVariant(
+                _phone(ramMB, platform: platform),
+              ) ==
+              AiModelVariant.qwen35x4b,
+          core.DeviceCapabilityService.supportsAdvancedModelFor(
+            ramMB,
+            platform: platform,
+          ),
+          reason: '$platform, $ramMB MB',
+        );
+      }
+    }
   });
 
   test('a desktop is recommended the largest model its memory and GPU '

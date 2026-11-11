@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/services/device_capability_service.dart'
+    as core;
 import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -249,10 +251,14 @@ class AiModelConfig {
   }
 
   static AiModelVariant recommendedVariant(DeviceProfile profile) {
-    // Advanced needs 8 GB on a phone, as the model list offers it.
+    // A phone or tablet is recommended Advanced exactly where it is offered.
     if (!profile.isDesktop) {
-      if (profile.ramMB >= 8192) return AiModelVariant.qwen35x4b;
-      return AiModelVariant.qwen;
+      return core.DeviceCapabilityService.supportsAdvancedModelFor(
+            profile.ramMB,
+            platform: profile.platform,
+          )
+          ? AiModelVariant.qwen35x4b
+          : AiModelVariant.qwen;
     }
 
     if (profile.gpuType == GpuType.appleSilicon) {
