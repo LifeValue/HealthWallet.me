@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:bloc_test/bloc_test.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
@@ -563,6 +564,37 @@ void main() {
         expect(added.notification.read, isFalse);
       },
     );
+  });
+
+  test('a connection check that does not answer in 5 s counts as no '
+      'internet: the error is shown and nothing starts', () {
+    fakeAsync((async) {
+      final bloc = build();
+      bloc.emit(
+        const LoadModelState(
+          status: LoadModelStatus.error,
+          errorMessage: 'old',
+          selectedVariant: AiModelVariant.qwen,
+        ),
+      );
+      final states = <LoadModelState>[];
+      final sub = bloc.stream.listen(states.add);
+
+      bloc.add(const LoadModelDownloadInitiated());
+      // The real lookup can't answer on the fake clock: its 5 s limit ends it.
+      async.elapse(const Duration(seconds: 6));
+
+      expect(states.map((s) => (s.status, s.errorMessage)), [
+        (LoadModelStatus.modelAbsent, null),
+        (LoadModelStatus.error, kNoInternetErrorKey),
+      ]);
+      expect(service.started, isEmpty);
+      expect(notifications.events, isEmpty);
+
+      sub.cancel();
+      bloc.close();
+      async.flushMicrotasks();
+    });
   });
 
   group('a service report', () {

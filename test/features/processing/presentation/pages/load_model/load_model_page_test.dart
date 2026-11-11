@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations_en.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/bloc/phone_handover_bloc.dart';
@@ -31,6 +32,29 @@ class _FakeStackRouter extends Fake implements StackRouter {
     popped.add(result);
     return true;
   }
+}
+
+/// English, with a privacy note that has no bold part, as a translation
+/// might.
+class _PlainNoteLocalizations extends AppLocalizationsEn {
+  static const note = 'Your data stays on your device.';
+
+  @override
+  String get aiModelUnlockDescription => note;
+}
+
+class _PlainNoteDelegate extends LocalizationsDelegate<AppLocalizations> {
+  const _PlainNoteDelegate();
+
+  @override
+  bool isSupported(Locale locale) => locale.languageCode == 'en';
+
+  @override
+  Future<AppLocalizations> load(Locale locale) async =>
+      _PlainNoteLocalizations();
+
+  @override
+  bool shouldReload(_PlainNoteDelegate old) => false;
 }
 
 class _MockCommunicationBloc
@@ -244,6 +268,39 @@ void main() {
       expect(spans[1].text, 'Your data stays private on your device.');
       expect(spans[1].style!.fontWeight, FontWeight.w700);
       expect(spans[0].style, isNull);
+    });
+
+    testWidgets('a privacy note without a bold part is shown as plain '
+        'text', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(500, 1400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('en'),
+          localizationsDelegates: [
+            const _PlainNoteDelegate(),
+            ...AppLocalizations.localizationsDelegates.where(
+              (d) => d.type != AppLocalizations,
+            ),
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const LoadModelPage(),
+        ),
+      );
+      await tester.pump();
+
+      final note = tester.widget<Text>(find.text(_PlainNoteLocalizations.note));
+      expect(note.textAlign, TextAlign.center);
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is RichText &&
+              w.text.toPlainText() == _PlainNoteLocalizations.note &&
+              w.text is TextSpan &&
+              (w.text as TextSpan).children != null,
+        ),
+        findsNothing,
+      );
     });
 
     testWidgets('on a capable device offers Choose & Download and a cancel '
