@@ -379,14 +379,6 @@
       }
     }
   },
-  "shareFoundDevices": "{count} Gerät(e) gefunden",
-  "@shareFoundDevices": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "shareRetryingCount": "Wiederholung ({retryCount}/3)...",
   "@shareRetryingCount": {
     "placeholders": {
@@ -523,24 +515,12 @@
       }
     }
   },
-  "desktopSyncingTable": "{tableName} wird synchronisiert...",
-  "@desktopSyncingTable": {
-    "placeholders": {
-      "tableName": {
-        "type": "String"
-      }
-    }
-  },
   "desktopSyncing": "Synchronisiere...",
   "desktopSyncNow": "Jetzt synchronisieren",
   "desktopSyncError": "Fehler",
   "desktopSyncInSync": "Synchron",
   "desktopSyncReady": "Bereit",
   "desktopSyncOffline": "Offline",
-  "desktopTableHealthRecords": "Gesundheitsdaten",
-  "desktopTableSources": "Quellen",
-  "desktopTableNotes": "Notizen",
-  "desktopTableSessions": "Sitzungen",
   "desktopConnection": "Verbindung",
   "desktopGeneratePairingQr": "Kopplungs-QR generieren",
   "desktopScanFromMobile": "Über die mobile Sync-Seite scannen",
@@ -637,17 +617,6 @@
     }
   },
   "desktopNewDeviceConnecting": "Neues Gerät verbindet sich",
-  "desktopNewDeviceMessage": "Ein neues Gerät ({address}) möchte sich verbinden.\n\nDies trennt die Verbindung zu \"{currentDevice}\".\n\nZum neuen Gerät wechseln?",
-  "@desktopNewDeviceMessage": {
-    "placeholders": {
-      "address": {
-        "type": "String"
-      },
-      "currentDevice": {
-        "type": "String"
-      }
-    }
-  },
   "desktopKeepCurrent": "Aktuelles behalten",
   "desktopSwitch": "Wechseln",
   "desktopCurrentDevice": "aktuelles Gerät",
@@ -668,7 +637,6 @@
   "desktopHandoverToDesktop": "An Desktop übergeben",
   "desktopHandoverProcessingMessage": "Verarbeitung läuft. Die Übergabe wird die aktuelle Verarbeitung abbrechen und Dateien an den Desktop senden.",
   "desktopHandover": "Übergabe",
-  "attachedDocuments": "Angehängte Dokumente",
   "documentAttachedTo": "An {visit} angehängt.",
   "cameraPermissionRequired": "Kamerazugriff erforderlich",
   "cameraPermissionRequiredMessage": "Diese App benötigt Kamerazugriff zum Scannen. Bitte erteile die Berechtigung.",
@@ -1076,8 +1044,6 @@
   "desktopBackupHistory": "Verlauf",
   "desktopPairedWith": "Gekoppelt mit {name}",
   "desktopMobileDevice": "Mobilgerät",
-  "desktopNotFoundScanAgain": "Desktop nicht gefunden. Scanne den QR-Code erneut.",
-  "desktopPairingExpired": "Verbindung fehlgeschlagen. Scanne den QR-Code, um erneut zu koppeln.",
   "desktopRemoteBackupName": "Vom Telefon {date}",
   "desktopNoBackupLocation": "Auf dem Desktop ist kein Backup-Speicherort festgelegt. Öffne die Desktop-App und wähle zuerst einen Backup-Ordner.",
   "desktopBackupFailed": "Backup fehlgeschlagen. Bitte versuche es erneut.",
@@ -1167,7 +1133,6 @@
   "dateFilterEndBeforeStart": "Das Enddatum muss nach dem Startdatum liegen",
   "dateFilterChip": "Datum: {range}",
   "aiModelCheckFailed": "Beim Prüfen, ob das Modell vorhanden ist, ist ein Fehler aufgetreten",
-  "aiModelExistenceCheckFailed": "Prüfung, ob das Modell vorhanden ist, fehlgeschlagen",
   "aiModelDownloadingTitle": "{modelName} wird heruntergeladen",
   "aiModelDownloadStarting": "Download wird gestartet...",
   "aiModelReadyTitle": "{modelName} bereit",
@@ -1208,7 +1173,6 @@
   "dateFormatHintIso": "JJJJ-MM-TT",
   "retryStep": "Erneut versuchen (Schritt {step})",
   "failedToCreateEncounter": "Termin konnte nicht erstellt werden: {error}",
-  "failedToAttachDocuments": "Dokumente konnten nicht angehängt werden: {error}",
   "fieldAccessionNumber": "Eingangsnummer",
   "fieldAchievementStatus": "Erreichungsstatus",
   "fieldActuality": "Tatsächlichkeit",

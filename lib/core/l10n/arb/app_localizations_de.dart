@@ -1162,11 +1162,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String shareFoundDevices(int count) {
-    return '$count Gerät(e) gefunden';
-  }
-
-  @override
   String shareRetryingCount(int retryCount) {
     return 'Wiederholung ($retryCount/3)...';
   }
@@ -1252,11 +1247,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String desktopSyncingTable(String tableName) {
-    return '$tableName wird synchronisiert...';
-  }
-
-  @override
   String get desktopSyncing => 'Synchronisiere...';
 
   @override
@@ -1273,18 +1263,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get desktopSyncOffline => 'Offline';
-
-  @override
-  String get desktopTableHealthRecords => 'Gesundheitsdaten';
-
-  @override
-  String get desktopTableSources => 'Quellen';
-
-  @override
-  String get desktopTableNotes => 'Notizen';
-
-  @override
-  String get desktopTableSessions => 'Sitzungen';
 
   @override
   String get desktopConnection => 'Verbindung';
@@ -1477,11 +1455,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get desktopNewDeviceConnecting => 'Neues Gerät verbindet sich';
 
   @override
-  String desktopNewDeviceMessage(String address, String currentDevice) {
-    return 'Ein neues Gerät ($address) möchte sich verbinden.\n\nDies trennt die Verbindung zu \"$currentDevice\".\n\nZum neuen Gerät wechseln?';
-  }
-
-  @override
   String get desktopKeepCurrent => 'Aktuelles behalten';
 
   @override
@@ -1522,9 +1495,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get desktopHandover => 'Übergabe';
-
-  @override
-  String get attachedDocuments => 'Angehängte Dokumente';
 
   @override
   String documentAttachedTo(String visit) {
@@ -2528,14 +2498,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get desktopMobileDevice => 'Mobilgerät';
 
   @override
-  String get desktopNotFoundScanAgain =>
-      'Desktop nicht gefunden. Scanne den QR-Code erneut.';
-
-  @override
-  String get desktopPairingExpired =>
-      'Verbindung fehlgeschlagen. Scanne den QR-Code, um erneut zu koppeln.';
-
-  @override
   String desktopRemoteBackupName(String date) {
     return 'Vom Telefon $date';
   }
@@ -2896,10 +2858,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Beim Prüfen, ob das Modell vorhanden ist, ist ein Fehler aufgetreten';
 
   @override
-  String get aiModelExistenceCheckFailed =>
-      'Prüfung, ob das Modell vorhanden ist, fehlgeschlagen';
-
-  @override
   String aiModelDownloadingTitle(String modelName) {
     return '$modelName wird heruntergeladen';
   }
@@ -3055,11 +3013,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String failedToCreateEncounter(String error) {
     return 'Termin konnte nicht erstellt werden: $error';
-  }
-
-  @override
-  String failedToAttachDocuments(String error) {
-    return 'Dokumente konnten nicht angehängt werden: $error';
   }
 
   @override

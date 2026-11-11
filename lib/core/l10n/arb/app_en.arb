@@ -413,14 +413,6 @@
       }
     }
   },
-  "shareFoundDevices": "Found {count} device(s)",
-  "@shareFoundDevices": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "shareRetryingCount": "Retrying ({retryCount}/3)...",
   "@shareRetryingCount": {
     "placeholders": {
@@ -557,24 +549,12 @@
       }
     }
   },
-  "desktopSyncingTable": "Syncing {tableName}...",
-  "@desktopSyncingTable": {
-    "placeholders": {
-      "tableName": {
-        "type": "String"
-      }
-    }
-  },
   "desktopSyncing": "Syncing...",
   "desktopSyncNow": "Sync Now",
   "desktopSyncError": "Error",
   "desktopSyncInSync": "In Sync",
   "desktopSyncReady": "Ready",
   "desktopSyncOffline": "Offline",
-  "desktopTableHealthRecords": "Health Records",
-  "desktopTableSources": "Sources",
-  "desktopTableNotes": "Notes",
-  "desktopTableSessions": "Sessions",
   "desktopConnection": "Connection",
   "desktopGeneratePairingQr": "Generate Pairing QR",
   "desktopScanFromMobile": "Scan from mobile Sync page",
@@ -671,17 +651,6 @@
     }
   },
   "desktopNewDeviceConnecting": "New Device Connecting",
-  "desktopNewDeviceMessage": "A new device ({address}) wants to connect.\n\nThis will disconnect \"{currentDevice}\".\n\nSwitch to the new device?",
-  "@desktopNewDeviceMessage": {
-    "placeholders": {
-      "address": {
-        "type": "String"
-      },
-      "currentDevice": {
-        "type": "String"
-      }
-    }
-  },
   "desktopKeepCurrent": "Keep Current",
   "desktopSwitch": "Switch",
   "desktopCurrentDevice": "current device",
@@ -702,7 +671,6 @@
   "desktopHandoverToDesktop": "Handover to Desktop",
   "desktopHandoverProcessingMessage": "Processing is in progress. Handover will cancel the current processing and send files to desktop.",
   "desktopHandover": "Handover",
-  "attachedDocuments": "Attached Documents",
   "documentAttachedTo": "Attached to {visit}.",
   "@documentAttachedTo": {
     "description": "Says which visit a document attached without the AI was filed under, for example \"Checkup, 03/11/2026\".",
@@ -1125,8 +1093,6 @@
     }
   },
   "desktopMobileDevice": "Mobile Device",
-  "desktopNotFoundScanAgain": "Desktop not found. Try scanning QR again.",
-  "desktopPairingExpired": "Could not connect. Scan QR code to pair again.",
   "desktopRemoteBackupName": "Remote {date}",
   "@desktopRemoteBackupName": {
     "placeholders": {
@@ -1344,7 +1310,6 @@
     }
   },
   "aiModelCheckFailed": "An error appeared while checking model existence",
-  "aiModelExistenceCheckFailed": "Failed to check model existence",
   "aiModelDownloadingTitle": "Downloading {modelName}",
   "@aiModelDownloadingTitle": {
     "placeholders": {
@@ -1456,14 +1421,6 @@
   },
   "failedToCreateEncounter": "Failed to create encounter: {error}",
   "@failedToCreateEncounter": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "failedToAttachDocuments": "Failed to attach documents: {error}",
-  "@failedToAttachDocuments": {
     "placeholders": {
       "error": {
         "type": "String"

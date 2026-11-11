@@ -1159,11 +1159,6 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
-  String shareFoundDevices(int count) {
-    return 'S-au găsit $count dispozitiv(e)';
-  }
-
-  @override
   String shareRetryingCount(int retryCount) {
     return 'Se reîncearcă ($retryCount/3)...';
   }
@@ -1250,11 +1245,6 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
-  String desktopSyncingTable(String tableName) {
-    return 'Se sincronizează $tableName...';
-  }
-
-  @override
   String get desktopSyncing => 'Se sincronizează...';
 
   @override
@@ -1271,18 +1261,6 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get desktopSyncOffline => 'Offline';
-
-  @override
-  String get desktopTableHealthRecords => 'Înregistrări medicale';
-
-  @override
-  String get desktopTableSources => 'Surse';
-
-  @override
-  String get desktopTableNotes => 'Notițe';
-
-  @override
-  String get desktopTableSessions => 'Sesiuni';
 
   @override
   String get desktopConnection => 'Conexiune';
@@ -1476,11 +1454,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String get desktopNewDeviceConnecting => 'Dispozitiv nou se conectează';
 
   @override
-  String desktopNewDeviceMessage(String address, String currentDevice) {
-    return 'Un dispozitiv nou ($address) dorește să se conecteze.\n\nAceasta va deconecta \"$currentDevice\".\n\nComuți pe noul dispozitiv?';
-  }
-
-  @override
   String get desktopKeepCurrent => 'Păstrează actualul';
 
   @override
@@ -1521,9 +1494,6 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get desktopHandover => 'Predare';
-
-  @override
-  String get attachedDocuments => 'Documente atașate';
 
   @override
   String documentAttachedTo(String visit) {
@@ -2529,14 +2499,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String get desktopMobileDevice => 'Dispozitiv mobil';
 
   @override
-  String get desktopNotFoundScanAgain =>
-      'Desktopul nu a fost găsit. Scanează din nou codul QR.';
-
-  @override
-  String get desktopPairingExpired =>
-      'Conectarea a eșuat. Scanează codul QR pentru a asocia din nou.';
-
-  @override
   String desktopRemoteBackupName(String date) {
     return 'De pe telefon $date';
   }
@@ -2891,10 +2853,6 @@ class AppLocalizationsRo extends AppLocalizations {
       'A apărut o eroare la verificarea existenței modelului';
 
   @override
-  String get aiModelExistenceCheckFailed =>
-      'Verificarea existenței modelului a eșuat';
-
-  @override
   String aiModelDownloadingTitle(String modelName) {
     return 'Se descarcă $modelName';
   }
@@ -3049,11 +3007,6 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String failedToCreateEncounter(String error) {
     return 'Crearea consultației a eșuat: $error';
-  }
-
-  @override
-  String failedToAttachDocuments(String error) {
-    return 'Atașarea documentelor a eșuat: $error';
   }
 
   @override
