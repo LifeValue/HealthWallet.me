@@ -58,10 +58,22 @@ class _FakeOcr extends Fake implements TextRecognitionService {
   final String text;
   Completer<void>? gate;
   var calls = 0;
+  var _called = Completer<void>();
+
+  /// Completes once the OCR has been called [count] times. A stream reaches
+  /// the OCR only after real file checks, which `pumpEventQueue` does not
+  /// wait for on a slow machine.
+  Future<void> untilCalled(int count) async {
+    while (calls < count) {
+      await _called.future;
+    }
+  }
 
   @override
   Future<String> recognizeTextFromImage(String imagePath) async {
     calls++;
+    _called.complete();
+    _called = Completer<void>();
     await gate?.future;
     return text;
   }
@@ -208,6 +220,14 @@ class _FakeNetwork extends Fake implements AiInferenceDataSource {
 
   /// Holds each text prompt until completed, when set.
   Completer<void>? textGate;
+  var _textPrompted = Completer<void>();
+
+  /// Completes once [count] text prompts have started.
+  Future<void> untilTextPrompts(int count) async {
+    while (textPrompts < count) {
+      await _textPrompted.future;
+    }
+  }
 
   @override
   Future<String?> runTextPrompt({
@@ -218,6 +238,8 @@ class _FakeNetwork extends Fake implements AiInferenceDataSource {
     Map<String, dynamic>? chatTemplateKwargs,
   }) async {
     textPrompts++;
+    _textPrompted.complete();
+    _textPrompted = Completer<void>();
     await textGate?.future;
     return '[{"resourceType":"Condition","conditionName":"Vorhofflimmern",'
         '"onsetDateTime":"2019","clinicalStatus":"active"}]';
@@ -1019,7 +1041,7 @@ void main() {
         const ['page-1.png'],
         outputMode: ExtractionOutputMode.grammar,
       ).toList();
-      await pumpEventQueue();
+      await ocr.untilCalled(1);
       expect(ocr.calls, 1);
 
       var waited = false;
@@ -1087,7 +1109,7 @@ void main() {
         const ['page-1.png'],
         outputMode: ExtractionOutputMode.grammar,
       ).toList();
-      await pumpEventQueue();
+      await ocr.untilCalled(1);
       final second = repository.mapRemainingResources(
         const ['page-2.png'],
         outputMode: ExtractionOutputMode.grammar,
@@ -1111,7 +1133,8 @@ void main() {
         const ['page-1.png'],
         outputMode: ExtractionOutputMode.grammar,
       ).toList();
-      await pumpEventQueue();
+      // The stream is reading its page when the cancel comes.
+      await ocr.untilCalled(1);
 
       await repository.cancelGeneration();
       expect(network.engineCancels, 1);
@@ -1143,7 +1166,7 @@ void main() {
         const ['page-1.png'],
         outputMode: ExtractionOutputMode.grammar,
       );
-      await pumpEventQueue();
+      await network.untilTextPrompts(1);
       expect(network.textPrompts, 1);
 
       await repository.cancelGeneration();
