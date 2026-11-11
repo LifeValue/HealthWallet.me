@@ -363,4 +363,57 @@ void main() {
       expect(repository.basicInfoReads.last, ['/docs/next.jpg']);
     });
   });
+
+  group('handed over while it is read', () {
+    test('the next waiting document starts once the AI has stopped on a '
+        'document handed over', () async {
+      seed(
+        withScan(ProcessingStatus.pending).copyWith(
+          sessions: [
+            ...withScan(ProcessingStatus.pending).sessions,
+            const ProcessingSession(id: 'next', filePaths: ['/docs/next.jpg']),
+          ],
+        ),
+      );
+      bloc.add(const MappingInitiated(sessionId: 's'));
+      await settle();
+      expect(repository.basicInfoReads, hasLength(1));
+
+      bloc.add(const SessionHandedOver(sessionId: 's'));
+      await settle();
+      // Not while the AI is still stopping: the engine is not reused.
+      expect(repository.basicInfoReads, hasLength(1));
+
+      repository.basicInfoGate.complete();
+      repository.stopGate.complete();
+      await settle();
+
+      expect(session('s').status, ProcessingStatus.handedOver);
+      expect(repository.basicInfoReads.last, ['/docs/next.jpg']);
+    });
+
+    test('handing over a document that waits starts nothing', () async {
+      repository.stopGate.complete();
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(
+              id: 'busy',
+              filePaths: ['/docs/busy.jpg'],
+              status: ProcessingStatus.processingPatient,
+            ),
+            ProcessingSession(id: 's', filePaths: ['/docs/s.pdf']),
+            ProcessingSession(id: 'next', filePaths: ['/docs/next.jpg']),
+          ],
+        ),
+      );
+
+      bloc.add(const SessionHandedOver(sessionId: 's'));
+      await settle();
+
+      expect(session('s').status, ProcessingStatus.handedOver);
+      expect(bloc.state.sessionImagePaths, isEmpty);
+      expect(repository.basicInfoReads, isEmpty);
+    });
+  });
 }

@@ -496,8 +496,15 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     // The desktop processes it: a failure of this phone's attempt (no model)
     // no longer applies.
     emit(state.copyWith(status: _withoutFailureOf(session.id)));
-    await _stopLocalProcessing(session);
+    try {
+      await _stopLocalProcessing(session);
+    } on Exception catch (e, s) {
+      // It is the desktop's now; the next run waits for the AI to end.
+      logger.e('[ProcessingBloc] stopping the AI for a handover failed', e, s);
+    }
     _layoutExtraction.forget(session.id);
+    // It held the queue: the next document goes on.
+    if (session.isProcessing) startNextPendingSession();
   }
 
   Future<void> _onHandoverDraftReceived(
