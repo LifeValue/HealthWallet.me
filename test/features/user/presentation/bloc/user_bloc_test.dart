@@ -20,6 +20,7 @@ class _FakeUserRepository extends Fake implements UserRepository {
   Exception? getUserError;
   Exception? updateUserError;
   Exception? saveLockError;
+  Exception? readLockError;
   final List<User> updatedUsers = [];
   final List<bool> savedLockValues = [];
 
@@ -55,7 +56,11 @@ class _FakeUserRepository extends Fake implements UserRepository {
   }
 
   @override
-  Future<bool> isBiometricAuthEnabled() async => lockEnabled;
+  Future<bool> isBiometricAuthEnabled() async {
+    final error = readLockError;
+    if (error != null) throw error;
+    return lockEnabled;
+  }
 
   @override
   Future<void> saveBiometricAuth(bool isEnabled) async {
@@ -803,6 +808,53 @@ void main() {
       ],
       verify: (_) => expect(users.updatedUsers, isEmpty),
     );
+  });
+
+  blocTest<UserBloc, UserState>(
+    'puts listening back on when turning it off cannot be saved, and still '
+    'reports the failure when it cannot start again',
+    setUp: () {
+      receiveMode.isListening = true;
+      users.updateUserError = Exception('disk full');
+    },
+    build: buildBloc,
+    seed: () => const UserState(user: User(isReceiveModeEnabled: true)),
+    act: (bloc) {
+      // Stopping works; starting again, to undo it, fails.
+      receiveMode.startError = Exception('Bluetooth off');
+      bloc.add(const UserReceiveModeToggled(false));
+    },
+    expect: () => [
+      _state(status: const UserStatus.loading()),
+      _failure(
+        UserSetting.receiveMode,
+      ).having((s) => s.user.isReceiveModeEnabled, 'on', isTrue),
+    ],
+    verify: (_) {
+      expect(receiveMode.stops, 1);
+      expect(receiveMode.isListening, isFalse);
+    },
+  );
+
+  test('a sync reload that throws does not hold up the saves queued after '
+      'it', () async {
+    users.readLockError = Exception('keychain locked');
+    final errors = <Object>[];
+    late UserBloc bloc;
+
+    // The bloc rethrows a handler's error into the zone it was built in.
+    await runZonedGuarded(() async {
+      bloc = buildBloc()
+        ..add(const UserDataUpdatedFromSync())
+        ..add(const UserThemeToggled());
+      await pumpEventQueue();
+    }, (error, _) => errors.add(error));
+
+    expect(errors, [isA<Exception>()]);
+    expect(users.storedUser?.isDarkMode, isTrue);
+    expect(bloc.state.user.isDarkMode, isTrue);
+    expect(bloc.state.status, const UserStatus.success());
+    await bloc.close();
   });
 
   group('preferences', () {
