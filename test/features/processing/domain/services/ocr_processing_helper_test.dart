@@ -373,7 +373,7 @@ void main() {
     });
 
     test('deleting the session deletes the imported originals in its page '
-        'map; saving keeps them', () async {
+        'map, also after saving released its OCR pages', () async {
       final pdf = file('report.pdf');
       final outside = File('${root.path}/Documents/elsewhere/other.pdf')
         ..createSync(recursive: true)
@@ -390,11 +390,6 @@ void main() {
       await helper.discardOcrPages(sessionId: 's');
       expect(pdf.existsSync(), isTrue);
 
-      await helper.prepareOcrPages(
-        sessionId: 's',
-        filePaths: [pdf.path, outside.path],
-        previewPaths: previews,
-      );
       await helper.discardSessionPages(sessionId: 's');
       expect(pdf.existsSync(), isFalse);
       expect(outside.existsSync(), isTrue);

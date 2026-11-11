@@ -548,8 +548,8 @@ void main() {
     expect(logs, loggedWarning('page 3 of imports/report_1.pdf'));
   });
 
-  test('saving the records deletes the 200 dpi pages and the page map, '
-      'not the preview', () async {
+  test('saving the records deletes the 200 dpi pages, not the preview or '
+      'the page sources', () async {
     final previews = await open(session());
     final ocrPages = bloc.state.ocrPageByPreviewPath.values.toList();
     seed(
@@ -581,11 +581,14 @@ void main() {
     );
     expect(bloc.state.status, isA<Success>());
     await eventually(
-      () => !pageMap().existsSync() && bloc.state.ocrPageByPreviewPath.isEmpty,
+      () =>
+          bloc.state.ocrPageByPreviewPath.isEmpty &&
+          ocrPages.every((p) => !File(p).existsSync()),
     );
 
-    expect(ocrPages.any((p) => File(p).existsSync()), isFalse);
-    expect(pageMap().existsSync(), isFalse);
+    // Deleting the session needs the rest of the page map.
+    await eventually(() => (readPageMap()['ocrKeys'] as List).isEmpty);
+    expect(pageMapHas(previews.map(name)), isTrue);
     expect(previews.every((p) => File(p).existsSync()), isTrue);
     final ocrKey = ocrPages.first.split('/').last.split('_page_').first;
     expect(File('${cacheDir().path}/$ocrKey.json').existsSync(), isFalse);
