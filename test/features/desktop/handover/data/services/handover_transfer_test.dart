@@ -5,6 +5,8 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/utils/stored_file_name.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/message_router.dart';
+import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart'
+    as link;
 import 'package:health_wallet/features/desktop/handover/data/services/handover_sender_service.dart';
 import 'package:health_wallet/features/desktop/handover/data/services/handover_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_protocol.dart';
@@ -19,6 +21,7 @@ import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../../helpers/eventually.dart';
+import '../../../../../helpers/log_capture.dart';
 import '../../../desktop_test_fakes.dart';
 import '../../handover_test_fakes.dart';
 
@@ -395,6 +398,124 @@ void main() {
     });
   });
 
+  group('the desktop receiving', () {
+    final logs = captureLogs();
+
+    void offer(String id, List<Object?> files, {Object? v}) =>
+        pair.desktop.deliver(HandoverMessage.offer, {
+          'session_id': id,
+          'v': v ?? HandoverProtocol.version,
+          'files': files,
+        });
+
+    test('an offer with an unreadable file list is refused', () async {
+      offer('a', [
+        {'name': 1, 'size': 2},
+      ]);
+      offer('b', ['a.jpg']);
+      offer('c', [
+        {'name': 'a.jpg', 'size': -1},
+      ]);
+      offer('d', []);
+      await eventually(
+        () => pair.desktop.sentOf(HandoverMessage.reject).length == 4,
+      );
+
+      expect(
+        pair.desktop.sentOf(HandoverMessage.reject).map((r) => r['reason']),
+        everyElement('failed'),
+      );
+      expect(pair.desktop.sentOf(HandoverMessage.accept), isEmpty);
+    });
+
+    test('a chunk for no file of the document, or not base64, fails the '
+        'transfer', () async {
+      for (final id in ['index', 'data']) {
+        offer(id, [
+          {'name': 'a.jpg', 'size': 10},
+        ]);
+      }
+      pair.desktop.deliver(HandoverMessage.chunk, {
+        'session_id': 'index',
+        'index': 1,
+        'offset': 0,
+        'data': base64Encode([1]),
+      });
+      pair.desktop.deliver(HandoverMessage.chunk, {
+        'session_id': 'data',
+        'index': 0,
+        'offset': 0,
+        'data': '%%%',
+      });
+      await eventually(() => fromDesktop.length == 2);
+
+      expect(
+        fromDesktop.map((e) => (e as DesktopHandoverFailed).failure),
+        everyElement(HandoverFailure.failed),
+      );
+      expect(logs, loggedWarning('undecodable chunk for data'));
+      expect(tmp.listSync(recursive: true).whereType<File>(), isEmpty);
+    });
+
+    test('a message that fails is logged and the next one is still '
+        'handled', () async {
+      receiver.temporaryDirectory = () async =>
+          throw const FileSystemException('no temporary folder');
+      offer('first', [
+        {'name': 'a.jpg', 'size': 1},
+      ]);
+      await eventually(
+        () => logs.any((e) => '${e.message}'.contains('not handled')),
+      );
+      expect(logs, loggedWarning('handover.offer not handled'));
+
+      receiver.temporaryDirectory = () async => tmp;
+      offer('second', [
+        {'name': 'a.jpg', 'size': 1},
+      ]);
+      await eventually(
+        () => pair.desktop.sentOf(HandoverMessage.accept).isNotEmpty,
+      );
+      expect(pair.desktop.sentOf(HandoverMessage.accept).single, {
+        'session_id': 'second',
+      });
+    });
+
+    test('an answer the phone cannot get is logged, not thrown', () async {
+      pair.desktop.state = link.ConnectionState.disconnected;
+      offer('s', const [], v: 1);
+      await eventually(
+        () => logs.any((e) => '${e.message}'.contains('not sent')),
+      );
+
+      expect(logs, loggedWarning('handover.reject not sent'));
+    });
+
+    test('stopping drops the transfers in progress and their files', () async {
+      offer('s', [
+        {'name': 'a.jpg', 'size': 10},
+      ]);
+      await eventually(
+        () => pair.desktop.sentOf(HandoverMessage.accept).isNotEmpty,
+      );
+      expect(tmp.listSync(recursive: true).whereType<File>(), hasLength(1));
+
+      await receiver.stop();
+
+      expect(tmp.listSync(recursive: true).whereType<File>(), isEmpty);
+    });
+
+    test('received files that cannot be deleted are kept and the failure '
+        'logged', () async {
+      await IOOverrides.runZoned(
+        () => receiver.discardFiles('s'),
+        createDirectory: _UndeletableDirectory.new,
+      );
+
+      expect(logs, loggedWarning('received files not deleted'));
+    });
+  });
+
   group('messages to the phone', () {
     const draft = HandoverDraft(
       patient: StagedPatient(
@@ -488,4 +609,20 @@ void main() {
       expect(prefs.getString(HandoverSenderService.outboxKey), isNull);
     });
   });
+}
+
+/// A folder that exists and can't be deleted, e.g. a file in it is open on
+/// Windows.
+class _UndeletableDirectory extends Fake implements Directory {
+  _UndeletableDirectory(this.path);
+
+  @override
+  final String path;
+
+  @override
+  Future<bool> exists() async => true;
+
+  @override
+  Future<FileSystemEntity> delete({bool recursive = false}) =>
+      Future.error(FileSystemException('Permission denied', path));
 }
