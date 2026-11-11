@@ -68,6 +68,12 @@ class _FakePrinting extends PrintingPlatform {
   /// Rendering at a dpi in here waits for its completer.
   final gates = <double, Completer<void>>{};
 
+  final _started = <double, Completer<void>>{};
+
+  /// Completes once a render at [dpi] has started.
+  Future<void> renderStarted(double dpi) =>
+      (_started[dpi] ??= Completer<void>()).future;
+
   @override
   Stream<PdfRaster> raster(
     Uint8List document,
@@ -75,6 +81,8 @@ class _FakePrinting extends PrintingPlatform {
     double dpi,
   ) async* {
     rendered.add(dpi);
+    final started = _started[dpi] ??= Completer<void>();
+    if (!started.isCompleted) started.complete();
     await gates[dpi]?.future;
     final count = dpi > 72 ? ocrPageCount ?? pageCount : pageCount;
     yield* Stream.fromIterable([for (var i = 0; i < count; i++) _Page(dpi)]);
@@ -82,6 +90,31 @@ class _FakePrinting extends PrintingPlatform {
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// The app's page helper, which says when it has deleted a session's pages.
+class _WatchedOcrHelper extends OcrProcessingHelper {
+  _WatchedOcrHelper(super.recognizer, super.resolver);
+
+  int _discards = 0;
+  final _waiting = <int, Completer<void>>{};
+
+  /// Completes once [count] calls to delete a session's pages have finished.
+  Future<void> discarded(int count) => _discards >= count
+      ? Future<void>.value()
+      : (_waiting[count] ??= Completer<void>()).future;
+
+  @override
+  Future<void> discardSessionPages({
+    required String sessionId,
+    Iterable<String> pages = const [],
+  }) async {
+    try {
+      await super.discardSessionPages(sessionId: sessionId, pages: pages);
+    } finally {
+      _waiting.remove(++_discards)?.complete();
+    }
+  }
 }
 
 /// The app's PDF conversion, with OCR that records the pages it reads.
@@ -194,11 +227,12 @@ void main() {
   late SharedPreferences prefs;
   late ProcessingBloc bloc;
   late File pdf;
+  late _WatchedOcrHelper ocrHelper;
 
   /// A bloc as the app builds one at start.
   ProcessingBloc newBloc() => ProcessingBloc(
     repository,
-    OcrProcessingHelper(recognizer, PathResolver()),
+    ocrHelper = _WatchedOcrHelper(recognizer, PathResolver()),
     _FakeSyncRepository(),
     _FakeDocumentReferenceService(),
     _FakeHolderService(),
@@ -598,27 +632,27 @@ void main() {
     test('a session deleted while its ${dpi.round()} dpi pages render leaves '
         'no pages behind', () async {
       seed(session());
-      printing.gates[dpi] = Completer<void>();
+      final render = printing.gates[dpi] = Completer<void>();
       bloc.add(const SessionActivated(sessionId: _sessionId));
-      await eventually(() => printing.rendered.contains(dpi));
+      await printing.renderStarted(dpi);
 
       bloc.add(SessionCleared(session: session()));
       await bloc.stream.firstWhere((s) => s.sessions.isEmpty);
-      printing.gates[dpi]!.complete();
-      await eventually(
-        () =>
-            !pageMap().existsSync() &&
-            (!cacheDir().existsSync() || cacheDir().listSync().isEmpty),
-      );
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      render.complete();
+      // The removal deletes the pages it knows of; the opening, finding the
+      // session gone once its render ends, deletes the pages it rendered.
+      // Those are the last page writes and deletes of the session.
+      await ocrHelper.discarded(2);
 
       expect(printing.rendered, dpi == 72 ? [72] : [72, 200]);
       expect(
-        cacheDir().existsSync() && cacheDir().listSync().isNotEmpty,
-        false,
+        cacheDir().existsSync() ? cacheDir().listSync() : const [],
+        isEmpty,
       );
       expect(bloc.state.sessionImagePaths, isEmpty);
       expect(bloc.state.ocrPageByPreviewPath, isEmpty);
+      // Each page is deleted once: no delete found its file already gone.
+      expect(logs, isNot(loggedWarning('failed')));
     });
   }
 
