@@ -13,7 +13,7 @@
 #
 # Deploys follow Gitflow and only start once every check has passed:
 #   ios / android / macos   manual on develop, release/* and master   shell-macmini (fastlane)
-#   windows                 manual on develop, release/* and master   needs a `windows` runner (none yet)
+#   windows                 manual on develop, release/* and master   `windows` runner (ST1, PowerShell)
 #                           → GitLab Release with zip + msix
 #   linux                   manual on develop, release/* and master   Linux instance runner (Docker)
 #                           → the same GitLab Release with .deb + tar.gz
@@ -627,20 +627,25 @@ shorebird:patch-ios:
 # to it, so the Windows and Linux jobs of one pipeline share a release in either order.
 
 # Windows: portable zip + Store MSIX, built by scripts/build_windows.ps1.
-# NO WINDOWS RUNNER IS REGISTERED YET. Until one with the `windows` tag exists, triggering this
-# job leaves it pending. Expected on that machine (the script's header lists the same): Git for
-# Windows, Visual Studio 2022 with "Desktop development with C++", FVM on PATH (it installs the
-# Flutter version from .fvmrc on first use), and the shell set to PowerShell (the runner default).
+# Runs on the `windows` runner ST1: an x64 Windows machine with a protected project runner (shell
+# executor, Windows PowerShell 5.1, builds in C:\gl\builds to keep paths short), started as a
+# service under the local, non-admin user ciagent. It only takes jobs from protected branches and
+# must be on when the job starts. Installed on it (the script's header lists the same): Git for
+# Windows, Visual Studio 2022 Build Tools with the C++ workload and ATL, FVM on the machine PATH
+# (it installs the Flutter version from .fvmrc on first use), Developer Mode and long paths. A
+# service only sees PATH changes after Windows restarts.
 windows:release:
   stage: deploy
   tags: [windows]
   interruptible: false
   needs: *all_checks
   rules: *on_deploy_branches
+  # Same rewrite as .private_deps. The braces matter: in "$env:CI_SERVER_HOST:2822" PowerShell reads
+  # ":2822" as part of the variable name, which expands to nothing.
   before_script:
     - $env:GIT_CONFIG_COUNT = "1"
-    - $env:GIT_CONFIG_KEY_0 = "url.https://gitlab-ci-token:$env:CI_JOB_TOKEN@$env:CI_SERVER_HOST/.insteadOf"
-    - $env:GIT_CONFIG_VALUE_0 = "ssh://git@$env:CI_SERVER_HOST:2822/"
+    - $env:GIT_CONFIG_KEY_0 = "url.https://gitlab-ci-token:${env:CI_JOB_TOKEN}@${env:CI_SERVER_HOST}/.insteadOf"
+    - $env:GIT_CONFIG_VALUE_0 = "ssh://git@${env:CI_SERVER_HOST}:2822/"
   script:
     - if (-not $env:ENV_FILE_CONTENT) { throw "Protected CI/CD variables are not available on $env:CI_COMMIT_BRANCH. Protect this branch to deploy from it." }
     - Copy-Item $env:ENV_FILE_CONTENT .env
@@ -657,11 +662,17 @@ windows:release:
         tag_name    = $tag
         ref         = $env:CI_COMMIT_SHA
         name        = $tag
-        description = "## HealthWallet $tag`n`nBranch: ``$env:CI_COMMIT_BRANCH`` · Commit: ``$env:CI_COMMIT_SHA```n`n- **Windows installer (.msix):** double-click to install (Windows 10+)`n- **Windows portable (.zip):** extract and run ``health_wallet.exe```n- **Linux (.deb):** ``sudo apt install ./HealthWallet-Linux-*.deb`` (Ubuntu 24.04, Debian 13 or newer)`n- **Linux portable (.tar.gz):** extract and run ``HealthWallet/health_wallet``"
+        description = "## HealthWallet $tag`n`nBranch: ``$env:CI_COMMIT_BRANCH``, commit: ``$env:CI_COMMIT_SHA```n`n- **Windows installer (.msix):** double-click to install (Windows 10+)`n- **Windows portable (.zip):** extract and run ``health_wallet.exe```n- **Linux (.deb):** ``sudo apt install ./HealthWallet-Linux-*.deb`` (Ubuntu 24.04, Debian 13 or newer)`n- **Linux portable (.tar.gz):** extract and run ``HealthWallet/health_wallet``"
       } | ConvertTo-Json
-      # The other platform's job may have created it already.
-      try { Invoke-RestMethod -Method Post -Uri $releases -Headers $headers -ContentType "application/json" -Body $release | Out-Null }
-      catch { Invoke-RestMethod -Method Get -Uri "$releases/$tag" -Headers $headers | Out-Null }
+      # Sent as UTF-8 bytes: Windows PowerShell 5.1 would otherwise encode a string body as Latin-1.
+      # 409 means the other platform's job created the release already; anything else fails the job
+      # with GitLab's reason.
+      try {
+        Invoke-RestMethod -Method Post -Uri $releases -Headers $headers -ContentType "application/json; charset=utf-8" -Body ([System.Text.Encoding]::UTF8.GetBytes($release)) | Out-Null
+      } catch {
+        $status = [int]$_.Exception.Response.StatusCode
+        if ($status -ne 409) { throw "Creating release $tag failed (HTTP $status): $($_.ErrorDetails.Message)" }
+      }
     - foreach ($file in $files) { Invoke-RestMethod -Method Post -Uri "$releases/$tag/assets/links" -Headers $headers -Body @{ name = $file.Name; url = "$packageUrl/$($file.Name)"; link_type = "package" } | Out-Null }
   after_script:
     - Remove-Item -Force -ErrorAction SilentlyContinue .env
@@ -708,17 +719,21 @@ linux:release:
     - |
       description="## HealthWallet $tag
 
-      Branch: \`$CI_COMMIT_BRANCH\` · Commit: \`$CI_COMMIT_SHA\`
+      Branch: \`$CI_COMMIT_BRANCH\`, commit: \`$CI_COMMIT_SHA\`
 
       - **Windows installer (.msix):** double-click to install (Windows 10+)
       - **Windows portable (.zip):** extract and run \`health_wallet.exe\`
       - **Linux (.deb):** \`sudo apt install ./HealthWallet-Linux-*.deb\` (Ubuntu 24.04, Debian 13 or newer)
       - **Linux portable (.tar.gz):** extract and run \`HealthWallet/health_wallet\`"
-      # The other platform's job may have created it already.
-      jq -n --arg tag "$tag" --arg ref "$CI_COMMIT_SHA" --arg description "$description" \
+      # 409 means the other platform's job created the release already; anything else fails the job
+      # with GitLab's reason.
+      status="$(jq -n --arg tag "$tag" --arg ref "$CI_COMMIT_SHA" --arg description "$description" \
         '{tag_name: $tag, ref: $ref, name: $tag, description: $description}' |
-        curl --fail -sS -o /dev/null -H "JOB-TOKEN: $CI_JOB_TOKEN" -H "Content-Type: application/json" --data @- "$releases" ||
-        curl --fail -sS -o /dev/null -H "JOB-TOKEN: $CI_JOB_TOKEN" "$releases/$tag"
+        curl -sS -o release.json -w '%{http_code}' -H "JOB-TOKEN: $CI_JOB_TOKEN" -H "Content-Type: application/json" --data @- "$releases")"
+      case "$status" in
+        201 | 409) ;;
+        *) echo "Creating release $tag failed (HTTP $status):"; cat release.json; exit 1 ;;
+      esac
     - |
       for file in build/linux/packages/*; do
         name="$(basename "$file")"
