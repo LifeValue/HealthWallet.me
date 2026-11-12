@@ -3,7 +3,9 @@
 # windows:release runs this script.
 #
 # Needs: Git for Windows, Visual Studio 2022 with "Desktop development with C++", FVM on PATH
-# (`choco install fvm`, or `dart pub global activate fvm`), and SSH access to
+# (the standalone fvm-<version>-windows-x64.zip from https://github.com/leoafarias/fvm/releases;
+# `choco install fvm` compiles FVM with the Dart already on the machine and fails silently when
+# that Dart is older than 3.6), and SSH access to
 # git.lifevalue.com (port 2822) for the private packages (CI rewrites them to HTTPS with its job token).
 #
 # Usage: .\scripts\build_windows.ps1 [-Msix] [-SkipCodegen] [-Clean]
@@ -29,21 +31,35 @@ if (-not (Get-Command fvm -ErrorAction SilentlyContinue)) {
 }
 $FlutterVersion = (Get-Content .fvmrc -Raw | ConvertFrom-Json).flutter
 
-# Installs the pinned version when missing; FVM then runs it for this project.
+# Installs the pinned version when missing.
 Invoke-Step "Flutter $FlutterVersion (from .fvmrc)" { fvm install --skip-pub-get }
-Invoke-Step "Windows desktop enabled" { fvm flutter config --enable-windows-desktop }
+
+# The later steps run that SDK directly, not through `fvm flutter` or `fvm dart`: FVM does not pass
+# the GIT_CONFIG_* variables on to Flutter, and CI fetches the private packages through them.
+$SdkInfo = fvm flutter --version --machine | Out-String
+if ($LASTEXITCODE -ne 0) { throw "fvm flutter --version failed (exit code $LASTEXITCODE)" }
+$JsonStart = $SdkInfo.IndexOf("{")
+$JsonEnd = $SdkInfo.LastIndexOf("}")
+if ($JsonStart -lt 0 -or $JsonEnd -lt $JsonStart) { throw "Unexpected output from fvm flutter --version --machine:`n$SdkInfo" }
+$FlutterRoot = ($SdkInfo.Substring($JsonStart, $JsonEnd - $JsonStart + 1) | ConvertFrom-Json).flutterRoot
+$Flutter = Join-Path $FlutterRoot "bin\flutter.bat"
+$Dart = Join-Path $FlutterRoot "bin\dart.bat"
+if (-not (Test-Path $Flutter)) { throw "Flutter $FlutterVersion not found in '$FlutterRoot'" }
+Write-Host "Flutter SDK: $FlutterRoot"
+
+Invoke-Step "Windows desktop enabled" { & $Flutter config --enable-windows-desktop }
 
 if (-not (Test-Path .env)) {
     Write-Warning ".env not found: the app builds with the default (empty) configuration."
 }
 
-if ($Clean) { Invoke-Step "Clean" { fvm flutter clean } }
-Invoke-Step "Dependencies" { fvm flutter pub get --enforce-lockfile }
+if ($Clean) { Invoke-Step "Clean" { & $Flutter clean } }
+Invoke-Step "Dependencies" { & $Flutter pub get --enforce-lockfile }
 if (-not $SkipCodegen) {
-    Invoke-Step "Code generation" { fvm dart run build_runner build --delete-conflicting-outputs }
+    Invoke-Step "Code generation" { & $Dart run build_runner build --delete-conflicting-outputs }
 }
 Invoke-Step "Windows release build" {
-    fvm flutter build windows --release --target lib/main_desktop.dart
+    & $Flutter build windows --release --target lib/main_desktop.dart
 }
 
 $Version = (Select-String -Path pubspec.yaml -Pattern '^version:\s*([^+\s]+)').Matches[0].Groups[1].Value
@@ -62,7 +78,7 @@ Write-Host $Zip
 
 if ($Msix) {
     # msix_config in pubspec.yaml; the Store signs the package.
-    Invoke-Step "MSIX" { fvm dart run msix:create --version "$Version.0" }
+    Invoke-Step "MSIX" { & $Dart run msix:create --version "$Version.0" }
     $Package = Get-ChildItem -Path $Release -Filter "*.msix" | Select-Object -First 1
     $MsixOut = "$Out\HealthWallet-Windows-v$Version-setup.msix"
     Copy-Item $Package.FullName $MsixOut
