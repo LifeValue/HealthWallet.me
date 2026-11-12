@@ -637,10 +637,12 @@ windows:release:
   interruptible: false
   needs: *all_checks
   rules: *on_deploy_branches
+  # Same rewrite as .private_deps. The braces matter: in "$env:CI_SERVER_HOST:2822" PowerShell reads
+  # ":2822" as part of the variable name, which expands to nothing.
   before_script:
     - $env:GIT_CONFIG_COUNT = "1"
-    - $env:GIT_CONFIG_KEY_0 = "url.https://gitlab-ci-token:$env:CI_JOB_TOKEN@$env:CI_SERVER_HOST/.insteadOf"
-    - $env:GIT_CONFIG_VALUE_0 = "ssh://git@$env:CI_SERVER_HOST:2822/"
+    - $env:GIT_CONFIG_KEY_0 = "url.https://gitlab-ci-token:${env:CI_JOB_TOKEN}@${env:CI_SERVER_HOST}/.insteadOf"
+    - $env:GIT_CONFIG_VALUE_0 = "ssh://git@${env:CI_SERVER_HOST}:2822/"
   script:
     - if (-not $env:ENV_FILE_CONTENT) { throw "Protected CI/CD variables are not available on $env:CI_COMMIT_BRANCH. Protect this branch to deploy from it." }
     - Copy-Item $env:ENV_FILE_CONTENT .env
