@@ -2,7 +2,9 @@
 # portable zip and, with -Msix, a Store MSIX, in build\windows\packages\. The CI job
 # windows:release runs this script.
 #
-# Needs: Git for Windows, Visual Studio 2022 with "Desktop development with C++", FVM on PATH
+# Needs: Git for Windows, Visual Studio 2022 with "Desktop development with C++" including ATL
+# (flutter_secure_storage needs atlstr.h; the Build Tools' C++ workload leaves it out), Developer
+# Mode (plugin symlinks), FVM on PATH
 # (the standalone fvm-<version>-windows-x64.zip from https://github.com/leoafarias/fvm/releases;
 # `choco install fvm` compiles FVM with the Dart already on the machine and fails silently when
 # that Dart is older than 3.6), and SSH access to

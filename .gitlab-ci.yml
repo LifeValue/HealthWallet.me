@@ -13,7 +13,7 @@
 #
 # Deploys follow Gitflow and only start once every check has passed:
 #   ios / android / macos   manual on develop, release/* and master   shell-macmini (fastlane)
-#   windows                 manual on develop, release/* and master   needs a `windows` runner (none yet)
+#   windows                 manual on develop, release/* and master   `windows` runner (ST1, PowerShell)
 #                           → GitLab Release with zip + msix
 #   linux                   manual on develop, release/* and master   Linux instance runner (Docker)
 #                           → the same GitLab Release with .deb + tar.gz
@@ -627,10 +627,13 @@ shorebird:patch-ios:
 # to it, so the Windows and Linux jobs of one pipeline share a release in either order.
 
 # Windows: portable zip + Store MSIX, built by scripts/build_windows.ps1.
-# NO WINDOWS RUNNER IS REGISTERED YET. Until one with the `windows` tag exists, triggering this
-# job leaves it pending. Expected on that machine (the script's header lists the same): Git for
-# Windows, Visual Studio 2022 with "Desktop development with C++", FVM on PATH (it installs the
-# Flutter version from .fvmrc on first use), and the shell set to PowerShell (the runner default).
+# Runs on the `windows` runner ST1: an x64 Windows machine with a protected project runner (shell
+# executor, Windows PowerShell 5.1, builds in C:\gl\builds to keep paths short), started as a
+# service under the local, non-admin user ciagent. It only takes jobs from protected branches and
+# must be on when the job starts. Installed on it (the script's header lists the same): Git for
+# Windows, Visual Studio 2022 Build Tools with the C++ workload and ATL, FVM on the machine PATH
+# (it installs the Flutter version from .fvmrc on first use), Developer Mode and long paths. A
+# service only sees PATH changes after Windows restarts.
 windows:release:
   stage: deploy
   tags: [windows]
