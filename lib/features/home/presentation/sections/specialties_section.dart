@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
@@ -44,6 +46,37 @@ class SpecialtiesSection extends StatelessWidget {
     return screenWidth < _breakpoint ? 2.07 : 2.1;
   }
 
+  static const double _cardBorderWidth = 1;
+
+  double _iconSize(double screenWidth) => screenWidth < _breakpoint ? 22 : 26;
+
+  double _verticalPadding(double screenWidth) =>
+      screenWidth >= 600 ? Insets.small : Insets.normal;
+
+  TextStyle _nameStyle(BuildContext context, double screenWidth) =>
+      AppTextStyle.bodySmall.copyWith(
+        fontSize: screenWidth < _breakpoint ? 10 : 14,
+        color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+      );
+
+  TextStyle _countStyle(BuildContext context, double screenWidth) =>
+      AppTextStyle.bodyMedium.copyWith(
+        fontSize: screenWidth < _breakpoint ? 14 : 16,
+        color: context.colorScheme.onSurface,
+      );
+
+  /// What a card's content needs inside the padding and the border: on a
+  /// tablet the name and the count share a row, on a phone they stack.
+  double _minCardHeight(BuildContext context, double screenWidth) {
+    final name = measureLineHeight(context, _nameStyle(context, screenWidth));
+    final count = measureLineHeight(context, _countStyle(context, screenWidth));
+    final text = screenWidth >= 600
+        ? math.max(name, count)
+        : name + Insets.small + count;
+    return math.max(_iconSize(screenWidth), text) +
+        2 * (_verticalPadding(screenWidth) + _cardBorderWidth);
+  }
+
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.sizeOf(context).width;
@@ -56,6 +89,7 @@ class SpecialtiesSection extends StatelessWidget {
       crossAxisSpacing: _getCrossAxisSpacing(screenWidth),
       mainAxisSpacing: _getCrossAxisSpacing(screenWidth),
       childAspectRatio: _getChildAspectRatio(screenWidth),
+      minItemHeight: _minCardHeight(context, screenWidth),
       itemBuilder: (context, card, index) {
         final isFirstCard = index == 0 && !editMode;
         final cardContent = _buildSpecialtyCard(
@@ -88,31 +122,26 @@ class SpecialtiesSection extends StatelessWidget {
     double screenWidth, {
     Key? key,
   }) {
-    final bool isSmall = screenWidth < _breakpoint;
     final bool isTabletLayout = screenWidth >= 600;
-    final double iconSize = isSmall ? 22 : 26;
+    final double iconSize = _iconSize(screenWidth);
 
-    final TextStyle nameStyle = AppTextStyle.bodySmall.copyWith(
-      fontSize: isSmall ? 10 : 14,
-      color: context.colorScheme.onSurface.withValues(alpha: 0.6),
-    );
-
-    final TextStyle countStyle = AppTextStyle.bodyMedium.copyWith(
-      fontSize: isSmall ? 14 : 16,
-      color: context.colorScheme.onSurface,
-    );
+    final TextStyle nameStyle = _nameStyle(context, screenWidth);
+    final TextStyle countStyle = _countStyle(context, screenWidth);
 
     return Container(
       key: key,
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: context.theme.dividerColor, width: 1),
+        border: Border.all(
+          color: context.theme.dividerColor,
+          width: _cardBorderWidth,
+        ),
       ),
       child: Padding(
         padding: EdgeInsets.symmetric(
           horizontal: Insets.normal,
-          vertical: isTabletLayout ? Insets.small : Insets.normal,
+          vertical: _verticalPadding(screenWidth),
         ),
         child: Center(
           child: Row(
