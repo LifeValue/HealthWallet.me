@@ -13,10 +13,17 @@
 #
 # Deploys follow Gitflow and only start once every check has passed:
 #   ios / android / macos   manual on develop, release/* and master   shell-macmini (fastlane)
+#   macos:direct            manual on develop, release/* and master   shell-macmini (fastlane)
+#                           → notarized DMG on the GitLab Release
 #   windows                 manual on develop, release/* and master   `windows` runner (ST1, PowerShell)
-#                           → GitLab Release with zip + msix
+#                           → the same GitLab Release with zip + msix
 #   linux                   manual on develop, release/* and master   Linux instance runner (Docker)
 #                           → the same GitLab Release with .deb + tar.gz
+#   cdn:publish             manual on develop, release/* and master,  Linux instance runner (Docker)
+#                           once windows and linux succeeded
+#                           → the release's zip, .deb, tar.gz and DMG
+#                           (if built) on the download CDN: master to
+#                           stable/, the others to beta/
 #   shorebird patches       manual on master                          shell-macmini
 # feature/*, bugfix/* and hotfix/* branches get the checks only.
 #
@@ -51,9 +58,24 @@
 #        ANDROID_KEYSTORE_BASE64                      masked
 #        ANDROID_STORE_PASSWORD, ANDROID_KEY_PASSWORD, ANDROID_KEY_ALIAS   masked
 #        PLAY_STORE_SERVICE_ACCOUNT_BASE64            masked
+#      The download CDN for cdn:publish (RustFS, S3-compatible; server setup in
+#      _bmad-output/planning-artifacts/download-cdn.md), new, not from GitHub:
+#        CDN_S3_ENDPOINT                              e.g. https://s3.example.org
+#        CDN_S3_REGION                                optional
+#        CDN_BUCKET                                   bucket the website downloads from
+#        CDN_ACCESS_KEY_ID, CDN_SECRET_ACCESS_KEY     masked — defined twice, one key per channel: the
+#                                                     stable/-only key scoped to environment
+#                                                     downloads-stable, the beta/-only key to
+#                                                     downloads-beta
+#        CDN_PUBLIC_URL                               public base URL of the bucket, no trailing /
 #   Copied from GitHub but unused (fastlane match was replaced by automatic signing, and the pub
 #   dependencies come through the job token): MATCH_GIT_URL, MATCH_PASSWORD, SSH_PRIVATE_KEY.
 #   Delete them once a TestFlight upload has succeeded without them.
+#   4. A "Developer ID Application" certificate for team N668J5X92P, with its private key, in the
+#      Mac mini's login keychain: macos:direct signs the DMG with it and stops with instructions
+#      when it is missing. Create it in Xcode (Settings → Accounts → Manage Certificates → +) or at
+#      developer.apple.com, as the Account Holder, and import the .p12 into the runner user's
+#      login keychain.
 
 # Branch pipelines only, no separate merge request pipelines: every push gets one pipeline with the
 # manual deploy jobs on it, and an MR shows its source branch's pipeline.
@@ -483,15 +505,20 @@ scan:secrets:
 
 # The integration tests in integration_test/ boot the real mobile app on an iOS simulator. They
 # need no secrets (an empty .env, as in `checks`), so they can run on any branch, but they hold
-# the shared Mac mini for several minutes: automatic on develop, release/* and master, by hand
-# elsewhere. Each run gets a fresh simulator, deleted afterwards, since the tests leave the app in
-# Romanian with demo data. extraction_bench/ needs downloaded models and is left to developers.
+# the shared Mac mini for several minutes. Automatic on develop, release/* and master, and
+# automatic and required on every push to feature/*, bugfix/* and hotfix/*, so a failure blocks
+# the merge request ("Pipelines must succeed") instead of turning up on develop after the merge.
+# Any other branch can run them by hand. Each run gets a fresh simulator, deleted afterwards,
+# since the tests leave the app in Romanian with demo data. extraction_bench/ needs downloaded
+# models and is left to developers.
 test:integration:
   stage: check
   tags: [shell-macmini]
   needs: ["checks"]
   rules:
     - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH =~ /^release\//
+    # Working branches: automatic and required, whatever they change.
+    - if: $CI_COMMIT_BRANCH =~ /^(feature|bugfix|hotfix)\//
     - when: manual
       allow_failure: true
   cache:
@@ -622,9 +649,33 @@ shorebird:patch-ios:
 # =============================================================================
 # master       → release      v<version>
 # other branch → pre-release  v<version>-dev.<pipeline iid>
-# Each job uploads its packages to the project's generic package registry, creates the release
-# for the tag when it does not exist yet (on the commit that was built) and links its packages
-# to it, so the Windows and Linux jobs of one pipeline share a release in either order.
+# (scripts/release_tag.sh; windows:release applies the same rule in PowerShell.)
+# Each job uploads its packages to the project's generic package registry (healthwallet-macos,
+# healthwallet-windows, healthwallet-linux), creates the release for the tag when it does not
+# exist yet (on the commit that was built) and links its packages to it, so the macOS, Windows
+# and Linux jobs of one pipeline share a release in any order. macOS and Linux do this with
+# scripts/gitlab_release.sh, Windows in the job itself.
+# cdn:publish then copies the release's packages from the registry to the download CDN.
+
+# macOS outside the App Store: a Developer ID signed, notarized and stapled DMG built by the
+# fastlane lane `direct` (macos/fastlane/Fastfile) into build/macos/packages/. Needs the Developer
+# ID Application certificate in the runner's keychain (setup step 4 at the top of this file).
+macos:direct:
+  extends: .macmini
+  stage: deploy
+  rules: *on_deploy_branches
+  script:
+    - *apple_signing
+    - *ios_cocoapods
+    - fvm flutter precache --macos
+    # The lane writes exactly one file here; never upload a DMG a previous run left behind.
+    - rm -rf build/macos/packages
+    - cd macos
+    - *pod_install
+    - bundle install --jobs 4 --retry 3
+    - bundle exec fastlane direct
+    - cd ..
+    - scripts/gitlab_release.sh healthwallet-macos build/macos/packages
 
 # Windows: portable zip + Store MSIX, built by scripts/build_windows.ps1.
 # Runs on the `windows` runner ST1: an x64 Windows machine with a protected project runner (shell
@@ -662,7 +713,7 @@ windows:release:
         tag_name    = $tag
         ref         = $env:CI_COMMIT_SHA
         name        = $tag
-        description = "## HealthWallet $tag`n`nBranch: ``$env:CI_COMMIT_BRANCH``, commit: ``$env:CI_COMMIT_SHA```n`n- **Windows installer (.msix):** double-click to install (Windows 10+)`n- **Windows portable (.zip):** extract and run ``health_wallet.exe```n- **Linux (.deb):** ``sudo apt install ./HealthWallet-Linux-*.deb`` (Ubuntu 24.04, Debian 13 or newer)`n- **Linux portable (.tar.gz):** extract and run ``HealthWallet/health_wallet``"
+        description = "## HealthWallet $tag`n`nBranch: ``$env:CI_COMMIT_BRANCH``, commit: ``$env:CI_COMMIT_SHA```n`n- **macOS (.dmg):** open it and drag HealthWallet to Applications (macOS 14 or newer)`n- **Windows installer (.msix):** double-click to install (Windows 10+)`n- **Windows portable (.zip):** extract and run ``health_wallet.exe```n- **Linux (.deb):** ``sudo apt install ./HealthWallet-Linux-*.deb`` (Ubuntu 24.04, Debian 13 or newer)`n- **Linux portable (.tar.gz):** extract and run ``HealthWallet/health_wallet``"
       } | ConvertTo-Json
       # Sent as UTF-8 bytes: Windows PowerShell 5.1 would otherwise encode a string body as Latin-1.
       # 409 means the other platform's job created the release already; anything else fails the job
@@ -699,7 +750,7 @@ linux:release:
     # Flutter's Linux toolchain, the libraries the runner and the plugins link, and dpkg-deb.
     - >-
       apt-get install -y -qq --no-install-recommends
-      ca-certificates git curl unzip xz-utils zip jq file dpkg-dev
+      ca-certificates git curl unzip xz-utils zip file dpkg-dev
       clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
       libsecret-1-dev libayatana-appindicator3-dev libtesseract-dev libleptonica-dev
     - cp "$ENV_FILE_CONTENT" .env
@@ -708,38 +759,53 @@ linux:release:
     - dart run build_runner build --delete-conflicting-outputs
     - flutter build linux --release --target lib/main_desktop.dart
     - scripts/package_linux.sh
-    - version="$(sed -nE 's/^version:[[:space:]]*([^+[:space:]]+).*/\1/p' pubspec.yaml)"
-    - if [ "$CI_COMMIT_BRANCH" = master ]; then tag="v$version"; else tag="v$version-dev.$CI_PIPELINE_IID"; fi
-    - package_url="$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/generic/healthwallet-linux/$tag"
-    - releases="$CI_API_V4_URL/projects/$CI_PROJECT_ID/releases"
-    - |
-      for file in build/linux/packages/*; do
-        curl --fail-with-body -sS -H "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "$file" "$package_url/$(basename "$file")"
-      done
-    - |
-      description="## HealthWallet $tag
-
-      Branch: \`$CI_COMMIT_BRANCH\`, commit: \`$CI_COMMIT_SHA\`
-
-      - **Windows installer (.msix):** double-click to install (Windows 10+)
-      - **Windows portable (.zip):** extract and run \`health_wallet.exe\`
-      - **Linux (.deb):** \`sudo apt install ./HealthWallet-Linux-*.deb\` (Ubuntu 24.04, Debian 13 or newer)
-      - **Linux portable (.tar.gz):** extract and run \`HealthWallet/health_wallet\`"
-      # 409 means the other platform's job created the release already; anything else fails the job
-      # with GitLab's reason.
-      status="$(jq -n --arg tag "$tag" --arg ref "$CI_COMMIT_SHA" --arg description "$description" \
-        '{tag_name: $tag, ref: $ref, name: $tag, description: $description}' |
-        curl -sS -o release.json -w '%{http_code}' -H "JOB-TOKEN: $CI_JOB_TOKEN" -H "Content-Type: application/json" --data @- "$releases")"
-      case "$status" in
-        201 | 409) ;;
-        *) echo "Creating release $tag failed (HTTP $status):"; cat release.json; exit 1 ;;
-      esac
-    - |
-      for file in build/linux/packages/*; do
-        name="$(basename "$file")"
-        curl --fail-with-body -sS -o /dev/null -H "JOB-TOKEN: $CI_JOB_TOKEN" \
-          --data-urlencode "name=$name" --data-urlencode "url=$package_url/$name" --data "link_type=package" \
-          "$releases/$tag/assets/links"
-      done
+    - scripts/gitlab_release.sh healthwallet-linux build/linux/packages
   after_script:
     - rm -f .env
+
+# =============================================================================
+# Download CDN — the website's download buttons
+# =============================================================================
+# Copies one pipeline's desktop packages from the generic package registry to the S3-compatible
+# bucket (RustFS) behind the download site, with scripts/publish_cdn.sh: the Windows portable zip,
+# the Linux .deb and .tar.gz, and the macOS DMG when macos:direct has already uploaded it for this
+# tag (otherwise it is skipped; run cdn:publish again after macos:direct to add it). Files go to
+# <channel>/<tag>/ and are never overwritten with other content; <channel>/versions.json, written
+# last, tells the website the current version. No Android APK (Google Play) and no MSIX (Store).
+# master publishes to stable/, develop and release/* to beta/. Server setup and the versions.json
+# contract: _bmad-output/planning-artifacts/download-cdn.md.
+#
+# It becomes playable once windows:release and linux:release have both succeeded (they in turn
+# need every check), and its rules mirror .on_deploy_branches, adding the channel. One publish at
+# a time, so two pipelines cannot interleave their versions.json writes.
+# Playing cdn:publish on an older pipeline rolls the website back to that version: this is the
+# intended rollback path.
+cdn:publish:
+  stage: deploy
+  image:
+    name: rclone/rclone:1.75.2
+    entrypoint: [""]
+  interruptible: false
+  needs:
+    - job: windows:release
+      artifacts: false
+    - job: linux:release
+      artifacts: false
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+      when: manual
+      allow_failure: true
+      variables:
+        CDN_CHANNEL: stable
+    - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH =~ /^release\//
+      when: manual
+      allow_failure: true
+      variables:
+        CDN_CHANNEL: beta
+  resource_group: cdn:publish
+  environment:
+    name: downloads-$CDN_CHANNEL
+  before_script:
+    - apk add --no-cache bash curl
+  script:
+    - scripts/publish_cdn.sh
