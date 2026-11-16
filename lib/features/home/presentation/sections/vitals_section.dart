@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
@@ -52,6 +54,48 @@ class VitalsSection extends StatelessWidget {
     return screenWidth < _breakpoint ? 1.88 : 1.85;
   }
 
+  static const double _cardBorderWidth = 1;
+
+  double _iconSize(double screenWidth) => screenWidth < _breakpoint ? 14 : 16;
+
+  double _cardPadding(double screenWidth) =>
+      screenWidth >= 600 ? Insets.small : Insets.normal;
+
+  TextStyle _titleStyle(BuildContext context, double screenWidth) =>
+      AppTextStyle.bodySmall.copyWith(
+        fontSize: screenWidth < _breakpoint ? 12 : 14,
+        color: context.colorScheme.onSurface,
+      );
+
+  TextStyle _valueStyle(BuildContext context, double screenWidth) =>
+      AppTextStyle.titleLarge.copyWith(
+        fontSize: screenWidth < _breakpoint ? 20 : 24,
+        color: context.colorScheme.onSurface,
+      );
+
+  TextStyle _unitStyle(BuildContext context, double screenWidth) =>
+      AppTextStyle.bodySmall.copyWith(
+        fontSize: screenWidth < _breakpoint ? 11 : 12,
+        color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+      );
+
+  /// What a card's content needs: the title row, the gap and the value row,
+  /// inside the padding and the border.
+  double _minCardHeight(BuildContext context, double screenWidth) {
+    final titleRow = math.max(
+      _iconSize(screenWidth),
+      measureLineHeight(context, _titleStyle(context, screenWidth)),
+    );
+    final valueRow = math.max(
+      measureLineHeight(context, _valueStyle(context, screenWidth)),
+      measureLineHeight(context, _unitStyle(context, screenWidth)),
+    );
+    return titleRow +
+        Insets.smallNormal +
+        valueRow +
+        2 * (_cardPadding(screenWidth) + _cardBorderWidth);
+  }
+
   @override
   Widget build(BuildContext context) {
     final vitalsToShow = vitalsExpanded ? allAvailableVitals : vitals;
@@ -86,6 +130,7 @@ class VitalsSection extends StatelessWidget {
           crossAxisSpacing: _getCrossAxisSpacing(screenWidth),
           mainAxisSpacing: _getCrossAxisSpacing(screenWidth),
           childAspectRatio: _getChildAspectRatio(screenWidth, isPortrait),
+          minItemHeight: _minCardHeight(context, screenWidth),
           shrinkWrap: true,
           padding: EdgeInsets.zero,
           itemBuilder: (context, vital, index) {
@@ -167,11 +212,10 @@ class VitalsSection extends StatelessWidget {
     final String? status = vital.status;
 
     final bool isSmall = screenWidth < _breakpoint;
-    final bool isTabletLayout = screenWidth >= 600;
 
-    final double iconSize = isSmall ? 14 : 16;
+    final double iconSize = _iconSize(screenWidth);
 
-    final double cardPadding = isTabletLayout ? Insets.small : Insets.normal;
+    final double cardPadding = _cardPadding(screenWidth);
 
     final double iconTitleSpacing = isSmall ? 6 : Insets.smaller;
 
@@ -344,20 +388,9 @@ class VitalsSection extends StatelessWidget {
       }
     }
 
-    final TextStyle titleStyle = AppTextStyle.bodySmall.copyWith(
-      fontSize: isSmall ? 12 : 14,
-      color: context.colorScheme.onSurface,
-    );
-
-    final TextStyle valueStyle = AppTextStyle.titleLarge.copyWith(
-      fontSize: isSmall ? 20 : 24,
-      color: context.colorScheme.onSurface,
-    );
-
-    final TextStyle unitStyle = AppTextStyle.bodySmall.copyWith(
-      fontSize: isSmall ? 11 : 12,
-      color: context.colorScheme.onSurface.withValues(alpha: 0.6),
-    );
+    final TextStyle titleStyle = _titleStyle(context, screenWidth);
+    final TextStyle valueStyle = _valueStyle(context, screenWidth);
+    final TextStyle unitStyle = _unitStyle(context, screenWidth);
 
     return Container(
       key: key,
@@ -366,7 +399,7 @@ class VitalsSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: context.theme.dividerColor,
-          width: 1,
+          width: _cardBorderWidth,
         ),
       ),
       child: Padding(
@@ -399,23 +432,27 @@ class VitalsSection extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: Insets.smallNormal),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Flexible(
-                    child: Text(
-                      value,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: valueStyle,
-                    ),
-                  ),
-                  if (unit.isNotEmpty && !value.contains(unit)) ...[
-                    const SizedBox(width: 4),
-                    Text(localizedUnit(unit, context.l10n), style: unitStyle),
+              // Scaled down like the title, so a long value and its unit
+              // ("135/85 mmHg") fit a narrow card at a large text size.
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(value, maxLines: 1, style: valueStyle),
+                    if (unit.isNotEmpty && !value.contains(unit)) ...[
+                      const SizedBox(width: 4),
+                      Text(
+                        localizedUnit(unit, context.l10n),
+                        maxLines: 1,
+                        style: unitStyle,
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ],
           ),
