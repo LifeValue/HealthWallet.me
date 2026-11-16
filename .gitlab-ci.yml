@@ -787,14 +787,10 @@ cdn:publish:
     entrypoint: [""]
   interruptible: false
   needs:
-    # TEMPORARY `optional: true` (revert before the merge request): lets the job exist on
-    # feature/cdn-downloads, where the release jobs don't.
     - job: windows:release
       artifacts: false
-      optional: true
     - job: linux:release
       artifacts: false
-      optional: true
   rules:
     - if: $CI_COMMIT_BRANCH == "master"
       when: manual
@@ -806,13 +802,6 @@ cdn:publish:
       allow_failure: true
       variables:
         CDN_CHANNEL: beta
-    # TEMPORARY (revert before the merge request): the job on the feature branch, where the
-    # protected CDN_* variables don't exist, so it stops at "Missing CI/CD variables" (exit 1).
-    - if: $CI_COMMIT_BRANCH == "feature/cdn-downloads"
-      when: manual
-      allow_failure: true
-      variables:
-        CDN_CHANNEL: dry-run
   resource_group: cdn:publish
   environment:
     name: downloads-$CDN_CHANNEL
@@ -820,81 +809,3 @@ cdn:publish:
     - apk add --no-cache bash curl
   script:
     - scripts/publish_cdn.sh
-
-# =============================================================================
-# TEMPORARY dry runs on feature/cdn-downloads — revert this commit before the merge request
-# =============================================================================
-# Both run by hand on the feature branch only and publish nothing: no GitLab Release, no
-# package upload, no real bucket, nothing sent to Apple.
-
-# The real scripts/publish_cdn.sh against a throwaway RustFS started next to the job and fake
-# installers served from inside the job (busybox httpd standing in for the package registry).
-# Publishes twice: first without the DMG, then with it, as a re-run after macos:direct would.
-# Expected: exit 0, with the bucket listing and versions.json in the log.
-cdn:publish:dry-run:
-  stage: deploy
-  image:
-    name: rclone/rclone:1.75.2
-    entrypoint: [""]
-  needs: []
-  rules:
-    - if: $CI_COMMIT_BRANCH == "feature/cdn-downloads"
-      when: manual
-      allow_failure: true
-  services:
-    - name: rustfs/rustfs:1.0.6
-      alias: rustfs
-  variables:
-    RUSTFS_ACCESS_KEY: dryrunkey
-    RUSTFS_SECRET_KEY: dryrunsecret123
-  before_script:
-    - apk add --no-cache bash curl busybox-extras
-  script:
-    # Set here, not under `variables:`: project variables would win over YAML ones, and this job
-    # must never see the real bucket.
-    - export CDN_CHANNEL=beta CDN_S3_ENDPOINT=http://rustfs:9000 CDN_BUCKET=healthwallet-downloads CDN_S3_REGION=
-    - export CDN_ACCESS_KEY_ID="$RUSTFS_ACCESS_KEY" CDN_SECRET_ACCESS_KEY="$RUSTFS_SECRET_KEY" CDN_PUBLIC_URL=https://downloads.example.invalid
-    - version="$(sed -nE 's/^version:[[:space:]]*([^+[:space:]]+).*/\1/p' pubspec.yaml)"
-    - tag="$(scripts/release_tag.sh)"
-    - registry="/tmp/registry/api/v4/projects/$CI_PROJECT_ID/packages/generic"
-    - mkdir -p "$registry/healthwallet-windows/$tag" "$registry/healthwallet-linux/$tag" "$registry/healthwallet-macos/$tag"
-    - head -c 300000 /dev/urandom > "$registry/healthwallet-windows/$tag/HealthWallet-Windows-v$version-portable.zip"
-    - head -c 200000 /dev/urandom > "$registry/healthwallet-linux/$tag/HealthWallet-Linux-v$version-amd64.deb"
-    - head -c 250000 /dev/urandom > "$registry/healthwallet-linux/$tag/HealthWallet-Linux-v$version-amd64.tar.gz"
-    - busybox-extras httpd -p 127.0.0.1:8080 -h /tmp/registry
-    - export CI_API_V4_URL="http://127.0.0.1:8080/api/v4"
-    - for i in $(seq 1 60); do curl -s -o /dev/null http://rustfs:9000/ && break; sleep 1; done
-    - export RCLONE_CONFIG_DRY_TYPE=s3 RCLONE_CONFIG_DRY_PROVIDER=Other RCLONE_CONFIG_DRY_ENDPOINT="$CDN_S3_ENDPOINT"
-    - export RCLONE_CONFIG_DRY_ACCESS_KEY_ID="$CDN_ACCESS_KEY_ID" RCLONE_CONFIG_DRY_SECRET_ACCESS_KEY="$CDN_SECRET_ACCESS_KEY" RCLONE_CONFIG_DRY_FORCE_PATH_STYLE=true
-    - rclone mkdir "dry:$CDN_BUCKET"
-    - echo "=== Publish 1 of 2 — without the macOS DMG"
-    - scripts/publish_cdn.sh
-    - echo "=== Publish 2 of 2 — after macos:direct, with the DMG"
-    - head -c 400000 /dev/urandom > "$registry/healthwallet-macos/$tag/HealthWallet-macOS-v$version.dmg"
-    - scripts/publish_cdn.sh
-    - echo "=== Bucket"
-    - rclone lsl "dry:$CDN_BUCKET"
-    - echo "=== beta/versions.json"
-    - rclone cat "dry:$CDN_BUCKET/beta/versions.json"
-
-# The fastlane lane `direct` on the Mac mini, without the secrets setup (none exist on a feature
-# branch). Its first step is the Developer ID certificate check, and the step after it needs the
-# App Store Connect key, so it stops before building anything.
-# Expected: exit 1 with the certificate instructions (or, if the certificate is already in the
-# keychain, at the missing App Store Connect API key).
-macos:direct:dry-run:
-  stage: deploy
-  tags: [shell-macmini]
-  needs: []
-  rules:
-    - if: $CI_COMMIT_BRANCH == "feature/cdn-downloads"
-      when: manual
-      allow_failure: true
-  cache:
-    - *bundle_cache
-  before_script:
-    - *macmini_toolchain
-  script:
-    - cd macos
-    - bundle install --jobs 4 --retry 3
-    - bundle exec fastlane direct
