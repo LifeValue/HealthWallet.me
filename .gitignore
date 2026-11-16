@@ -68,6 +68,12 @@ env.g.dart
 .pub/
 /build/
 
+# snapcraft pack (snap/snapcraft.yaml) on the host or in destructive mode
+/parts/
+/stage/
+/prime/
+/*.snap
+
 # Symbolication related
 app.*.symbols
 

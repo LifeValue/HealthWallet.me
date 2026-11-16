@@ -19,7 +19,9 @@
 #                           → Microsoft Store package flight, and the
 #                           zip + msix on the same GitLab Release
 #   linux                   manual on develop, release/* and master   Linux instance runner (Docker)
-#                           → the same GitLab Release with .deb + tar.gz
+#                           → Snap Store (edge from develop, beta
+#                           otherwise), and the .deb + tar.gz on the
+#                           same GitLab Release
 #   cdn:publish             manual on develop, release/* and master,  Linux instance runner (Docker)
 #                           once windows and linux succeeded
 #                           → the release's zip, .deb, tar.gz and DMG
@@ -32,10 +34,11 @@
 # on an unprotected branch the job stops at its first step and says so.
 #
 # Every deploy is started by hand from the pipeline, including on develop: a beta goes to TestFlight
-# (iOS, macOS), the Play internal track and the Microsoft Store package flight only when someone
-# runs it. Nothing goes to production from CI: a tested beta is promoted to the App Store / Play
-# production in App Store Connect and Play Console, and a flight's package to the Store's
-# non-flighted submission in Partner Center.
+# (iOS, macOS), the Play internal track, the Microsoft Store package flight and the Snap Store's
+# edge or beta channel only when someone runs it. Nothing goes to production from CI: a tested beta
+# is promoted to the App Store / Play production in App Store Connect and Play Console, a flight's
+# package to the Store's non-flighted submission in Partner Center, and a snap revision to stable on
+# snapcraft.io.
 #
 # The Flutter version comes from .fvmrc, the same pin FVM uses locally.
 #
@@ -64,6 +67,7 @@
 #        MSSTORE_TENANT_ID, MSSTORE_SELLER_ID, MSSTORE_CLIENT_ID   NOT from GitHub; see windows:store
 #        MSSTORE_CLIENT_SECRET                        masked; NOT from GitHub
 #        MSSTORE_APP_ID, MSSTORE_FLIGHT_ID            NOT from GitHub; see windows:store
+#        SNAPCRAFT_STORE_CREDENTIALS                  masked; NOT from GitHub; see linux:snap
 #      The download CDN for cdn:publish (RustFS, S3-compatible; server setup in
 #      _bmad-output/planning-artifacts/download-cdn.md), new, not from GitHub:
 #        CDN_S3_ENDPOINT                              e.g. https://s3.example.org
@@ -810,28 +814,67 @@ windows:store:
       - build/windows/packages/
 
 # =============================================================================
-# Linux: GitLab Release with a .deb and a portable tarball
+# Linux: Snap Store
 # =============================================================================
-# master       → release      v<version>
-# other branch → pre-release  v<version>-dev.<pipeline iid>
-# Uploads the packages to the project's generic package registry, creates the release for the tag
-# (on the commit that was built) and links the packages to it. Built by flutter build linux and
-# scripts/package_linux.sh, for the runner's architecture, on Ubuntu 24.04, the oldest system the
-# packages support: llamadart's prebuilt libraries need glibc 2.38.
-linux:release:
+# develop                 → edge
+# release/* and master    → beta
+# Builds the Flutter bundle, packs it as a strict snap with snap/snapcraft.yaml and uploads it to the
+# Snap Store, released to the channel above (versions: the pubspec version, -dev.<pipeline iid>
+# off master). Testers install it with `snap install health-wallet --edge` or `--beta`. Nothing
+# goes to stable from CI: promote a tested revision by hand at snapcraft.io/health-wallet/releases.
+# The .deb and portable tarball from scripts/package_linux.sh go to the GitLab Release first
+# (scripts/gitlab_release.sh), so the website's download (cdn:publish) does not depend on the Snap
+# Store, and stay in the job's artifacts.
+#
+# Runs in Canonical's snapcraft image (Ubuntu 24.04 with Snapcraft 8 for core24 snaps; pinned by
+# digest, as it only has moving tags), on the runner's architecture. Ubuntu 24.04 is also the oldest
+# system llamadart's prebuilt libraries run on (glibc 2.38). snapcraft packs in destructive mode,
+# in the job's own container; snapcraft.yaml says why that is enough.
+#
+# One-time setup:
+#   1. Register the name: `snapcraft register health-wallet`, or snapcraft.io/register-snap.
+#   2. Export store credentials that can only upload and release this snap, and keep them as the
+#      masked, protected variable SNAPCRAFT_STORE_CREDENTIALS. From a Mac, through the same image:
+#        docker run --rm -it -v "$PWD":/out --entrypoint snapcraft ghcr.io/canonical/snapcraft:8_core24 \
+#          export-login --snaps=health-wallet --channels=edge,beta \
+#          --acls=package_access,package_push,package_update,package_release \
+#          --expires=<date, at most a year ahead> /out/snap-credentials.txt
+#      then paste the file's contents into the variable and delete the file. Renew it before it
+#      expires.
+#   3. Ask the store to auto-connect password-manager-service (pairing keys) and avahi-control
+#      (discovery) in the forum's store-requests category (forum.snapcraft.io). Until it does,
+#      testers connect them after installing:
+#        sudo snap connect health-wallet:password-manager-service
+#        sudo snap connect health-wallet:avahi-control
+linux:snap:
   stage: deploy
   extends: .flutter_job
-  image: ubuntu:24.04
+  image:
+    name: ghcr.io/canonical/snapcraft:8_core24@sha256:f51fc5081f844bece0bb69d7b19a9c543f4666685da630dd9f9f7d0fb74e08f5
+    # The image runs snapcraft through Pebble; the job runs its own commands.
+    entrypoint: [""]
   interruptible: false
   needs: *all_checks
   rules: *on_deploy_branches
+  # Uploads from two pipelines would otherwise be released to the channel in whatever order they
+  # finish.
+  resource_group: linux:snap
+  environment: { name: snap-store }
   cache:
     - <<: *flutter_sdk_cache
       policy: pull
     - <<: *pub_cache
       policy: pull
+  variables:
+    # What the image sets for its own snapcraft service: build in this container, with craftctl on
+    # PATH.
+    SNAPCRAFT_BUILD_ENVIRONMENT: host
   before_script:
     - '[ -n "$ENV_FILE_CONTENT" ] || { echo "Protected CI/CD variables are not available on $CI_COMMIT_BRANCH. Protect this branch (Settings → Repository → Protected branches) to deploy from it."; exit 1; }'
+    - export PATH="/usr/libexec/snapcraft:$PATH"
+    # The image ships the extensions' launcher scripts in site-packages, but snapcraft looks for them
+    # in an empty /usr/share/snapcraft/extensions.
+    - ln -sfn /usr/lib/python3*/site-packages/extensions/* /usr/share/snapcraft/extensions/
     - export DEBIAN_FRONTEND=noninteractive
     - apt-get update -qq
     # Flutter's Linux toolchain, the libraries the runner and the plugins link, and dpkg-deb.
@@ -846,9 +889,23 @@ linux:release:
     - dart run build_runner build --delete-conflicting-outputs
     - flutter build linux --release --target lib/main_desktop.dart
     - scripts/package_linux.sh
-    - scripts/gitlab_release.sh healthwallet-linux build/linux/packages
+    # The release (for cdn:publish) does not stop the snap upload: a retried job fails to link the
+    # files the first run linked already, and should still reach the store. A failed release fails
+    # the job at the end.
+    - scripts/gitlab_release.sh healthwallet-linux build/linux/packages || release_failed=1
+    - '[ -n "$SNAPCRAFT_STORE_CREDENTIALS" ] || { echo "Not uploaded to the Snap Store: SNAPCRAFT_STORE_CREDENTIALS is not set; see linux:snap in .gitlab-ci.yml."; exit 1; }'
+    - if [ "$CI_COMMIT_BRANCH" = develop ]; then channel=edge; else channel=beta; fi
+    - if [ "$CI_COMMIT_BRANCH" != master ]; then export SNAP_VERSION_SUFFIX="-dev.$CI_PIPELINE_IID"; fi
+    - snapcraft pack --output build/linux/packages/
+    - snapcraft upload --release="$channel" build/linux/packages/*.snap
+    - '[ -z "${release_failed:-}" ] || { echo "Adding the packages to the GitLab Release failed (see above); the snap was uploaded regardless."; exit 1; }'
   after_script:
     - rm -f .env
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - build/linux/packages/
 
 # =============================================================================
 # Download CDN — the website's download buttons
@@ -862,8 +919,8 @@ linux:release:
 # master publishes to stable/, develop and release/* to beta/. Server setup and the versions.json
 # contract: _bmad-output/planning-artifacts/download-cdn.md.
 #
-# It becomes playable once windows:store and linux:release have both succeeded (they in turn
-# need every check), and its rules mirror .on_deploy_branches, adding the channel. One publish at
+# It becomes playable once windows:store and linux:snap have run (they in turn need every
+# check), and its rules mirror .on_deploy_branches, adding the channel. One publish at
 # a time, so two pipelines cannot interleave their versions.json writes.
 # Playing cdn:publish on an older pipeline rolls the website back to that version: this is the
 # intended rollback path.
@@ -876,7 +933,7 @@ cdn:publish:
   needs:
     - job: windows:store
       artifacts: false
-    - job: linux:release
+    - job: linux:snap
       artifacts: false
   rules:
     - if: $CI_COMMIT_BRANCH == "master"

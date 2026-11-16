@@ -185,7 +185,7 @@
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-cdn-downloads.md`
   summary: Make `scripts/gitlab_release.sh` and `windows:store` idempotent on retry (skip or update an already linked asset instead of failing on GitLab's 400).
-  evidence: A retried `macos:direct` or `linux:release` fails at linking after a full rebuild; the inline Linux code behaved the same before this change.
+  evidence: A retried `macos:direct` or `linux:snap` fails at linking after a full rebuild; the inline Linux code behaved the same before this change.
 - source_spec: `_bmad-output/implementation-artifacts/spec-cdn-downloads.md`
   summary: Give beta `.deb` packages a version that sorts below the release (e.g. `1.3.0~dev.412`) in `scripts/package_linux.sh`.
   evidence: Betas and the final release all carry `Version: 1.3.0`, so apt treats them as the same version; testers who install a beta don't get upgraded to the release.

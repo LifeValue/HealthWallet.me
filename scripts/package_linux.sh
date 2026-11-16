@@ -3,7 +3,7 @@
 # Build first, on Ubuntu 24.04 or newer (llamadart's libraries need glibc 2.38):
 #   fvm flutter build linux --release --target lib/main_desktop.dart
 #   scripts/package_linux.sh
-# The CI job linux:release runs the same steps.
+# The CI job linux:snap runs the same steps, then packs the bundle as a snap (snap/snapcraft.yaml).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
