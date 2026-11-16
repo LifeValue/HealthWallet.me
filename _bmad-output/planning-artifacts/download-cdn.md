@@ -23,7 +23,7 @@ Hostnames, bucket names and keys below are placeholders: `downloads.example.org`
 
 - `master` publishes to `stable/`, `develop` and `release/*` to `beta/`.
 - There is no `latest` file or folder. Every package has its version in its name and folder and never changes once uploaded. Two files do change: `<channel>/<tag>/SHA256SUMS`, rewritten when a re-run adds the DMG, and `<channel>/versions.json`, which names the current version. `versions.json` is uploaded last, so it never points at a file that isn't there yet.
-- A re-run of `cdn:publish` on the same pipeline uploads the same bytes again. That holds only while the build jobs aren't retried: builds aren't reproducible, so a retried `windows:release`, `linux:release` or `macos:direct` puts a different file in the registry, and `cdn:publish` then fails with "bump the version" instead of replacing a published file.
+- A re-run of `cdn:publish` on the same pipeline uploads the same bytes again. That holds only while the build jobs aren't retried: builds aren't reproducible, so a retried `windows:store`, `linux:release` or `macos:direct` puts a different file in the registry, and `cdn:publish` then fails with "bump the version" instead of replacing a published file.
 - No Android APK (the website links to Google Play) and no Windows MSIX (Microsoft Store only).
 - Headers set on upload, stored with each object and returned on every download:
 

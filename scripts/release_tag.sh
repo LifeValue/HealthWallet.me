@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Prints the release tag of this pipeline: v<version> on master, v<version>-dev.<pipeline iid>
 # on every other branch, with the version from pubspec.yaml without its build number.
-# windows:release in .gitlab-ci.yml applies the same rule in PowerShell; keep the two identical.
+# windows:store in .gitlab-ci.yml applies the same rule in PowerShell; keep the two identical.
 # Reads CI_COMMIT_BRANCH and CI_PIPELINE_IID.
 set -euo pipefail
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Publishes one pipeline's desktop packages to the download CDN (an S3-compatible bucket, RustFS),
-# for the website's download buttons. Run by the CI job cdn:publish after windows:release and
+# for the website's download buttons. Run by the CI job cdn:publish after windows:store and
 # linux:release; macos:direct is optional, its DMG is included when it is already in the registry.
 #
 # Fetches the packages for this pipeline's release tag (scripts/release_tag.sh) from the generic
@@ -105,7 +105,7 @@ else
 fi
 
 fetch healthwallet-windows "$windows" || {
-  echo "Missing healthwallet-windows/$tag/$windows in the package registry; run windows:release first." >&2
+  echo "Missing healthwallet-windows/$tag/$windows in the package registry; run windows:store first." >&2
   exit 1
 }
 files+=("$windows")

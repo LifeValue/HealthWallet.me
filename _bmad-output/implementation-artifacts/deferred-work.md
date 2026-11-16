@@ -184,7 +184,7 @@
   evidence: Pinned as current behaviour in the patient dialog coverage tests.
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-cdn-downloads.md`
-  summary: Make `scripts/gitlab_release.sh` and `windows:release` idempotent on retry (skip or update an already linked asset instead of failing on GitLab's 400).
+  summary: Make `scripts/gitlab_release.sh` and `windows:store` idempotent on retry (skip or update an already linked asset instead of failing on GitLab's 400).
   evidence: A retried `macos:direct` or `linux:release` fails at linking after a full rebuild; the inline Linux code behaved the same before this change.
 - source_spec: `_bmad-output/implementation-artifacts/spec-cdn-downloads.md`
   summary: Give beta `.deb` packages a version that sorts below the release (e.g. `1.3.0~dev.412`) in `scripts/package_linux.sh`.
@@ -193,5 +193,5 @@
   summary: Check that the notarized, hardened-runtime macOS build runs llamadart's native libraries (medium, unverified).
   evidence: Launch the first DMG from `macos:direct` and run an AI scan; if library validation blocks the libraries, add the needed entitlement to a Developer ID-only entitlements file.
 - source_spec: `_bmad-output/implementation-artifacts/spec-cdn-downloads.md`
-  summary: Share one release tag rule between `scripts/release_tag.sh` and the PowerShell in `windows:release`.
+  summary: Share one release tag rule between `scripts/release_tag.sh` and the PowerShell in `windows:store`.
   evidence: The two copies can drift with no test failing; a drift splits the GitLab Release and makes `cdn:publish` miss the Windows zip.
