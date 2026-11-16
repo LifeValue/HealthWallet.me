@@ -505,15 +505,20 @@ scan:secrets:
 
 # The integration tests in integration_test/ boot the real mobile app on an iOS simulator. They
 # need no secrets (an empty .env, as in `checks`), so they can run on any branch, but they hold
-# the shared Mac mini for several minutes: automatic on develop, release/* and master, by hand
-# elsewhere. Each run gets a fresh simulator, deleted afterwards, since the tests leave the app in
-# Romanian with demo data. extraction_bench/ needs downloaded models and is left to developers.
+# the shared Mac mini for several minutes. Automatic on develop, release/* and master, and
+# automatic and required on every push to feature/*, bugfix/* and hotfix/*, so a failure blocks
+# the merge request ("Pipelines must succeed") instead of turning up on develop after the merge.
+# Any other branch can run them by hand. Each run gets a fresh simulator, deleted afterwards,
+# since the tests leave the app in Romanian with demo data. extraction_bench/ needs downloaded
+# models and is left to developers.
 test:integration:
   stage: check
   tags: [shell-macmini]
   needs: ["checks"]
   rules:
     - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH =~ /^release\//
+    # Working branches: automatic and required, whatever they change.
+    - if: $CI_COMMIT_BRANCH =~ /^(feature|bugfix|hotfix)\//
     - when: manual
       allow_failure: true
   cache:
