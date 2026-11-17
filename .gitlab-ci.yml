@@ -827,10 +827,15 @@ windows:store:
 # develop                 → edge
 # release/* and master    → beta
 # Builds the Flutter bundle, packs it as a strict snap with snap/snapcraft.yaml and uploads it to the
-# Snap Store, released to the channel above (version: the pubspec version; the store numbers each
-# upload with a revision). Testers install it with `snap install health-wallet --edge` or
-# `--beta`. Nothing goes to stable from CI: promote a tested revision by hand at
-# snapcraft.io/health-wallet/releases.
+# Snap Store, released to the channel above. Edge and beta are the testers' channels, like
+# TestFlight and the Play internal track: testers install it with `snap install health-wallet
+# --edge` or `--beta`. Nothing goes to stable from CI: promote a tested revision by hand at
+# snapcraft.io/health-wallet/releases. The version is the pubspec version; the store numbers each
+# upload with a revision, as the mobile stores number builds.
+#
+# Every upload goes through the store's automated review. A revision that needs a human reviewer
+# (see step 3 below) is still uploaded: the job passes and says so. Once a reviewer approves it,
+# check that it is on its channel at snapcraft.io/health-wallet/releases.
 # The .deb and portable tarball from scripts/package_linux.sh go to the GitLab Release first
 # (scripts/gitlab_release.sh), so the website's download (cdn:publish) does not depend on the Snap
 # Store, and stay in the job's artifacts.
@@ -853,9 +858,9 @@ windows:store:
 #   3. In one post in the forum's store-requests category (forum.snapcraft.io), ask the store to
 #      allow the dbus-health-wallet slot (snapcraft.yaml says why the app owns its bus name) and
 #      to auto-connect password-manager-service (pairing keys) and avahi-control (discovery).
-#      Until the slot is allowed, every upload stops at "human review required due to
-#      'deny-connection' constraint (interface attributes)", the job fails and the revision waits
-#      for a reviewer. Until the plugs auto-connect, testers connect them after installing:
+#      Until the slot is allowed, every revision waits for a reviewer ("human review required due
+#      to 'deny-connection' constraint (interface attributes)"). Until the plugs auto-connect,
+#      testers connect them after installing:
 #        sudo snap connect health-wallet:password-manager-service
 #        sudo snap connect health-wallet:avahi-control
 linux:snap:
@@ -908,7 +913,13 @@ linux:snap:
     - '[ -n "$SNAPCRAFT_STORE_CREDENTIALS" ] || { echo "Not uploaded to the Snap Store: SNAPCRAFT_STORE_CREDENTIALS is not set; see linux:snap in .gitlab-ci.yml."; exit 1; }'
     - if [ "$CI_COMMIT_BRANCH" = develop ]; then channel=edge; else channel=beta; fi
     - snapcraft pack --output build/linux/packages/
-    - snapcraft upload --release="$channel" build/linux/packages/*.snap
+    # snapcraft exits non-zero when the revision needs a human reviewer, although the upload worked.
+    - |
+      set -o pipefail
+      if ! snapcraft upload --release="$channel" build/linux/packages/*.snap 2>&1 | tee snap-upload.log; then
+        grep -q "will need manual review" snap-upload.log || exit 1
+        echo "Uploaded. The revision waits for a Snap Store reviewer. Once approved, check that it is on $channel at snapcraft.io/health-wallet/releases and release it there if not."
+      fi
     - '[ -z "${release_failed:-}" ] || { echo "Adding the packages to the GitLab Release failed (see above); the snap was uploaded regardless."; exit 1; }'
   after_script:
     - rm -f .env
