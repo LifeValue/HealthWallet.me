@@ -849,9 +849,12 @@ windows:store:
 #          --expires=<date, at most a year ahead> /out/snap-credentials.txt
 #      then paste the file's contents into the variable and delete the file. Renew it before it
 #      expires.
-#   3. Ask the store to auto-connect password-manager-service (pairing keys) and avahi-control
-#      (discovery) in the forum's store-requests category (forum.snapcraft.io). Until it does,
-#      testers connect them after installing:
+#   3. In one post in the forum's store-requests category (forum.snapcraft.io), ask the store to
+#      allow the dbus-health-wallet slot (snapcraft.yaml says why the app owns its bus name) and
+#      to auto-connect password-manager-service (pairing keys) and avahi-control (discovery).
+#      Until the slot is allowed, every upload stops at "human review required due to
+#      'deny-connection' constraint (interface attributes)", the job fails and the revision waits
+#      for a reviewer. Until the plugs auto-connect, testers connect them after installing:
 #        sudo snap connect health-wallet:password-manager-service
 #        sudo snap connect health-wallet:avahi-control
 linux:snap:
