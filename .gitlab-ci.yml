@@ -827,9 +827,10 @@ windows:store:
 # develop                 → edge
 # release/* and master    → beta
 # Builds the Flutter bundle, packs it as a strict snap with snap/snapcraft.yaml and uploads it to the
-# Snap Store, released to the channel above (versions: the pubspec version, -dev.<pipeline iid>
-# off master). Testers install it with `snap install health-wallet --edge` or `--beta`. Nothing
-# goes to stable from CI: promote a tested revision by hand at snapcraft.io/health-wallet/releases.
+# Snap Store, released to the channel above (version: the pubspec version; the store numbers each
+# upload with a revision). Testers install it with `snap install health-wallet --edge` or
+# `--beta`. Nothing goes to stable from CI: promote a tested revision by hand at
+# snapcraft.io/health-wallet/releases.
 # The .deb and portable tarball from scripts/package_linux.sh go to the GitLab Release first
 # (scripts/gitlab_release.sh), so the website's download (cdn:publish) does not depend on the Snap
 # Store, and stay in the job's artifacts.
@@ -906,7 +907,6 @@ linux:snap:
     - scripts/gitlab_release.sh healthwallet-linux build/linux/packages || release_failed=1
     - '[ -n "$SNAPCRAFT_STORE_CREDENTIALS" ] || { echo "Not uploaded to the Snap Store: SNAPCRAFT_STORE_CREDENTIALS is not set; see linux:snap in .gitlab-ci.yml."; exit 1; }'
     - if [ "$CI_COMMIT_BRANCH" = develop ]; then channel=edge; else channel=beta; fi
-    - if [ "$CI_COMMIT_BRANCH" != master ]; then export SNAP_VERSION_SUFFIX="-dev.$CI_PIPELINE_IID"; fi
     - snapcraft pack --output build/linux/packages/
     - snapcraft upload --release="$channel" build/linux/packages/*.snap
     - '[ -z "${release_failed:-}" ] || { echo "Adding the packages to the GitLab Release failed (see above); the snap was uploaded regardless."; exit 1; }'

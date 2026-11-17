@@ -64,9 +64,8 @@ parts:
       - on arm64: build/linux/arm64/release/bundle
     override-build: |
       craftctl default
-      # The pubspec version; CI adds -dev.<pipeline iid> off master through SNAP_VERSION_SUFFIX.
-      version=$(sed -nE 's/^version:[[:space:]]*([^+[:space:]]+).*/\1/p' "$CRAFT_PROJECT_DIR/pubspec.yaml")
-      craftctl set version="$version${SNAP_VERSION_SUFFIX:-}"
+      # The pubspec version without the build number; the store numbers uploads itself (revisions).
+      craftctl set version="$(sed -nE 's/^version:[[:space:]]*([^+[:space:]]+).*/\1/p' "$CRAFT_PROJECT_DIR/pubspec.yaml")"
       install -Dm644 "$CRAFT_PROJECT_DIR/linux/runner/resources/app_icon.png" \
         "$CRAFT_PART_INSTALL/usr/share/icons/hicolor/256x256/apps/health-wallet.png"
       install -d "$CRAFT_PART_INSTALL/usr/share/applications"
