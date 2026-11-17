@@ -85,8 +85,11 @@ parts:
       EOF
     # What the .deb depends on (scripts/package_linux.sh) that the GNOME platform snap lacks:
     # the tray library, Tesseract with the app's languages, and the Vulkan loader llama.cpp uses.
+    # libsecret too: the linter cannot see the platform snap in CI, so it is staged rather than
+    # assumed.
     stage-packages:
       - libayatana-appindicator3-1
+      - libsecret-1-0
       - libtesseract5
       - tesseract-ocr-eng
       - tesseract-ocr-deu
