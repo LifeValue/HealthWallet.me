@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -42,8 +43,8 @@ class _HomePatientBarState extends State<HomePatientBar> {
   }
 
   void _measureHeight() {
-    final renderBox = widget.patientRowKey.currentContext?.findRenderObject()
-        as RenderBox?;
+    final renderBox =
+        widget.patientRowKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox != null && mounted) {
       final height = renderBox.size.height;
       if (height > 0) {
@@ -90,7 +91,7 @@ class _HomePatientBarState extends State<HomePatientBar> {
             children: [
               Flexible(
                 child: Text(
-                  'Patient: ${FhirFieldExtractor.extractHumanNameFamilyFirst(widget.state.patient?.name?.first) ?? 'Loading...'}',
+                  '${context.l10n.patient}: ${FhirFieldExtractor.extractHumanNameFamilyFirst(widget.state.patient?.name?.first) ?? context.l10n.loading}',
                   style: AppTextStyle.bodyMedium.copyWith(
                     color: context.colorScheme.onSurface,
                   ),
@@ -119,11 +120,10 @@ class _HomePatientBarState extends State<HomePatientBar> {
 
   void _onPatientBarTap(BuildContext context) {
     if (_isShareMenuOpen) return;
-    final row = widget.patientRowKey.currentContext?.findRenderObject()
-        as RenderBox?;
+    final row =
+        widget.patientRowKey.currentContext?.findRenderObject() as RenderBox?;
     if (row == null) return;
-    final overlay =
-        Overlay.of(context).context.findRenderObject() as RenderBox;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     final rowTopLeft = row.localToGlobal(
       Offset.zero,
       ancestor: overlay,
@@ -139,7 +139,8 @@ class _HomePatientBarState extends State<HomePatientBar> {
     setState(() => _isShareMenuOpen = true);
 
     final patientName = FhirFieldExtractor.extractHumanNameFamilyFirst(
-        widget.state.patient?.name?.first);
+      widget.state.patient?.name?.first,
+    );
     showShareOptionsMenu(
       context,
       position: position,

@@ -1,0 +1,59 @@
+PODS:
+  - airdrop (0.0.1):
+    - FlutterMacOS
+  - bonsoir_darwin (0.0.1):
+    - Flutter
+    - FlutterMacOS
+  - desktop_drop (0.0.1):
+    - FlutterMacOS
+  - FlutterMacOS (1.0.0)
+  - pdfx (1.0.0):
+    - FlutterMacOS
+  - screen_retriever_macos (0.0.1):
+    - FlutterMacOS
+  - tray_manager (0.0.1):
+    - FlutterMacOS
+  - window_manager (0.2.0):
+    - FlutterMacOS
+
+DEPENDENCIES:
+  - airdrop (from `Flutter/ephemeral/.symlinks/plugins/airdrop/macos`)
+  - bonsoir_darwin (from `Flutter/ephemeral/.symlinks/plugins/bonsoir_darwin/darwin`)
+  - desktop_drop (from `Flutter/ephemeral/.symlinks/plugins/desktop_drop/macos`)
+  - FlutterMacOS (from `Flutter/ephemeral`)
+  - pdfx (from `Flutter/ephemeral/.symlinks/plugins/pdfx/macos`)
+  - screen_retriever_macos (from `Flutter/ephemeral/.symlinks/plugins/screen_retriever_macos/macos`)
+  - tray_manager (from `Flutter/ephemeral/.symlinks/plugins/tray_manager/macos`)
+  - window_manager (from `Flutter/ephemeral/.symlinks/plugins/window_manager/macos`)
+
+EXTERNAL SOURCES:
+  airdrop:
+    :path: Flutter/ephemeral/.symlinks/plugins/airdrop/macos
+  bonsoir_darwin:
+    :path: Flutter/ephemeral/.symlinks/plugins/bonsoir_darwin/darwin
+  desktop_drop:
+    :path: Flutter/ephemeral/.symlinks/plugins/desktop_drop/macos
+  FlutterMacOS:
+    :path: Flutter/ephemeral
+  pdfx:
+    :path: Flutter/ephemeral/.symlinks/plugins/pdfx/macos
+  screen_retriever_macos:
+    :path: Flutter/ephemeral/.symlinks/plugins/screen_retriever_macos/macos
+  tray_manager:
+    :path: Flutter/ephemeral/.symlinks/plugins/tray_manager/macos
+  window_manager:
+    :path: Flutter/ephemeral/.symlinks/plugins/window_manager/macos
+
+SPEC CHECKSUMS:
+  airdrop: e23174e9c66351c6ba722b4989966bc1b27c6a57
+  bonsoir_darwin: 29c7ccf356646118844721f36e1de4b61f6cbd0e
+  desktop_drop: e0b672a7d84c0a6cbc378595e82cdb15f2970a43
+  FlutterMacOS: c232990155153907050900a2e175c7773903ba4e
+  pdfx: 1e79f57f7a6ce2f4a4c30f21fa54d3dc82441b51
+  screen_retriever_macos: 452e51764a9e1cdb74b3c541238795849f21557f
+  tray_manager: a104b5c81b578d83f3c3d0f40a997c8b10810166
+  window_manager: 1d01fa7ac65a6e6f83b965471b1a7fdd3f06166c
+
+PODFILE CHECKSUM: 65518dfa33224eb593c8da40acf785b0303b45dd
+
+COCOAPODS: 1.17.0

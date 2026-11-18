@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -25,23 +26,18 @@ class _PatientSectionState extends State<PatientSection> {
     if (!_hasInitialized) {
       _hasInitialized = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final patientBloc = context.read<PatientBloc>();
-        final currentSelectedPatientId = patientBloc.state.selectedPatientId;
-
         context.read<PatientBloc>().add(
-              PatientPatientsLoaded(
-                preserveOrder: true,
-                preservePatientId: currentSelectedPatientId,
-              ),
-            );
+          const PatientPatientsLoaded(preserveOrder: true),
+        );
       });
     }
   }
 
   void _handlePatientTap(String patientId) {
     final currentState = context.read<PatientBloc>().state;
-    final isCurrentlyExpanded =
-        currentState.expandedPatientIds.contains(patientId);
+    final isCurrentlyExpanded = currentState.expandedPatientIds.contains(
+      patientId,
+    );
 
     if (isCurrentlyExpanded) {
       return;
@@ -53,7 +49,7 @@ class _PatientSectionState extends State<PatientSection> {
   @override
   Widget build(BuildContext context) {
     final borderColor = context.theme.dividerColor;
-    final iconColor = context.colorScheme.onSurface.withOpacity(0.6);
+    final iconColor = context.colorScheme.onSurface.withValues(alpha: 0.6);
     final textColor = context.colorScheme.onSurface;
 
     return BlocBuilder<PatientBloc, PatientState>(

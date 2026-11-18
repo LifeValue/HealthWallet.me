@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/date_format_utils.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_notes/bloc/record_notes_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/utils/date_format_utils.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 
 class RecordNotesWidget extends StatefulWidget {
   const RecordNotesWidget({
@@ -52,7 +53,7 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
                   state.status == const RecordNotesStatus.input())
                 _buildInputWidget(state)
               else
-                _buildMainWidget(state)
+                _buildMainWidget(state),
             ],
           );
         },
@@ -62,8 +63,9 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
 
   Widget _buildMainWidget(RecordNotesState state) {
     return ConstrainedBox(
-      constraints:
-          BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height / 1.5),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height / 1.5,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -71,29 +73,31 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             decoration: BoxDecoration(
               border: Border(
-                  bottom:
-                      BorderSide(color: context.theme.dividerColor, width: 1)),
+                bottom: BorderSide(color: context.theme.dividerColor, width: 1),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text("Notes", style: AppTextStyle.bodyMedium),
+                Text(context.l10n.notes, style: AppTextStyle.bodyMedium),
                 IconButton(
                   iconSize: 20,
-                  visualDensity:
-                      const VisualDensity(horizontal: -4, vertical: -4),
+                  visualDensity: const VisualDensity(
+                    horizontal: -4,
+                    vertical: -4,
+                  ),
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close),
-                )
+                ),
               ],
             ),
           ),
           if (state.notes.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(16),
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: Center(
                 child: Text(
-                  "This record has no notes attached",
+                  context.l10n.noNotesAttached,
                   style: AppTextStyle.labelLarge,
                 ),
               ),
@@ -105,10 +109,12 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
                 child: ListView(
                   shrinkWrap: true,
                   children: state.notes
-                      .map((note) => _buildNoteWidget(
-                            note: note,
-                            isLast: note == state.notes.last,
-                          ))
+                      .map(
+                        (note) => _buildNoteWidget(
+                          note: note,
+                          isLast: note == state.notes.last,
+                        ),
+                      )
                       .toList(),
                 ),
               ),
@@ -122,7 +128,8 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.all(10),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadiusGeometry.circular(6)),
+                    borderRadius: BorderRadiusGeometry.circular(6),
+                  ),
                 ),
                 onPressed: () => _bloc.add(const RecordNotesInputInitialised()),
                 child: Row(
@@ -130,7 +137,7 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
                   children: [
                     Assets.icons.addPlus.svg(width: 16, color: Colors.white),
                     const SizedBox(width: 4),
-                    const Text("Add note", style: AppTextStyle.buttonSmall),
+                    Text(context.l10n.addNote, style: AppTextStyle.buttonSmall),
                   ],
                 ),
               ),
@@ -150,8 +157,8 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
           decoration: BoxDecoration(
             border: Border(
-                bottom:
-                    BorderSide(color: context.theme.dividerColor, width: 1)),
+              bottom: BorderSide(color: context.theme.dividerColor, width: 1),
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -162,21 +169,29 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
                     onPressed: () =>
                         _bloc.add(const RecordNotesInputCanceled()),
                     icon: const Icon(Icons.arrow_back, size: 20),
-                    visualDensity:
-                        const VisualDensity(horizontal: -4, vertical: -4),
+                    visualDensity: const VisualDensity(
+                      horizontal: -4,
+                      vertical: -4,
+                    ),
                   ),
                   const SizedBox(width: 12),
-                  Text(state.editNote != null ? "Edit note" : "Add note",
-                      style: AppTextStyle.bodyMedium),
+                  Text(
+                    state.editNote != null
+                        ? context.l10n.editNote
+                        : context.l10n.addNote,
+                    style: AppTextStyle.bodyMedium,
+                  ),
                 ],
               ),
               IconButton(
                 iconSize: 20,
-                visualDensity:
-                    const VisualDensity(horizontal: -4, vertical: -4),
+                visualDensity: const VisualDensity(
+                  horizontal: -4,
+                  vertical: -4,
+                ),
                 onPressed: () => Navigator.of(context).pop(),
                 icon: const Icon(Icons.close),
-              )
+              ),
             ],
           ),
         ),
@@ -211,9 +226,10 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
                 child: GestureDetector(
                   onTap: () => _bloc.add(const RecordNotesInputCanceled()),
                   child: Text(
-                    "Cancel",
-                    style: AppTextStyle.buttonSmall
-                        .copyWith(color: AppColors.primary),
+                    context.l10n.cancel,
+                    style: AppTextStyle.buttonSmall.copyWith(
+                      color: AppColors.primary,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -223,24 +239,29 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    disabledBackgroundColor:
-                        AppColors.primary.withValues(alpha: 0.3),
+                    disabledBackgroundColor: AppColors.primary.withValues(
+                      alpha: 0.3,
+                    ),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.all(10),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadiusGeometry.circular(6)),
+                      borderRadius: BorderRadiusGeometry.circular(6),
+                    ),
                   ),
                   onPressed: () => textController.text != ''
                       ? _bloc.add(
-                          RecordNotesInputDone(content: textController.text))
+                          RecordNotesInputDone(content: textController.text),
+                        )
                       : null,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Assets.icons.checkmarkCircleOutline
-                          .svg(width: 14, color: Colors.white),
+                      Assets.icons.checkmarkCircleOutline.svg(
+                        width: 14,
+                        color: Colors.white,
+                      ),
                       const SizedBox(width: 4),
-                      const Text("Done", style: AppTextStyle.buttonSmall),
+                      Text(context.l10n.done, style: AppTextStyle.buttonSmall),
                     ],
                   ),
                 ),
@@ -265,9 +286,12 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
             Text(
               DateFormatUtils.humanReadable(note.timestamp),
               style: AppTextStyle.labelMedium.copyWith(
-                  color: context.textTheme.bodyMedium?.color
-                          ?.withValues(alpha: 0.6) ??
-                      context.colorScheme.onSurface.withValues(alpha: 0.6)),
+                color:
+                    context.textTheme.bodyMedium?.color?.withValues(
+                      alpha: 0.6,
+                    ) ??
+                    context.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
             ),
             if (!widget.readOnly)
               Row(
@@ -275,12 +299,15 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
                   Padding(
                     padding: const EdgeInsetsGeometry.all(6),
                     child: GestureDetector(
-                      onTap: () =>
-                          _bloc.add(RecordNotesInputInitialised(editNote: note)),
+                      onTap: () => _bloc.add(
+                        RecordNotesInputInitialised(editNote: note),
+                      ),
                       child: Assets.icons.edit.svg(
-                          width: 20,
-                          color: context.theme.iconTheme.color ??
-                              context.colorScheme.onSurface),
+                        width: 20,
+                        color:
+                            context.theme.iconTheme.color ??
+                            context.colorScheme.onSurface,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -289,9 +316,11 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
                     child: GestureDetector(
                       onTap: () => _showDeleteConfirmationDialog(context, note),
                       child: Assets.icons.trashCan.svg(
-                          width: 20,
-                          color: context.theme.iconTheme.color ??
-                              context.colorScheme.onSurface),
+                        width: 20,
+                        color:
+                            context.theme.iconTheme.color ??
+                            context.colorScheme.onSurface,
+                      ),
                     ),
                   ),
                 ],
@@ -304,7 +333,7 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
         if (!isLast)
           Divider(
             color: context.theme.dividerColor,
-          )
+          ),
       ],
     );
   }

@@ -1,9 +1,11 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -14,7 +16,7 @@ import 'package:intl/intl.dart';
 part 'related_person.freezed.dart';
 
 @freezed
-class RelatedPerson with _$RelatedPerson implements IFhirResource {
+abstract class RelatedPerson with _$RelatedPerson implements IFhirResource {
   const RelatedPerson._();
 
   const factory RelatedPerson({
@@ -26,6 +28,7 @@ class RelatedPerson with _$RelatedPerson implements IFhirResource {
     @Default({}) Map<String, dynamic> rawResource,
     @Default('') String encounterId,
     @Default('') String subjectId,
+    String? specialtyOverride,
     Narrative? text,
     List<Identifier>? identifier,
     FhirBoolean? active,
@@ -57,6 +60,7 @@ class RelatedPerson with _$RelatedPerson implements IFhirResource {
       rawResource: resourceJson,
       encounterId: data.encounterId ?? '',
       subjectId: data.subjectId ?? '',
+      specialtyOverride: data.specialtyOverride,
       text: fhirRelatedPerson.text,
       identifier: fhirRelatedPerson.identifier,
       active: fhirRelatedPerson.active,
@@ -75,16 +79,16 @@ class RelatedPerson with _$RelatedPerson implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'RelatedPerson',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'RelatedPerson',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -102,8 +106,8 @@ class RelatedPerson with _$RelatedPerson implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
+    final List<RecordInfoLine> infoLines = [];
 
     // Active Status
     final activeStatus = active?.valueBoolean;
@@ -111,22 +115,24 @@ class RelatedPerson with _$RelatedPerson implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-            activeStatus ? 'Active' : 'Inactive',
-            prefix: 'Status'),
+          activeStatus ? l10n.active : l10n.inactive,
+          prefix: l10n.fieldStatus,
+        ),
       );
     }
 
     // Relationship
     if (relationship != null && relationship!.isNotEmpty) {
       final relationDisplay = relationship!
-          .map((r) => FhirFieldExtractor.extractCodeableConceptText(r))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((r) => r != null && r.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-            relationDisplay.isNotEmpty ? relationDisplay : null,
-            prefix: 'Relationship'),
+          relationDisplay.isNotEmpty ? relationDisplay : null,
+          prefix: l10n.fieldRelationship,
+        ),
       );
     }
 
@@ -134,20 +140,25 @@ class RelatedPerson with _$RelatedPerson implements IFhirResource {
     final patientDisplay = patient?.display?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(patientDisplay, prefix: 'Patient'),
+      ResourceFieldMapper.createUserLine(
+        patientDisplay,
+        prefix: l10n.fieldPatient,
+      ),
     );
 
     // Gender
     final genderDisplay = gender?.display?.valueString;
     if (genderDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: genderDisplay.toLowerCase() == 'male'
-            ? Assets.icons.genderMale
-            : genderDisplay.toLowerCase() == 'female'
-                ? Assets.icons.genderFemale
-                : Assets.icons.user,
-        info: 'Gender: $genderDisplay',
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: genderDisplay.toLowerCase() == 'male'
+              ? Assets.icons.genderMale
+              : genderDisplay.toLowerCase() == 'female'
+              ? Assets.icons.genderFemale
+              : Assets.icons.user,
+          info: '${l10n.fieldGender}: $genderDisplay',
+        ),
+      );
     }
 
     // Birth Date
@@ -156,26 +167,35 @@ class RelatedPerson with _$RelatedPerson implements IFhirResource {
       if (birthDateValue != null) {
         try {
           final parsedDate = DateTime.parse(birthDateValue);
-          infoLines.add(RecordInfoLine(
-            icon: Assets.icons.calendar,
-            info: 'Birth Date: ${DateFormat.yMMMMd().format(parsedDate)}',
-          ));
+          infoLines.add(
+            RecordInfoLine(
+              icon: Assets.icons.calendar,
+              info:
+                  '${l10n.fieldBirthDate}: ${DateFormat.yMMMMd(l10n.localeName).format(parsedDate)}',
+            ),
+          );
         } catch (_) {
           // Use raw string if parsing fails
-          infoLines.add(RecordInfoLine(
-            icon: Assets.icons.calendar,
-            info: 'Birth Date: $birthDateValue',
-          ));
+          infoLines.add(
+            RecordInfoLine(
+              icon: Assets.icons.calendar,
+              info: '${l10n.fieldBirthDate}: $birthDateValue',
+            ),
+          );
         }
       }
     }
 
     // Address
-    final addressDisplay =
-        FhirFieldExtractor.formatAddress(address?.firstOrNull);
+    final addressDisplay = FhirFieldExtractor.formatAddress(
+      address?.firstOrNull,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createLocationLine(addressDisplay, prefix: 'Address'),
+      ResourceFieldMapper.createLocationLine(
+        addressDisplay,
+        prefix: l10n.fieldAddress,
+      ),
     );
 
     // Telecom (phone/email)
@@ -187,7 +207,7 @@ class RelatedPerson with _$RelatedPerson implements IFhirResource {
           ?.valueString;
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createStatusLine(phone, prefix: 'Phone'),
+        ResourceFieldMapper.createStatusLine(phone, prefix: l10n.fieldPhone),
       );
 
       final email = telecom!
@@ -197,7 +217,7 @@ class RelatedPerson with _$RelatedPerson implements IFhirResource {
           ?.valueString;
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createStatusLine(email, prefix: 'Email'),
+        ResourceFieldMapper.createStatusLine(email, prefix: l10n.fieldEmail),
       );
     }
 
@@ -210,24 +230,34 @@ class RelatedPerson with _$RelatedPerson implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-            languages.isNotEmpty ? languages : null,
-            prefix: 'Languages'),
+          languages.isNotEmpty ? languages : null,
+          prefix: l10n.fieldLanguages,
+        ),
       );
     }
 
     // Period
-    final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(period);
+    final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(
+      period,
+      l10n: l10n,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(periodDisplay, prefix: 'Period'),
+      ResourceFieldMapper.createDateLine(
+        periodDisplay,
+        prefix: l10n.fieldPeriod,
+      ),
     );
 
     // Date (last updated)
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: 'Last Updated: ${DateFormat.yMMMMd().format(date!)}',
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info:
+              '${l10n.fieldLastUpdated}: ${FhirFieldExtractor.formatRecordDate(date!, l10n.localeName)}',
+        ),
+      );
     }
 
     return infoLines;

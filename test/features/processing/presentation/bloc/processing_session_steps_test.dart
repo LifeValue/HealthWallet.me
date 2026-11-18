@@ -1,0 +1,1444 @@
+import 'dart:io';
+
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart' hide Notification;
+import 'package:flutter_test/flutter_test.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_service.dart';
+import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
+import 'package:health_wallet/features/processing/data/services/pdf_generation_service.dart';
+import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_observation.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
+import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
+import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
+import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extractor_registry.dart';
+import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../helpers/eventually.dart';
+import '../../../../helpers/fake_device_capability_service.dart';
+import '../../../share_records/share_test_helpers.dart';
+
+const _docScanner = MethodChannel('flutter_doc_scanner');
+
+class _FakeProcessingRepository extends Fake implements ProcessingRepository {
+  /// The sessions saved before the app started.
+  List<ProcessingSession> saved = const [];
+  final created = <List<String>>[];
+  final edited = <ProcessingSession>[];
+  final deleted = <ProcessingSession>[];
+  int cancels = 0;
+  int disposes = 0;
+
+  @override
+  Future<List<ProcessingSession>> getProcessingSessions() async => saved;
+
+  @override
+  Future<ProcessingSession> createProcessingSession({
+    required List<String> filePaths,
+    required ProcessingOrigin origin,
+    String? id,
+  }) async {
+    created.add(filePaths);
+    return ProcessingSession(
+      id: id ?? 'new',
+      filePaths: filePaths,
+      origin: origin,
+    );
+  }
+
+  @override
+  Future<int> editProcessingSession(ProcessingSession session) async {
+    edited.add(session);
+    return 1;
+  }
+
+  @override
+  Future<int> deleteProcessingSession(ProcessingSession session) async {
+    deleted.add(session);
+    return 1;
+  }
+
+  @override
+  Future<void> cancelGeneration() async => cancels++;
+
+  @override
+  Future<void> waitForStreamCompletion() async {}
+
+  @override
+  Future<void> disposeModel() async => disposes++;
+
+  @override
+  Future<bool> checkModelExistence() async => false;
+
+  /// The pages each records step read.
+  final remainingReads = <List<String>>[];
+
+  @override
+  Stream<MappingResourcesWithProgress> mapRemainingResources(
+    List<String> imagePaths, {
+    String? documentCategory,
+    bool useVision = false,
+    int? maxTokens,
+    int? gpuLayers,
+    int? threads,
+    int? contextSize,
+    ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
+  }) {
+    remainingReads.add(imagePaths);
+    return Stream.value((
+      [
+        MappingObservation(
+          id: 'obs-${remainingReads.length}',
+          observationName: const MappedProperty(value: 'Glucose'),
+        ),
+      ],
+      1.0,
+    ));
+  }
+}
+
+/// Reads "page N of M" from the OCR text of each path.
+class _FakeOcrProcessingHelper extends Fake implements OcrProcessingHelper {
+  Map<String, String> textByPath = {};
+
+  @override
+  Future<String> processOcrForImages(List<String> imagePaths) async =>
+      textByPath.entries
+          .firstWhere(
+            (e) => imagePaths.single.contains(e.key),
+            orElse: () => const MapEntry('', ''),
+          )
+          .value;
+
+  @override
+  Future<List<String>> prepareAllImages({
+    required List<String> filePaths,
+    double dpi = 72,
+  }) async => filePaths;
+
+  /// The page [rotateOcrPage] returns, or the error it throws when set.
+  String? rotatedPage;
+  Exception? rotateError;
+
+  @override
+  Future<String?> rotateOcrPage({
+    required String sessionId,
+    required List<String> filePaths,
+    required String previewPath,
+    required int quarterTurns,
+  }) async {
+    if (rotateError != null) throw rotateError!;
+    return rotatedPage;
+  }
+}
+
+class _FakeSyncRepository extends Fake implements SyncRepository {}
+
+class _FakeRecordsRepository extends Fake implements RecordsRepository {}
+
+class _FakeDocumentReferenceService extends Fake
+    implements DocumentReferenceService {}
+
+class _FakeHolderSelection extends Fake implements HolderSelection {}
+
+class _FakeHolderService extends Fake implements HolderService {}
+
+final _en = lookupAppLocalizations(const Locale('en'));
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+
+  late Directory root;
+  late _FakeProcessingRepository repository;
+  late _FakeOcrProcessingHelper ocr;
+  late SharedPreferences prefs;
+  late ProcessingBloc bloc;
+
+  setUp(() async {
+    root = mockPathProvider();
+    SharedPreferences.setMockInitialValues({});
+    prefs = await SharedPreferences.getInstance();
+    repository = _FakeProcessingRepository();
+    ocr = _FakeOcrProcessingHelper();
+    bloc = ProcessingBloc(
+      repository,
+      ocr,
+      _FakeSyncRepository(),
+      _FakeDocumentReferenceService(),
+      _FakeHolderService(),
+      _FakeHolderSelection(),
+      _FakeRecordsRepository(),
+      prefs,
+      AppStringsProvider.forLocale(const Locale('en')),
+      LayoutExtractionService(
+        repository,
+        ocr,
+        LayoutExtractorRegistry(const []),
+        _FakeHolderService(),
+        _FakeRecordsRepository(),
+      ),
+      FakeDeviceCapabilityService(),
+    );
+  });
+
+  tearDown(() async {
+    await bloc.close();
+    messenger.setMockMethodCallHandler(_docScanner, null);
+  });
+
+  // Seeding the state directly starts a step without running the steps
+  // before it.
+  void seed(ProcessingState state) {
+    // ignore: invalid_use_of_visible_for_testing_member
+    bloc.emit(state);
+  }
+
+  Future<void> settle() => pumpEventQueue();
+
+  File file(String name) =>
+      File('${root.path}/$name')..writeAsBytesSync([1, 2, 3]);
+
+  ProcessingSession session(String id) =>
+      bloc.state.sessions.firstWhere((s) => s.id == id);
+
+  group('state', () {
+    test('a session can be retried when not processed or after a failure', () {
+      ProcessingState with_(ProcessingStatus status, [PipelineStatus? p]) =>
+          ProcessingState(
+            status: p ?? const PipelineStatus.initial(),
+            sessions: [ProcessingSession(id: 's', status: status)],
+          );
+
+      expect(with_(ProcessingStatus.draft).canRetrySession('s'), isTrue);
+      expect(
+        with_(ProcessingStatus.patientExtracted).canRetrySession('s'),
+        isTrue,
+      );
+      expect(with_(ProcessingStatus.cancelled).canRetrySession('s'), isTrue);
+      expect(with_(ProcessingStatus.processing).canRetrySession('s'), isFalse);
+      expect(
+        with_(
+          ProcessingStatus.processing,
+          const PipelineStatus.failure(error: 'x'),
+        ).canRetrySession('s'),
+        isTrue,
+      );
+      expect(
+        with_(
+          ProcessingStatus.processing,
+          const PipelineStatus.capacityFailure(sessionId: 's'),
+        ).canRetrySession('s'),
+        isTrue,
+      );
+      expect(with_(ProcessingStatus.draft).canRetrySession('other'), isFalse);
+    });
+
+    test('step two can be retried from a draft or a failed patient step', () {
+      ProcessingState with_(ProcessingStatus status, [PipelineStatus? p]) =>
+          ProcessingState(
+            status: p ?? const PipelineStatus.initial(),
+            sessions: [ProcessingSession(id: 's', status: status)],
+          );
+
+      expect(with_(ProcessingStatus.draft).canRetryStep2('s'), isTrue);
+      expect(
+        with_(ProcessingStatus.patientExtracted).canRetryStep2('s'),
+        isFalse,
+      );
+      expect(
+        with_(
+          ProcessingStatus.patientExtracted,
+          const PipelineStatus.failure(error: 'x'),
+        ).canRetryStep2('s'),
+        isTrue,
+      );
+      expect(with_(ProcessingStatus.draft).canRetryStep2('other'), isFalse);
+    });
+  });
+
+  group('scan', () {
+    test('scanned pages are kept and become a scan session', () async {
+      final page = file('page1.jpg');
+      messenger.setMockMethodCallHandler(
+        _docScanner,
+        (call) async => {
+          'images': ['file://${page.path}', ''],
+          'count': 1,
+        },
+      );
+
+      bloc.add(const CaptureButtonPressed());
+      final status = await bloc.stream
+          .map((s) => s.status)
+          .firstWhere((s) => s is SessionCreated || s is Failure);
+
+      expect(status, isA<SessionCreated>());
+      final paths = repository.created.single;
+      expect(
+        paths.single,
+        matches(RegExp(r'/Documents/imports/page1_[0-9a-f]{8}\.jpg$')),
+      );
+      expect(File(paths.single).existsSync(), isTrue);
+      expect(session('new').origin, ProcessingOrigin.scan);
+    });
+
+    test('a scan without pages goes back to initial', () async {
+      messenger.setMockMethodCallHandler(
+        _docScanner,
+        (call) async => {'images': <String>[], 'count': 0},
+      );
+
+      bloc.add(const CaptureButtonPressed());
+      final status = await bloc.stream
+          .map((s) => s.status)
+          .firstWhere((s) => s is! Loading);
+
+      expect(status, const PipelineStatus.initial());
+      expect(repository.created, isEmpty);
+    });
+  });
+
+  group('import', () {
+    test('pages labelled "page N of M" are put in order', () async {
+      final second = file('b.jpg');
+      final first = file('a.jpg');
+      ocr.textByPath = {'b_': 'Page 2 of 2', 'a_': 'Page 1 of 2'};
+
+      bloc.add(DocumentImported(filePaths: [second.path, first.path]));
+      await bloc.stream.firstWhere((s) => s.status is SessionCreated);
+
+      final paths = repository.created.single;
+      expect(paths[0], contains('/a_'));
+      expect(paths[1], contains('/b_'));
+    });
+
+    test('unlabelled pages keep their order', () async {
+      final second = file('b.jpg');
+      final first = file('a.jpg');
+
+      bloc.add(DocumentImported(filePaths: [second.path, first.path]));
+      await bloc.stream.firstWhere((s) => s.status is SessionCreated);
+
+      final paths = repository.created.single;
+      expect(paths[0], contains('/b_'));
+      expect(paths[1], contains('/a_'));
+    });
+
+    test('files with the same name are kept apart under unique names, as new '
+        'files', () async {
+      final first = File('${root.path}/one/scan.jpg')
+        ..createSync(recursive: true)
+        ..writeAsBytesSync([1]);
+      final second = File('${root.path}/two/scan.jpg')
+        ..createSync(recursive: true)
+        ..writeAsBytesSync([2]);
+      for (final f in [first, second]) {
+        f.setLastModifiedSync(DateTime(2020));
+      }
+      final before = DateTime.now().subtract(const Duration(seconds: 5));
+
+      bloc.add(DocumentImported(filePaths: [first.path, second.path]));
+      await bloc.stream.firstWhere((s) => s.status is SessionCreated);
+
+      final paths = repository.created.single;
+      expect(paths.toSet(), hasLength(2));
+      for (final path in paths) {
+        expect(
+          path,
+          matches(RegExp(r'/Documents/imports/scan_[0-9a-f]{8}\.jpg$')),
+        );
+        expect(File(path).lastModifiedSync().isAfter(before), isTrue);
+      }
+      expect(paths.map((path) => File(path).readAsBytesSync()), [
+        [1],
+        [2],
+      ]);
+    });
+
+    test('an imported PDF keeps its name as the document title', () async {
+      final pdf = File('${root.path}/Scrisoare medicală.pdf')
+        ..writeAsStringSync('%PDF');
+
+      bloc.add(DocumentImported(filePaths: [pdf.path]));
+      await bloc.stream.firstWhere((s) => s.status is SessionCreated);
+
+      final stored = repository.created.single.single;
+      expect(
+        stored,
+        matches(RegExp(r'/imports/Scrisoare medicală_[0-9a-f]{8}\.pdf$')),
+      );
+      final group = (await PdfGenerationService(
+        PathResolver(),
+      ).groupAndConvertDocuments(filePaths: [stored])).single;
+      expect(group.title, 'PDF: Scrisoare medicală');
+    });
+
+    test('a patient found on the desktop starts the session at step two', () {
+      final doc = file('doc.pdf');
+      const patient = StagedPatient(draft: MappingPatient(id: 'p1'));
+
+      bloc.add(
+        DocumentImported(filePaths: [doc.path], phase1Patient: patient),
+      );
+
+      return expectLater(
+        bloc.stream.map((s) => s.sessions.firstOrNull?.status),
+        emitsThrough(ProcessingStatus.patientExtracted),
+      );
+    });
+  });
+
+  group('session list', () {
+    test('a draft progress update is saved, others are not', () async {
+      bloc.add(
+        const SessionChangedProgress(
+          session: ProcessingSession(id: 's', progress: 0.5),
+        ),
+      );
+      await settle();
+      expect(session('s').progress, 0.5);
+      expect(repository.edited, isEmpty);
+
+      bloc.add(
+        const SessionChangedProgress(
+          session: ProcessingSession(id: 's', status: ProcessingStatus.draft),
+        ),
+      );
+      await settle();
+      expect(bloc.state.sessions, hasLength(1));
+      expect(repository.edited.single.status, ProcessingStatus.draft);
+    });
+
+    test('clearing a running session stops the AI and starts the next', () {
+      const running = ProcessingSession(
+        id: 'run',
+        status: ProcessingStatus.processing,
+      );
+      const queued = ProcessingSession(id: 'next', filePaths: ['/n.jpg']);
+      seed(const ProcessingState(sessions: [running, queued]));
+
+      bloc.add(const SessionCleared(session: running));
+
+      return expectLater(
+        bloc.stream.map((s) => s.status),
+        emitsThrough(isA<Failure>()),
+      ).then((_) {
+        expect(repository.cancels, 1);
+        expect(repository.deleted.single.id, 'run');
+        expect(bloc.state.sessions.single.id, 'next');
+        // The next session is activated; with no model it fails as such.
+        expect(
+          (bloc.state.status as Failure).reason,
+          PipelineFailureReason.modelNotFound,
+        );
+      });
+    });
+
+    test('reordered pages are saved and used for OCR', () async {
+      seed(const ProcessingState(sessions: [ProcessingSession(id: 's')]));
+
+      bloc.add(
+        const PagesReordered(sessionId: 's', reorderedPaths: ['/2', '/1']),
+      );
+      await settle();
+
+      expect(session('s').filePaths, ['/2', '/1']);
+      expect(bloc.state.sessionImagePaths['s'], ['/2', '/1']);
+      expect(repository.edited.single.filePaths, ['/2', '/1']);
+    });
+
+    test('reordering an unknown session does nothing', () async {
+      bloc.add(const PagesReordered(sessionId: 'x', reorderedPaths: ['/1']));
+      await settle();
+
+      expect(repository.edited, isEmpty);
+    });
+  });
+
+  group('review edits', () {
+    ProcessingSession draft() => ProcessingSession(
+      id: 's',
+      status: ProcessingStatus.draft,
+      resources: [MappingObservation.empty()],
+    );
+
+    test('a resource field change is saved', () async {
+      seed(ProcessingState(sessions: [draft()]));
+
+      bloc.add(
+        const ResourceChanged(
+          sessionId: 's',
+          index: 0,
+          propertyKey: 'observationName',
+          newValue: 'Glucose',
+        ),
+      );
+      await settle();
+
+      final changed = session('s').resources.single as MappingObservation;
+      expect(changed.observationName.value, 'Glucose');
+      expect(repository.edited, hasLength(1));
+    });
+
+    test('a patient field change edits the draft patient', () async {
+      seed(ProcessingState(sessions: [draft()]));
+
+      bloc.add(
+        const ResourceChanged(
+          sessionId: 's',
+          index: -1,
+          propertyKey: 'givenName',
+          newValue: 'Ana',
+          isDraftPatient: true,
+        ),
+      );
+      await settle();
+
+      expect(session('s').patient.draft?.givenName.value, 'Ana');
+      expect(session('s').patient.mode, ImportMode.createNew);
+    });
+
+    test('an encounter field change edits the draft encounter', () async {
+      seed(ProcessingState(sessions: [draft()]));
+
+      bloc.add(
+        const ResourceChanged(
+          sessionId: 's',
+          index: -1,
+          propertyKey: 'encounterType',
+          newValue: 'Checkup',
+          isDraftEncounter: true,
+        ),
+      );
+      await settle();
+
+      expect(session('s').encounter.draft?.encounterType.value, 'Checkup');
+    });
+
+    test('a report field change edits the draft report', () async {
+      seed(ProcessingState(sessions: [draft()]));
+
+      bloc.add(
+        const ResourceChanged(
+          sessionId: 's',
+          index: -1,
+          propertyKey: 'reportName',
+          newValue: 'CBC',
+          isDraftDiagnosticReport: true,
+        ),
+      );
+      await settle();
+
+      expect(session('s').diagnosticReport?.draft?.reportName.value, 'CBC');
+    });
+
+    test('resources are added and removed', () async {
+      seed(ProcessingState(sessions: [draft()]));
+
+      bloc.add(
+        const ResourcesAdded(
+          sessionId: 's',
+          resourceTypes: ['Condition', 'Procedure'],
+        ),
+      );
+      await settle();
+      expect(session('s').resources, hasLength(3));
+
+      bloc.add(const ResourceRemoved(sessionId: 's', index: 0));
+      await settle();
+      expect(session('s').resources, hasLength(2));
+      expect(session('s').resources.first, isNot(isA<MappingObservation>()));
+    });
+
+    test('reverting without an existing patient does nothing', () async {
+      seed(ProcessingState(sessions: [draft()]));
+
+      bloc.add(const PatientReverted(sessionId: 's'));
+      await settle();
+
+      expect(repository.edited, isEmpty);
+    });
+
+    test('an attached encounter replaces patient and encounter', () async {
+      seed(ProcessingState(sessions: [draft()]));
+      const patient = StagedPatient(draft: MappingPatient(id: 'p'));
+      const encounter = StagedEncounter(draft: MappingEncounter(id: 'e'));
+
+      bloc.add(
+        const EncounterAttached(
+          sessionId: 's',
+          patient: patient,
+          encounter: encounter,
+        ),
+      );
+      await settle();
+
+      expect(session('s').patient, patient);
+      expect(session('s').encounter, encounter);
+      expect(repository.edited, hasLength(1));
+    });
+  });
+
+  group('mapping steps', () {
+    test('a document without text becomes a draft to fill by hand', () async {
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(id: 's', filePaths: ['/p.jpg']),
+          ],
+          sessionImagePaths: {
+            's': ['/p.jpg'],
+          },
+        ),
+      );
+
+      bloc.add(const MappingInitiated(sessionId: 's'));
+      await bloc.stream.firstWhere(
+        (st) => st.sessions.single.status == ProcessingStatus.draft,
+      );
+    });
+
+    test('a session already processing is not started again', () async {
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(id: 's', status: ProcessingStatus.processing),
+          ],
+        ),
+      );
+
+      bloc.add(const MappingInitiated(sessionId: 's'));
+      await settle();
+
+      expect(bloc.state.status, const PipelineStatus.initial());
+    });
+
+    test('cancelling before a patient is found cancels the session', () async {
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(
+              id: 's',
+              status: ProcessingStatus.processingPatient,
+            ),
+          ],
+        ),
+      );
+
+      bloc.add(const MappingCancelled(sessionId: 's'));
+      await settle();
+
+      expect(session('s').status, ProcessingStatus.cancelled);
+      expect(repository.disposes, 1);
+    });
+
+    test('cancelling step two keeps the patient step', () async {
+      seed(
+        ProcessingState(
+          sessions: [
+            ProcessingSession(
+              id: 's',
+              status: ProcessingStatus.processing,
+              resources: [MappingObservation.empty()],
+            ),
+          ],
+        ),
+      );
+
+      bloc.add(const MappingCancelled(sessionId: 's'));
+      await settle();
+
+      expect(session('s').status, ProcessingStatus.patientExtracted);
+      expect(session('s').resources, isEmpty);
+    });
+
+    test('a cancelled step two is saved as cancelled, so its results do not '
+        'come back when the app restarts', () async {
+      seed(
+        ProcessingState(
+          sessions: [
+            ProcessingSession(
+              id: 's',
+              status: ProcessingStatus.processing,
+              resources: [MappingObservation.empty()],
+              progress: 0.6,
+            ),
+          ],
+        ),
+      );
+
+      bloc.add(const MappingCancelled(sessionId: 's'));
+      await settle();
+
+      final saved = repository.edited.last;
+      expect(saved.id, 's');
+      expect(saved.status, ProcessingStatus.patientExtracted);
+      expect(saved.resources, isEmpty);
+      expect(saved.progress, 0.0);
+    });
+
+    test('cancelling a session that has no patient yet is saved as '
+        'cancelled', () async {
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(
+              id: 's',
+              status: ProcessingStatus.processingPatient,
+            ),
+          ],
+        ),
+      );
+
+      bloc.add(const MappingCancelled(sessionId: 's'));
+      await settle();
+
+      expect(repository.edited.last.status, ProcessingStatus.cancelled);
+    });
+
+    test('attaching the document is saved on the session', () async {
+      seed(const ProcessingState(sessions: [ProcessingSession(id: 's')]));
+
+      bloc.add(const DocumentAttached(sessionId: 's'));
+      await settle();
+
+      expect(session('s').isDocumentAttached, isTrue);
+      expect(repository.edited.single.isDocumentAttached, isTrue);
+    });
+  });
+
+  group('container type', () {
+    test('a report becomes an encounter with its name and date', () async {
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(
+              id: 's',
+              diagnosticReport: StagedDiagnosticReport(
+                draft: MappingDiagnosticReport(
+                  id: 'r',
+                  reportName: MappedProperty(value: 'CBC'),
+                  issuedDate: MappedProperty(value: '2024-03-01'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      bloc.add(const ContainerTypeSwitched(sessionId: 's'));
+      await settle();
+
+      expect(session('s').encounter.draft?.encounterType.value, 'CBC');
+      expect(session('s').encounter.draft?.periodStart.value, '2024-03-01');
+      expect(session('s').diagnosticReport?.draft, isNull);
+    });
+
+    test('an encounter becomes a report with its name and date', () async {
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(
+              id: 's',
+              encounter: StagedEncounter(
+                draft: MappingEncounter(
+                  id: 'e',
+                  encounterType: MappedProperty(value: 'Checkup'),
+                  periodStart: MappedProperty(value: '2024-03-01'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      bloc.add(const ContainerTypeSwitched(sessionId: 's'));
+      await settle();
+
+      expect(session('s').diagnosticReport?.draft?.reportName.value, 'Checkup');
+      expect(session('s').encounter.draft, isNull);
+    });
+
+    test('a visit picked from the wallet becomes a report', () async {
+      seed(
+        ProcessingState(
+          sessions: [
+            ProcessingSession(
+              id: 's',
+              encounter: StagedEncounter(
+                existing: Encounter(
+                  id: 'e1',
+                  title: 'Checkup',
+                  date: DateTime(2024, 3),
+                ),
+                mode: ImportMode.linkExisting,
+              ),
+            ),
+          ],
+        ),
+      );
+
+      bloc.add(const ContainerTypeSwitched(sessionId: 's'));
+      await settle();
+
+      expect(session('s').diagnosticReport?.draft?.id, 'e1');
+      expect(session('s').encounter.existing, isNull);
+    });
+
+    test('an unknown session is ignored', () async {
+      bloc.add(const ContainerTypeSwitched(sessionId: 'x'));
+      await settle();
+
+      expect(bloc.state.sessions, isEmpty);
+    });
+  });
+
+  group('settings', () {
+    test('turning vision on is saved', () async {
+      bloc.add(const VisionToggled(useVision: true));
+      await settle();
+
+      expect(bloc.state.useVision, isTrue);
+      expect(prefs.getBool(SharedPrefsConstants.aiUseVision), isTrue);
+    });
+
+    test('a new token limit is saved and the model reloaded', () async {
+      bloc.add(const TokenCapacityUpdated(newMaxTokens: 2048, sessionId: 'x'));
+      await settle();
+
+      expect(prefs.getInt(SharedPrefsConstants.aiMaxTokens), 2048);
+      expect(repository.disposes, 1);
+    });
+
+    test('an acknowledged notification is cleared', () async {
+      seed(
+        ProcessingState(
+          notification: Notification(text: 'done', time: DateTime(2026)),
+        ),
+      );
+
+      bloc.add(const NotificationAcknowledged());
+      await settle();
+
+      expect(bloc.state.notification, isNull);
+    });
+
+    test('capacity errors are read from the engine text', () {
+      for (final text in [
+        'maxTokens reached',
+        'Input is too long',
+        'bad input_size',
+        'tokenization failed',
+        'Prompt too long',
+      ]) {
+        expect(bloc.isCapacityError(text), isTrue, reason: text);
+      }
+      expect(bloc.isCapacityError('Not enough memory'), isFalse);
+    });
+  });
+
+  group('handover', () {
+    const patient = StagedPatient(
+      draft: MappingPatient(id: 'p'),
+      mode: ImportMode.createNew,
+    );
+
+    test(
+      'the records step reads its own session\'s pages, not the pages of '
+      'the session opened last',
+      () async {
+        // Another document was opened and its pages prepared.
+        seed(
+          ProcessingState(
+            sessions: [
+              const ProcessingSession(
+                id: 'h',
+                filePaths: ['h-page.jpg'],
+                status: ProcessingStatus.patientExtracted,
+                origin: ProcessingOrigin.handover,
+                patient: patient,
+              ),
+              const ProcessingSession(
+                id: 'other',
+                filePaths: ['other-page.jpg'],
+                status: ProcessingStatus.draft,
+              ),
+            ],
+            sessionImagePaths: {
+              'other': [file('other-page.jpg').path],
+            },
+          ),
+        );
+
+        bloc.add(const ProcessRemainingResources(sessionId: 'h'));
+        await settle();
+
+        expect(repository.remainingReads.single, ['h-page.jpg']);
+        expect(session('h').status, ProcessingStatus.draft);
+      },
+    );
+
+    test(
+      'a handover with the phone\'s patient step runs on to its draft by '
+      'itself, under the phone\'s session id',
+      () async {
+        bloc.add(
+          DocumentImported(
+            filePaths: [file('page.jpg').path],
+            origin: ProcessingOrigin.handover,
+            sessionId: 'phone-id',
+            phase1Patient: patient,
+          ),
+        );
+        // The import copies a real file.
+        await eventually(
+          () => bloc.state.sessions.any(
+            (s) => s.id == 'phone-id' && s.status == ProcessingStatus.draft,
+          ),
+        );
+
+        expect(session('phone-id').status, ProcessingStatus.draft);
+        expect(session('phone-id').resources.single.id, 'obs-1');
+      },
+    );
+
+    test(
+      'a failed records step of a handover is not retried by the queue',
+      () async {
+        seed(
+          const ProcessingState(
+            sessions: [
+              ProcessingSession(
+                id: 'h',
+                filePaths: ['h.jpg'],
+                status: ProcessingStatus.patientExtracted,
+                origin: ProcessingOrigin.handover,
+                patient: patient,
+              ),
+            ],
+          ),
+        );
+        bloc.haltedHandovers.add('h');
+
+        bloc.add(
+          const ProcessRemainingResources(sessionId: 'h', automatic: true),
+        );
+        await settle();
+        expect(repository.remainingReads, isEmpty);
+
+        // The user retrying does run it.
+        bloc.add(const ProcessRemainingResources(sessionId: 'h'));
+        await settle();
+        expect(repository.remainingReads, hasLength(1));
+      },
+    );
+
+    test('a handed-over session is left alone by local steps', () async {
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(id: 's', filePaths: ['s.jpg'], patient: patient),
+          ],
+        ),
+      );
+
+      seed(
+        bloc.state.copyWith(
+          status: const PipelineStatus.failure(
+            error: 'x',
+            reason: PipelineFailureReason.modelNotFound,
+            sessionId: 's',
+          ),
+        ),
+      );
+      bloc.add(const SessionHandedOver(sessionId: 's'));
+      await settle();
+      expect(session('s').status, ProcessingStatus.handedOver);
+      // This phone's failure doesn't apply to what the desktop does.
+      expect(bloc.state.status, const PipelineStatus.initial());
+
+      bloc
+        ..add(const MappingInitiated(sessionId: 's'))
+        ..add(const ProcessRemainingResources(sessionId: 's'));
+      await settle();
+      expect(session('s').status, ProcessingStatus.handedOver);
+      expect(repository.remainingReads, isEmpty);
+    });
+
+    test(
+      'the desktop\'s draft is applied for review, with a notification',
+      () async {
+        // This phone has no model: opening the scan failed before the
+        // handover.
+        seed(
+          const ProcessingState(
+            status: PipelineStatus.failure(
+              error: 'x',
+              reason: PipelineFailureReason.modelNotFound,
+              sessionId: 's',
+            ),
+            sessions: [
+              ProcessingSession(
+                id: 's',
+                status: ProcessingStatus.handedOver,
+              ),
+            ],
+          ),
+        );
+
+        bloc.add(
+          const HandoverDraftReceived(
+            sessionId: 's',
+            patient: patient,
+            resources: [
+              MappingObservation(
+                id: 'from-desktop',
+                observationName: MappedProperty(value: 'Glucose'),
+              ),
+            ],
+          ),
+        );
+        await settle();
+
+        expect(session('s').status, ProcessingStatus.draft);
+        // Still a scan: the Scan tab lists it.
+        expect(session('s').origin, ProcessingOrigin.scan);
+        expect(bloc.state.status, const PipelineStatus.initial());
+        expect(session('s').resources.single.id, 'from-desktop');
+        expect(bloc.state.notification!.text, 'Scan: ready to review');
+        expect(repository.edited.last.status, ProcessingStatus.draft);
+      },
+    );
+
+    test('a session that came back is this device\'s again', () async {
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(id: 'a', status: ProcessingStatus.handedOver),
+            ProcessingSession(
+              id: 'b',
+              status: ProcessingStatus.handedOver,
+              patient: patient,
+            ),
+          ],
+        ),
+      );
+
+      bloc
+        ..add(
+          const HandoverReturned(
+            sessionId: 'a',
+            reason: HandoverReturnReason.withdrawn,
+          ),
+        )
+        ..add(
+          const HandoverReturned(
+            sessionId: 'b',
+            reason: HandoverReturnReason.noModelOnDesktop,
+          ),
+        );
+      await settle();
+
+      expect(session('a').status, ProcessingStatus.pending);
+      expect(session('b').status, ProcessingStatus.patientExtracted);
+      expect(
+        bloc.state.notification!.text,
+        'Scan: there is no AI model on the desktop. It\'s back on this phone.',
+      );
+    });
+
+    test(
+      'a session the desktop failed, or deleted, comes back with why',
+      () async {
+        seed(
+          const ProcessingState(
+            sessions: [
+              ProcessingSession(id: 'a', status: ProcessingStatus.handedOver),
+              ProcessingSession(id: 'b', status: ProcessingStatus.handedOver),
+            ],
+          ),
+        );
+        final scan = _en.processingOriginScan;
+
+        bloc.add(
+          const HandoverReturned(
+            sessionId: 'a',
+            reason: HandoverReturnReason.failedOnDesktop,
+          ),
+        );
+        await settle();
+        expect(
+          bloc.state.notification!.text,
+          _en.handoverFailedOnDesktop(scan),
+        );
+        expect(bloc.state.notification!.type, NotificationType.error);
+
+        bloc.add(
+          const HandoverReturned(
+            sessionId: 'b',
+            reason: HandoverReturnReason.deletedOnDesktop,
+          ),
+        );
+        await settle();
+        expect(
+          bloc.state.notification!.text,
+          _en.handoverDeletedOnDesktop(scan),
+        );
+        expect(session('a').status, ProcessingStatus.pending);
+        expect(session('b').status, ProcessingStatus.pending);
+      },
+    );
+
+    test('a session being read here stops when it is handed over', () async {
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(id: 's', status: ProcessingStatus.processing),
+          ],
+        ),
+      );
+
+      bloc.add(const SessionHandedOver(sessionId: 's'));
+      await settle();
+
+      expect(session('s').status, ProcessingStatus.handedOver);
+      expect(repository.cancels, 1);
+      expect(repository.disposes, 1);
+    });
+
+    test('the message for a session saved elsewhere names where, and '
+        'whether a draft was dropped', () async {
+      final scan = _en.processingOriginScan;
+      Future<String> savedElsewhere(
+        ProcessingStatus status, {
+        required bool byDesktop,
+      }) async {
+        seed(
+          ProcessingState(
+            sessions: [ProcessingSession(id: 's', status: status)],
+          ),
+        );
+        bloc.add(SessionSavedElsewhere(sessionId: 's', byDesktop: byDesktop));
+        await settle();
+        return bloc.state.notification!.text;
+      }
+
+      expect(
+        await savedElsewhere(ProcessingStatus.draft, byDesktop: false),
+        _en.handoverDraftSavedOnPhone(scan),
+      );
+      expect(
+        await savedElsewhere(ProcessingStatus.handedOver, byDesktop: true),
+        _en.handoverSavedOnDesktop(scan),
+      );
+      expect(
+        await savedElsewhere(ProcessingStatus.handedOver, byDesktop: false),
+        _en.handoverSavedOnPhone(scan),
+      );
+    });
+
+    test(
+      'on start, a waiting handover is opened before other documents',
+      () async {
+        repository.saved = const [
+          ProcessingSession(
+            id: 'scan',
+            filePaths: ['scan.jpg'],
+            status: ProcessingStatus.pending,
+          ),
+          ProcessingSession(
+            id: 'h',
+            filePaths: ['h.jpg'],
+            status: ProcessingStatus.pending,
+            origin: ProcessingOrigin.handover,
+          ),
+        ];
+
+        bloc.add(const ProcessingInitialised());
+        await eventually(() => bloc.state.sessionImagePaths.containsKey('h'));
+
+        expect(bloc.state.sessionImagePaths.keys, ['h']);
+      },
+    );
+
+    test('on start, a halted handover is left for the user', () async {
+      repository.saved = const [
+        ProcessingSession(
+          id: 'h',
+          filePaths: ['h.jpg'],
+          status: ProcessingStatus.pending,
+          origin: ProcessingOrigin.handover,
+        ),
+      ];
+      bloc.haltedHandovers.add('h');
+
+      bloc.add(const ProcessingInitialised());
+      await eventually(() => bloc.state.sessions.isNotEmpty);
+      await settle();
+
+      expect(bloc.state.sessionImagePaths, isEmpty);
+    });
+
+    test('a session saved on the other device is removed', () async {
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(id: 's', status: ProcessingStatus.draft),
+          ],
+        ),
+      );
+
+      bloc.add(const SessionSavedElsewhere(sessionId: 's', byDesktop: true));
+      await settle();
+
+      expect(bloc.state.sessions, isEmpty);
+      expect(repository.deleted.single.id, 's');
+      expect(bloc.state.notification!.route.routeName, isEmpty);
+    });
+
+    test('a session the phone took back is removed and says so', () async {
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(id: 's', status: ProcessingStatus.draft),
+            ProcessingSession(id: 'other', status: ProcessingStatus.draft),
+          ],
+        ),
+      );
+
+      bloc.add(const SessionTakenBack(sessionId: 's'));
+      await settle();
+
+      expect(bloc.state.sessions.map((s) => s.id), ['other']);
+      expect(repository.deleted.single.id, 's');
+      expect(
+        bloc.state.notification!.text,
+        'The phone took this document back.',
+      );
+    });
+
+    test('taking back a session that is already gone does nothing', () async {
+      seed(const ProcessingState());
+
+      bloc.add(const SessionTakenBack(sessionId: 's'));
+      await settle();
+
+      expect(bloc.state.notification, isNull);
+      expect(repository.deleted, isEmpty);
+    });
+  });
+
+  group('the same document sent again', () {
+    test('replaces a running attempt: its AI is stopped and its files '
+        'deleted', () async {
+      const previous = ProcessingSession(
+        id: 'h',
+        status: ProcessingStatus.processing,
+        filePaths: ['/old.jpg'],
+      );
+      seed(
+        const ProcessingState(
+          sessions: [previous],
+          sessionImagePaths: {
+            'h': ['/old.jpg'],
+          },
+        ),
+      );
+      final doc = file('doc.jpg');
+
+      bloc.add(DocumentImported(filePaths: [doc.path], sessionId: 'h'));
+      await bloc.stream.firstWhere((s) => s.status is SessionCreated);
+
+      expect(repository.cancels, 1);
+      expect(repository.deleted.single, previous);
+      expect(bloc.state.sessions.where((s) => s.id == 'h'), hasLength(1));
+      expect(session('h').filePaths, isNot(contains('/old.jpg')));
+      expect(bloc.state.sessionImagePaths['h'], isNot(contains('/old.jpg')));
+    });
+
+    test('replaces an attempt that is not running without stopping the '
+        'AI', () async {
+      const previous = ProcessingSession(
+        id: 'h',
+        status: ProcessingStatus.cancelled,
+      );
+      seed(const ProcessingState(sessions: [previous]));
+      final doc = file('doc.jpg');
+
+      bloc.add(DocumentImported(filePaths: [doc.path], sessionId: 'h'));
+      await bloc.stream.firstWhere((s) => s.status is SessionCreated);
+
+      expect(repository.cancels, 0);
+      expect(repository.deleted.single, previous);
+    });
+  });
+
+  group('page order', () {
+    test('labelled pages go first in page order, unlabelled ones after them '
+        'in their own order', () async {
+      final d = file('d.jpg');
+      final c = file('c.jpg');
+      final b = file('b.jpg');
+      final a = file('a.jpg');
+      ocr.textByPath = {'b_': 'Page 2 of 4', 'a_': 'Page 1 of 4'};
+
+      bloc.add(DocumentImported(filePaths: [d.path, b.path, c.path, a.path]));
+      await bloc.stream.firstWhere((s) => s.status is SessionCreated);
+
+      final paths = repository.created.single;
+      expect(paths[0], contains('/a_'));
+      expect(paths[1], contains('/b_'));
+      expect(paths[2], contains('/d_'));
+      expect(paths[3], contains('/c_'));
+    });
+  });
+
+  group('page rotation', () {
+    const seeded = ProcessingState(
+      sessions: [
+        ProcessingSession(id: 's', filePaths: ['/doc.pdf']),
+      ],
+      ocrPageByPreviewPath: {'/p1.png': '/ocr1.png'},
+    );
+
+    test('the turned OCR page replaces the one kept for the preview', () async {
+      seed(seeded);
+      ocr.rotatedPage = '/ocr1-turned.png';
+
+      bloc.add(const PageRotated(sessionId: 's', previewPath: '/p1.png'));
+      await settle();
+
+      expect(bloc.state.ocrPageByPreviewPath, {'/p1.png': '/ocr1-turned.png'});
+    });
+
+    test('when turning the OCR page fails, OCR reads the turned preview '
+        'instead', () async {
+      seed(seeded);
+      ocr.rotateError = Exception('disk full');
+
+      bloc.add(const PageRotated(sessionId: 's', previewPath: '/p1.png'));
+      await settle();
+
+      expect(bloc.state.ocrPageByPreviewPath, isEmpty);
+    });
+
+    test('a page of an unknown session is left alone', () async {
+      seed(seeded);
+      ocr.rotateError = Exception('not called');
+
+      bloc.add(const PageRotated(sessionId: 'x', previewPath: '/p1.png'));
+      await settle();
+
+      expect(bloc.state.ocrPageByPreviewPath, {'/p1.png': '/ocr1.png'});
+    });
+  });
+
+  group('a wallet patient in the review', () {
+    const existing = Patient(id: 'p1', title: 'Ana Pop');
+
+    ProcessingSession linked({MappingPatient? draft}) => ProcessingSession(
+      id: 's',
+      status: ProcessingStatus.draft,
+      patient: StagedPatient(
+        existing: existing,
+        draft: draft,
+        mode: ImportMode.linkExisting,
+      ),
+    );
+
+    test('a field change starts a draft from the wallet patient and keeps '
+        'it linked', () async {
+      seed(ProcessingState(sessions: [linked()]));
+
+      bloc.add(
+        const ResourceChanged(
+          sessionId: 's',
+          index: -1,
+          propertyKey: 'givenName',
+          newValue: 'Ioana',
+          isDraftPatient: true,
+        ),
+      );
+      await settle();
+
+      final patient = session('s').patient;
+      expect(patient.mode, ImportMode.linkExisting);
+      expect(patient.existing, existing);
+      expect(patient.draft?.id, 'p1');
+      expect(patient.draft?.givenName.value, 'Ioana');
+      expect(repository.edited, hasLength(1));
+    });
+
+    test('a field change edits a draft already started', () async {
+      seed(
+        ProcessingState(
+          sessions: [
+            linked(
+              draft: const MappingPatient(
+                id: 'd',
+                familyName: MappedProperty(value: 'Pop'),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      bloc.add(
+        const ResourceChanged(
+          sessionId: 's',
+          index: -1,
+          propertyKey: 'givenName',
+          newValue: 'Ioana',
+          isDraftPatient: true,
+        ),
+      );
+      await settle();
+
+      final draft = session('s').patient.draft!;
+      expect(draft.id, 'd');
+      expect(draft.familyName.value, 'Pop');
+      expect(draft.givenName.value, 'Ioana');
+    });
+
+    test('reverting drops the edits and links the wallet patient', () async {
+      seed(
+        ProcessingState(
+          sessions: [
+            linked(
+              draft: const MappingPatient(
+                givenName: MappedProperty(value: 'Ioana'),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      bloc.add(const PatientReverted(sessionId: 's'));
+      await settle();
+
+      final patient = session('s').patient;
+      expect(patient.draft, isNull);
+      expect(patient.existing, existing);
+      expect(patient.mode, ImportMode.linkExisting);
+      expect(repository.edited, hasLength(1));
+    });
+  });
+}

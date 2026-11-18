@@ -13,6 +13,10 @@ class FhirResource extends Table {
   TextColumn get resourceRaw => text()();
   TextColumn get encounterId => text().nullable()();
   TextColumn get subjectId => text().nullable()();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+  TextColumn get deviceId => text().nullable()();
+  TextColumn get specialtyOverride => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};

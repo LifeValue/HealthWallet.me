@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+
 import 'form_fields.dart';
 
 class DialogHeader extends StatelessWidget {
@@ -22,7 +23,9 @@ class DialogHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(
-          horizontal: Insets.normal, vertical: Insets.small),
+        horizontal: Insets.normal,
+        vertical: Insets.small,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -38,8 +41,9 @@ class DialogHeader extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: AppTextStyle.bodySmall
-                            .copyWith(fontWeight: FontWeight.w500),
+                        style: AppTextStyle.bodySmall.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       if (subtitle != null)
                         Text(

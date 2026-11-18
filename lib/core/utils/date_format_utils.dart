@@ -1,4 +1,5 @@
 import 'package:health_wallet/core/config/constants/region_preset.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:intl/intl.dart';
 
 class DateFormatUtils {
@@ -41,18 +42,18 @@ class DateFormatUtils {
     }
   }
 
-  static String getSincePretty(DateTime dateTime) {
+  static String getSincePretty(DateTime dateTime, AppLocalizations l10n) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
 
     if (difference.inDays > 0) {
-      return '${difference.inDays} day${difference.inDays != 1 ? 's' : ''} ago';
+      return l10n.timeAgoDays(difference.inDays);
     } else if (difference.inHours > 0) {
-      return '${difference.inHours} hour${difference.inHours != 1 ? 's' : ''} ago';
+      return l10n.timeAgoHours(difference.inHours);
     } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} minute${difference.inMinutes != 1 ? 's' : ''} ago';
+      return l10n.timeAgoMinutes(difference.inMinutes);
     } else {
-      return 'Just now';
+      return l10n.justNow;
     }
   }
 }

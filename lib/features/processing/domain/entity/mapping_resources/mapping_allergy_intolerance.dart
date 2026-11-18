@@ -1,0 +1,173 @@
+import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/processing/domain/entity/text_field_descriptor.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:uuid/uuid.dart';
+
+part 'mapping_allergy_intolerance.freezed.dart';
+
+@freezed
+abstract class MappingAllergyIntolerance
+    with _$MappingAllergyIntolerance
+    implements MappingResource {
+  const MappingAllergyIntolerance._();
+
+  const factory MappingAllergyIntolerance({
+    @Default('') String id,
+    @Default(MappedProperty()) MappedProperty substance,
+    @Default(MappedProperty()) MappedProperty manifestation,
+    @Default(MappedProperty()) MappedProperty category,
+  }) = _MappingAllergyIntolerance;
+
+  factory MappingAllergyIntolerance.fromJson(Map<String, dynamic> json) {
+    return MappingAllergyIntolerance(
+      id: json['id'] ?? const Uuid().v4(),
+      substance: MappedProperty.fromJson(json['substance']),
+      manifestation: MappedProperty.fromJson(json['manifestation']),
+      category: MappedProperty.fromJson(json['category']),
+    );
+  }
+
+  factory MappingAllergyIntolerance.empty() {
+    return MappingAllergyIntolerance(
+      id: const Uuid().v4(),
+      substance: MappedProperty.empty(),
+      manifestation: MappedProperty.empty(),
+      category: MappedProperty.empty(),
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'resourceType': 'AllergyIntolerance',
+    'substance': substance.toJson(),
+    'manifestation': manifestation.toJson(),
+    'category': category.toJson(),
+  };
+
+  @override
+  IFhirResource toFhirResource({
+    String? sourceId,
+    String? encounterId,
+    String? subjectId,
+    fhir_r4.FhirMeta? meta,
+  }) {
+    // The AI may leave the category empty or invent one; FHIR only allows these codes.
+    final categoryCode = category.value.trim().toLowerCase();
+    final hasValidCategory = const {
+      'food',
+      'medication',
+      'environment',
+      'biologic',
+    }.contains(categoryCode);
+
+    final fhir_r4.AllergyIntolerance allergyIntolerance =
+        fhir_r4.AllergyIntolerance(
+          meta: meta,
+          code: fhir_r4.CodeableConcept(
+            text: fhir_r4.FhirString(substance.value),
+          ),
+          reaction: [
+            fhir_r4.AllergyIntoleranceReaction(
+              manifestation: [
+                fhir_r4.CodeableConcept(
+                  text: fhir_r4.FhirString(manifestation.value),
+                ),
+              ],
+            ),
+          ],
+          category: hasValidCategory
+              ? [fhir_r4.AllergyIntoleranceCategory(categoryCode)]
+              : null,
+          patient: fhir_r4.Reference(
+            reference: fhir_r4.FhirString('Patient/$subjectId'),
+          ),
+          encounter: fhir_r4.Reference(
+            reference: fhir_r4.FhirString('Encounter/$encounterId'),
+          ),
+        );
+
+    final Map<String, dynamic> rawResource = allergyIntolerance.toJson();
+
+    return AllergyIntolerance(
+      id: id,
+      resourceId: id,
+      title: substance.value,
+      sourceId: sourceId ?? '',
+      encounterId: encounterId ?? '',
+      subjectId: subjectId ?? '',
+      rawResource: rawResource,
+      code: allergyIntolerance.code,
+      reaction: allergyIntolerance.reaction,
+      category: allergyIntolerance.category,
+    );
+  }
+
+  static Map<String, String> localizedLabels(AppLocalizations l10n) => {
+    'substance': l10n.labelSubstance,
+    'manifestation': l10n.labelManifestation,
+    'category': l10n.labelCategory,
+  };
+
+  @override
+  Map<String, TextFieldDescriptor> getFieldDescriptors(AppLocalizations l10n) =>
+      {
+        'substance': TextFieldDescriptor(
+          label: l10n.labelSubstance,
+          value: substance.value,
+          confidenceLevel: substance.confidenceLevel,
+        ),
+        'manifestation': TextFieldDescriptor(
+          label: l10n.labelManifestation,
+          value: manifestation.value,
+          confidenceLevel: manifestation.confidenceLevel,
+        ),
+        'category': TextFieldDescriptor(
+          label: l10n.labelCategory,
+          value: category.value,
+          confidenceLevel: category.confidenceLevel,
+        ),
+      };
+
+  @override
+  MappingResource copyWithMap(Map<String, dynamic> newValues) =>
+      MappingAllergyIntolerance(
+        id: id,
+        substance: MappedProperty(
+          value: newValues['substance'] ?? substance.value,
+          confidenceLevel: newValues['substance'] != null
+              ? 1
+              : substance.confidenceLevel,
+        ),
+        manifestation: MappedProperty(
+          value: newValues['manifestation'] ?? manifestation.value,
+          confidenceLevel: newValues['manifestation'] != null
+              ? 1
+              : manifestation.confidenceLevel,
+        ),
+        category: MappedProperty(
+          value: newValues['category'] ?? category.value,
+          confidenceLevel: newValues['category'] != null
+              ? 1
+              : category.confidenceLevel,
+        ),
+      );
+
+  @override
+  String localizedLabel(AppLocalizations l10n) => l10n.allergyIntolerance;
+
+  @override
+  MappingResource populateConfidence(String inputText) => copyWith(
+    substance: substance.calculateConfidence(inputText),
+    manifestation: manifestation.calculateConfidence(inputText),
+    category: category.calculateConfidence(inputText),
+  );
+
+  @override
+  bool get isValid =>
+      substance.isValid || manifestation.isValid || category.isValid;
+}

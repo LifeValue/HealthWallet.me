@@ -6,6 +6,7 @@ import 'package:health_wallet/gen/assets.gen.dart';
 
 class HomeSectionHeader extends StatelessWidget {
   final String title;
+  final Widget? titleWidget;
   final String? filterLabel;
   final VoidCallback? onFilterTap;
   final Widget? trailing;
@@ -19,7 +20,8 @@ class HomeSectionHeader extends StatelessWidget {
 
   const HomeSectionHeader({
     super.key,
-    required this.title,
+    this.title = '',
+    this.titleWidget,
     this.filterLabel,
     this.onFilterTap,
     this.trailing,
@@ -46,12 +48,15 @@ class HomeSectionHeader extends StatelessWidget {
             Expanded(
               child: Row(
                 children: [
-                  Text(
-                    title,
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      color: context.colorScheme.onSurface,
+                  if (titleWidget != null)
+                    titleWidget!
+                  else
+                    Text(
+                      title,
+                      style: AppTextStyle.bodyMedium.copyWith(
+                        color: context.colorScheme.onSurface,
+                      ),
                     ),
-                  ),
                   if (onInfoTap != null) ...[
                     const SizedBox(width: 8),
                     GestureDetector(
@@ -87,7 +92,7 @@ class HomeSectionHeader extends StatelessWidget {
                       Assets.icons.filter.svg(
                         colorFilter: ColorFilter.mode(
                           isFilterDisabled
-                              ? colorScheme.onSurface.withOpacity(0.38)
+                              ? colorScheme.onSurface.withValues(alpha: 0.38)
                               : colorScheme.primary,
                           BlendMode.srcIn,
                         ),
@@ -99,7 +104,7 @@ class HomeSectionHeader extends StatelessWidget {
                         filterLabel!,
                         style: AppTextStyle.bodySmall.copyWith(
                           color: isFilterDisabled
-                              ? colorScheme.onSurface.withOpacity(0.38)
+                              ? colorScheme.onSurface.withValues(alpha: 0.38)
                               : colorScheme.primary,
                         ),
                       ),

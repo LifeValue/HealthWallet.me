@@ -2,14 +2,17 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:injectable/injectable.dart';
 
 @lazySingleton
 class BluetoothStateService {
-  static const _methodChannel =
-      MethodChannel('com.techstackapps.healthwallet/bluetooth');
-  static const _eventChannel =
-      EventChannel('com.techstackapps.healthwallet/bluetooth_state');
+  static const _methodChannel = MethodChannel(
+    'com.techstackapps.healthwallet/bluetooth',
+  );
+  static const _eventChannel = EventChannel(
+    'com.techstackapps.healthwallet/bluetooth_state',
+  );
 
   StreamSubscription<dynamic>? _subscription;
   final _controller = StreamController<bool>.broadcast();
@@ -31,8 +34,9 @@ class BluetoothStateService {
   Future<bool> isEnabled() async {
     if (!Platform.isAndroid && !Platform.isIOS) return true;
     try {
-      final result =
-          await _methodChannel.invokeMethod<bool>('isBluetoothEnabled');
+      final result = await _methodChannel.invokeMethod<bool>(
+        'isBluetoothEnabled',
+      );
       return result ?? false;
     } catch (_) {
       return true;
@@ -42,7 +46,9 @@ class BluetoothStateService {
   Future<void> requestEnable() async {
     try {
       await _methodChannel.invokeMethod('requestEnable');
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Could not ask the system to turn Bluetooth on', e);
+    }
   }
 
   @disposeMethod

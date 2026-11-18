@@ -11,23 +11,27 @@ abstract class SourceMapper {
 class SourceMapperImpl implements SourceMapper {
   @override
   Source mapToEntity(SourceDto dto) {
-    String platformName = _generatePlatformName(dto.platformType ?? 'fasten');
-    String? labelSource = platformName;
-    String platformType = 'fasten';
+    final String platformName = _generatePlatformName(
+      dto.platformType ?? 'fasten',
+    );
+    // The provider's name for the source (its hospital or portal), else
+    // the platform's.
+    final String labelSource = (dto.labelSource?.isNotEmpty ?? false)
+        ? dto.labelSource!
+        : platformName;
+    // The integration the source came through. The app only asks whether a
+    // source is the wallet (writable) or a provider's (read-only).
+    const String platformType = 'fasten';
 
     DateTime? createdAt;
     DateTime? updatedAt;
 
     if (dto.createdAt != null) {
-      try {
-        createdAt = DateTime.parse(dto.createdAt!);
-      } catch (e) {}
+      createdAt = DateTime.tryParse(dto.createdAt!);
     }
 
     if (dto.updatedAt != null) {
-      try {
-        updatedAt = DateTime.parse(dto.updatedAt!);
-      } catch (e) {}
+      updatedAt = DateTime.tryParse(dto.updatedAt!);
     }
 
     return Source(

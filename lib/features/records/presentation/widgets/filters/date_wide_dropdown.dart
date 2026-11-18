@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+
 import 'date_range_filter_model.dart';
 
 class DateWideDropdown extends StatefulWidget {
   final String label;
+  final DateField field;
   final int? value;
   final List<DateDropdownItem> items;
   final ValueChanged<int?>? onChanged;
@@ -19,6 +22,7 @@ class DateWideDropdown extends StatefulWidget {
   const DateWideDropdown({
     super.key,
     required this.label,
+    required this.field,
     required this.value,
     required this.items,
     required this.onChanged,
@@ -76,14 +80,14 @@ class _DateWideDropdownState extends State<DateWideDropdown> {
 
     final menuContent = StatefulBuilder(
       builder: (context, setOverlayState) {
-        final content = widget.label == 'Year'
-            ? _buildYearPicker(setOverlayState)
-            : widget.label == 'Day'
-                ? _buildDayCalendar()
-                : _buildMonthGrid();
+        final content = switch (widget.field) {
+          DateField.year => _buildYearPicker(setOverlayState),
+          DateField.day => _buildDayCalendar(),
+          DateField.month => _buildMonthGrid(),
+        };
 
         // Calculate menu height based on type
-        final menuHeight = widget.label == 'Day' ? 340.0 : 260.0;
+        final menuHeight = widget.field == DateField.day ? 340.0 : 260.0;
 
         double? top;
         double? bottom;
@@ -101,8 +105,7 @@ class _DateWideDropdownState extends State<DateWideDropdown> {
           // Position below the dropdown field
           top = position.dy + size.height + 4;
           // Ensure menu doesn't overflow below safe area
-          final availableBelow =
-              screenSize.height - top - viewPadding.bottom;
+          final availableBelow = screenSize.height - top - viewPadding.bottom;
           if (menuHeight > availableBelow) {
             // Clamp the top so the bottom stays above safe area
             final maxTop =
@@ -238,8 +241,7 @@ class _DateWideDropdownState extends State<DateWideDropdown> {
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                 child: GridView.builder(
                   padding: EdgeInsets.zero,
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 5,
                     crossAxisSpacing: 8,
                     mainAxisSpacing: 8,
@@ -294,7 +296,9 @@ class _DateWideDropdownState extends State<DateWideDropdown> {
     final daysInMonth = DateTime(year, monthValue + 1, 0).day;
     final startWeekday = firstDayOfMonth.weekday % 7;
 
-    final dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    final dayNames = DateRangeDropdownService.getWeekdayInitials(
+      context.l10n.localeName,
+    );
 
     const double cellHeight = 36;
     // 6 rows max + header + gaps + padding
@@ -309,53 +313,60 @@ class _DateWideDropdownState extends State<DateWideDropdown> {
           children: [
             SizedBox(
               height: 24,
-            child: Row(
-              children: dayNames
-                  .map((name) => Expanded(
+              child: Row(
+                children: dayNames
+                    .map(
+                      (name) => Expanded(
                         child: Center(
                           child: Text(
                             name,
                             style: AppTextStyle.labelSmall.copyWith(
-                              color: context.colorScheme.onSurface
-                                  .withValues(alpha: 0.6),
+                              color: context.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                      ))
-                  .toList(),
+                      ),
+                    )
+                    .toList(),
+              ),
             ),
-          ),
-          SizedBox(height: Theme.of(context).platform == TargetPlatform.iOS ? 4 : 4),
-          Transform.translate(
-            offset: Offset(0, Theme.of(context).platform == TargetPlatform.iOS ? -28 : -12),
-            child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 7,
-              crossAxisSpacing: 6,
-              mainAxisSpacing: 6,
-              mainAxisExtent: cellHeight,
+            SizedBox(
+              height: Theme.of(context).platform == TargetPlatform.iOS ? 4 : 4,
             ),
-            itemCount: startWeekday + daysInMonth + 1,
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return _buildClearButton();
-              }
+            Transform.translate(
+              offset: Offset(
+                0,
+                Theme.of(context).platform == TargetPlatform.iOS ? -28 : -12,
+              ),
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  crossAxisSpacing: 6,
+                  mainAxisSpacing: 6,
+                  mainAxisExtent: cellHeight,
+                ),
+                itemCount: startWeekday + daysInMonth + 1,
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return _buildClearButton();
+                  }
 
-              if (index <= startWeekday) {
-                return const SizedBox.shrink();
-              }
+                  if (index <= startWeekday) {
+                    return const SizedBox.shrink();
+                  }
 
-              final day = index - startWeekday;
-              return _buildDayItem(day);
-            },
-          ),
-          ),
-        ],
-      ),
+                  final day = index - startWeekday;
+                  return _buildDayItem(day);
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -519,9 +530,9 @@ class _DateWideDropdownState extends State<DateWideDropdown> {
   @override
   Widget build(BuildContext context) {
     final matchingItem = widget.items.cast<DateDropdownItem?>().firstWhere(
-          (item) => item!.value == widget.value,
-          orElse: () => null,
-        );
+      (item) => item!.value == widget.value,
+      orElse: () => null,
+    );
     final displayValue = matchingItem?.displayText ?? '-';
 
     return Column(
@@ -530,8 +541,9 @@ class _DateWideDropdownState extends State<DateWideDropdown> {
         Text(
           widget.label,
           style: AppTextStyle.labelSmall.copyWith(
-            color: context.colorScheme.onSurface
-                .withValues(alpha: widget.enabled ? 0.7 : 0.4),
+            color: context.colorScheme.onSurface.withValues(
+              alpha: widget.enabled ? 0.7 : 0.4,
+            ),
           ),
         ),
         const SizedBox(height: 4),
@@ -543,7 +555,9 @@ class _DateWideDropdownState extends State<DateWideDropdown> {
             child: Container(
               height: 48,
               padding: const EdgeInsets.symmetric(
-                  horizontal: Insets.small, vertical: Insets.small),
+                horizontal: Insets.small,
+                vertical: Insets.small,
+              ),
               decoration: BoxDecoration(
                 color: widget.enabled
                     ? context.colorScheme.surface
@@ -552,8 +566,8 @@ class _DateWideDropdownState extends State<DateWideDropdown> {
                   color: _isOpen
                       ? context.colorScheme.primary
                       : context.isDarkMode
-                          ? AppColors.borderDark
-                          : AppColors.border,
+                      ? AppColors.borderDark
+                      : AppColors.border,
                   width: 1.5,
                 ),
                 borderRadius: BorderRadius.circular(8),
@@ -568,8 +582,9 @@ class _DateWideDropdownState extends State<DateWideDropdown> {
                       style: AppTextStyle.labelLarge.copyWith(
                         color: widget.enabled
                             ? context.colorScheme.onSurface
-                            : context.colorScheme.onSurface
-                                .withValues(alpha: 0.4),
+                            : context.colorScheme.onSurface.withValues(
+                                alpha: 0.4,
+                              ),
                       ),
                     ),
                   ),

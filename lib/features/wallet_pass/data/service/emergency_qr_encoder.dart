@@ -84,21 +84,19 @@ abstract final class EmergencyQrEncoder {
     return EmergencyCardData(
       patientName: map['n'] as String? ?? '',
       bloodType: map['b'] as String?,
-      dateOfBirth:
-          map['d'] != null ? DateTime.tryParse(map['d'] as String) : null,
+      dateOfBirth: map['d'] != null
+          ? DateTime.tryParse(map['d'] as String)
+          : null,
       gender: map['g'] as String?,
       patientPhone: map['p'] as String?,
-      allergies: (map['a'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
+      allergies:
+          (map['a'] as List<dynamic>?)?.map((e) => e as String).toList() ??
           const [],
-      conditions: (map['c'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
+      conditions:
+          (map['c'] as List<dynamic>?)?.map((e) => e as String).toList() ??
           const [],
-      medications: (map['m'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
+      medications:
+          (map['m'] as List<dynamic>?)?.map((e) => e as String).toList() ??
           const [],
       emergencyContactName: map['en'] as String?,
       emergencyContactPhone: map['ep'] as String?,

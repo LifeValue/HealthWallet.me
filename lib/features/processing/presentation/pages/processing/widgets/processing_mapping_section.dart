@@ -1,0 +1,478 @@
+import 'package:auto_route/auto_route.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/bloc/phone_handover_bloc.dart';
+import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
+
+class ProcessingMappingSection extends StatelessWidget {
+  final ProcessingState state;
+  final ProcessingSession displayedSession;
+  final String sessionId;
+  final VoidCallback onShowAiSettings;
+  final VoidCallback onRetryStep1;
+  final Future<bool> Function() checkModelExistence;
+  final VoidCallback onRetryStep2;
+  final VoidCallback onCancel;
+  final VoidCallback? onProcessOnDesktop;
+  final VoidCallback? onAttachWithoutProcessing;
+
+  const ProcessingMappingSection({
+    required this.state,
+    required this.displayedSession,
+    required this.sessionId,
+    required this.onShowAiSettings,
+    required this.onRetryStep1,
+    required this.onRetryStep2,
+    required this.onCancel,
+    required this.checkModelExistence,
+    this.onProcessOnDesktop,
+    this.onAttachWithoutProcessing,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget content;
+
+    final isDraft = displayedSession.status == ProcessingStatus.draft;
+    if (displayedSession.status == ProcessingStatus.handedOver) {
+      content = _HandedOverMessage(sessionId: displayedSession.id);
+    } else if (state.status case CapacityFailure(:final sessionId)
+        when sessionId == displayedSession.id && !isDraft) {
+      content = _buildCapacityFailure(context);
+    } else if (state.status case final Failure failure
+        when failure.sessionId == displayedSession.id ||
+            (failure.sessionId == null && !isDraft)) {
+      // Never another session's failure. Over a draft's records only its own
+      // (a failed save): the processing failures before it are cleared when
+      // the draft is made.
+      content = _buildFailure(context, failure);
+    } else if (displayedSession.status == ProcessingStatus.cancelled) {
+      content = _buildCancelled(context);
+    } else if (state.isStopping(displayedSession.id)) {
+      content = const _StoppingMessage();
+    } else if (displayedSession.isProcessing) {
+      content = _buildProcessing(context);
+    } else if (displayedSession.status == ProcessingStatus.pending) {
+      content = _QueuedMessage(checkModelExistence: checkModelExistence);
+    } else {
+      content = const SizedBox.shrink();
+    }
+
+    final showDesktopLink =
+        !getIt<AppPlatform>().isDesktop &&
+        displayedSession.status != ProcessingStatus.draft &&
+        displayedSession.status != ProcessingStatus.patientExtracted &&
+        displayedSession.status != ProcessingStatus.handedOver &&
+        onProcessOnDesktop != null;
+
+    if (!showDesktopLink) return content;
+
+    return Column(
+      children: [
+        content,
+        const SizedBox(height: Insets.medium),
+        GestureDetector(
+          onTap: onProcessOnDesktop,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.computer,
+                size: 20,
+                color: context.colorScheme.primary,
+              ),
+              const SizedBox(width: Insets.small),
+              Text(
+                context.l10n.processOnDesktop,
+                style: AppTextStyle.bodySmall.copyWith(
+                  color: context.colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFailure(BuildContext context, Failure failure) {
+    final isNoModel = failure.reason == PipelineFailureReason.modelNotFound;
+    final title = isNoModel
+        ? context.l10n.noAiModel
+        : context.l10n.processingFailed;
+
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(Insets.normal),
+          decoration: BoxDecoration(
+            color: isNoModel
+                ? AppColors.warning.withValues(alpha: 0.08)
+                : context.colorScheme.errorContainer.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isNoModel
+                  ? AppColors.warning.withValues(alpha: 0.4)
+                  : context.colorScheme.error.withValues(alpha: 0.5),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    isNoModel
+                        ? Icons.warning_amber_rounded
+                        : Icons.error_outline,
+                    color: isNoModel
+                        ? AppColors.warning
+                        : context.colorScheme.error,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    title,
+                    style: AppTextStyle.bodyMedium.copyWith(
+                      color: isNoModel
+                          ? AppColors.warning
+                          : context.colorScheme.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                failure.reason.localizedMessage(context.l10n),
+                style: AppTextStyle.bodySmall.copyWith(
+                  color: context.colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (isNoModel && onAttachWithoutProcessing != null) ...[
+          const SizedBox(height: Insets.normal),
+          AppButton(
+            label: context.l10n.attachWithoutProcessing,
+            variant: AppButtonVariant.primary,
+            onPressed: onAttachWithoutProcessing,
+          ),
+        ],
+        if (!isNoModel) ...[
+          const SizedBox(height: Insets.normal),
+          if (displayedSession.status != ProcessingStatus.patientExtracted)
+            AppButton(
+              label: context.l10n.retry,
+              variant: AppButtonVariant.outlined,
+              onPressed: onRetryStep1,
+            ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCancelled(BuildContext context) {
+    final stopping = state.isStopping(displayedSession.id);
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(Insets.normal),
+          decoration: BoxDecoration(
+            color: context.colorScheme.surfaceContainerHighest.withValues(
+              alpha: 0.5,
+            ),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: context.colorScheme.outline.withValues(alpha: 0.5),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.cancel_outlined,
+                color: context.colorScheme.onSurfaceVariant,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                stopping
+                    ? context.l10n.processingStopping
+                    : context.l10n.processingCancelled,
+                style: AppTextStyle.bodyMedium.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: Insets.normal),
+        AppButton(
+          label: context.l10n.retry,
+          variant: AppButtonVariant.outlined,
+          // Retried only once the AI has stopped.
+          enabled: !stopping,
+          onPressed: onRetryStep1,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProcessing(BuildContext context) {
+    return Column(
+      children: [
+        CustomProgressIndicator(
+          progress: displayedSession.progress,
+          text: displayedSession.status == ProcessingStatus.processingPatient
+              ? context.l10n.processingBasicDetails
+              : context.l10n.processingPages,
+          secondaryText:
+              displayedSession.status == ProcessingStatus.processingPatient
+              ? context.l10n.extractingPatientInfo
+              : context.l10n.pleaseWait,
+          showProgressBar:
+              displayedSession.status == ProcessingStatus.processing &&
+              state.useVision,
+        ),
+        const SizedBox(height: Insets.normal),
+        Row(
+          children: [
+            Expanded(
+              child: AppButton(
+                label: context.l10n.cancel,
+                variant: AppButtonVariant.outlined,
+                onPressed: onCancel,
+              ),
+            ),
+            const SizedBox(width: Insets.smallNormal),
+            Expanded(
+              child: AppButton(
+                label: context.l10n.focusMode,
+                icon: Assets.icons.scan.svg(),
+                variant: AppButtonVariant.primary,
+                onPressed: () {
+                  context.router.push(const FocusModeRoute());
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCapacityFailure(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(Insets.normal),
+          decoration: BoxDecoration(
+            color: context.colorScheme.errorContainer.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: context.colorScheme.error.withValues(alpha: 0.5),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.memory,
+                    color: context.colorScheme.error,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    context.l10n.processingFailed,
+                    style: AppTextStyle.bodyMedium.copyWith(
+                      color: context.colorScheme.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                context.l10n.processingFailedCapacity,
+                style: AppTextStyle.bodySmall.copyWith(
+                  color: context.colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                context.l10n.processingFailedCapacitySuggestion,
+                style: AppTextStyle.labelSmall.copyWith(
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: Insets.normal),
+        AppButton(
+          label: context.l10n.increaseAiModelCapacity,
+          variant: AppButtonVariant.primary,
+          onPressed: onShowAiSettings,
+        ),
+        const SizedBox(height: Insets.small),
+        AppButton(
+          label: context.l10n.goBack,
+          variant: AppButtonVariant.transparent,
+          onPressed: () => context.router.maybePop(),
+        ),
+      ],
+    );
+  }
+}
+
+/// Shown after Cancel until the AI has stopped.
+class _StoppingMessage extends StatelessWidget {
+  const _StoppingMessage();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox.square(
+          dimension: Insets.normal,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: context.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(width: Insets.small),
+        Text(
+          context.l10n.processingStopping,
+          style: AppTextStyle.bodyMedium.copyWith(
+            color: context.colorScheme.primary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _QueuedMessage extends StatelessWidget {
+  final Future<bool> Function() checkModelExistence;
+
+  const _QueuedMessage({required this.checkModelExistence});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: checkModelExistence(),
+      builder: (context, asyncSnapshot) {
+        if (!asyncSnapshot.hasData) return const SizedBox();
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.hourglass_empty,
+              color: context.colorScheme.primary,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              asyncSnapshot.data!
+                  ? context.l10n.onlyOneSessionAtTime
+                  : context.l10n.aiModelNotAvailable,
+              style: AppTextStyle.bodyMedium.copyWith(
+                color: context.colorScheme.primary,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// A session the desktop is processing: its progress there, and a way to
+/// process it on this phone after all.
+class _HandedOverMessage extends StatelessWidget {
+  const _HandedOverMessage({required this.sessionId});
+
+  final String sessionId;
+
+  @override
+  Widget build(BuildContext context) {
+    final bloc = getIt<PhoneHandoverBloc>();
+    return BlocBuilder<PhoneHandoverBloc, PhoneHandoverState>(
+      bloc: bloc,
+      buildWhen: (a, b) =>
+          a.desktopProgress[sessionId] != b.desktopProgress[sessionId],
+      builder: (context, state) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(Insets.normal),
+        decoration: BoxDecoration(
+          color: context.colorScheme.primary.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(Insets.small),
+          border: Border.all(
+            color: context.colorScheme.primary.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Icon(Icons.computer, color: context.colorScheme.primary),
+                const SizedBox(width: Insets.small),
+                Expanded(
+                  child: Text(
+                    context.l10n.handoverOnDesktopTitle,
+                    style: AppTextStyle.bodyMedium.copyWith(
+                      color: context.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: Insets.small),
+            CustomProgressIndicator(
+              progress: state.desktopProgress[sessionId] ?? 0,
+            ),
+            const SizedBox(height: Insets.small),
+            Text(
+              context.l10n.handoverOnDesktopMessage,
+              style: AppTextStyle.bodySmall.copyWith(
+                color: context.secondaryTextColor,
+              ),
+            ),
+            const SizedBox(height: Insets.normal),
+            AppButton(
+              label: context.l10n.handoverTakeBack,
+              variant: AppButtonVariant.outlined,
+              height: Insets.large,
+              onPressed: () => bloc.add(
+                PhoneHandoverTakeBackRequested(sessionId: sessionId),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

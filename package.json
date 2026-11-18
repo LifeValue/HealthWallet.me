@@ -1,0 +1,16 @@
+{
+  "name": "health-wallet-tooling",
+  "private": true,
+  "description": "Dev tooling only: Prettier and commitlint, run through pre-commit (see .pre-commit-config.yaml).",
+  "scripts": {
+    "prepare": "pre-commit install --install-hooks || echo pre-commit is not installed, so the git hooks were skipped. See README, Code quality, then run npm install again.",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@commitlint/cli": "21.2.3",
+    "@commitlint/config-conventional": "21.2.3",
+    "@prettier/plugin-xml": "3.4.2",
+    "prettier": "3.9.9"
+  }
+}

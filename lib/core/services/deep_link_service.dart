@@ -1,14 +1,17 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:injectable/injectable.dart';
+
 import 'package:app_links/app_links.dart';
+import 'package:flutter/foundation.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/external_files_service.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/wallet_pass/data/service/emergency_qr_encoder.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
+import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 
 @lazySingleton
 class DeepLinkService {
@@ -17,9 +20,13 @@ class DeepLinkService {
   final PageViewNavigationController _navigationController;
 
   DeepLinkService(
-      this._router, this._externalFilesService, this._navigationController);
+    this._router,
+    this._externalFilesService,
+    this._navigationController, {
+    @ignoreParam AppLinks? appLinks,
+  }) : _appLinks = appLinks ?? AppLinks();
 
-  final _appLinks = AppLinks();
+  final AppLinks _appLinks;
   StreamSubscription? _linkSubscription;
   bool _isInitialized = false;
 
@@ -27,21 +34,19 @@ class DeepLinkService {
     if (_isInitialized) return;
     _isInitialized = true;
 
-    try {
-      final initialUri = await _appLinks.getInitialLink();
-      if (initialUri != null) {
-        await _handleDeepLink(initialUri);
-      }
-    } catch (_) {}
-
+    // Since app_links 6 the stream also delivers the link the app was opened
+    // with, so it is the only source: reading getInitialLink() as well
+    // handled that link twice (two emergency cards, two downloads).
     _linkSubscription = _appLinks.uriLinkStream.listen(
       (Uri uri) async {
-        await _handleDeepLink(uri);
+        await handleDeepLink(uri);
       },
+      onError: (Object e) => logger.w('A deep link could not be read', e),
     );
   }
 
-  Future<void> _handleDeepLink(Uri uri) async {
+  @visibleForTesting
+  Future<void> handleDeepLink(Uri uri) async {
     if (uri.scheme == 'healthwallet' && uri.host == 'emergency') {
       _handleEmergencyLink(uri);
       return;
@@ -64,23 +69,29 @@ class DeepLinkService {
     }
 
     try {
-      final filePath =
-          await downloadFile(fileUrl, customFileName: documentName);
+      final filePath = await downloadFile(
+        fileUrl,
+        customFileName: documentName,
+      );
       _externalFilesService.addFilePaths([filePath]);
-      _router.replaceAll([const DashboardRoute()]);
+      unawaited(_router.replaceAll([const DashboardRoute()]));
 
       if (_navigationController.currentPage == 3) {
         _navigationController.jumpToPage(0);
       }
-      _navigationController.navigateToPage(3);
-    } catch (_) {}
+      unawaited(_navigationController.navigateToPage(3));
+    } catch (e) {
+      logger.w('Linked document could not be downloaded', e);
+    }
   }
 
   void _handleEmergencyLink(Uri uri) {
     try {
       final cardData = EmergencyQrEncoder.decode(uri.toString());
       _router.push(EmergencyCardRoute(cardData: cardData));
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Emergency link could not be read', e);
+    }
   }
 
   Future<String> downloadFile(String fileUrl, {String? customFileName}) async {
@@ -90,19 +101,37 @@ class DeepLinkService {
     }
 
     final appDocDir = await getApplicationDocumentsDirectory();
-    final downloadsDir =
-        Directory(path.join(appDocDir.path, 'provider_downloads'));
+    final downloadsDir = Directory(
+      path.join(appDocDir.path, 'provider_downloads'),
+    );
     if (!await downloadsDir.exists()) {
       await downloadsDir.create(recursive: true);
     }
 
-    final fileName = customFileName ??
+    final fileName =
+        safeFileName(customFileName) ??
         'provider_doc_${DateTime.now().millisecondsSinceEpoch}${_getExtensionFromUrl(fileUrl)}';
     final filePath = path.join(downloadsDir.path, fileName);
 
     final file = File(filePath);
     await file.writeAsBytes(response.bodyBytes);
     return filePath;
+  }
+
+  /// The link's `name` reduced to a plain file name, so it can't reach
+  /// outside `provider_downloads/`: the last segment after any `/` or `\`,
+  /// without control characters. Null when nothing usable is left, so the
+  /// caller generates a name.
+  @visibleForTesting
+  static String? safeFileName(String? name) {
+    if (name == null) return null;
+    final base = name
+        .split(RegExp(r'[/\\]'))
+        .last
+        .replaceAll(RegExp(r'[\x00-\x1F\x7F]'), '')
+        .trim();
+    if (base.isEmpty || base == '.' || base == '..') return null;
+    return base;
   }
 
   String _getExtensionFromUrl(String url) {
@@ -112,7 +141,9 @@ class DeepLinkService {
       if (segs.isNotEmpty && segs.last.contains('.')) {
         return path.extension(segs.last);
       }
-    } catch (_) {}
+    } on FormatException {
+      // An unparsable URL has no extension to read; use the default.
+    }
     return '.pdf';
   }
 

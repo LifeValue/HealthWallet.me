@@ -1,7 +1,7 @@
 part of 'user_bloc.dart';
 
 @freezed
-class UserState with _$UserState {
+abstract class UserState with _$UserState {
   const factory UserState({
     @Default(UserStatus.initial()) UserStatus status,
     @Default(User()) User user,
@@ -13,10 +13,17 @@ class UserState with _$UserState {
   }) = _UserState;
 }
 
+/// The profile setting a save belongs to, so the screen can say which one
+/// failed.
+enum UserSetting { name, theme, receiveMode, biometric }
+
 @freezed
-class UserStatus with _$UserStatus {
+sealed class UserStatus with _$UserStatus {
   const factory UserStatus.initial() = _Initial;
   const factory UserStatus.loading() = _Loading;
-  const factory UserStatus.success() = _Success;
-  const factory UserStatus.failure(Object exception) = _Failure;
+
+  /// [setting] is set only by the name save, whose field closes on success.
+  const factory UserStatus.success({UserSetting? setting}) = _Success;
+  const factory UserStatus.failure(Object exception, UserSetting setting) =
+      _Failure;
 }

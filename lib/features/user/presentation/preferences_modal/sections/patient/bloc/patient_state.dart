@@ -1,12 +1,18 @@
 part of 'patient_bloc.dart';
 
 @freezed
-class PatientState with _$PatientState {
+abstract class PatientState with _$PatientState {
   const factory PatientState({
     @Default(PatientStatus.initial()) PatientStatus status,
     @Default([]) List<Patient> patients,
-    @Default([]) List<Patient> allPatientsAcrossSources,
-    @Default({}) Map<String, PatientGroup> patientGroups,
+    @Default({}) Map<String, Holder> patientGroups,
+
+    /// People who arrived and match no one, while the wallet has several.
+    @Default([]) List<HolderAsk> holderQuestions,
+
+    /// The blood type of each listed patient; null when they have none, and
+    /// missing while it loads.
+    @Default({}) Map<String, String?> bloodTypes,
     @Default({}) Set<String> expandedPatientIds,
     String? selectedPatientId,
     @Default('') String animatingPatientId,
@@ -21,7 +27,7 @@ class PatientState with _$PatientState {
 }
 
 @freezed
-class PatientStatus with _$PatientStatus {
+sealed class PatientStatus with _$PatientStatus {
   const factory PatientStatus.initial() = _Initial;
   const factory PatientStatus.loading() = _Loading;
   const factory PatientStatus.success() = _Success;

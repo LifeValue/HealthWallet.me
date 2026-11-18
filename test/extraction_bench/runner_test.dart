@@ -1,0 +1,733 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:health_wallet/core/config/constants/ai_model_config.dart';
+import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
+import 'package:health_wallet/features/processing/data/model/generation_stats.dart';
+import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
+import 'package:llamadart/llamadart.dart';
+import 'package:path/path.dart' as p;
+
+import '../../integration_test/extraction_bench/document_runner.dart';
+import '../../integration_test/extraction_bench/native_log_capture.dart';
+import '../../integration_test/extraction_bench/recording_data_source.dart';
+import '../../integration_test/extraction_bench/run_record.dart';
+import '../../tool/extraction_bench/src/dataset.dart';
+import '../../tool/extraction_bench/src/scoring.dart';
+
+class FakeAiInferenceDataSource extends Fake implements AiInferenceDataSource {
+  FakeAiInferenceDataSource(this.outputs);
+  final List<String> outputs;
+  var _calls = 0;
+  GenerationStats? _stats;
+
+  /// (grammar, responseFormat) of each call, as received.
+  final constraints = <(String?, Map<String, dynamic>?)>[];
+
+  @override
+  PromptFamily get promptFamily => PromptFamily.standard;
+
+  @override
+  int get visionPagesPerBatch => 2;
+
+  @override
+  GenerationStats? get lastGenerationStats => _stats;
+
+  @override
+  Future<String?> runTextPrompt({
+    required String prompt,
+    int? maxTokens,
+    String? grammar,
+    Map<String, dynamic>? responseFormat,
+    Map<String, dynamic>? chatTemplateKwargs,
+  }) async {
+    constraints.add((grammar, responseFormat));
+    _stats = const GenerationStats(
+      mode: GenerationMode.text,
+      promptTokens: 10,
+      timeToFirstTokenMs: 12.5,
+      finishReason: 'length',
+    );
+    return outputs[_calls++];
+  }
+
+  @override
+  Future<String?> runVisionPrompt({
+    required String prompt,
+    required List<String> imagePaths,
+    int? maxTokens,
+    String? grammar,
+    Map<String, dynamic>? responseFormat,
+  }) async {
+    constraints.add((grammar, responseFormat));
+    _stats = const GenerationStats(
+      mode: GenerationMode.vision,
+      promptEvalMs: 900,
+    );
+    return outputs[_calls++];
+  }
+}
+
+class _FakeProcessingRepository extends Fake implements ProcessingRepository {
+  _FakeProcessingRepository(
+    this.failingImages, {
+    this.container = const {
+      'resourceType': 'DiagnosticReport',
+      'reportName': 'Hemoleucograma',
+    },
+  });
+
+  /// Pages whose phase 1 throws.
+  final Set<String> failingImages;
+
+  /// Phase 1's container, in the model's JSON shape.
+  final Map<String, dynamic> container;
+  final remainingCategories = <String?>[];
+  final outputModes = <ExtractionOutputMode>[];
+
+  @override
+  Future<(MappingPatient, MappingResource)> mapBasicInfo(
+    List<String> imagePaths, {
+    int? maxTokens,
+    int? gpuLayers,
+    int? threads,
+    int? contextSize,
+    ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
+  }) async {
+    outputModes.add(outputMode);
+    if (imagePaths.any(failingImages.contains)) throw Exception('boom');
+    return (
+      MappingResource.fromJson({
+        'resourceType': 'Patient',
+        'familyName': 'Popescu',
+        'givenName': 'Ana',
+        'gender': 'female',
+      }) as MappingPatient,
+      MappingResource.fromJson(Map.of(container)),
+    );
+  }
+
+  @override
+  Stream<MappingResourcesWithProgress> mapRemainingResources(
+    List<String> imagePaths, {
+    String? documentCategory,
+    bool useVision = false,
+    int? maxTokens,
+    int? gpuLayers,
+    int? threads,
+    int? contextSize,
+    ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
+  }) async* {
+    remainingCategories.add(documentCategory);
+    outputModes.add(outputMode);
+    final hb = MappingResource.fromJson({
+      'resourceType': 'Observation',
+      'observationName': 'Hemoglobina',
+      'value': '13,5',
+      'unit': 'g/dL',
+    });
+    final wbc = MappingResource.fromJson({
+      'resourceType': 'Observation',
+      'observationName': 'Leucocite',
+      'value': '6,2',
+      'unit': '10^9/L',
+    });
+    // Snapshots, as the production stream yields them: each holds everything so far.
+    yield ([hb], 0.5);
+    yield ([hb, wbc], 1.0);
+  }
+}
+
+class _DisposableFakeDataSource extends FakeAiInferenceDataSource {
+  _DisposableFakeDataSource() : super(const []);
+  var disposed = 0;
+
+  @override
+  Future<void> disposeModel() async => disposed++;
+}
+
+class _InitRecordingFakeDataSource extends FakeAiInferenceDataSource {
+  _InitRecordingFakeDataSource() : super(const []);
+  final gpuLayers = <int?>[];
+  final withVision = <bool>[];
+
+  @override
+  Future<void> initModel({
+    bool withVision = true,
+    int? contextSize,
+    int? gpuLayers,
+    int? threads,
+  }) async {
+    this.gpuLayers.add(gpuLayers);
+    this.withVision.add(withVision);
+  }
+}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  test(
+    'recording decorator flags non-strict JSON and passes output through',
+    () async {
+      const fenced = '```json\n[{"resourceType":"Patient"}]\n```';
+      final recorder = RecordingAiInferenceDataSource(
+        FakeAiInferenceDataSource(['[{"resourceType":"Patient"}]', fenced]),
+      )..phase = 'basic';
+      expect(
+        await recorder.runTextPrompt(prompt: 'p'),
+        '[{"resourceType":"Patient"}]',
+      );
+      recorder.phase = 'remaining';
+      final second = recorder.runVisionPrompt(
+        prompt: 'p',
+        imagePaths: const [],
+      );
+      recorder.onLog(
+        LlamaLogRecord(
+          level: LlamaLogLevel.info,
+          message: 'encoding image slice...\nimage slice encoded in 412 ms',
+          time: DateTime(2026),
+        ),
+      );
+      recorder.onLog(
+        LlamaLogRecord(
+          level: LlamaLogLevel.info,
+          message: 'image decoded (batch 1/1) in 37 ms',
+          time: DateTime(2026),
+        ),
+      );
+      expect(await second, fenced);
+
+      expect(RecordingAiInferenceDataSource.isStrictJson('[]'), isTrue);
+      expect(RecordingAiInferenceDataSource.isStrictJson('{"a": 1}'), isTrue);
+      for (final notContainer in ['null', '"text"', '42', 'true', '', '[1,']) {
+        expect(
+          RecordingAiInferenceDataSource.isStrictJson(notContainer),
+          isFalse,
+          reason: notContainer,
+        );
+      }
+      expect(RecordingAiInferenceDataSource.isStrictJson(null), isFalse);
+
+      final [text, vision] = recorder.generations;
+      expect(text.strictJsonValid, isTrue);
+      expect(text.phase, 'basic');
+      expect(text.stats!.timeToFirstTokenMs, 12.5);
+      expect(text.toJson()['finishReason'], 'length');
+      expect(text.toJson()['constraint'], 'none');
+      expect(text.imageEncodeMs, isNull);
+      expect(vision.strictJsonValid, isFalse);
+      expect(vision.phase, 'remaining');
+      expect(vision.imageEncodeMs, 412);
+      expect(vision.imageDecodeMs, 37);
+      expect(vision.stats!.promptEvalMs, 900);
+
+      final json = jsonDecode(
+        jsonEncode(
+          RunRecord(
+            docId: 'd',
+            runId: 'r',
+            model: 'qwen',
+            platform: 'macos',
+            useVision: true,
+            predictedResources: const [],
+            generations: recorder.generations,
+            peakRssBytes: 1,
+            wallMs: 2,
+          ).toJson(),
+        ),
+      ) as Map<String, dynamic>;
+      final parsed = PredictionRecord.fromJson(json);
+      expect(parsed.generations.map((g) => g.strictJsonValid), [true, false]);
+      expect(parsed.generations[1].imageEncodeMs, 412);
+      expect(parsed.error, isNull);
+    },
+  );
+
+  test('recording decorator passes grammar and responseFormat through and labels the constraint', () async {
+    const format = {
+      'type': 'json_schema',
+      'json_schema': {
+        'schema': {'type': 'object'},
+      },
+    };
+    final inner = FakeAiInferenceDataSource(['{}', '[]', '{}']);
+    final recorder = RecordingAiInferenceDataSource(inner);
+    await recorder.runTextPrompt(prompt: 'p', responseFormat: format);
+    await recorder.runVisionPrompt(
+      prompt: 'p',
+      imagePaths: const [],
+      grammar: 'root ::= "x"',
+    );
+    await recorder.runVisionPrompt(
+      prompt: 'p',
+      imagePaths: const [],
+      responseFormat: format,
+    );
+    expect(recorder.generations.map((g) => g.toJson()['constraint']), [
+      'schema',
+      'grammar',
+      'schema',
+    ]);
+    expect(inner.constraints, [
+      (null, format),
+      ('root ::= "x"', null),
+      (null, format),
+    ]);
+  });
+
+  test(
+    'native log drained after each call is parsed into that generation',
+    () async {
+      final drains = [
+        'llama_model_load: loaded\n', // before the document: discarded
+        'clip_model_loader: ok\nencoding image slice...\nimage slice encoded in 300 ms\n'
+            'image slice encoded in 112.5 ms\nimage decoded (batch 1/1) in 40 ms\n',
+        'llama_context: n_ctx = 2048\n',
+      ];
+      final recorder = RecordingAiInferenceDataSource(
+        FakeAiInferenceDataSource(['[]', '[]']),
+        drainNativeLog: () => drains.isEmpty ? '' : drains.removeAt(0),
+      )..beginDocument();
+      recorder.phase = 'remaining';
+      await recorder.runVisionPrompt(prompt: 'p', imagePaths: const []);
+      await recorder.runTextPrompt(prompt: 'p');
+      final [vision, text] = recorder.generations;
+      expect(vision.imageEncodeMs, 412.5);
+      expect(vision.imageDecodeMs, 40);
+      expect(text.imageEncodeMs, isNull);
+      expect(drains, isEmpty);
+    },
+  );
+
+  test('NativeLogCapture redirects stderr to a file and restores it', () async {
+    final tmp = Directory.systemTemp.createTempSync('bench_stderr_');
+    addTearDown(() => tmp.deleteSync(recursive: true));
+    final path = p.join(tmp.path, 'native.log');
+    final capture = NativeLogCapture.start(path);
+    stderr.writeln('image slice encoded in 77 ms');
+    await stderr.flush();
+    expect(capture.drain(), contains('image slice encoded in 77 ms'));
+    expect(capture.drain(), isEmpty);
+    stderr.writeln('second');
+    await stderr.flush();
+    capture.stop();
+    expect(File(path).readAsStringSync(), endsWith('second\n'));
+    expect(capture.drain(), isEmpty);
+  });
+
+  test(
+    'the GPU-layer override replaces every model load and is recorded',
+    () async {
+      final inner = _InitRecordingFakeDataSource();
+      await RecordingAiInferenceDataSource(inner)
+          .initModel(withVision: false, gpuLayers: 4);
+      final overridden = RecordingAiInferenceDataSource(
+        inner,
+        gpuLayersOverride: 0,
+      );
+      await overridden.initModel(withVision: false);
+      await overridden.initModel(gpuLayers: 4);
+      expect(inner.gpuLayers, [4, 0, 0]);
+      expect(inner.withVision, [false, false, true]);
+
+      final record = RunRecord(
+        docId: 'd',
+        runId: 'r',
+        model: 'qwen',
+        platform: 'ios',
+        useVision: false,
+        gpuLayers: overridden.gpuLayersOverride,
+        predictedResources: const [],
+        generations: const [],
+        peakRssBytes: 1,
+        wallMs: 2,
+      );
+      expect(record.toJson()['gpuLayers'], 0);
+      expect(
+        PredictionRecord.fromJson(
+          jsonDecode(jsonEncode(record.toJson())) as Map<String, dynamic>,
+        ).gpuLayers,
+        0,
+      );
+      expect(
+        RunRecord(
+          docId: 'd',
+          runId: 'r',
+          model: 'qwen',
+          platform: 'ios',
+          useVision: false,
+          predictedResources: const [],
+          generations: const [],
+          peakRssBytes: 1,
+          wallMs: 2,
+        ).toJson(),
+        isNot(contains('gpuLayers')),
+      );
+    },
+  );
+
+  test('pipeline-shaped predictions are read by the field specs', () {
+    String toFhir(Map<String, dynamic> m) => jsonEncode(
+      MappingResource.fromJson(m)
+          .toFhirResource(
+            subjectId: 'bench-patient',
+            encounterId: 'bench-container',
+          )
+          .rawResource,
+    );
+    final pred = [
+      for (final m in <Map<String, dynamic>>[
+        {
+          'resourceType': 'Patient',
+          'familyName': 'Müller',
+          'givenName': 'Hans Peter',
+          'dateOfBirth': '1970-04-02',
+          'gender': 'male',
+          'patientIdentifier': 'A123456789',
+        },
+        {
+          'resourceType': 'Observation',
+          'observationName': 'Hämoglobin',
+          'value': '13.5',
+          'unit': 'g/dl',
+        },
+        {
+          'resourceType': 'Observation',
+          'observationName': 'Heart rate',
+          'value': '72',
+          'unit': 'bpm',
+        },
+        {
+          'resourceType': 'Condition',
+          'conditionName': 'Vorhofflimmern',
+          'onsetDateTime': '2019-05',
+        },
+        {
+          'resourceType': 'MedicationStatement',
+          'medicationName': 'Bisoprolol 5 mg',
+          'dosage': '1-0-0',
+        },
+        {
+          'resourceType': 'DiagnosticReport',
+          'reportName': 'Laborbefund',
+          'issuedDate': '2025-03-14',
+          'conclusion': 'Alle Werte im Referenzbereich.',
+        },
+        {
+          'resourceType': 'Encounter',
+          'encounterType': 'Entlassungsbrief',
+          'specialty': 'Cardiology',
+          'periodStart': '2024-06-08',
+        },
+        {
+          'resourceType': 'AllergyIntolerance',
+          'substance': 'Penicillin',
+          'manifestation': 'Hautausschlag',
+          'category': 'medication',
+        },
+        {
+          'resourceType': 'Procedure',
+          'procedureName': 'Koloskopie',
+          'performedDateTime': '2024-06-10',
+        },
+        {
+          'resourceType': 'Practitioner',
+          'practitionerName': 'Dr. med. Felix Böhm',
+          'specialty': 'Kardiologie',
+          'identifier': '471354493',
+        },
+        {
+          'resourceType': 'Organization',
+          'organizationName': 'Kreisklinikum Bergheide',
+          'address': 'Hauptstraße 12, 10115 Berlin',
+          'phone': '+49 30 23125 390',
+        },
+      ])
+        jsonDecode(toFhir(m)) as Map<String, dynamic>,
+    ];
+    final gold = <Map<String, dynamic>>[
+      {
+        'resourceType': 'Patient',
+        'name': [
+          {
+            'family': 'Müller',
+            'given': ['Hans', 'Peter'],
+          },
+        ],
+        'birthDate': '1970-04-02',
+        'gender': 'male',
+        'identifier': [
+          {'value': 'A123456789'},
+        ],
+      },
+      {
+        'resourceType': 'Observation',
+        'code': {
+          'coding': [
+            {'system': 'http://loinc.org', 'code': '718-7'},
+          ],
+          'text': 'Hämoglobin',
+        },
+        'valueQuantity': {
+          'value': 13.5,
+          'unit': 'g/dl',
+          'system': 'http://unitsofmeasure.org',
+          'code': 'g/dL',
+        },
+      },
+      {
+        'resourceType': 'Observation',
+        'code': {
+          'coding': [
+            {'system': 'http://loinc.org', 'code': '8867-4'},
+          ],
+          'text': 'Herzfrequenz',
+        },
+        'valueQuantity': {
+          'value': 72,
+          'unit': '/min',
+          'system': 'http://unitsofmeasure.org',
+          'code': '/min',
+        },
+      },
+      {
+        'resourceType': 'Condition',
+        'code': {
+          'coding': [
+            {'system': 'http://snomed.info/sct', 'code': '49436004'},
+          ],
+          'text': 'Vorhofflimmern',
+        },
+        'onsetDateTime': '2019-05',
+      },
+      {
+        'resourceType': 'MedicationStatement',
+        'medicationCodeableConcept': {'text': 'Bisoprolol 5 mg'},
+        'dosage': [
+          {'text': '1-0-0'},
+        ],
+      },
+      {
+        'resourceType': 'DiagnosticReport',
+        'code': {'text': 'Laborbefund'},
+        'effectiveDateTime': '2025-03-14',
+        'conclusion': 'Alle Werte im Referenzbereich.',
+      },
+      {
+        'resourceType': 'Encounter',
+        'type': [
+          {'text': 'Entlassungsbrief'},
+        ],
+        'serviceType': {
+          'coding': [
+            {
+              'system': 'http://snomed.info/sct',
+              'code': '394579002',
+              'display': 'Cardiology',
+            },
+          ],
+          'text': 'Kardiologie',
+        },
+        'period': {'start': '2024-06-08', 'end': '2024-06-20'},
+      },
+      {
+        'resourceType': 'AllergyIntolerance',
+        'category': ['medication'],
+        'code': {
+          'coding': [
+            {'system': 'http://snomed.info/sct', 'code': '764146007'},
+          ],
+          'text': 'Penicillin',
+        },
+        'reaction': [
+          {
+            'manifestation': [
+              {'text': 'Hautausschlag'},
+            ],
+          },
+        ],
+      },
+      {
+        'resourceType': 'Procedure',
+        'code': {
+          'coding': [
+            {'system': 'http://snomed.info/sct', 'code': '73761001'},
+          ],
+          'text': 'Koloskopie',
+        },
+        'performedDateTime': '2024-06-10',
+      },
+      {
+        'resourceType': 'Practitioner',
+        'identifier': [
+          {'value': '471354493'},
+        ],
+        'name': [
+          {'text': 'Dr. med. Felix Böhm', 'family': 'Böhm'},
+        ],
+        'qualification': [
+          {
+            'code': {'text': 'Kardiologie'},
+          },
+        ],
+      },
+      {
+        'resourceType': 'Organization',
+        'name': 'Kreisklinikum Bergheide',
+        'telecom': [
+          {'system': 'phone', 'value': '+49 30 23125 390'},
+        ],
+        'address': [
+          {'text': 'Hauptstraße 12, 10115 Berlin'},
+        ],
+      },
+    ];
+    final s = scoreResources(gold, pred);
+    expect(s.byType['Patient']!.f1, 1, reason: 'patient fields');
+    expect(s.byType['MedicationStatement']!.f1, 1);
+    expect(s.byType['DiagnosticReport']!.f1, 1);
+    // Text-only codes earn half credit against a coded gold concept; the
+    // vital sign's LOINC code from the app earns full credit.
+    final obs = s.byType['Observation']!;
+    expect(obs.tp, 3.5);
+    final condition = s.byType['Condition']!;
+    expect(condition.tp, 1.5);
+    // The app codes the specialty with the same SNOMED code.
+    expect(s.byType['Encounter']!.f1, 1);
+    expect(s.byType['Practitioner']!.f1, 1);
+    expect(s.byType['Organization']!.f1, 1);
+    // Substance text-only against a coded gold (0.5), category 1, text-only
+    // manifestation 1.
+    expect(s.byType['AllergyIntolerance']!.tp, 2.5);
+    expect(s.byType['AllergyIntolerance']!.hallucinated, 0);
+    // Procedure code text-only against a coded gold (0.5), date 1.
+    expect(s.byType['Procedure']!.tp, 1.5);
+    expect(s.byType['Procedure']!.hallucinated, 0);
+  });
+
+  test('a pipeline failure is recorded with empty predictions and the next document still runs', () async {
+    final tmp = Directory.systemTemp.createTempSync('bench_runner_');
+    addTearDown(() => tmp.deleteSync(recursive: true));
+    BenchDoc doc(String id) {
+      final dir = Directory(p.join(tmp.path, 'real', id))
+        ..createSync(recursive: true);
+      File(p.join(dir.path, 'page-1.png')).writeAsBytesSync(const [0]);
+      return BenchDoc(id, dir.path, {'docId': id, 'degradation': 'clean'});
+    }
+
+    final failing = doc('a-fails');
+    final ok = doc('b-ok');
+    final repository = _FakeProcessingRepository({
+      p.join(failing.dir, 'page-1.png'),
+    });
+    final inner = _DisposableFakeDataSource();
+    final recorder = RecordingAiInferenceDataSource(inner);
+    final records = <RunRecord>[
+      for (final d in [failing, ok])
+        await runBenchDocument(
+          doc: d,
+          repository: repository,
+          recorder: recorder,
+          pages: (d) async => [p.join(d.dir, 'page-1.png')],
+          workDir: tmp.path,
+          runId: 'r',
+          model: 'qwen',
+          useVision: true,
+          pref: (_) => null,
+        ),
+    ];
+
+    expect(records[0].error, contains('boom'));
+    expect(records[0].predictedResources, isEmpty);
+    expect(inner.disposed, 1);
+    expect(records[1].error, isNull);
+    expect(repository.remainingCategories, ['lab_report']);
+    // Patient, the DiagnosticReport container and the last snapshot, without
+    // repeating the first one.
+    expect(records[1].predictedResources.map((r) => r['resourceType']), [
+      'Patient',
+      'DiagnosticReport',
+      'Observation',
+      'Observation',
+    ]);
+    expect(
+      records[1].predictedResources.skip(2).map((r) => r['code']['text']),
+      ['Hemoglobina', 'Leucocite'],
+    );
+    expect(
+      File(p.join(ok.dir, 'page-1.png')).existsSync(),
+      isTrue,
+      reason: 'dataset images are kept',
+    );
+    // The report had no date, so the DateTime.now() fill-in is dropped.
+    expect(records[1].predictedResources[1], isNot(contains('issued')));
+  });
+
+  test(
+    'phase 2 category follows the container; a parsed report date is kept',
+    () async {
+      final tmp = Directory.systemTemp.createTempSync('bench_runner_');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+      final dir = Directory(p.join(tmp.path, 'real', 'd'))
+        ..createSync(recursive: true);
+      final doc = BenchDoc('d', dir.path, const {
+        'docId': 'd',
+        'degradation': 'clean',
+      });
+
+      Future<(RunRecord, _FakeProcessingRepository)> run(
+        Map<String, dynamic> container,
+      ) async {
+        final repository = _FakeProcessingRepository(
+          const {},
+          container: container,
+        );
+        final record = await runBenchDocument(
+          doc: doc,
+          repository: repository,
+          recorder: RecordingAiInferenceDataSource(_DisposableFakeDataSource()),
+          pages: (d) async => [p.join(d.dir, 'page-1.png')],
+          workDir: tmp.path,
+          runId: 'r',
+          model: 'qwen',
+          useVision: false,
+          pref: (_) => null,
+          outputMode: ExtractionOutputMode.schema,
+        );
+        return (record, repository);
+      }
+
+      final (visit, visitRepo) = await run(const {
+        'resourceType': 'Encounter',
+        'encounterType': 'Bilet de ieșire din spital',
+      });
+      expect(visitRepo.remainingCategories, ['visit']);
+      expect(visit.predictedResources[1]['resourceType'], 'Encounter');
+      // Both phases get the run's output mode, and the record names it.
+      expect(visitRepo.outputModes, [
+        ExtractionOutputMode.schema,
+        ExtractionOutputMode.schema,
+      ]);
+      expect(visit.toJson()['outputMode'], 'schema');
+      expect(
+        PredictionRecord.fromJson(
+          jsonDecode(jsonEncode(visit.toJson())) as Map<String, dynamic>,
+        ).outputMode,
+        'schema',
+      );
+
+      final (lab, labRepo) = await run(const {
+        'resourceType': 'DiagnosticReport',
+        'reportName': 'Hemoleucograma',
+        'issuedDate': '2025-03-14',
+      });
+      expect(labRepo.remainingCategories, ['lab_report']);
+      expect(lab.predictedResources[1]['issued'], startsWith('2025-03-14'));
+    },
+  );
+}

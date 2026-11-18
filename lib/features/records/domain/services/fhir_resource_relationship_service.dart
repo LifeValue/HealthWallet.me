@@ -19,9 +19,11 @@ class FhirResourceRelationshipService {
       final encounterId = _extractEncounterIdFromResource(resource);
       if (encounterId != null) {
         final encounter = allRecords
-            .where((r) =>
-                r.fhirType == FhirType.Encounter &&
-                r.resourceId == encounterId)
+            .where(
+              (r) =>
+                  r.fhirType == FhirType.Encounter &&
+                  r.resourceId == encounterId,
+            )
             .firstOrNull;
         if (encounter != null) related.add(encounter);
       }
@@ -43,7 +45,9 @@ class FhirResourceRelationshipService {
   }
 
   static bool _resourceReferencesEncounter(
-      IFhirResource r, String encounterId) {
+    IFhirResource r,
+    String encounterId,
+  ) {
     if (r.encounterId.isNotEmpty && r.encounterId == encounterId) {
       return true;
     }

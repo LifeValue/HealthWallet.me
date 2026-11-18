@@ -8,4 +8,5 @@ class AppConstants {
   static const int defaultMaxTokens = 4096;
   static const int maxAllowedTokens = 4096;
   static const int visionMaxTokens = 512;
+  static const int desktopVisionMaxTokens = 1024;
 }

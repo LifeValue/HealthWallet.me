@@ -15,16 +15,54 @@ class FhirCommonExtractor {
     try {
       final text = codeableConcept.text?.toString();
       if (text != null && text.isNotEmpty) return text;
-    } catch (e) {}
+    } catch (_) {
+      // Malformed text; try the coding display next.
+    }
 
     try {
-      final coding = codeableConcept.coding;
-      if (coding?.isNotEmpty == true) {
-        final display = coding!.first.display?.toString();
-        if (display != null && display.isNotEmpty) return display;
+      final codings = codeableConcept.coding;
+      if (codings is Iterable) {
+        for (final coding in codings) {
+          final display = coding.display?.toString();
+          if (display != null && display.isNotEmpty) return display;
+        }
       }
-    } catch (e) {}
+    } catch (_) {
+      // Malformed coding; there is no display text to return.
+    }
 
+    return null;
+  }
+
+  /// The name of a `medication[x]`: its CodeableConcept, or for a Reference
+  /// its display, else the code of the Medication it points to inside the
+  /// record's `contained` resources ([rawResource]).
+  static String? extractMedicationName(
+    dynamic medicationX,
+    Map<String, dynamic> rawResource,
+  ) {
+    final concept = medicationX?.isAs<fhir_r4.CodeableConcept>();
+    if (concept != null) return extractCodeableConceptText(concept);
+
+    final reference = medicationX?.isAs<fhir_r4.Reference>();
+    if (reference == null) return null;
+    final display = reference.display?.valueString;
+    if (display != null && display.isNotEmpty) return display;
+
+    final target = reference.reference?.valueString;
+    if (target == null || !target.startsWith('#')) return null;
+    final contained = rawResource['contained'];
+    if (contained is! List) return null;
+    for (final resource in contained) {
+      if (resource is Map<String, dynamic> &&
+          resource['resourceType'] == 'Medication' &&
+          resource['id'] == target.substring(1) &&
+          resource['code'] is Map<String, dynamic>) {
+        return extractCodeableConceptText(
+          fhir_r4.CodeableConcept.fromJson(resource['code']),
+        );
+      }
+    }
     return null;
   }
 
@@ -40,7 +78,8 @@ class FhirCommonExtractor {
   }
 
   static String? extractFirstCodeableConceptFromArray(
-      List<dynamic>? codeableConceptArray) {
+    List<dynamic>? codeableConceptArray,
+  ) {
     if (codeableConceptArray == null || codeableConceptArray.isEmpty) {
       return null;
     }
@@ -50,8 +89,9 @@ class FhirCommonExtractor {
   }
 
   static String? joinNullable(List<String?> values, String separator) {
-    final nonNullStrings =
-        values.where((s) => s != null && s.isNotEmpty).toList();
+    final nonNullStrings = values
+        .where((s) => s != null && s.isNotEmpty)
+        .toList();
     return nonNullStrings.isEmpty ? null : nonNullStrings.join(separator);
   }
 
@@ -65,24 +105,71 @@ class FhirCommonExtractor {
     return null;
   }
 
+  static const _minQuantityDecimals = 2;
+  static const _maxQuantityDecimals = 6;
+
+  /// The decimals a quantity is shown with: at least 2, at most as many as
+  /// [source] carries, capped at 6 (120 -> 2, 0.004 -> 3, 1.2345 -> 4).
+  static int quantityDecimals(double source) {
+    for (var d = _minQuantityDecimals; d < _maxQuantityDecimals; d++) {
+      if (double.parse(source.toStringAsFixed(d)) == source) return d;
+    }
+    return _maxQuantityDecimals;
+  }
+
+  /// Formats [value] with the decimals of [source] (default: [value] itself),
+  /// so a converted value keeps the precision of the recorded one.
+  static String formatQuantityValue(double value, {double? source}) =>
+      value.toStringAsFixed(quantityDecimals(source ?? value));
+
+  /// The unit of [quantity], falling back to its UCUM `code`; null when
+  /// neither is present.
+  static String? quantityUnit(fhir_r4.Quantity? quantity) {
+    final unit = quantity?.unit?.valueString?.trim();
+    if (unit != null && unit.isNotEmpty) return unit;
+    final code = quantity?.code?.valueString?.trim();
+    if (code != null && code.isNotEmpty) return code;
+    return null;
+  }
+
+  /// The formatted value of [quantity] without its unit, or null when it has
+  /// no value. Its comparator is kept, so "<20" doesn't read as "20".
+  static String? quantityValue(fhir_r4.Quantity? quantity) {
+    final value = quantity?.value?.valueDouble;
+    if (value == null) return null;
+    return '${comparatorOf(quantity)}${formatQuantityValue(value)}';
+  }
+
+  /// The comparator of [quantity] ("<", "<=", ">=", ">"), or "".
+  static String comparatorOf(fhir_r4.Quantity? quantity) =>
+      quantity?.comparator?.valueString ?? '';
+
+  /// "[low] - [high]"; an open range keeps its direction ("≥ [low]",
+  /// "≤ [high]") so it does not read as an exact value. Null when both
+  /// bounds are missing.
+  static String? formatRange(String? low, String? high) {
+    if (low != null && high != null) return '$low - $high';
+    if (low != null) return '≥ $low';
+    if (high != null) return '≤ $high';
+    return null;
+  }
+
   static String? extractQuantity(fhir_r4.Quantity? quantity) {
-    if (quantity == null) return null;
-    if (quantity.value == null) return null;
-
-    final value = quantity.value?.valueDouble?.toStringAsFixed(2);
-    final unit = quantity.unit?.toString() ?? '';
-
-    return '$value $unit'.trim();
+    final value = quantityValue(quantity);
+    if (value == null) return null;
+    final unit = quantityUnit(quantity);
+    return unit == null ? value : '$value $unit';
   }
 
   static String? extractAllCodeableConceptsFromArray(
-      List<dynamic>? codeableConceptArray) {
+    List<dynamic>? codeableConceptArray,
+  ) {
     if (codeableConceptArray == null || codeableConceptArray.isEmpty) {
       return null;
     }
 
     final texts = codeableConceptArray
-        .map((concept) => extractCodeableConceptText(concept))
+        .map(extractCodeableConceptText)
         .where((text) => text != null && text.isNotEmpty)
         .toList();
 
@@ -156,8 +243,10 @@ class FhirCommonExtractor {
         if (dosage.doseAndRate != null && dosage.doseAndRate!.isNotEmpty) {
           final doseAndRate = dosage.doseAndRate!.first;
           final doseQuantity = doseAndRate.doseX?.isAs<fhir_r4.Quantity>();
-          if (doseQuantity != null) {
-            parts.add('${doseQuantity.value} ${doseQuantity.unit ?? ''}');
+          final value = doseQuantity?.value?.toString();
+          if (value != null) {
+            final unit = quantityUnit(doseQuantity);
+            parts.add(unit == null ? value : '$value $unit');
           }
         }
 
@@ -170,40 +259,6 @@ class FhirCommonExtractor {
     return instructions.isEmpty ? null : instructions.join('; ');
   }
 
-  static String? extractDosage(List<fhir_r4.Dosage>? dosages) {
-    if (dosages == null || dosages.isEmpty) return null;
-
-    final dosage = dosages.first;
-
-    if (dosage.text?.valueString != null) {
-      return dosage.text!.valueString;
-    }
-
-    final parts = <String>[];
-
-    if (dosage.doseAndRate != null && dosage.doseAndRate!.isNotEmpty) {
-      final doseAndRate = dosage.doseAndRate!.first;
-      final doseQuantity = doseAndRate.doseX?.isAs<fhir_r4.Quantity>();
-      if (doseQuantity != null) {
-        final value = doseQuantity.value?.valueDouble?.toStringAsFixed(0);
-        final unit = doseQuantity.unit?.valueString;
-        if (value != null) {
-          parts.add('$value${unit != null ? ' $unit' : ''}');
-        }
-      }
-    }
-
-    final route = extractCodeableConceptText(dosage.route);
-    if (route != null) parts.add(route);
-
-    if (dosage.timing?.code != null) {
-      final timing = extractCodeableConceptText(dosage.timing!.code);
-      if (timing != null) parts.add(timing);
-    }
-
-    return parts.isEmpty ? null : parts.join(', ');
-  }
-
   static String? extractReasonCodes(List<dynamic>? reasonCodes) {
     return extractAllCodeableConceptsFromArray(reasonCodes);
   }
@@ -212,8 +267,7 @@ class FhirCommonExtractor {
     return extractMultipleReferenceDisplays(reasonReferences);
   }
 
-  static String? extractFirstIdentifier(
-      List<fhir_r4.Identifier>? identifiers) {
+  static String? extractFirstIdentifier(List<fhir_r4.Identifier>? identifiers) {
     if (identifiers == null || identifiers.isEmpty) return null;
 
     for (final identifier in identifiers) {
@@ -262,7 +316,9 @@ class FhirCommonExtractor {
               names.add(display);
             }
           }
-        } catch (_) {}
+        } catch (_) {
+          // An element without this field (NoSuchMethodError on dynamic); skip it.
+        }
       }
     }
 
@@ -282,7 +338,9 @@ class FhirCommonExtractor {
             names.add(display);
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        // An element without this field (NoSuchMethodError on dynamic); skip it.
+      }
 
       try {
         final member = (participant as dynamic).member;
@@ -292,7 +350,9 @@ class FhirCommonExtractor {
             names.add(display);
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        // An element without this field (NoSuchMethodError on dynamic); skip it.
+      }
     }
 
     return names.isEmpty ? null : names.join(', ');
@@ -311,7 +371,9 @@ class FhirCommonExtractor {
             names.add(display);
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        // An element without this field (NoSuchMethodError on dynamic); skip it.
+      }
 
       if (location is fhir_r4.Reference) {
         final display = location.display?.toString();
@@ -337,7 +399,9 @@ class FhirCommonExtractor {
             names.add(display);
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        // An element without this field (NoSuchMethodError on dynamic); skip it.
+      }
     }
 
     return names.isEmpty ? null : names.join(', ');

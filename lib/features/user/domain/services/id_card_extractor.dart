@@ -53,20 +53,28 @@ class IdCardExtractor {
       }
     }
 
+    // The card's issuing country decides its layout; the passed-in country
+    // (the user's or the phone's region) is only the fallback.
+    if (mrzResult?.countryCode == null) {
+      upperCountry = _detectCountryFromText(text) ?? upperCountry;
+    }
+
     final profile = CountryIdentifier.forCountry(upperCountry);
 
-    var result = _extractByCountry(text, upperCountry) ??
-        const IdCardExtractionResult();
+    var result =
+        _extractByCountry(text, upperCountry) ?? const IdCardExtractionResult();
 
     result = result.merge(mrzData);
 
     if (result.familyName == null || result.givenName == null) {
       final standaloneNames = _tryStandaloneUppercaseNames(text);
       if (standaloneNames != null) {
-        result = result.merge(IdCardExtractionResult(
-          familyName: standaloneNames.familyName,
-          givenName: standaloneNames.givenName,
-        ));
+        result = result.merge(
+          IdCardExtractionResult(
+            familyName: standaloneNames.familyName,
+            givenName: standaloneNames.givenName,
+          ),
+        );
       }
     }
 
@@ -77,20 +85,24 @@ class IdCardExtractor {
         result.identifierLabel,
       );
       if (idParsed != null) {
-        result = result.merge(IdCardExtractionResult(
-          dateOfBirth: idParsed.dob,
-          gender: idParsed.gender,
-        ));
+        result = result.merge(
+          IdCardExtractionResult(
+            dateOfBirth: idParsed.dob,
+            gender: idParsed.gender,
+          ),
+        );
       }
     }
 
     if (result.identifierValue == null || result.identifierValue!.isEmpty) {
       final genericId = _extractGenericIdentifier(text, profile);
       if (genericId != null) {
-        result = result.merge(IdCardExtractionResult(
-          identifierValue: genericId,
-          identifierLabel: profile.identifierLabel,
-        ));
+        result = result.merge(
+          IdCardExtractionResult(
+            identifierValue: genericId,
+            identifierLabel: profile.identifierLabel,
+          ),
+        );
       }
     }
 
@@ -104,8 +116,63 @@ class IdCardExtractor {
     );
   }
 
+  static final Map<String, List<RegExp>> _countryMarkers =
+      {
+        'RO': [
+          r'ROM[ÂA]NIA',
+          r'CARTE\s+DE\s+IDENTITATE',
+          r'\bCNP\b',
+          r'\bROU\b',
+        ],
+        'DE': [r'BUNDESREPUBLIK\s+DEUTSCHLAND', r'PERSONALAUSWEIS'],
+        'AT': [r'REPUBLIK\s+[ÖO]STERREICH', r'[ÖO]STERREICH'],
+        'CH': [
+          r'SCHWEIZ',
+          r'SUISSE',
+          r'SVIZZERA',
+          r'CONFOEDERATIO\s+HELVETICA',
+        ],
+        'ES': [
+          r'ESPA[ÑN]A',
+          r'DOCUMENTO\s+NACIONAL\s+DE\s+IDENTIDAD',
+          r'\bDNI\b',
+        ],
+        'FR': [
+          r'R[ÉE]PUBLIQUE\s+FRAN[ÇC]AISE',
+          r'CARTE\s+NATIONALE\s+D.IDENTIT[ÉE]',
+        ],
+        'IT': [r'REPUBBLICA\s+ITALIANA', r'CARTA\s+D.IDENTIT[ÀA]'],
+        'GB': [r'UNITED\s+KINGDOM', r'DRIVING\s+LICENCE'],
+        'NL': [r'KONINKRIJK\s+DER\s+NEDERLANDEN', r'IDENTITEITSKAART'],
+        'PL': [r'RZECZPOSPOLITA\s+POLSKA', r'DOW[ÓO]D\s+OSOBISTY'],
+        'SE': [r'SVERIGE', r'IDENTITETSKORT'],
+        'US': [r'UNITED\s+STATES', r"DRIVER'?S?\s+LICENSE"],
+      }.map(
+        (country, patterns) => MapEntry(
+          country,
+          patterns.map((p) => RegExp(p, caseSensitive: false)).toList(),
+        ),
+      );
+
+  /// The issuing country named on the card itself (e.g. "ROMÂNIA",
+  /// "PERSONALAUSWEIS"), or null when no country's markers appear.
+  static String? _detectCountryFromText(String text) {
+    String? best;
+    var bestScore = 0;
+    for (final entry in _countryMarkers.entries) {
+      final score = entry.value.where((marker) => marker.hasMatch(text)).length;
+      if (score > bestScore) {
+        best = entry.key;
+        bestScore = score;
+      }
+    }
+    return best;
+  }
+
   static IdCardExtractionResult? _extractByCountry(
-      String text, String? country) {
+    String text,
+    String? country,
+  ) {
     switch (country) {
       case 'RO':
         return _extractRomanian(text);
@@ -162,21 +229,31 @@ class IdCardExtractor {
     for (int i = 0; i < lines.length - 1; i++) {
       final line = lines[i].toLowerCase();
       if (familyName == null &&
-          (line.contains('nume') || line.contains('surname') || line.contains('last name') || line.contains('nom')) &&
-          !line.contains('prenume') && !line.contains('prenom') && !line.contains('first')) {
+          (line.contains('nume') ||
+              line.contains('surname') ||
+              line.contains('last name') ||
+              line.contains('nom')) &&
+          !line.contains('prenume') &&
+          !line.contains('prenom') &&
+          !line.contains('first')) {
         final nextLine = lines[i + 1].trim();
         if (nextLine.isNotEmpty &&
             RegExp(r'^[A-ZÀ-Ž\-\s]{2,}$').hasMatch(nextLine) &&
-            !nextLine.contains('PRENUME') && !nextLine.contains('CARTE')) {
+            !nextLine.contains('PRENUME') &&
+            !nextLine.contains('CARTE')) {
           familyName = nextLine;
         }
       }
       if (givenName == null &&
-          (line.contains('prenume') || line.contains('prenom') || line.contains('first name') || line.contains('given'))) {
+          (line.contains('prenume') ||
+              line.contains('prenom') ||
+              line.contains('first name') ||
+              line.contains('given'))) {
         final nextLine = lines[i + 1].trim();
         if (nextLine.isNotEmpty &&
             RegExp(r'^[A-ZÀ-Ž\-\s]{2,}$').hasMatch(nextLine) &&
-            !nextLine.contains('CETAT') && !nextLine.contains('NATION')) {
+            !nextLine.contains('CETAT') &&
+            !nextLine.contains('NATION')) {
           givenName = nextLine;
         }
       }
@@ -329,8 +406,11 @@ class IdCardExtractor {
       final val = genderMatch.group(1)!.toUpperCase();
       if (val == 'M' || val.startsWith('MÄNN') || val.startsWith('MASC')) {
         gender = 'male';
-      } else if (val == 'F' || val == 'W' || val.startsWith('WEIB') ||
-          val.startsWith('FÉM') || val.startsWith('FEMM')) {
+      } else if (val == 'F' ||
+          val == 'W' ||
+          val.startsWith('WEIB') ||
+          val.startsWith('FÉM') ||
+          val.startsWith('FEMM')) {
         gender = 'female';
       }
     }
@@ -357,7 +437,8 @@ class IdCardExtractor {
       r'(?:NOMBRE)[:\s]*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑa-záéíóúñ\-\s]+)',
       multiLine: true,
     ).firstMatch(text);
-    final dniMatch = RegExp(r'(?:DNI|NUM)[:\s]*(\d{8}[A-Z])\b').firstMatch(text) ??
+    final dniMatch =
+        RegExp(r'(?:DNI|NUM)[:\s]*(\d{8}[A-Z])\b').firstMatch(text) ??
         RegExp(r'\b(\d{8}[A-Z])\b').firstMatch(text);
     final dobMatch = RegExp(
       r'(?:FECHA\s*DE\s*NACIMIENTO|F\.?\s*NACIMIENTO)[:\s]*(\d{2}[.\-/\s]\d{2}[.\-/\s]\d{4})',
@@ -437,7 +518,7 @@ class IdCardExtractor {
       }
     }
 
-    String? nirValue = nirMatch?.group(1)?.replaceAll(' ', '');
+    final String? nirValue = nirMatch?.group(1)?.replaceAll(' ', '');
 
     return IdCardExtractionResult(
       familyName: nomMatch?.group(1),
@@ -478,7 +559,8 @@ class IdCardExtractor {
       multiLine: true,
     ).firstMatch(text);
 
-    final dobRaw = luogoDataMatch?.group(1) ??
+    final dobRaw =
+        luogoDataMatch?.group(1) ??
         natoMatch?.group(1) ??
         dataNascitaMatch?.group(1);
     if (dobRaw != null) {
@@ -496,7 +578,10 @@ class IdCardExtractor {
     if (gender == null) {
       if (RegExp(r'\bNATO\s*IL\b', caseSensitive: false).hasMatch(text)) {
         gender = 'male';
-      } else if (RegExp(r'\bNATA\s*IL\b', caseSensitive: false).hasMatch(text)) {
+      } else if (RegExp(
+        r'\bNATA\s*IL\b',
+        caseSensitive: false,
+      ).hasMatch(text)) {
         gender = 'female';
       }
     }
@@ -572,10 +657,11 @@ class IdCardExtractor {
       r'(?:Voorna(?:a)?men?|VOORNA(?:A)?MEN?)[:\s]*([A-ZÀ-Ž][A-ZÀ-Ža-zà-ž\-\s]+)',
       multiLine: true,
     ).firstMatch(text);
-    final bsnMatch = RegExp(
-      r'(?:Burgerservicenummer|BSN)[/:\s]*(\d{9})\b',
-      caseSensitive: false,
-    ).firstMatch(text) ??
+    final bsnMatch =
+        RegExp(
+          r'(?:Burgerservicenummer|BSN)[/:\s]*(\d{9})\b',
+          caseSensitive: false,
+        ).firstMatch(text) ??
         RegExp(r'\b(\d{9})\b').firstMatch(text);
     final dobMatch = RegExp(
       r'(?:Geboortedatum|Geb\.?\s*datum)[:\s]*(\d{2}[.\-/]\d{2}[.\-/]\d{4})',
@@ -620,10 +706,11 @@ class IdCardExtractor {
       r'(?:Imiona|IMIONA|Imi(?:ę|e)|IMIĘ)[:\s]*([A-ZĄĆĘŁŃÓŚŹŻ][A-ZĄĆĘŁŃÓŚŹŻa-ząćęłńóśźż\-\s]+)',
       multiLine: true,
     ).firstMatch(text);
-    final peselMatch = RegExp(
-      r'(?:PESEL)[:\s]*(\d{11})\b',
-      caseSensitive: false,
-    ).firstMatch(text) ??
+    final peselMatch =
+        RegExp(
+          r'(?:PESEL)[:\s]*(\d{11})\b',
+          caseSensitive: false,
+        ).firstMatch(text) ??
         RegExp(r'\b(\d{11})\b').firstMatch(text);
     final dobMatch = RegExp(
       r'(?:Data\s*urodzenia)[:\s]*(\d{2}[.\-/]\d{2}[.\-/]\d{4})',
@@ -744,7 +831,8 @@ class IdCardExtractor {
       final parts = dobMatch.group(1)!.split(RegExp(r'[.\-/]'));
       if (parts.length == 3) {
         if (parts[2].length == 4) {
-          dob = '${parts[2]}-${parts[0].padLeft(2, '0')}-${parts[1].padLeft(2, '0')}';
+          dob =
+              '${parts[2]}-${parts[0].padLeft(2, '0')}-${parts[1].padLeft(2, '0')}';
         }
       }
     }
@@ -820,7 +908,9 @@ class IdCardExtractor {
   }
 
   static String? _extractGenericIdentifier(
-      String text, CountryIdentifier profile) {
+    String text,
+    CountryIdentifier profile,
+  ) {
     final labelPattern = RegExp(
       '${RegExp.escape(profile.identifierLabel)}[:\\s]*(\\S+)',
       caseSensitive: false,
@@ -882,7 +972,7 @@ class IdCardExtractor {
       return null;
     }
 
-    var yy = int.parse(pesel.substring(0, 2));
+    final yy = int.parse(pesel.substring(0, 2));
     var mm = int.parse(pesel.substring(2, 4));
     final dd = int.parse(pesel.substring(4, 6));
 
@@ -918,8 +1008,18 @@ class IdCardExtractor {
     if (cf.length != 16) return null;
 
     const monthMap = {
-      'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'H': 6,
-      'L': 7, 'M': 8, 'P': 9, 'R': 10, 'S': 11, 'T': 12,
+      'A': 1,
+      'B': 2,
+      'C': 3,
+      'D': 4,
+      'E': 5,
+      'H': 6,
+      'L': 7,
+      'M': 8,
+      'P': 9,
+      'R': 10,
+      'S': 11,
+      'T': 12,
     };
 
     final yyStr = cf.substring(6, 8);
@@ -1103,9 +1203,18 @@ class IdCardExtractor {
   static String? _mrzCountryToIso2(String? mrzCode) {
     if (mrzCode == null || mrzCode.isEmpty) return null;
     const map = {
-      'ROU': 'RO', 'DEU': 'DE', 'AUT': 'AT', 'ESP': 'ES',
-      'FRA': 'FR', 'ITA': 'IT', 'GBR': 'GB', 'NLD': 'NL',
-      'POL': 'PL', 'SWE': 'SE', 'CHE': 'CH', 'USA': 'US',
+      'ROU': 'RO',
+      'DEU': 'DE',
+      'AUT': 'AT',
+      'ESP': 'ES',
+      'FRA': 'FR',
+      'ITA': 'IT',
+      'GBR': 'GB',
+      'NLD': 'NL',
+      'POL': 'PL',
+      'SWE': 'SE',
+      'CHE': 'CH',
+      'USA': 'US',
       'D': 'DE',
     };
     return map[mrzCode] ?? (mrzCode.length == 2 ? mrzCode : null);
@@ -1125,9 +1234,12 @@ class IdCardExtractor {
 
   static _MrzResult? _tryStandaloneUppercaseNames(String text) {
     final lines = text.split('\n').map((l) => l.trim()).toList();
-    final countryIdx = lines.indexWhere((l) =>
-        RegExp(r'^(ROMÂNIA|ROMANIA|DEUTSCHLAND|BUNDESREPUBLIK|REPUBLIQUE|REPUBBLICA|KINGDOM|KONINKRIJK|RZECZPOSPOLITA|SVERIGE|SCHWEIZ|SUISSE|ESPAÑA|UNITED\s*STATES)', caseSensitive: false)
-            .hasMatch(l));
+    final countryIdx = lines.indexWhere(
+      (l) => RegExp(
+        r'^(ROMÂNIA|ROMANIA|DEUTSCHLAND|BUNDESREPUBLIK|REPUBLIQUE|REPUBBLICA|KINGDOM|KONINKRIJK|RZECZPOSPOLITA|SVERIGE|SCHWEIZ|SUISSE|ESPAÑA|UNITED\s*STATES)',
+        caseSensitive: false,
+      ).hasMatch(l),
+    );
 
     if (countryIdx < 0) return null;
 
@@ -1137,8 +1249,7 @@ class IdCardExtractor {
     for (int i = countryIdx + 1; i < lines.length && i < countryIdx + 12; i++) {
       final line = lines[i].trim();
       if (line.isEmpty || line.length < 2) continue;
-      if (RegExp(r'^[A-ZÀ-Ž\- ]{2,}$')
-              .hasMatch(line) &&
+      if (RegExp(r'^[A-ZÀ-Ž\- ]{2,}$').hasMatch(line) &&
           !RegExp(
             r'^(ROMÂNĂ|ROU|ROMANĂ|CARTE|PASAPORT|PASSPORT|PASSEPORT|IDENTITY|CARD|PE|BULETIN|REISEPASS|PERSONALAUSWEIS|REPUBLICA|REPUBLIC|FEDERATION|DOCUMENT|NATIONAL|EUROPÄISCHE|UNION|EUROPEENNE|EUROPEA|TYPE|TIPO|TIPO|NOV|DEC|JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT)$',
             caseSensitive: false,
@@ -1161,8 +1272,7 @@ class IdCardExtractor {
     );
   }
 
-  static _CnpFields? _tryDeriveFromIdentifier(
-      String idValue, String? idLabel) {
+  static _CnpFields? _tryDeriveFromIdentifier(String idValue, String? idLabel) {
     switch (idLabel) {
       case 'CNP':
         return _tryParseCnpFields(idValue);
@@ -1190,10 +1300,13 @@ class IdCardExtractor {
   }
 
   static String _titleCase(String input) {
-    return input.split(' ').map((word) {
-      if (word.isEmpty) return word;
-      return word[0].toUpperCase() + word.substring(1).toLowerCase();
-    }).join(' ');
+    return input
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return word;
+          return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        })
+        .join(' ');
   }
 
   static String? _cleanName(String? name) {

@@ -1,10 +1,13 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
+import 'package:health_wallet/features/wallet_pass/domain/entity/wallet_pass_labels.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -14,18 +17,40 @@ class EmergencyCardPage extends StatelessWidget {
 
   const EmergencyCardPage({super.key, required this.cardData});
 
+  /// Goes back to the previous page. A link that starts the app opens the
+  /// card as the only page, so then it opens the app instead: the splash
+  /// sends the user to onboarding or the dashboard.
+  static void _goBack(BuildContext context) {
+    final router = context.router;
+    if (router.canPop()) {
+      router.maybePop();
+      return;
+    }
+    router.replaceAll([const SplashRoute()]);
+  }
+
   @override
   Widget build(BuildContext context) {
+    return PopScope(
+      canPop: context.router.canPop(),
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _goBack(context);
+      },
+      child: _buildScaffold(context),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Emergency Medical ID',
+        title: Text(
+          context.l10n.emergencyMedicalId,
           style: AppTextStyle.titleMedium,
         ),
         centerTitle: false,
         backgroundColor: context.colorScheme.surface,
         leading: IconButton(
-          onPressed: () => context.router.maybePop(),
+          onPressed: () => _goBack(context),
           icon: const Icon(Icons.arrow_back),
         ),
         elevation: 0,
@@ -41,7 +66,7 @@ class EmergencyCardPage extends StatelessWidget {
               _buildPhoneRow(
                 context,
                 icon: Icons.phone,
-                label: 'Phone',
+                label: context.l10n.phoneLabel,
                 phone: cardData.patientPhone!,
               ),
             if (cardData.emergencyContactName != null)
@@ -50,7 +75,7 @@ class EmergencyCardPage extends StatelessWidget {
               _buildListSection(
                 context,
                 icon: Icons.warning_amber_rounded,
-                label: 'Allergies',
+                label: context.l10n.allergiesLabel,
                 items: cardData.allergies,
                 badgeColor: AppColors.error,
               ),
@@ -58,7 +83,7 @@ class EmergencyCardPage extends StatelessWidget {
               _buildListSection(
                 context,
                 icon: Icons.monitor_heart_outlined,
-                label: 'Medical Conditions',
+                label: context.l10n.medicalConditionsLabel,
                 items: cardData.conditions,
                 badgeColor: AppColors.secondary,
               ),
@@ -66,7 +91,7 @@ class EmergencyCardPage extends StatelessWidget {
               _buildListSection(
                 context,
                 icon: Icons.medication_outlined,
-                label: 'Medications',
+                label: context.l10n.medicationsLabel,
                 items: cardData.medications,
                 badgeColor: AppColors.info,
               ),
@@ -78,7 +103,7 @@ class EmergencyCardPage extends StatelessWidget {
 
   Widget _buildPatientHeader(BuildContext context) {
     final gender = cardData.gender != null
-        ? cardData.gender![0].toUpperCase() + cardData.gender!.substring(1)
+        ? WalletPassLabels.fromL10n(context.l10n).genderName(cardData.gender!)
         : null;
 
     return Container(
@@ -114,13 +139,18 @@ class EmergencyCardPage extends StatelessWidget {
               if (cardData.bloodType != null)
                 const SizedBox(width: Insets.small),
               if (gender != null) ...[
-                _buildBadge(gender, Colors.white.withValues(alpha: 0.2),
-                    Colors.white),
+                _buildBadge(
+                  gender,
+                  Colors.white.withValues(alpha: 0.2),
+                  Colors.white,
+                ),
                 const SizedBox(width: Insets.small),
               ],
               if (cardData.dateOfBirth != null)
                 _buildBadge(
-                  DateFormat('MMM d, yyyy').format(cardData.dateOfBirth!),
+                  DateFormat.yMMMd(
+                    context.l10n.localeName,
+                  ).format(cardData.dateOfBirth!),
                   Colors.white.withValues(alpha: 0.2),
                   Colors.white,
                 ),
@@ -185,7 +215,9 @@ class EmergencyCardPage extends StatelessWidget {
                   Text(
                     label,
                     style: AppTextStyle.labelSmall.copyWith(
-                      color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.6,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -201,44 +233,6 @@ class EmergencyCardPage extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: Insets.smallNormal),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(Insets.smallNormal),
-        decoration: BoxDecoration(
-          border: Border.all(color: context.theme.dividerColor),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: context.colorScheme.onSurface.withValues(alpha: 0.6)),
-            const SizedBox(width: Insets.smallNormal),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: AppTextStyle.labelSmall.copyWith(
-                    color: context.colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(value, style: AppTextStyle.bodyMedium),
-              ],
-            ),
-          ],
         ),
       ),
     );
@@ -267,9 +261,11 @@ class EmergencyCardPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Emergency Phone Contact',
+                    context.l10n.emergencyContact,
                     style: AppTextStyle.labelSmall.copyWith(
-                      color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.6,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -336,22 +332,24 @@ class EmergencyCardPage extends StatelessWidget {
               spacing: Insets.small,
               runSpacing: Insets.small,
               children: items
-                  .map((item) => Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: Insets.smallNormal,
-                          vertical: Insets.smaller,
+                  .map(
+                    (item) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Insets.smallNormal,
+                        vertical: Insets.smaller,
+                      ),
+                      decoration: BoxDecoration(
+                        color: badgeColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        item,
+                        style: AppTextStyle.labelMedium.copyWith(
+                          color: badgeColor,
                         ),
-                        decoration: BoxDecoration(
-                          color: badgeColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          item,
-                          style: AppTextStyle.labelMedium.copyWith(
-                            color: badgeColor,
-                          ),
-                        ),
-                      ))
+                      ),
+                    ),
+                  )
                   .toList(),
             ),
           ],

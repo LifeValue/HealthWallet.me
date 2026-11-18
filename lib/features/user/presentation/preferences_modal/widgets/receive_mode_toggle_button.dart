@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 
 class ReceiveModeToggleButton extends StatelessWidget {
@@ -39,15 +40,19 @@ class ReceiveModeToggleButton extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Center(
-                    child: Text(
-                      'OFF',
-                      style: context.textTheme.bodySmall?.copyWith(
-                        color: !isReceiveModeEnabled
-                            ? (context.isDarkMode
-                                ? Colors.white
-                                : colorScheme.onPrimary)
-                            : colorScheme.onSurface,
-                        fontWeight: FontWeight.w600,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        context.l10n.toggleOff,
+                        maxLines: 1,
+                        style: context.textTheme.bodySmall?.copyWith(
+                          color: !isReceiveModeEnabled
+                              ? (context.isDarkMode
+                                    ? Colors.white
+                                    : colorScheme.onPrimary)
+                              : colorScheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
@@ -63,15 +68,19 @@ class ReceiveModeToggleButton extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Center(
-                    child: Text(
-                      'ON',
-                      style: context.textTheme.bodySmall?.copyWith(
-                        color: isReceiveModeEnabled
-                            ? (context.isDarkMode
-                                ? Colors.white
-                                : colorScheme.onPrimary)
-                            : colorScheme.onSurface,
-                        fontWeight: FontWeight.w600,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        context.l10n.toggleOn,
+                        maxLines: 1,
+                        style: context.textTheme.bodySmall?.copyWith(
+                          color: isReceiveModeEnabled
+                              ? (context.isDarkMode
+                                    ? Colors.white
+                                    : colorScheme.onPrimary)
+                              : colorScheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),

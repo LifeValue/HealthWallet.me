@@ -1,5 +1,16 @@
+# CocoaPods downloads specs from its CDN (cdn.jsdelivr.net) through Typhoeus/libcurl, which
+# multiplexes them over HTTP/2. That connection intermittently breaks with "Error in the HTTP2
+# framing layer" and fails the whole install, so every CocoaPods request uses HTTP/1.1 instead.
+require 'typhoeus'
+module ForceHttp11Requests
+  def initialize(base_url, options = {})
+    super(base_url, { http_version: :httpv1_1 }.merge(options))
+  end
+end
+Typhoeus::Request.prepend(ForceHttp11Requests)
+
 # Uncomment this line to define a global platform for your project
-platform :ios, '16.0'
+platform :ios, '16.4'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -50,8 +61,8 @@ post_install do |installer|
         'PERMISSION_BLUETOOTH=1',
       ]
 
-      # Fix deployment target for all pods (min iOS 16.0)
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+      # Fix deployment target for all pods (min iOS 16.4)
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.4'
 
       # Disable code signing for Pods (not needed, Runner handles signing)
       config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'

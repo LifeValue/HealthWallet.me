@@ -1,0 +1,443 @@
+import 'dart:async';
+import 'dart:io';
+import 'dart:math' as math;
+
+import 'package:health_wallet/core/config/constants/app_constants.dart';
+import 'package:health_wallet/core/services/temp_file_sweeper.dart';
+import 'package:health_wallet/features/processing/data/model/generation_stats.dart';
+import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
+import 'package:image/image.dart' as img;
+import 'package:llamadart/llamadart.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+
+mixin AiInferenceHandler {
+  LlamaEngine? get engine;
+  set engine(LlamaEngine? value);
+  bool get hasVisionProjector;
+  set hasVisionProjector(bool value);
+  String get ts;
+
+  static final int maxImageDimension =
+      (Platform.isMacOS || Platform.isLinux || Platform.isWindows) ? 1120 : 560;
+
+  /// Completes when the running generation has ended (and, when one was
+  /// asked for meanwhile, the engine is disposed); null when none runs.
+  Completer<void>? _generation;
+
+  bool get isGenerating => _generation != null;
+  bool pendingDisposal = false;
+
+  /// Completes once no generation runs. A load or a new prompt waits for a
+  /// generation that is still ending (a cancelled one), so the engine is
+  /// never used by two at once.
+  Future<void> waitForGeneration() async {
+    while (_generation != null) {
+      await _generation!.future;
+    }
+  }
+
+  /// Stops the running generation: its prompt call returns the text
+  /// generated so far. A generation started afterwards is not affected.
+  void cancelGeneration() {
+    if (!isGenerating) return;
+    ProcessingLogBuffer.instance.log(
+      '[$ts][ScanAI] cancelling the running generation',
+    );
+    engine?.cancelGeneration();
+  }
+
+  /// Stats of the most recent generation; null until it completes.
+  GenerationStats? lastGenerationStats;
+
+  Future<GenerationStats> buildGenerationStats(
+    GenerationMode mode,
+    LlamaGenerationUsage? usage, {
+    String? finishReason,
+  }) async {
+    BackendPerfContextData? perf;
+    try {
+      perf = await engine?.getPerformanceContext();
+    } catch (_) {
+      // Performance counters are optional; the stats are built without them.
+    }
+    return GenerationStats(
+      mode: mode,
+      promptTokens: usage?.promptTokens,
+      completionTokens: usage?.completionTokens,
+      timeToFirstTokenMs: usage?.timeToFirstToken == null
+          ? null
+          : usage!.timeToFirstToken!.inMicroseconds / 1000.0,
+      promptEvalMs: perf?.promptEvalMs,
+      durationMs: usage?.duration == null
+          ? null
+          : usage!.duration!.inMicroseconds / 1000.0,
+      finishReason: finishReason,
+    );
+  }
+
+  /// Disposes the engine; while a generation runs, once it has ended.
+  Future<void> disposeModel() async {
+    pendingDisposal = true;
+
+    final running = _generation;
+    if (running != null) {
+      // The generation disposes the engine as it ends.
+      await running.future;
+      return;
+    }
+
+    await performActualDisposal();
+  }
+
+  /// Marks a generation as running; the engine must be loaded.
+  Completer<void> _startGeneration() {
+    if (engine == null) {
+      throw Exception('Model not initialized. Call initModel() first.');
+    }
+    return _generation = Completer<void>();
+  }
+
+  /// Ends [generation], disposing the engine first when that was asked for
+  /// while it ran.
+  Future<void> _endGeneration(Completer<void> generation) async {
+    try {
+      if (pendingDisposal) await performActualDisposal();
+    } finally {
+      _generation = null;
+      generation.complete();
+    }
+  }
+
+  Future<void> performActualDisposal() async {
+    await engine?.dispose();
+    engine = null;
+    hasVisionProjector = false;
+    pendingDisposal = false;
+  }
+
+  Future<String> resizeImageIfNeeded(String imagePath) async {
+    if (maxImageDimension <= 0) return imagePath;
+
+    final file = File(imagePath);
+    if (!await file.exists()) return imagePath;
+    final bytes = await file.readAsBytes();
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) return imagePath;
+
+    final w = decoded.width;
+    final h = decoded.height;
+
+    if (w <= maxImageDimension && h <= maxImageDimension) {
+      return imagePath;
+    }
+
+    final scale = maxImageDimension / math.max(w, h);
+    final newW = (w * scale).round();
+    final newH = (h * scale).round();
+
+    final resized = img.copyResize(decoded, width: newW, height: newH);
+    final dir = await getTemporaryDirectory();
+    final resizedPath = path.join(
+      dir.path,
+      '${TempFileSweeper.resizedImagePrefix}${path.basename(imagePath)}',
+    );
+    final quality = (Platform.isMacOS || Platform.isLinux || Platform.isWindows)
+        ? 95
+        : 85;
+    await File(resizedPath)
+        .writeAsBytes(img.encodeJpg(resized, quality: quality));
+
+    return resizedPath;
+  }
+
+  Future<String?> runVisionPromptImpl({
+    required String prompt,
+    required List<String> imagePaths,
+    int? maxTokens,
+    String? grammar,
+    Map<String, dynamic>? responseFormat,
+  }) async {
+    lastGenerationStats = null;
+    if (engine == null) {
+      throw Exception('Model not initialized. Call initModel() first.');
+    }
+
+    final effectiveTokens =
+        maxTokens ??
+        ((Platform.isMacOS || Platform.isLinux || Platform.isWindows)
+            ? AppConstants.desktopVisionMaxTokens
+            : AppConstants.visionMaxTokens);
+    ProcessingLogBuffer.instance.log('[$ts][ScanAI] --- VISION INFERENCE ---');
+    ProcessingLogBuffer.instance.log(
+      '[$ts][ScanAI] input: ${imagePaths.length} images, prompt ${prompt.length} chars, maxTokens=$effectiveTokens',
+    );
+
+    final resizeSw = Stopwatch()..start();
+    final resizedPaths = <String>[];
+    for (final imgPath in imagePaths) {
+      if (!File(imgPath).existsSync()) {
+        ProcessingLogBuffer.instance.log(
+          '[$ts][ScanAI] image skipped (not found): ${path.basename(imgPath)}',
+        );
+        continue;
+      }
+      final originalSize = File(imgPath).lengthSync();
+      final resized = await resizeImageIfNeeded(imgPath);
+      final resizedSize = File(resized).existsSync()
+          ? File(resized).lengthSync()
+          : 0;
+      final wasResized = resized != imgPath;
+      ProcessingLogBuffer.instance.log(
+        '[$ts][ScanAI] image: ${(resizedSize / 1024).toStringAsFixed(0)}KB${wasResized ? ' (resized from ${(originalSize / 1024).toStringAsFixed(0)}KB, max ${maxImageDimension}px)' : ' (${maxImageDimension}px limit ok)'}',
+      );
+      resizedPaths.add(resized);
+    }
+    resizeSw.stop();
+    if (resizeSw.elapsedMilliseconds > 100) {
+      ProcessingLogBuffer.instance.log(
+        '[$ts][ScanAI] image prep: ${(resizeSw.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s',
+      );
+    }
+
+    final content = <LlamaContentPart>[
+      for (final imgPath in resizedPaths) LlamaImageContent(path: imgPath),
+      LlamaTextContent(prompt),
+    ];
+
+    final messages = [
+      const LlamaChatMessage.fromText(
+        role: LlamaChatRole.system,
+        text: 'You are a medical document data extractor. Output only valid JSON.',
+      ),
+      LlamaChatMessage.withContent(
+        role: LlamaChatRole.user,
+        content: content,
+      ),
+    ];
+
+    // A generation still ending (a cancelled one) finishes first.
+    await waitForGeneration();
+    final generation = _startGeneration();
+    final sw = Stopwatch()..start();
+    Timer? heartbeat;
+    try {
+      final buffer = StringBuffer();
+      int tokenCount = 0;
+      LlamaGenerationUsage? usage;
+      String? finishReason;
+      ProcessingLogBuffer.instance.log(
+        '[$ts][ScanAI] encoding image + prompt (native, no callbacks available)...',
+      );
+
+      heartbeat = Timer.periodic(const Duration(seconds: 10), (_) {
+        final elapsed = (sw.elapsedMilliseconds / 1000.0).toStringAsFixed(0);
+        if (tokenCount == 0) {
+          ProcessingLogBuffer.instance.log(
+            '[$ts][ScanAI] still encoding... ${elapsed}s elapsed',
+          );
+        }
+      });
+
+      await for (final chunk in engine!.create(
+        messages,
+        params: GenerationParams(
+          maxTokens: effectiveTokens,
+          temp: 0.0,
+          topK: 1,
+          topP: 1.0,
+          grammar: grammar,
+        ),
+        enableThinking: false,
+        responseFormat: responseFormat,
+      )) {
+        usage = chunk.usage ?? usage;
+        finishReason = chunk.choices.firstOrNull?.finishReason ?? finishReason;
+        final text = chunk.choices.first.delta.content;
+        if (text != null) {
+          buffer.write(text);
+          tokenCount++;
+          if (tokenCount == 1) {
+            heartbeat?.cancel();
+            final prefillSec = (sw.elapsedMilliseconds / 1000.0)
+                .toStringAsFixed(1);
+            ProcessingLogBuffer.instance.log(
+              '[$ts][ScanAI] image encoded + prefill done in ${prefillSec}s, generating JSON...',
+            );
+            heartbeat = Timer.periodic(const Duration(seconds: 5), (_) {
+              final elapsed = (sw.elapsedMilliseconds / 1000.0).toStringAsFixed(
+                0,
+              );
+              final snippet = buffer.length > 60
+                  ? '...${buffer.toString().substring(buffer.length - 60)}'
+                  : buffer.toString();
+              ProcessingLogBuffer.instance.log(
+                '[$ts][ScanAI] generating... $tokenCount tokens, ${elapsed}s | $snippet',
+              );
+            });
+          }
+        }
+      }
+
+      heartbeat?.cancel();
+      sw.stop();
+      lastGenerationStats = await buildGenerationStats(
+        GenerationMode.vision,
+        usage,
+        finishReason: finishReason,
+      );
+      final totalSec = sw.elapsedMilliseconds / 1000.0;
+      final tokPerSec = tokenCount > 0
+          ? (tokenCount / totalSec).toStringAsFixed(1)
+          : '0';
+      ProcessingLogBuffer.instance.log(
+        '[$ts][ScanAI] done: $tokenCount tokens in ${totalSec.toStringAsFixed(1)}s ($tokPerSec tok/s)',
+      );
+      if (tokenCount >= effectiveTokens) {
+        ProcessingLogBuffer.instance.log(
+          '[$ts][ScanAI] WARNING: hit maxTokens limit ($effectiveTokens), output may be truncated',
+        );
+      }
+      final preview = buffer.length > 120
+          ? '${buffer.toString().substring(0, 120)}...'
+          : buffer.toString();
+      ProcessingLogBuffer.instance.log('[$ts][ScanAI] response: $preview');
+      return buffer.toString();
+    } catch (e) {
+      heartbeat?.cancel();
+      sw.stop();
+      ProcessingLogBuffer.instance.log(
+        '[$ts][ScanAI] FAILED after ${(sw.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s: $e',
+      );
+      rethrow;
+    } finally {
+      heartbeat?.cancel();
+      await _endGeneration(generation);
+    }
+  }
+
+  Future<String?> runTextPromptImpl({
+    required String prompt,
+    int? maxTokens,
+    String? grammar,
+    Map<String, dynamic>? responseFormat,
+    Map<String, dynamic>? chatTemplateKwargs,
+  }) async {
+    lastGenerationStats = null;
+    if (engine == null) {
+      throw Exception('Model not initialized. Call initModel() first.');
+    }
+
+    final effectiveTokens = maxTokens ?? AppConstants.defaultMaxTokens;
+    ProcessingLogBuffer.instance.log('[$ts][ScanAI] --- TEXT INFERENCE ---');
+    ProcessingLogBuffer.instance.log(
+      '[$ts][ScanAI] prompt ${prompt.length} chars, maxTokens=$effectiveTokens',
+    );
+
+    // NuExtract's chat template renders its own task, template and document
+    // sections around the user message.
+    final messages = chatTemplateKwargs != null
+        ? [LlamaChatMessage.fromText(role: LlamaChatRole.user, text: prompt)]
+        : [
+            const LlamaChatMessage.fromText(
+              role: LlamaChatRole.system,
+              text: 'You are a medical document data extractor. Output only valid JSON.',
+            ),
+            LlamaChatMessage.fromText(
+              role: LlamaChatRole.user,
+              text: '$prompt\n\nJSON:\n',
+            ),
+          ];
+
+    // A generation still ending (a cancelled one) finishes first.
+    await waitForGeneration();
+    final generation = _startGeneration();
+    final sw = Stopwatch()..start();
+    Timer? heartbeat;
+    try {
+      final buffer = StringBuffer();
+      int tokenCount = 0;
+      LlamaGenerationUsage? usage;
+      String? finishReason;
+
+      heartbeat = Timer.periodic(const Duration(seconds: 5), (_) {
+        final elapsed = (sw.elapsedMilliseconds / 1000.0).toStringAsFixed(0);
+        if (tokenCount == 0) {
+          ProcessingLogBuffer.instance.log(
+            '[$ts][ScanAI] text: processing prompt (no tokens generated yet)... ${elapsed}s elapsed',
+          );
+        } else {
+          final snippet = buffer.length > 60
+              ? '...${buffer.toString().substring(buffer.length - 60)}'
+              : buffer.toString();
+          ProcessingLogBuffer.instance.log(
+            '[$ts][ScanAI] text: generating... $tokenCount tokens, ${elapsed}s | $snippet',
+          );
+        }
+      });
+
+      await for (final chunk in engine!.create(
+        messages,
+        params: GenerationParams(
+          maxTokens: effectiveTokens,
+          temp: 0.0,
+          topK: 1,
+          topP: 1.0,
+          grammar: grammar,
+        ),
+        enableThinking: false,
+        responseFormat: responseFormat,
+        chatTemplateKwargs: chatTemplateKwargs,
+      )) {
+        usage = chunk.usage ?? usage;
+        finishReason = chunk.choices.firstOrNull?.finishReason ?? finishReason;
+        final text = chunk.choices.first.delta.content;
+        if (text != null) {
+          buffer.write(text);
+          tokenCount++;
+          if (tokenCount == 1) {
+            final prefillMs = sw.elapsedMilliseconds;
+            ProcessingLogBuffer.instance.log(
+              '[$ts][ScanAI] text: prefill done in ${(prefillMs / 1000.0).toStringAsFixed(1)}s, generating JSON...',
+            );
+          }
+        }
+      }
+
+      heartbeat.cancel();
+      sw.stop();
+      lastGenerationStats = await buildGenerationStats(
+        GenerationMode.text,
+        usage,
+        finishReason: finishReason,
+      );
+      final totalSec = sw.elapsedMilliseconds / 1000.0;
+      final tokPerSec = tokenCount > 0
+          ? (tokenCount / totalSec).toStringAsFixed(1)
+          : '0';
+      ProcessingLogBuffer.instance.log(
+        '[$ts][ScanAI] text done: $tokenCount tokens in ${totalSec.toStringAsFixed(1)}s ($tokPerSec tok/s)',
+      );
+      if (tokenCount >= effectiveTokens) {
+        ProcessingLogBuffer.instance.log(
+          '[$ts][ScanAI] WARNING: hit maxTokens limit ($effectiveTokens), output may be truncated',
+        );
+      }
+      final preview = buffer.length > 120
+          ? '${buffer.toString().substring(0, 120)}...'
+          : buffer.toString();
+      ProcessingLogBuffer.instance.log('[$ts][ScanAI] response: $preview');
+      return buffer.toString();
+    } catch (e) {
+      heartbeat?.cancel();
+      sw.stop();
+      ProcessingLogBuffer.instance.log(
+        '[$ts][ScanAI] text FAILED after ${(sw.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s: $e',
+      );
+      rethrow;
+    } finally {
+      heartbeat?.cancel();
+      await _endGeneration(generation);
+    }
+  }
+}

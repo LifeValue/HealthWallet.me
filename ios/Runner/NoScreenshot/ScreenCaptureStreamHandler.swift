@@ -1,7 +1,9 @@
 import Flutter
 
 class ScreenCaptureStreamHandler: NSObject, FlutterStreamHandler {
-    func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+    func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink)
+        -> FlutterError?
+    {
         return nil
     }
 

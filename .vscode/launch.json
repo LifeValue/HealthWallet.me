@@ -1,26 +1,19 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-    
-        {
-            "name": "health_wallet",
-            "request": "launch",
-            "type": "dart"
-        },
-        {
-            "name": "health_wallet (profile mode)",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "profile"
-        },
-        {
-            "name": "health_wallet (release mode)",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "release"
-        }
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "health_wallet (mobile)",
+      "request": "launch",
+      "type": "dart"
+    },
+    {
+      "name": "health_wallet (desktop)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main_desktop.dart"
+    }
+  ]
 }

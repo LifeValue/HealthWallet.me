@@ -1,32 +1,47 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
+
 import 'package:drift/drift.dart';
 import 'package:fhir_ips_export/fhir_ips_export.dart';
+import 'package:flutter/services.dart';
+import 'package:health_wallet/core/config/constants/country_identifier.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/constants/blood_types.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
-import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/core/data/local/soft_delete.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/data/data_source/fhir_resource_datasource.dart';
+import 'package:health_wallet/features/records/data/data_source/shared_notes_datasource.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
-import 'package:health_wallet/core/config/constants/country_identifier.dart';
-import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/features/sync/domain/services/demo_data_extractor.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:injectable/injectable.dart';
-import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
 @Injectable(as: RecordsRepository)
 class RecordsRepositoryImpl implements RecordsRepository {
   final FhirResourceDatasource _datasource;
   final SyncLocalDataSource _syncLocalDataSource;
   final AppDatabase _database;
+  final SharedNotesDatasource _sharedNotes;
 
-  RecordsRepositoryImpl(this._database, this._syncLocalDataSource)
-      : _datasource = FhirResourceDatasource(_database);
+  RecordsRepositoryImpl(
+    this._database,
+    this._syncLocalDataSource,
+    this._sharedNotes,
+  ) : _datasource = FhirResourceDatasource(_database);
+
+  /// Rows read at a time while a filter skips some of them.
+  static const _filteredBatchSize = 100;
 
   @override
   Future<List<IFhirResource>> getResources({
@@ -35,7 +50,6 @@ class RecordsRepositoryImpl implements RecordsRepository {
     List<String>? sourceIds,
     int limit = 20,
     int offset = 0,
-    DateFilter? dateFilter,
   }) async {
     final localDtos = await _datasource.getResources(
       resourceTypes: resourceTypes.map((fhirType) => fhirType.name).toList(),
@@ -44,26 +58,83 @@ class RecordsRepositoryImpl implements RecordsRepository {
       limit: limit,
       offset: offset,
     );
+    return localDtos.map(_parse).nonNulls.toList();
+  }
 
-    final validResources = <IFhirResource>[];
-    for (final dto in localDtos) {
-      try {
-        final resource = IFhirResource.fromLocalDto(dto);
+  @override
+  Future<ResourcePage> getResourcePage({
+    List<FhirType> resourceTypes = const [],
+    String? sourceId,
+    List<String>? sourceIds,
+    DateFilter? dateFilter,
+    bool Function(IFhirResource resource)? where,
+    int? limit = 20,
+    int offset = 0,
+  }) async {
+    final matches = _matcher(dateFilter, where);
+    final batchSize = limit == null
+        ? null
+        : matches == null
+        ? limit
+        : max(limit, _filteredBatchSize);
+    final types = resourceTypes.map((fhirType) => fhirType.name).toList();
+    final page = <IFhirResource>[];
+    var next = offset;
 
-        if (dateFilter != null && dateFilter.hasValue) {
-          final resourceDate = resource.date;
-          if (resourceDate != null && !dateFilter.matches(resourceDate)) {
-            continue;
-          }
+    while (true) {
+      final rows = await _datasource.getResources(
+        resourceTypes: types,
+        sourceId: sourceId,
+        sourceIds: sourceIds,
+        limit: batchSize,
+        offset: next,
+      );
+      for (final row in rows) {
+        next++;
+        final resource = _parse(row);
+        if (resource == null || !(matches?.call(resource) ?? true)) continue;
+        page.add(resource);
+        if (page.length == limit) {
+          return (resources: page, nextOffset: next, hasMore: true);
         }
-
-        validResources.add(resource);
-      } catch (e) {
-        logger.w(
-            'Failed to parse resource ${dto.id} of type ${dto.resourceType}: $e');
+      }
+      if (batchSize == null || rows.length < batchSize) {
+        return (resources: page, nextOffset: next, hasMore: false);
       }
     }
-    return validResources;
+  }
+
+  @override
+  Future<List<IFhirResource>> getResourcesByIds(Iterable<String> ids) async {
+    final rows = await _datasource.getResourcesByIds(ids.toSet().toList());
+    return rows.map(_parse).nonNulls.toList();
+  }
+
+  /// [dateFilter] and [where] as one test, or null when neither filters.
+  static bool Function(IFhirResource)? _matcher(
+    DateFilter? dateFilter,
+    bool Function(IFhirResource resource)? where,
+  ) {
+    final dates = dateFilter != null && dateFilter.hasValue ? dateFilter : null;
+    if (dates == null && where == null) return null;
+    return (resource) {
+      final date = resource.date;
+      if (dates != null && date != null && !dates.matches(date)) return false;
+      return where?.call(resource) ?? true;
+    };
+  }
+
+  /// The stored row as a record, or null (logged) when it can't be read, so
+  /// one bad row doesn't hide the others.
+  static IFhirResource? _parse(FhirResourceLocalDto dto) {
+    try {
+      return IFhirResource.fromLocalDto(dto);
+    } catch (e) {
+      logger.w(
+        'Failed to parse resource ${dto.id} of type ${dto.resourceType}: $e',
+      );
+      return null;
+    }
   }
 
   /// Get related resources for an encounter
@@ -95,10 +166,10 @@ class RecordsRepositoryImpl implements RecordsRepository {
   Future<List<IFhirResource>> getRelatedResources({
     required IFhirResource resource,
   }) async {
-    List<IFhirResource> resources = [];
+    final List<IFhirResource> resources = [];
 
     for (String? reference in resource.resourceReferences) {
-      IFhirResource? resource = await resolveReference(reference!);
+      final IFhirResource? resource = await resolveReference(reference!);
       if (resource == null) continue;
 
       resources.add(resource);
@@ -109,10 +180,61 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
   @override
   Future<IFhirResource?> resolveReference(String reference) async {
-    FhirResourceLocalDto? localDto =
-        await _datasource.resolveReference(reference);
+    final FhirResourceLocalDto? localDto = await _datasource.resolveReference(
+      reference,
+    );
     if (localDto == null) return null;
     return IFhirResource.fromLocalDto(localDto);
+  }
+
+  @override
+  Future<List<IFhirResource>> getAttachedDocuments(
+    IFhirResource resource,
+  ) async {
+    final id = resource.resourceId;
+    if (id.isEmpty) return [];
+    final isEncounter = resource.fhirType == FhirType.Encounter;
+
+    // Narrowed in SQL to documents that mention the id, then matched exactly.
+    final rows =
+        await (_database.select(_database.fhirResource)
+              ..where(
+                (f) =>
+                    f.resourceType.equals('DocumentReference') &
+                    f.deletedAt.isNull() &
+                    (f.encounterId.equals(id) | f.resourceRaw.contains(id)),
+              )
+              ..orderBy([(f) => OrderingTerm.desc(f.date)]))
+            .get();
+
+    bool refersTo(Object? references) =>
+        references is List &&
+        references.any(
+          (r) =>
+              r is Map &&
+              FhirReferenceUtils.extractReferenceId(
+                    r['reference']?.toString(),
+                  ) ==
+                  id,
+        );
+
+    final documents = <IFhirResource>[];
+    for (final row in rows) {
+      final IFhirResource doc;
+      try {
+        doc = IFhirResource.fromLocalDto(row);
+      } catch (e) {
+        logger.w('Unreadable DocumentReference ${row.id}', e);
+        continue;
+      }
+      final context = doc.rawResource['context'];
+      final attached = isEncounter
+          ? doc.encounterId == id ||
+                (context is Map && refersTo(context['encounter']))
+          : context is Map && refersTo(context['related']);
+      if (attached) documents.add(doc);
+    }
+    return documents;
   }
 
   // Record Notes - Can be attached to any FHIR resource
@@ -123,8 +245,9 @@ class RecordsRepositoryImpl implements RecordsRepository {
     required String content,
   }) async {
     final companion = RecordNotesCompanion.insert(
+      uuid: Value(const Uuid().v4()),
       resourceId: resourceId,
-      sourceId: Value(sourceId),
+      sourceId: Value(await _existingSourceId(sourceId)),
       content: content,
       timestamp: DateTime.now(),
     );
@@ -134,84 +257,152 @@ class RecordsRepositoryImpl implements RecordsRepository {
         .insertOnConflictUpdate(companion);
   }
 
+  /// [sourceId] when that source exists. A note refers to its source, so a
+  /// record without one (or whose source is gone) gets a note without one,
+  /// rather than a note that can't be saved.
+  Future<String?> _existingSourceId(String? sourceId) async {
+    if (sourceId == null || sourceId.isEmpty) return null;
+    final source = await (_database.select(
+      _database.sources,
+    )..where((s) => s.id.equals(sourceId))).getSingleOrNull();
+    return source?.id;
+  }
+
   @override
   Future<List<RecordNote>> getRecordNotes(String resourceId) async {
-    final notes = await (_database.select(_database.recordNotes)
-          ..where((t) => t.resourceId.equals(resourceId))
-          ..orderBy([(t) => OrderingTerm.desc(t.timestamp)]))
-        .get();
+    final shared = _sharedNotes.notesFor(resourceId);
+    if (shared != null) return shared;
+
+    final notes =
+        await (_database.select(_database.recordNotes)
+              ..where(
+                (t) => t.resourceId.equals(resourceId) & t.deletedAt.isNull(),
+              )
+              ..orderBy([(t) => OrderingTerm.desc(t.timestamp)]))
+            .get();
 
     return notes.map(RecordNote.fromDto).toList();
   }
 
   @override
+  void showSharedNotes(Map<String, List<RecordNote>> notes) =>
+      _sharedNotes.show(notes);
+
+  @override
+  void clearSharedNotes() => _sharedNotes.clear();
+
+  @override
   Future<int> editRecordNote(RecordNote note) async {
-    return await (_database.update(_database.recordNotes)
-          ..where((t) => t.id.equals(note.id)))
-        .write(RecordNotesCompanion(
-      resourceId: Value(note.resourceId),
-      sourceId: Value(note.sourceId),
-      content: Value(note.content),
-      timestamp: Value(note.timestamp),
-    ));
+    return await (_database.update(
+      _database.recordNotes,
+    )..where((t) => t.id.equals(note.id))).write(
+      RecordNotesCompanion(
+        resourceId: Value(note.resourceId),
+        sourceId: Value(await _existingSourceId(note.sourceId)),
+        content: Value(note.content),
+        timestamp: Value(note.timestamp),
+      ),
+    );
   }
 
+  /// Soft-deletes the note so the delete reaches the paired device.
   @override
-  Future<int> deleteRecordNote(RecordNote note) async {
-    return await (_database.delete(_database.recordNotes)
-          ..where((t) => t.id.equals(note.id)))
-        .go();
+  Future<int> deleteRecordNote(RecordNote note) =>
+      _database.softDeleteNote(note.id);
+
+  /// Soft-deletes the record and its notes so the delete reaches the paired
+  /// device; the other delete methods below do the same.
+  @override
+  Future<void> deleteResource(String resourceId) =>
+      _deleteRecords({resourceId});
+
+  @override
+  Future<void> deleteResourcesByIds(List<String> ids) =>
+      _deleteRecords(ids.toSet());
+
+  /// Deletes the records [ids] with what belongs to them: their notes and the
+  /// documents attached only to them. Their attachment files stay on the
+  /// device, so undoing the delete or a restore opens them again; the 30-day
+  /// tombstone purge deletes the files no other row refers to.
+  Future<void> _deleteRecords(Set<String> ids) async {
+    if (ids.isEmpty) return;
+
+    await _database.transaction(() async {
+      final rows = await (_database.select(
+        _database.fhirResource,
+      )..where((f) => f.id.isIn(ids))).get();
+      final attached = await _documentsAttachedOnlyTo(rows, ids);
+      final allIds = {...ids, ...attached.map((r) => r.id)};
+
+      // Tombstones the records and their notes, so the delete reaches the
+      // paired device.
+      await _datasource.deleteResourcesByIds(allIds.toList());
+    });
   }
 
-  @override
-  Future<void> deleteResource(String resourceId) async {
-    await _datasource.deleteResourceById(resourceId);
+  /// DocumentReferences attached (`context.related`) to [rows] and to no
+  /// record outside [ids].
+  Future<List<FhirResourceLocalDto>> _documentsAttachedOnlyTo(
+    List<FhirResourceLocalDto> rows,
+    Set<String> ids,
+  ) async {
+    final references = {
+      for (final row in rows)
+        if (row.resourceType != null && row.resourceId != null)
+          '${row.resourceType}/${row.resourceId}',
+    };
+    if (references.isEmpty) return [];
+
+    final candidates =
+        await (_database.select(_database.fhirResource)..where(
+              (f) =>
+                  f.resourceType.equals('DocumentReference') &
+                  f.deletedAt.isNull() &
+                  f.id.isNotIn(ids) &
+                  references
+                      .map((r) => f.resourceRaw.contains('"$r"'))
+                      .reduce((a, b) => a | b),
+            ))
+            .get();
+
+    return [
+      for (final doc in candidates)
+        if (_relatedReferences(doc.resourceRaw) case final related
+            when related.isNotEmpty && related.every(references.contains))
+          doc,
+    ];
   }
 
-  @override
-  Future<void> deleteResourcesByIds(List<String> ids) async {
-    await _datasource.deleteResourcesByIds(ids);
-  }
-
-  @override
-  Future<void> deleteResourceWithRelated(String resourceId) async {
-    final targetResource = (await (_database.select(_database.fhirResource)
-          ..where((f) => f.id.equals(resourceId)))
-        .get())
-        .firstOrNull;
-
-    if (targetResource == null) return;
-
-    final idsToDelete = <String>{resourceId};
-
-    if (targetResource.resourceType == 'Encounter' ||
-        targetResource.resourceType == 'DiagnosticReport') {
-      final related = await _datasource.getResourcesByEncounterId(
-        encounterId: targetResource.resourceId ?? '',
-      );
-      idsToDelete.addAll(related.map((r) => r.id));
+  static List<String> _relatedReferences(String rawJson) {
+    try {
+      final related =
+          (jsonDecode(rawJson) as Map<String, dynamic>)['context']?['related']
+              as List?;
+      return [
+        for (final r in related ?? const [])
+          if (r is Map && r['reference'] is String) r['reference'] as String,
+      ];
+    } catch (e) {
+      logger.w('Unreadable DocumentReference context', e);
+      return const [];
     }
+  }
 
-    final encId = targetResource.encounterId;
-    if (encId != null && encId.isNotEmpty) {
-      final encounterRows = await (_database.select(_database.fhirResource)
-            ..where((f) => f.resourceId.equals(encId)))
+  Future<FhirResourceLocalDto?> _liveResource(String id) => (_database.select(
+    _database.fhirResource,
+  )..where((f) => f.id.equals(id) & f.deletedAt.isNull())).getSingleOrNull();
+
+  Future<List<FhirResourceLocalDto>> _liveResourcesWithResourceId(
+    String resourceId,
+  ) =>
+      (_database.select(_database.fhirResource)..where(
+            (f) => f.resourceId.equals(resourceId) & f.deletedAt.isNull(),
+          ))
           .get();
-      idsToDelete.addAll(encounterRows.map((r) => r.id));
-
-      final siblings = await _datasource.getResourcesByEncounterId(encounterId: encId);
-      idsToDelete.addAll(siblings.map((r) => r.id));
-    }
-
-    await _datasource.deleteResourcesByIds(idsToDelete.toList());
-  }
 
   @override
   Future<int> getRelatedResourceCount(String resourceId) async {
-    final targetResource = (await (_database.select(_database.fhirResource)
-          ..where((f) => f.id.equals(resourceId)))
-        .get())
-        .firstOrNull;
+    final targetResource = await _liveResource(resourceId);
 
     if (targetResource == null) return 0;
 
@@ -233,11 +424,9 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
   @override
   Future<List<IFhirResource>> getRelatedResourcesForDeletion(
-      String resourceId) async {
-    final targetResource = (await (_database.select(_database.fhirResource)
-          ..where((f) => f.id.equals(resourceId)))
-        .get())
-        .firstOrNull;
+    String resourceId,
+  ) async {
+    final targetResource = await _liveResource(resourceId);
 
     if (targetResource == null) return [];
 
@@ -255,15 +444,14 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
     final encId = targetResource.encounterId;
     if (encId != null && encId.isNotEmpty) {
-      final encounterRows = await (_database.select(_database.fhirResource)
-            ..where((f) => f.resourceId.equals(encId)))
-          .get();
+      final encounterRows = await _liveResourcesWithResourceId(encId);
       for (final r in encounterRows) {
         if (r.id != resourceId) relatedIds.add(r.id);
       }
 
-      final siblings =
-          await _datasource.getResourcesByEncounterId(encounterId: encId);
+      final siblings = await _datasource.getResourcesByEncounterId(
+        encounterId: encId,
+      );
       for (final r in siblings) {
         if (r.id != resourceId) relatedIds.add(r.id);
       }
@@ -271,9 +459,11 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
     if (relatedIds.isEmpty) return [];
 
-    final relatedRows = await (_database.select(_database.fhirResource)
-          ..where((f) => f.id.isIn(relatedIds.toList())))
-        .get();
+    final relatedRows =
+        await (_database.select(_database.fhirResource)..where(
+              (f) => f.id.isIn(relatedIds.toList()) & f.deletedAt.isNull(),
+            ))
+            .get();
 
     return relatedRows.map(IFhirResource.fromLocalDto).toList();
   }
@@ -285,8 +475,9 @@ class RecordsRepositoryImpl implements RecordsRepository {
       await _syncLocalDataSource.createDemoDataSource();
 
       // Load demo data from assets
-      final String demoDataJson =
-          await rootBundle.loadString('assets/demo_data.json');
+      final String demoDataJson = await rootBundle.loadString(
+        'assets/demo_data/demo_data.json',
+      );
       final Map<String, dynamic> demoData = json.decode(demoDataJson);
 
       // Handle both FHIR Bundle format and simple resources format
@@ -303,7 +494,8 @@ class RecordsRepositoryImpl implements RecordsRepository {
         resources = demoData['resources'] as List<dynamic>;
       } else {
         throw Exception(
-            'Demo data file has invalid format: neither "entry" nor "resources" key found');
+          'Demo data file has invalid format: neither "entry" nor "resources" key found',
+        );
       }
 
       final prefs = await SharedPreferences.getInstance();
@@ -319,23 +511,90 @@ class RecordsRepositoryImpl implements RecordsRepository {
       }
 
       final processedResources = resources
-          .map((resource) => FhirResourceDto.fromJson({
-                'id': resource['id'],
-                'source_id': 'demo_data',
-                'source_resource_type': resource['resourceType'],
-                'source_resource_id': resource['id'],
-                'sort_title': DemoDataExtractor.extractTitle(resource),
-                'sort_date': DemoDataExtractor.extractDate(resource),
-                'resource_raw': resource,
-                'change_type': 'created',
-              }).populateEncounterIdFromRaw().populateSubjectIdFromRaw())
+          .map(
+            (resource) => FhirResourceDto.fromJson({
+              'id': resource['id'],
+              'source_id': 'demo_data',
+              'source_resource_type': resource['resourceType'],
+              'source_resource_id': resource['id'],
+              'sort_title': DemoDataExtractor.extractTitle(resource),
+              'sort_date': DemoDataExtractor.extractDate(resource),
+              'resource_raw': resource,
+              'change_type': 'created',
+            }).populateEncounterIdFromRaw().populateSubjectIdFromRaw(),
+          )
           .toList();
 
-      _syncLocalDataSource.cacheFhirResources(processedResources);
+      await _syncLocalDataSource.cacheFhirResources(processedResources);
+
+      await _attachDemoPdf();
     } catch (e, stackTrace) {
       logger.e('Failed to load demo data: $e');
       logger.e('Stack trace: $stackTrace');
       throw Exception('Failed to load demo data: $e');
+    }
+  }
+
+  Future<void> _attachDemoPdf() async {
+    try {
+      final byteData = await rootBundle.load(
+        'assets/demo_data/pdf_preview_demo_data.pdf',
+      );
+      final docsDir = await getApplicationDocumentsDirectory();
+      final pdfFile = File('${docsDir.path}/demo_medical_report.pdf');
+      await pdfFile.writeAsBytes(byteData.buffer.asUint8List());
+
+      const docRefId = 'demo-doc-ref-pdf-001';
+      final docRef = <String, dynamic>{
+        'resourceType': 'DocumentReference',
+        'id': docRefId,
+        'status': 'current',
+        'type': {
+          'coding': [
+            {
+              'system': 'http://loinc.org',
+              'code': '34117-2',
+              'display': 'History and physical note',
+            },
+          ],
+          'text': 'Medical Report',
+        },
+        'subject': {
+          'reference': 'Patient/john-doe-patient-001',
+          'display': 'John Doe',
+        },
+        'date': DateTime.now().toIso8601String(),
+        'description': 'Demo Medical Report',
+        'content': [
+          {
+            'attachment': {
+              'contentType': 'application/pdf',
+              'url': 'file://${pdfFile.path}',
+              'title': 'Medical Report',
+            },
+          },
+        ],
+        'context': {
+          'encounter': [
+            {'reference': 'Encounter/demo-encounter-001'},
+          ],
+        },
+      };
+
+      final dto = FhirResourceDto.fromJson({
+        'id': docRefId,
+        'source_id': 'demo_data',
+        'source_resource_type': 'DocumentReference',
+        'source_resource_id': docRefId,
+        'sort_title': 'Medical Report',
+        'sort_date': DateTime.now().toIso8601String(),
+        'resource_raw': docRef,
+        'change_type': 'created',
+      }).populateEncounterIdFromRaw().populateSubjectIdFromRaw();
+
+      await _syncLocalDataSource.cacheFhirResources([dto]);
+    } catch (e) {
+      logger.w('Failed to attach the demo PDF', e);
     }
   }
 
@@ -353,7 +612,9 @@ class RecordsRepositoryImpl implements RecordsRepository {
         if (type == null) return idMap;
         final codings = type['coding'] as List<dynamic>?;
         if (codings == null || codings.isEmpty) return idMap;
-        final coding = Map<String, dynamic>.from(codings.first as Map<String, dynamic>);
+        final coding = Map<String, dynamic>.from(
+          codings.first as Map<String, dynamic>,
+        );
         if (coding['code'] == 'MR') {
           coding['code'] = profile.identifierFhirCode;
           coding['display'] = profile.identifierDisplayName;
@@ -408,115 +669,101 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
   @override
   Future<void> clearDemoData() async {
-    await _datasource.deleteResourcesBySourceId('demo_data');
+    // The demo person's sources: the demo data and what was scanned or
+    // attached for them, which would otherwise outlive their patient.
+    final sourceIds = [
+      'demo_data',
+      for (final row
+          in await _database
+              .customSelect(
+                'SELECT id FROM sources WHERE deleted_at IS NULL '
+                "AND id != 'demo_data' AND holder_id = "
+                "(SELECT holder_id FROM sources WHERE id = 'demo_data')",
+              )
+              .get())
+        row.read<String>('id'),
+    ];
 
-    // Delete the demo_data source itself
-    await _syncLocalDataSource.deleteSource('demo_data');
+    // Each tombstones the source, its records and their notes in one
+    // transaction.
+    for (final sourceId in sourceIds) {
+      await _syncLocalDataSource.deleteSource(sourceId);
+    }
   }
 
   @override
   Future<bool> hasDemoData() async {
     final resources = await _datasource.getResources(
-        sourceId: 'demo_data', resourceTypes: [], limit: 1);
+      sourceId: 'demo_data',
+      resourceTypes: [],
+      limit: 1,
+    );
     return resources.isNotEmpty;
   }
 
+  /// The patient's blood-type observations (ABO, Rh, or both), newest
+  /// first, found by LOINC code so they don't drop out behind newer results.
+  /// With [sourceId], the ones from that source when it has any.
   @override
   Future<List<IFhirResource>> getBloodTypeObservations({
     required String patientId,
     String? sourceId,
   }) async {
-    List<IFhirResource> observations;
+    final patientRow =
+        await (_database.select(_database.fhirResource)..where(
+              (f) =>
+                  f.id.equals(patientId) &
+                  f.resourceType.equals('Patient') &
+                  f.deletedAt.isNull(),
+            ))
+            .getSingleOrNull();
+    if (patientRow == null) return [];
+    final patientIds = {patientRow.id, ?patientRow.resourceId};
 
-    if (sourceId != null && sourceId.isNotEmpty) {
-      observations = await getResources(
-        resourceTypes: [FhirType.Observation],
-        sourceId: sourceId,
-        limit: 100,
-        offset: 0,
-      );
+    const codes = [
+      BloodTypes.aboLoincCode,
+      BloodTypes.rhLoincCode,
+      BloodTypes.combinedLoincCode,
+    ];
+    final rows =
+        await (_database.select(_database.fhirResource)
+              ..where(
+                (f) =>
+                    f.resourceType.equals('Observation') &
+                    f.deletedAt.isNull() &
+                    codes
+                        .map((code) => f.resourceRaw.contains('"$code"'))
+                        .reduce((a, b) => a | b),
+              )
+              ..orderBy([(f) => OrderingTerm.desc(f.date)]))
+            .get();
 
-      if (observations.isEmpty) {
-        observations = await getResources(
-          resourceTypes: [FhirType.Observation],
-          limit: 100,
-          offset: 0,
-        );
+    final matches = <Observation>[];
+    for (final row in rows) {
+      final IFhirResource resource;
+      try {
+        resource = IFhirResource.fromLocalDto(row);
+      } catch (e) {
+        logger.w('Unreadable blood type observation ${row.id}', e);
+        continue;
       }
-    } else {
-      observations = await getResources(
-        resourceTypes: [FhirType.Observation],
-        limit: 100,
-        offset: 0,
-      );
+      if (resource is! Observation) continue;
+      final hasCode =
+          resource.code?.coding?.any(
+            (c) => codes.contains(c.code?.toString()),
+          ) ??
+          false;
+      final subject = resource.subject?.reference?.valueString;
+      if (!hasCode || subject == null) continue;
+      final subjectId = FhirReferenceUtils.extractReferenceId(subject);
+      if (patientIds.contains(subjectId)) matches.add(resource);
     }
 
-    final patients = await getResources(
-      resourceTypes: [FhirType.Patient],
-      limit: 100,
-      offset: 0,
-    );
-
-    final patientList = patients.whereType<Patient>().toList();
-    if (patientList.isEmpty) return [];
-
-    final targetPatient = patientList.firstWhere(
-      (p) => p.id == patientId,
-      orElse: () => patientList.first,
-    );
-
-    final bloodTypeObservations = observations.where((resource) {
-      if (resource is! Observation) {
-        return false;
-      }
-
-      final coding = resource.code?.coding;
-      if (coding == null || coding.isEmpty) {
-        return false;
-      }
-
-      bool hasBloodTypeCode = false;
-      for (final code in coding) {
-        if (code.code == null) continue;
-
-        final loincCode = code.code.toString();
-
-        if (loincCode == BloodTypes.aboLoincCode ||
-            loincCode == BloodTypes.rhLoincCode ||
-            loincCode == BloodTypes.combinedLoincCode) {
-          hasBloodTypeCode = true;
-          break;
-        }
-      }
-
-      if (!hasBloodTypeCode) {
-        return false;
-      }
-
-      final subject = resource.subject?.reference?.valueString;
-
-      if (subject == null) {
-        return false;
-      }
-
-      String subjectPatientId;
-      if (subject.contains('/')) {
-        subjectPatientId = subject.split('/').last;
-      } else if (subject.startsWith('urn:uuid:')) {
-        subjectPatientId = subject.replaceFirst('urn:uuid:', '');
-      } else {
-        subjectPatientId = subject;
-      }
-
-      final matches = subjectPatientId == targetPatient.resourceId ||
-          subjectPatientId == targetPatient.id ||
-          subject == targetPatient.resourceId ||
-          subject == targetPatient.id;
-
-      return matches;
-    }).toList();
-
-    return bloodTypeObservations;
+    if (sourceId != null && sourceId.isNotEmpty) {
+      final fromSource = matches.where((o) => o.sourceId == sourceId).toList();
+      if (fromSource.isNotEmpty) return fromSource;
+    }
+    return matches;
   }
 
   @override
@@ -533,11 +780,13 @@ class RecordsRepositoryImpl implements RecordsRepository {
     final rawResource = observation.rawResource;
     if (rawResource['encounter']?['reference'] != null) {
       encounterId = FhirReferenceUtils.extractReferenceId(
-          rawResource['encounter']['reference']);
+        rawResource['encounter']['reference'],
+      );
     }
     if (rawResource['subject']?['reference'] != null) {
       subjectId = FhirReferenceUtils.extractReferenceId(
-          rawResource['subject']['reference']);
+        rawResource['subject']['reference'],
+      );
     }
 
     final dto = FhirResourceLocalDto(
@@ -584,25 +833,35 @@ class RecordsRepositoryImpl implements RecordsRepository {
     required String query,
     List<FhirType> resourceTypes = const [],
     String? sourceId,
+    List<String>? sourceIds,
+    DateFilter? dateFilter,
+    bool Function(IFhirResource resource)? where,
     int limit = 50,
   }) async {
+    final matches = _matcher(dateFilter, where);
     final localDtos = await _datasource.searchResources(
       query: query,
       resourceTypes: resourceTypes.map((fhirType) => fhirType.name).toList(),
       sourceId: sourceId,
-      limit: limit,
+      sourceIds: sourceIds,
+      // A filter applied here would otherwise leave fewer than [limit].
+      limit: matches == null ? limit : null,
     );
 
-    return localDtos.map(IFhirResource.fromLocalDto).toList();
+    final resources = localDtos.map(_parse).nonNulls;
+    return (matches == null ? resources : resources.where(matches))
+        .take(limit)
+        .toList();
   }
 
   @override
   Future<({Uint8List bytes, String patientName})> buildIpsExport({
     String? sourceId,
+    List<String>? sourceIds,
     String? patientId,
   }) async {
-    List<String>? patientSourceIds;
-    if (patientId != null) {
+    List<String>? patientSourceIds = sourceIds;
+    if (patientSourceIds == null && patientId != null) {
       final allPatients = await _datasource.getResources(
         resourceTypes: [FhirType.Patient.name],
       );
@@ -614,30 +873,36 @@ class RecordsRepositoryImpl implements RecordsRepository {
           .toList();
     }
 
-    List<FhirResourceLocalDto> resourceDtos = await _datasource.getResources(
-      resourceTypes: [],
-      sourceId: sourceId,
-      sourceIds: patientSourceIds,
-    );
+    final List<FhirResourceLocalDto> resourceDtos = await _datasource
+        .getResources(
+          resourceTypes: [],
+          sourceId: sourceId,
+          sourceIds: patientSourceIds,
+        );
 
-    List<IFhirResource> resources =
-        resourceDtos.map(IFhirResource.fromLocalDto).toList();
+    final List<IFhirResource> resources = resourceDtos
+        .map(IFhirResource.fromLocalDto)
+        .toList();
 
-    Patient? patient = patientId != null
-        ? resources.whereType<Patient>().where((p) => p.id == patientId).firstOrNull
+    final Patient? patient = patientId != null
+        ? resources
+              .whereType<Patient>()
+              .where((p) => p.id == patientId)
+              .firstOrNull
         : resources.whereType<Patient>().firstOrNull;
 
     if (patient == null) {
-      throw Exception("Patient not found");
+      throw Exception('Patient not found');
     }
 
-    final patientName = FhirFieldExtractor.extractHumanNameFamilyFirst(
+    final patientName =
+        FhirFieldExtractor.extractHumanNameFamilyFirst(
           patient.name?.first,
         )?.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_') ??
         'Unknown';
 
-    FhirIpsBuilder builder = FhirIpsBuilder();
-    FhirIpsPdfRenderer renderer = FhirIpsPdfRenderer();
+    final FhirIpsBuilder builder = FhirIpsBuilder();
+    final FhirIpsPdfRenderer renderer = FhirIpsPdfRenderer();
 
     final ipsData = await builder.buildFromRawResources(
       rawResources: resources.map((r) => r.rawResource).toList(),
@@ -646,5 +911,30 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
     final bytes = await renderer.render(ipsData: ipsData);
     return (bytes: bytes, patientName: patientName);
+  }
+
+  @override
+  Future<void> updateResourceRaw(String resourceId, String rawJson) async {
+    await (_database.update(
+      _database.fhirResource,
+    )..where((tbl) => tbl.id.equals(resourceId))).write(
+      FhirResourceCompanion(
+        resourceRaw: Value(rawJson),
+      ),
+    );
+  }
+
+  @override
+  Future<void> setSpecialtyOverride(
+    String resourceId,
+    String? specialtyName,
+  ) async {
+    await (_database.update(
+      _database.fhirResource,
+    )..where((tbl) => tbl.id.equals(resourceId))).write(
+      FhirResourceCompanion(
+        specialtyOverride: Value(specialtyName),
+      ),
+    );
   }
 }

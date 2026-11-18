@@ -3,7 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'emergency_card_data.freezed.dart';
 
 @freezed
-class EmergencyCardData with _$EmergencyCardData {
+abstract class EmergencyCardData with _$EmergencyCardData {
   const factory EmergencyCardData({
     @Default('') String patientName,
     String? bloodType,

@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/services/biometric_auth_service.dart';
-
-// import 'package:health_wallet/features/user/data/data_source/local/user_local_data_source.dart';
-import 'package:health_wallet/features/user/data/data_source/remote/user_remote_data_source.dart';
+import 'package:health_wallet/features/processing/data/extractors/clearvis/clearvis_io_extractor.dart';
+import 'package:health_wallet/features/processing/data/services/native_text_recognition_service.dart';
+import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extractor_registry.dart';
+import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -19,14 +21,16 @@ abstract class RegisterModule {
   AppDatabase get appDatabase => AppDatabase();
 
   @lazySingleton
-  UserRemoteDataSource get userRemoteDataSource => MockUserRemoteDataSource();
-
-  // UserLocalDataSource is automatically registered via @Injectable annotation
+  BiometricAuthService biometricAuthService(AppStringsProvider strings) =>
+      BiometricAuthService(strings);
 
   @lazySingleton
-  BiometricAuthService get biometricAuthService => BiometricAuthService();
+  TextRecognitionService get textRecognitionService =>
+      NativeTextRecognitionService();
 
-
-
-
+  /// The layout extractors, tried in this order (see
+  /// `LayoutExtractorRegistry`). Adding a layout is one entry here.
+  @lazySingleton
+  LayoutExtractorRegistry get layoutExtractorRegistry =>
+      LayoutExtractorRegistry(const [ClearvisIoExtractor()]);
 }

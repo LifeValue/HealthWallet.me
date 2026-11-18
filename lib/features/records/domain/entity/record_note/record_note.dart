@@ -4,7 +4,7 @@ import 'package:health_wallet/core/data/local/app_database.dart';
 part 'record_note.freezed.dart';
 
 @freezed
-class RecordNote with _$RecordNote {
+abstract class RecordNote with _$RecordNote {
   const RecordNote._(); // Private constructor for getters
 
   const factory RecordNote({
@@ -16,21 +16,21 @@ class RecordNote with _$RecordNote {
   }) = _RecordNote;
 
   factory RecordNote.fromDto(RecordNoteDto dto) => RecordNote(
-        id: dto.id,
-        resourceId: dto.resourceId,
-        sourceId: dto.sourceId,
-        content: dto.content,
-        timestamp: dto.timestamp,
-      );
+    id: dto.id,
+    resourceId: dto.resourceId,
+    sourceId: dto.sourceId,
+    content: dto.content,
+    timestamp: dto.timestamp,
+  );
 
   Map<String, dynamic> toMap() => {
-        'content': content,
-        'timestamp': timestamp.toIso8601String(),
-      };
+    'content': content,
+    'timestamp': timestamp.toIso8601String(),
+  };
 
   factory RecordNote.fromMap(Map<String, dynamic> map) => RecordNote(
-        content: map['content'] as String? ?? '',
-        timestamp: DateTime.tryParse(map['timestamp'] as String? ?? '') ??
-            DateTime.now(),
-      );
+    content: map['content'] as String? ?? '',
+    timestamp:
+        DateTime.tryParse(map['timestamp'] as String? ?? '') ?? DateTime.now(),
+  );
 }

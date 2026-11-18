@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/services/bluetooth_state_service.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -72,8 +73,11 @@ class _ShareProximityRowState extends State<ShareProximityRow>
 
     if (granted) {
       final manager = getIt<ReceiveModeService>();
-      final isEnabled =
-          context.read<UserBloc>().state.user.isReceiveModeEnabled;
+      final isEnabled = context
+          .read<UserBloc>()
+          .state
+          .user
+          .isReceiveModeEnabled;
       if (manager.isListening && !isEnabled) {
         context.read<UserBloc>().add(const UserReceiveModeToggled(true));
       }
@@ -135,8 +139,7 @@ class _ShareProximityRowState extends State<ShareProximityRow>
   }
 
   Future<void> _toggleReceiveMode(BuildContext context) async {
-    final isEnabled =
-        context.read<UserBloc>().state.user.isReceiveModeEnabled;
+    final isEnabled = context.read<UserBloc>().state.user.isReceiveModeEnabled;
 
     if (!isEnabled) {
       final service = getIt<BluetoothStateService>();
@@ -155,7 +158,7 @@ class _ShareProximityRowState extends State<ShareProximityRow>
       }
     }
 
-    if (!mounted) return;
+    if (!mounted || !context.mounted) return;
     context.read<UserBloc>().add(UserReceiveModeToggled(!isEnabled));
   }
 
@@ -177,14 +180,16 @@ class _ShareProximityRowState extends State<ShareProximityRow>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Share Proximity',
+                  Text(
+                    context.l10n.shareProximityTitle,
                     style: AppTextStyle.bodySmall,
                   ),
                   Text(
-                    'Advertise to nearby devices',
+                    context.l10n.shareProximityDescription,
                     style: AppTextStyle.labelSmall.copyWith(
-                      color: context.colorScheme.onSurface.withOpacity(0.6),
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.6,
+                      ),
                     ),
                   ),
                 ],
@@ -194,7 +199,7 @@ class _ShareProximityRowState extends State<ShareProximityRow>
               const ReceiveModeToggleButton()
             else
               AppButton(
-                label: 'Allow',
+                label: context.l10n.allow,
                 onPressed: _requestPermissions,
                 fullWidth: false,
                 height: 40,

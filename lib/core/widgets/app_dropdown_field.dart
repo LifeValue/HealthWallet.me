@@ -3,12 +3,17 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_input_field.dart';
 
 class AppDropdownField<T> extends StatefulWidget {
   final String value;
   final List<T> items;
   final String Function(T) getDisplayText;
   final ValueChanged<T>? onChanged;
+  final Widget Function(BuildContext, T, bool isSelected)? itemBuilder;
+  final Widget Function(BuildContext, String)? valueBuilder;
+  final bool hasError;
+  final bool openAbove;
 
   const AppDropdownField({
     super.key,
@@ -16,6 +21,10 @@ class AppDropdownField<T> extends StatefulWidget {
     required this.items,
     required this.getDisplayText,
     this.onChanged,
+    this.itemBuilder,
+    this.valueBuilder,
+    this.hasError = false,
+    this.openAbove = false,
   });
 
   @override
@@ -42,10 +51,24 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
     setState(() => _isOpen = false);
   }
 
+  /// Height of one menu row; the menu shows at most [_maxVisibleRows].
+  static const double _rowHeight = 52;
+  static const int _maxVisibleRows = 7;
+
+  /// Gap kept between the menu and the safe area's edge.
+  static const double _screenMargin = 8;
+
   void _showMenu() {
     final overlay = Overlay.of(context);
     final renderBox = context.findRenderObject() as RenderBox;
     final size = renderBox.size;
+    final placement = menuPlacement(
+      fieldTop: renderBox.localToGlobal(Offset.zero).dy,
+      fieldHeight: size.height,
+      media: MediaQuery.of(context),
+      itemCount: widget.items.length,
+      preferAbove: widget.openAbove,
+    );
 
     _overlayEntry = OverlayEntry(
       builder: (context) => Stack(
@@ -61,7 +84,13 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
             child: CompositedTransformFollower(
               link: _layerLink,
               showWhenUnlinked: false,
-              offset: Offset(0, size.height + 4),
+              targetAnchor: placement.above
+                  ? Alignment.topLeft
+                  : Alignment.bottomLeft,
+              followerAnchor: placement.above
+                  ? Alignment.bottomLeft
+                  : Alignment.topLeft,
+              offset: Offset(0, placement.above ? -4 : 4),
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
@@ -73,13 +102,15 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, -2)),
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, -2),
+                    ),
                     BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 16,
-                        offset: const Offset(0, -4)),
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 16,
+                      offset: const Offset(0, -4),
+                    ),
                   ],
                 ),
                 child: Material(
@@ -88,13 +119,13 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
                   color: context.colorScheme.surface,
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxHeight: 52.0 *
-                          (widget.items.length > 7 ? 7 : widget.items.length),
+                      maxHeight: placement.maxHeight,
                     ),
                     child: _MenuList(
                       items: widget.items,
                       selectedValue: widget.value,
                       getDisplayText: widget.getDisplayText,
+                      itemBuilder: widget.itemBuilder,
                       onSelected: (item) {
                         widget.onChanged?.call(item);
                         _hideMenu();
@@ -128,30 +159,34 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
         borderRadius: BorderRadius.circular(8),
         child: Container(
           width: double.infinity,
-          height: 42,
-          padding: const EdgeInsets.symmetric(
-              horizontal: Insets.smallNormal, vertical: Insets.small),
+          height: kInputFieldHeight,
+          padding: const EdgeInsets.symmetric(horizontal: Insets.smallNormal),
           decoration: BoxDecoration(
             border: Border.all(
-              color: _isOpen
+              color: widget.hasError
+                  ? context.colorScheme.error
+                  : _isOpen
                   ? context.colorScheme.primary
                   : context.isDarkMode
-                      ? AppColors.borderDark
-                      : AppColors.border,
-              width: 1.5,
+                  ? AppColors.borderDark
+                  : AppColors.border,
+              width: kInputBorderWidth,
             ),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(kInputBorderRadius),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text(
-                  widget.value,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.labelLarge
-                      .copyWith(color: context.colorScheme.onSurface),
-                ),
+                child: widget.valueBuilder != null
+                    ? widget.valueBuilder!(context, widget.value)
+                    : Text(
+                        widget.value,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyle.labelLarge.copyWith(
+                          color: context.colorScheme.onSurface,
+                        ),
+                      ),
               ),
               Icon(
                 _isOpen ? Icons.expand_less : Icons.expand_more,
@@ -171,12 +206,14 @@ class _MenuList<T> extends StatefulWidget {
   final String selectedValue;
   final String Function(T) getDisplayText;
   final ValueChanged<T> onSelected;
+  final Widget Function(BuildContext, T, bool isSelected)? itemBuilder;
 
   const _MenuList({
     required this.items,
     required this.selectedValue,
     required this.getDisplayText,
     required this.onSelected,
+    this.itemBuilder,
   });
 
   @override
@@ -245,19 +282,63 @@ class _MenuListState<T> extends State<_MenuList<T>> {
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(
-                itemText,
-                style: AppTextStyle.bodyMedium.copyWith(
-                  color: isSelected
-                      ? context.colorScheme.primary
-                      : context.colorScheme.onSurface,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
+              child: widget.itemBuilder != null
+                  ? widget.itemBuilder!(context, item, isSelected)
+                  : Text(
+                      itemText,
+                      style: AppTextStyle.bodyMedium.copyWith(
+                        color: isSelected
+                            ? context.colorScheme.primary
+                            : context.colorScheme.onSurface,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
             ),
           ),
         );
       },
     );
   }
+}
+
+/// Where the dropdown menu opens and how tall it may be.
+@visibleForTesting
+typedef MenuPlacement = ({bool above, double maxHeight});
+
+/// Opens the menu on the side the caller prefers when the whole menu fits
+/// there, and otherwise on the side with more room, never past the safe area
+/// or behind the keyboard. The menu scrolls when it is cut shorter.
+@visibleForTesting
+MenuPlacement menuPlacement({
+  required double fieldTop,
+  required double fieldHeight,
+  required MediaQueryData media,
+  required int itemCount,
+  required bool preferAbove,
+}) {
+  const rowHeight = _AppDropdownFieldState._rowHeight;
+  const margin = _AppDropdownFieldState._screenMargin;
+  final rows = itemCount.clamp(1, _AppDropdownFieldState._maxVisibleRows);
+  final wanted = rowHeight * rows;
+
+  final spaceAbove = fieldTop - media.padding.top - margin;
+  final spaceBelow =
+      media.size.height -
+      media.viewInsets.bottom -
+      media.padding.bottom -
+      margin -
+      (fieldTop + fieldHeight);
+
+  final preferred = preferAbove ? spaceAbove : spaceBelow;
+  final other = preferAbove ? spaceBelow : spaceAbove;
+  final above = preferred >= wanted || preferred >= other
+      ? preferAbove
+      : !preferAbove;
+  final room = above ? spaceAbove : spaceBelow;
+
+  return (
+    above: above,
+    // At least one row, even on a tiny screen, so the menu never vanishes.
+    maxHeight: room.clamp(rowHeight, wanted),
+  );
 }

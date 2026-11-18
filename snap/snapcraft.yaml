@@ -1,0 +1,97 @@
+# Snap Store package of the desktop app, built by the CI job linux:snap; the job's comment in
+# .gitlab-ci.yml has the Snap Store setup.
+#
+# The snap is packed from the Flutter bundle the job builds first, for the runner's architecture
+# (build/linux/{x64,arm64}/release/bundle), by snapcraft in destructive mode in Canonical's
+# snapcraft image: Ubuntu 24.04 without snapd. Inside a container snapcraft skips build snaps, so
+# the GNOME extension's SDK is not installed; nothing here compiles against it. The extension still
+# adds the runtime: GTK and the GNOME libraries from the gnome-46-2404 content snap, GPU drivers
+# from mesa-2404, themes, and the desktop-launch command chain that sets them up.
+#
+# Locally, on Ubuntu 24.04 with snapd, after `fvm flutter build linux --release --target
+# lib/main_desktop.dart`: `snapcraft pack`, then `sudo snap install --dangerous health-wallet_*.snap`.
+name: health-wallet
+title: HealthWallet.me
+summary: Patient-controlled health records, synced with your phone
+description: |
+  HealthWallet.me keeps your health records on your own devices. The desktop
+  app pairs with the HealthWallet.me phone app over your local network, syncs
+  your records with it and reads scanned documents with on-device AI.
+website: https://healthwallet.me
+license: GPL-3.0-only
+icon: linux/runner/resources/app_icon.png
+base: core24
+grade: stable
+confinement: strict
+adopt-info: health-wallet
+
+apps:
+  health-wallet:
+    command: health_wallet
+    desktop: usr/share/applications/health-wallet.desktop
+    extensions: [gnome]
+    environment:
+      # Tesseract's built-in data path is the system's; the language data is staged into the snap.
+      TESSDATA_PREFIX: $SNAP/usr/share/tesseract-ocr/5/tessdata
+    plugs:
+      # Downloads (AI model, FHIR sources) and the encrypted link to the phone, which connects to
+      # the desktop's TCP server.
+      - network
+      - network-bind
+      # Files dropped onto the window or opened by path; the file dialogs go through the portal.
+      - home
+      # The tray icon (AppIndicator / StatusNotifierItem).
+      - unity7
+      # Not auto-connected until the Snap Store grants it (see linux:snap):
+      # the pairing keys in the desktop's keyring (libsecret)...
+      - password-manager-service
+      # ...and the Avahi announcement the phone discovers the desktop by.
+      - avahi-control
+
+slots:
+  # One instance only: GApplication owns the application ID (APPLICATION_ID in
+  # linux/CMakeLists.txt) on the session bus, and the app exits when it cannot.
+  dbus-health-wallet:
+    interface: dbus
+    bus: session
+    name: com.techstackapps.healthwallet
+
+parts:
+  health-wallet:
+    plugin: dump
+    source:
+      - on amd64: build/linux/x64/release/bundle
+      - on arm64: build/linux/arm64/release/bundle
+    override-build: |
+      craftctl default
+      # The pubspec version without the build number; the store numbers uploads itself (revisions).
+      craftctl set version="$(sed -nE 's/^version:[[:space:]]*([^+[:space:]]+).*/\1/p' "$CRAFT_PROJECT_DIR/pubspec.yaml")"
+      install -Dm644 "$CRAFT_PROJECT_DIR/linux/runner/resources/app_icon.png" \
+        "$CRAFT_PART_INSTALL/usr/share/icons/hicolor/256x256/apps/health-wallet.png"
+      install -d "$CRAFT_PART_INSTALL/usr/share/applications"
+      # StartupWMClass is the application ID the runner sets as the program name.
+      cat >"$CRAFT_PART_INSTALL/usr/share/applications/health-wallet.desktop" <<EOF
+      [Desktop Entry]
+      Type=Application
+      Name=HealthWallet.me
+      GenericName=Health Records
+      Comment=Patient-controlled health records, synced with your phone
+      Exec=health-wallet
+      Icon=\${SNAP}/usr/share/icons/hicolor/256x256/apps/health-wallet.png
+      Terminal=false
+      Categories=Office;MedicalSoftware;
+      StartupWMClass=com.techstackapps.healthwallet
+      EOF
+    # What the .deb depends on (scripts/package_linux.sh) that the GNOME platform snap lacks:
+    # the tray library, Tesseract with the app's languages, and the Vulkan loader llama.cpp uses.
+    # libsecret too: the linter cannot see the platform snap in CI, so it is staged rather than
+    # assumed.
+    stage-packages:
+      - libayatana-appindicator3-1
+      - libsecret-1-0
+      - libtesseract5
+      - tesseract-ocr-eng
+      - tesseract-ocr-deu
+      - tesseract-ocr-spa
+      - tesseract-ocr-ron
+      - libvulkan1

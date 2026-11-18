@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+
 import 'filters/date_range_filter_model.dart';
 import 'filters/date_range_selector.dart';
 
@@ -11,12 +15,17 @@ class RecordsFilterBottomSheet extends StatefulWidget {
     required this.activeFilters,
     required this.onApply,
     this.currentDateFilter,
+    this.availableFilters,
+    this.currentSpecialties = const [],
     super.key,
   });
 
   final List<FhirType> activeFilters;
-  final void Function(List<FhirType>, DateFilter?) onApply;
+  final void Function(List<FhirType>, DateFilter?, List<MedicalSpecialty>)
+  onApply;
   final DateFilter? currentDateFilter;
+  final List<FhirType>? availableFilters;
+  final List<MedicalSpecialty> currentSpecialties;
 
   @override
   State<RecordsFilterBottomSheet> createState() =>
@@ -26,6 +35,7 @@ class RecordsFilterBottomSheet extends StatefulWidget {
 class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
     with SingleTickerProviderStateMixin {
   List<FhirType> _selectedFilters = [];
+  List<MedicalSpecialty> _selectedSpecialties = [];
   late DateRangeFilterModel _dateRangeModel;
   late TabController _tabController;
   final GlobalKey _dateRangeContainerKey = GlobalKey();
@@ -33,6 +43,7 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
   @override
   void initState() {
     _selectedFilters = [...widget.activeFilters];
+    _selectedSpecialties = [...widget.currentSpecialties];
     final df = widget.currentDateFilter;
     _dateRangeModel = DateRangeFilterModel(
       fromYear: df?.fromYear,
@@ -94,7 +105,9 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: context.colorScheme.onSurface.withValues(alpha: 0.18),
+                    color: context.colorScheme.onSurface.withValues(
+                      alpha: 0.18,
+                    ),
                     width: 1,
                   ),
                 ),
@@ -107,7 +120,10 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                   return Stack(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         child: Row(
                           children: [
                             Expanded(
@@ -115,23 +131,28 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                                 controller: _tabController,
                                 indicatorColor: Colors.transparent,
                                 labelColor: context.colorScheme.primary,
-                                unselectedLabelColor: context.colorScheme.onSurface.withValues(alpha: 0.6),
+                                unselectedLabelColor: context
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.6),
                                 labelStyle: AppTextStyle.bodyMedium,
                                 unselectedLabelStyle: AppTextStyle.bodyMedium,
                                 dividerColor: Colors.transparent,
-                                tabs: const [
-                                  Tab(text: "Filters"),
-                                  Tab(text: "Time Range"),
+                                tabs: [
+                                  Tab(text: context.l10n.filters),
+                                  Tab(text: context.l10n.timeRange),
                                 ],
                               ),
                             ),
                             IconButton(
                               iconSize: 18,
-                              visualDensity:
-                                  const VisualDensity(horizontal: -4, vertical: -4),
+                              visualDensity: const VisualDensity(
+                                horizontal: -4,
+                                vertical: -4,
+                              ),
                               onPressed: () => Navigator.of(context).pop(),
                               icon: const Icon(Icons.close),
-                            )
+                            ),
                           ],
                         ),
                       ),
@@ -164,7 +185,9 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: context.colorScheme.onSurface.withValues(alpha: 0.18),
+                    color: context.colorScheme.onSurface.withValues(
+                      alpha: 0.18,
+                    ),
                     width: 1,
                   ),
                 ),
@@ -175,7 +198,7 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                     child: GestureDetector(
                       onTap: () => Navigator.of(context).pop(),
                       child: Text(
-                        "Cancel",
+                        context.l10n.cancel,
                         style: AppTextStyle.buttonMedium.copyWith(
                           color: context.colorScheme.primary,
                         ),
@@ -192,7 +215,8 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                             : context.colorScheme.onPrimary,
                         padding: const EdgeInsets.all(10),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadiusGeometry.circular(6)),
+                          borderRadius: BorderRadiusGeometry.circular(6),
+                        ),
                       ),
                       onPressed: () {
                         final dateFilter = _dateRangeModel.hasValue
@@ -206,12 +230,15 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                               )
                             : null;
 
-                        final validationError = dateFilter?.validate();
-                        if (validationError != null) {
+                        if (dateFilter?.hasInvalidRange ?? false) {
                           return;
                         }
 
-                        widget.onApply.call(_selectedFilters, dateFilter);
+                        widget.onApply.call(
+                          _selectedFilters,
+                          dateFilter,
+                          _selectedSpecialties,
+                        );
                         Navigator.of(context).pop();
                       },
                       child: Row(
@@ -225,8 +252,10 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Text("Apply filters",
-                              style: AppTextStyle.buttonMedium),
+                          Text(
+                            context.l10n.applyFilters,
+                            style: AppTextStyle.buttonMedium,
+                          ),
                         ],
                       ),
                     ),
@@ -246,40 +275,168 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
       child: ListView(
         shrinkWrap: true,
         children: [
-          Text(
-            "Record type",
-            style: AppTextStyle.buttonSmall.copyWith(
-              color: context.colorScheme.onSurface.withValues(alpha: 0.7),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                context.l10n.specialty,
+                style: AppTextStyle.buttonSmall.copyWith(
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+              if (_selectedSpecialties.isNotEmpty)
+                GestureDetector(
+                  onTap: () => setState(() => _selectedSpecialties.clear()),
+                  child: Text(
+                    context.l10n.clearAll,
+                    style: AppTextStyle.labelSmall.copyWith(
+                      color: context.colorScheme.primary,
+                    ),
+                  ),
+                ),
+            ],
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: FhirType.values.map((filter) {
+          const SizedBox(height: 8),
+          _buildSpecialtySelector(context),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                context.l10n.recordType,
+                style: AppTextStyle.buttonSmall.copyWith(
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+              if (_selectedFilters.isNotEmpty)
+                GestureDetector(
+                  onTap: () => setState(() => _selectedFilters.clear()),
+                  child: Text(
+                    context.l10n.clearAll,
+                    style: AppTextStyle.labelSmall.copyWith(
+                      color: context.colorScheme.primary,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: (widget.availableFilters ?? FhirType.values).map((
+              filter,
+            ) {
               final isSelected = _selectedFilters.contains(filter);
               return GestureDetector(
                 onTap: () => _toggleFitler(filter),
                 child: Container(
-                  padding: const EdgeInsets.all(10),
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  width: MediaQuery.sizeOf(context).width,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? context.colorScheme.primary.withValues(alpha: 0.12)
                         : context.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected
+                          ? context.colorScheme.primary.withValues(alpha: 0.3)
+                          : context.colorScheme.onSurface.withValues(
+                              alpha: 0.15,
+                            ),
+                    ),
                   ),
-                  child: Text(filter.display,
-                      style: AppTextStyle.labelLarge.copyWith(
-                        color: isSelected
-                            ? context.colorScheme.primary
-                            : context.colorScheme.onSurface,
-                      )),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      filter.icon.svg(
+                        width: 14,
+                        height: 14,
+                        colorFilter: ColorFilter.mode(
+                          isSelected
+                              ? context.colorScheme.primary
+                              : context.colorScheme.onSurface,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        filter.localizedName(context.l10n),
+                        style: AppTextStyle.labelSmall.copyWith(
+                          color: isSelected
+                              ? context.colorScheme.primary
+                              : context.colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }).toList(),
-          )
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSpecialtySelector(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        ...MedicalSpecialty.values.map((specialty) {
+          final isSelected = _selectedSpecialties.contains(specialty);
+          return GestureDetector(
+            onTap: () => setState(() {
+              if (isSelected) {
+                _selectedSpecialties.remove(specialty);
+              } else {
+                _selectedSpecialties.add(specialty);
+              }
+            }),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? context.colorScheme.primary.withValues(alpha: 0.12)
+                    : context.colorScheme.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isSelected
+                      ? context.colorScheme.primary.withValues(alpha: 0.3)
+                      : context.colorScheme.onSurface.withValues(alpha: 0.15),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  specialty.icon.svg(
+                    width: 14,
+                    height: 14,
+                    colorFilter: ColorFilter.mode(
+                      isSelected
+                          ? context.colorScheme.primary
+                          : context.colorScheme.onSurface,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    specialty.localizedName(context.l10n),
+                    style: AppTextStyle.labelSmall.copyWith(
+                      color: isSelected
+                          ? context.colorScheme.primary
+                          : context.colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
     );
   }
 
@@ -294,7 +451,9 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
             toDay: _dateRangeModel.toDay,
           )
         : null;
-    final validationError = currentFilter?.validate();
+    final validationError = (currentFilter?.hasInvalidRange ?? false)
+        ? context.l10n.dateFilterEndBeforeStart
+        : null;
     final rangePreview = _buildDateRangePreview();
 
     return SingleChildScrollView(
@@ -320,14 +479,14 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  'Selected Range',
+                  context.l10n.selectedRange,
                   style: AppTextStyle.labelSmall.copyWith(
                     color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  rangePreview ?? 'No range selected',
+                  rangePreview ?? context.l10n.noRangeSelected,
                   style: AppTextStyle.titleSmall.copyWith(
                     color: rangePreview != null
                         ? context.colorScheme.primary
@@ -346,7 +505,7 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 DateRangeSelector(
-                  label: 'Start',
+                  label: context.l10n.start,
                   icon: Assets.icons.calendar,
                   containerKey: _dateRangeContainerKey,
                   year: _dateRangeModel.fromYear,
@@ -372,7 +531,7 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                 ),
                 const SizedBox(height: 24),
                 DateRangeSelector(
-                  label: 'End',
+                  label: context.l10n.end,
                   icon: Assets.icons.calendar,
                   containerKey: _dateRangeContainerKey,
                   openUpward: true,
@@ -433,11 +592,13 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Clear data range',
+                    context.l10n.clearDateRange,
                     style: AppTextStyle.labelLarge.copyWith(
                       color: _dateRangeModel.hasValue
                           ? context.colorScheme.error
-                          : context.colorScheme.onSurface.withValues(alpha: 0.3),
+                          : context.colorScheme.onSurface.withValues(
+                              alpha: 0.3,
+                            ),
                     ),
                   ),
                 ],
@@ -490,38 +651,21 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
     final toMonth = _dateRangeModel.toMonth;
     final toDay = _dateRangeModel.toDay;
 
-    final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
-    ];
-
-    String formatDate(int? year, int? month, int? day) {
-      final parts = <String>[];
-      if (day != null) parts.add('$day');
-      if (month != null) parts.add(months[month - 1]);
-      if (year != null) parts.add('$year');
-      return parts.join(' ');
-    }
-
-    final start = formatDate(fromYear, fromMonth, fromDay);
-    final end = formatDate(toYear, toMonth, toDay);
+    final locale = context.l10n.localeName;
+    final start = DateFilter.formatDateParts(
+      fromYear,
+      fromMonth,
+      fromDay,
+      locale,
+    );
+    final end = DateFilter.formatDateParts(toYear, toMonth, toDay, locale);
 
     if (start.isNotEmpty && end.isNotEmpty) {
       return '$start - $end';
     } else if (start.isNotEmpty) {
-      return 'From $start';
+      return context.l10n.fromDate(start);
     } else if (end.isNotEmpty) {
-      return 'Until $end';
+      return context.l10n.untilDate(end);
     }
 
     return null;

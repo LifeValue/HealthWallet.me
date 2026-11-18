@@ -1,20 +1,24 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_code_labels.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
 
 part 'diagnostic_report.freezed.dart';
 
 @freezed
-class DiagnosticReport with _$DiagnosticReport implements IFhirResource {
+abstract class DiagnosticReport
+    with _$DiagnosticReport
+    implements IFhirResource {
   const DiagnosticReport._();
 
   const factory DiagnosticReport({
@@ -26,6 +30,7 @@ class DiagnosticReport with _$DiagnosticReport implements IFhirResource {
     @Default({}) Map<String, dynamic> rawResource,
     @Default('') String encounterId,
     @Default('') String subjectId,
+    String? specialtyOverride,
     Narrative? text,
     List<Identifier>? identifier,
     List<Reference>? basedOn,
@@ -52,8 +57,9 @@ class DiagnosticReport with _$DiagnosticReport implements IFhirResource {
 
   factory DiagnosticReport.fromLocalData(FhirResourceLocalDto data) {
     final resourceJson = jsonDecode(data.resourceRaw);
-    final fhirDiagnosticReport =
-        fhir_r4.DiagnosticReport.fromJson(resourceJson);
+    final fhirDiagnosticReport = fhir_r4.DiagnosticReport.fromJson(
+      resourceJson,
+    );
 
     return DiagnosticReport(
       id: data.id,
@@ -64,6 +70,7 @@ class DiagnosticReport with _$DiagnosticReport implements IFhirResource {
       rawResource: resourceJson,
       encounterId: data.encounterId ?? '',
       subjectId: data.subjectId ?? '',
+      specialtyOverride: data.specialtyOverride,
       text: fhirDiagnosticReport.text,
       identifier: fhirDiagnosticReport.identifier,
       basedOn: fhirDiagnosticReport.basedOn,
@@ -88,16 +95,16 @@ class DiagnosticReport with _$DiagnosticReport implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'DiagnosticReport',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'DiagnosticReport',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -112,14 +119,17 @@ class DiagnosticReport with _$DiagnosticReport implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
+    final List<RecordInfoLine> infoLines = [];
 
     // Status
-    final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+      FhirCodeLabels.statusLine(
+        status?.valueString,
+        l10n,
+        prefix: l10n.fieldStatus,
+      ),
     );
 
     // Category
@@ -127,8 +137,10 @@ class DiagnosticReport with _$DiagnosticReport implements IFhirResource {
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(categoryDisplay,
-          prefix: 'Category'),
+      ResourceFieldMapper.createCategoryLine(
+        categoryDisplay,
+        prefix: l10n.fieldCategory,
+      ),
     );
 
     // Performer
@@ -136,7 +148,10 @@ class DiagnosticReport with _$DiagnosticReport implements IFhirResource {
         FhirFieldExtractor.extractMultipleReferenceDisplays(performer);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(performerDisplay, prefix: 'Performer'),
+      ResourceFieldMapper.createUserLine(
+        performerDisplay,
+        prefix: l10n.fieldPerformer,
+      ),
     );
 
     // Results Interpreter
@@ -144,22 +159,33 @@ class DiagnosticReport with _$DiagnosticReport implements IFhirResource {
         FhirFieldExtractor.extractMultipleReferenceDisplays(resultsInterpreter);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(interpreterDisplay,
-          prefix: 'Interpreter'),
+      ResourceFieldMapper.createUserLine(
+        interpreterDisplay,
+        prefix: l10n.fieldInterpreter,
+      ),
     );
 
     // Effective Date
-    final effectiveDisplay = FhirFieldExtractor.extractEffectiveX(effectiveX);
+    final effectiveDisplay = FhirFieldExtractor.extractEffectiveX(
+      effectiveX,
+      l10n: l10n,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(effectiveDisplay, prefix: 'Effective'),
+      ResourceFieldMapper.createDateLine(
+        effectiveDisplay,
+        prefix: l10n.fieldEffective,
+      ),
     );
 
     // Conclusion
     final conclusionText = conclusion?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createLabLine(conclusionText, prefix: 'Conclusion'),
+      ResourceFieldMapper.createLabLine(
+        conclusionText,
+        prefix: l10n.fieldConclusion,
+      ),
     );
 
     // Conclusion Code
@@ -167,16 +193,20 @@ class DiagnosticReport with _$DiagnosticReport implements IFhirResource {
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(conclusionCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createLabLine(conclusionCodeDisplay,
-          prefix: 'Conclusion Code'),
+      ResourceFieldMapper.createLabLine(
+        conclusionCodeDisplay,
+        prefix: l10n.fieldConclusionCode,
+      ),
     );
 
     // Number of Results
     if (result != null && result!.isNotEmpty) {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createLabLine('${result!.length} result(s)',
-            prefix: 'Results'),
+        ResourceFieldMapper.createLabLine(
+          l10n.resultCount(result!.length),
+          prefix: l10n.fieldResults,
+        ),
       );
     }
 
@@ -184,8 +214,10 @@ class DiagnosticReport with _$DiagnosticReport implements IFhirResource {
     if (specimen != null && specimen!.isNotEmpty) {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createLabLine('${specimen!.length} specimen(s)',
-            prefix: 'Specimens'),
+        ResourceFieldMapper.createLabLine(
+          l10n.specimenCount(specimen!.length),
+          prefix: l10n.fieldSpecimens,
+        ),
       );
     }
 
@@ -193,17 +225,21 @@ class DiagnosticReport with _$DiagnosticReport implements IFhirResource {
     if (media != null && media!.isNotEmpty) {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createImageLine('${media!.length} image(s)',
-            prefix: 'Media'),
+        ResourceFieldMapper.createImageLine(
+          l10n.imageCount(media!.length),
+          prefix: l10n.fieldMedia,
+        ),
       );
     }
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: FhirFieldExtractor.formatRecordDate(date!, l10n.localeName),
+        ),
+      );
     }
 
     return infoLines;
@@ -216,8 +252,9 @@ class DiagnosticReport with _$DiagnosticReport implements IFhirResource {
       encounter?.reference?.valueString,
       ...?basedOn?.map((reference) => reference.reference?.valueString),
       ...?performer?.map((reference) => reference.reference?.valueString),
-      ...?resultsInterpreter
-          ?.map((reference) => reference.reference?.valueString),
+      ...?resultsInterpreter?.map(
+        (reference) => reference.reference?.valueString,
+      ),
       ...?specimen?.map((reference) => reference.reference?.valueString),
       ...?result?.map((reference) => reference.reference?.valueString),
       ...?imagingStudy?.map((reference) => reference.reference?.valueString),

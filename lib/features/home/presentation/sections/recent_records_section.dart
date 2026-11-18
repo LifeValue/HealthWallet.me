@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
+import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class RecentRecordsSection extends StatelessWidget {
@@ -24,15 +28,21 @@ class RecentRecordsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ...recentRecords
-            .map((record) => _buildRecentRecordCard(context, record)),
+        ...recentRecords.map(
+          (record) => _buildRecentRecordCard(context, record),
+        ),
       ],
     );
   }
 
   Widget _buildRecentRecordCard(BuildContext context, IFhirResource record) {
-    final tag = record.fhirType.display;
-    RecordInfoLine? infoLine = record.additionalInfo.firstOrNull;
+    final tag = record.fhirType.localizedName(context.l10n);
+    final RecordInfoLine? infoLine = record
+        .additionalInfoIn(
+          context.read<UserBloc>().state.regionPreset,
+          context.l10n,
+        )
+        .firstOrNull;
 
     // Get icon based on resource type
     Widget icon;
@@ -101,8 +111,9 @@ class RecentRecordsSection extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color:
-                                context.colorScheme.onSurface.withOpacity(0.08),
+                            color: context.colorScheme.onSurface.withValues(
+                              alpha: 0.08,
+                            ),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Row(
@@ -128,7 +139,10 @@ class RecentRecordsSection extends StatelessWidget {
                   ),
                   if (record.statusDisplay.isNotEmpty)
                     Text(
-                      record.statusDisplay,
+                      localizedStatusDisplay(
+                        record.statusDisplay,
+                        context.l10n,
+                      ),
                       style: AppTextStyle.labelMedium.copyWith(
                         color: context.colorScheme.onSurface,
                       ),
@@ -156,7 +170,9 @@ class RecentRecordsSection extends StatelessWidget {
                           width: 16,
                           height: 16,
                           colorFilter: ColorFilter.mode(
-                            context.colorScheme.onSurface.withOpacity(0.6),
+                            context.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
                             BlendMode.srcIn,
                           ),
                         ),
@@ -182,7 +198,7 @@ class RecentRecordsSection extends StatelessWidget {
                         width: 16,
                         height: 16,
                         colorFilter: ColorFilter.mode(
-                          context.colorScheme.onSurface.withOpacity(0.6),
+                          context.colorScheme.onSurface.withValues(alpha: 0.6),
                           BlendMode.srcIn,
                         ),
                       ),
@@ -203,42 +219,4 @@ class RecentRecordsSection extends StatelessWidget {
       ),
     );
   }
-}
-
-String? _extractClinician(List<String> additionalInfo) {
-  // Prefer specific performer/participant info if present
-  final performer = additionalInfo.firstWhere(
-    (line) => line.startsWith('Performer: '),
-    orElse: () => '',
-  );
-  if (performer.isNotEmpty) {
-    return performer.replaceFirst('Performer: ', '').trim();
-  }
-
-  final participant = additionalInfo.firstWhere(
-    (line) => line.startsWith('Participant: '),
-    orElse: () => '',
-  );
-  if (participant.isNotEmpty) {
-    return participant.replaceFirst('Participant: ', '').trim();
-  }
-
-  final performers = additionalInfo.firstWhere(
-    (line) => line.startsWith('Performers: '),
-    orElse: () => '',
-  );
-  if (performers.isNotEmpty) {
-    return performers.replaceFirst('Performers: ', '').trim();
-  }
-
-  // Fall back to service provider if that is meaningful
-  final serviceProvider = additionalInfo.firstWhere(
-    (line) => line.startsWith('Service Provider: '),
-    orElse: () => '',
-  );
-  if (serviceProvider.isNotEmpty) {
-    return serviceProvider.replaceFirst('Service Provider: ', '').trim();
-  }
-
-  return null;
 }

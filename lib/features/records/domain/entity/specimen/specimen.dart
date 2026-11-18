@@ -1,20 +1,21 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
 
 part 'specimen.freezed.dart';
 
 @freezed
-class Specimen with _$Specimen implements IFhirResource {
+abstract class Specimen with _$Specimen implements IFhirResource {
   const Specimen._();
 
   const factory Specimen({
@@ -26,6 +27,7 @@ class Specimen with _$Specimen implements IFhirResource {
     @Default({}) Map<String, dynamic> rawResource,
     @Default('') String encounterId,
     @Default('') String subjectId,
+    String? specialtyOverride,
     Narrative? text,
     List<Identifier>? identifier,
     Identifier? accessionIdentifier,
@@ -58,6 +60,7 @@ class Specimen with _$Specimen implements IFhirResource {
       rawResource: resourceJson,
       encounterId: data.encounterId ?? '',
       subjectId: data.subjectId ?? '',
+      specialtyOverride: data.specialtyOverride,
       text: fhirSpecimen.text,
       identifier: fhirSpecimen.identifier,
       accessionIdentifier: fhirSpecimen.accessionIdentifier,
@@ -77,16 +80,16 @@ class Specimen with _$Specimen implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'Specimen',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'Specimen',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -101,115 +104,155 @@ class Specimen with _$Specimen implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Specimen Details'));
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
+    final List<RecordInfoLine> infoLines = [];
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader(l10n.fieldSpecimenDetails),
+    );
 
     // Type (What kind of specimen - CRITICAL)
     final typeDisplay = FhirFieldExtractor.extractCodeableConceptText(type);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createLabLine(typeDisplay, prefix: 'Specimen Type'),
+      ResourceFieldMapper.createLabLine(
+        typeDisplay,
+        prefix: l10n.fieldSpecimenType,
+      ),
     );
 
     // Status (available, unavailable, unsatisfactory)
     final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(
+        statusText,
+        prefix: l10n.fieldStatus,
+      ),
     );
 
     // Accession Identifier (Lab tracking number)
     final accessionId = accessionIdentifier?.value?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createIdentificationLine(accessionId,
-          prefix: 'Accession Number'),
+      ResourceFieldMapper.createIdentificationLine(
+        accessionId,
+        prefix: l10n.fieldAccessionNumber,
+      ),
     );
 
     // Condition (Hemolyzed, clotted, etc. - important for lab quality)
     if (condition != null && condition!.isNotEmpty) {
       final conditionDisplay = condition!
-          .map((c) => FhirFieldExtractor.extractCodeableConceptText(c))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((c) => c != null && c.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createWarningLine(
-            conditionDisplay.isNotEmpty ? conditionDisplay : null,
-            prefix: 'Condition'),
+          conditionDisplay.isNotEmpty ? conditionDisplay : null,
+          prefix: l10n.fieldCondition,
+        ),
       );
     }
 
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Collection Information'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader(l10n.fieldCollectionInformation),
+    );
 
     // Collection details
     if (collection != null) {
       // Collected Time/Period
-      final collectedDateTime = collection!.collectedX?.isAs<fhir_r4.FhirDateTime>();
+      final collectedDateTime = collection!.collectedX
+          ?.isAs<fhir_r4.FhirDateTime>();
       final collectedPeriod = collection!.collectedX?.isAs<fhir_r4.Period>();
-      
+
       if (collectedDateTime != null) {
         ResourceFieldMapper.addIfNotNull(
           infoLines,
-          ResourceFieldMapper.createDateLine(collectedDateTime.valueString,
-              prefix: 'Collection Date'),
+          ResourceFieldMapper.createDateLine(
+            collectedDateTime.valueString,
+            prefix: l10n.fieldCollectionDate,
+          ),
         );
       } else if (collectedPeriod != null) {
-        final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(collectedPeriod);
+        final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(
+          collectedPeriod,
+          l10n: l10n,
+        );
         ResourceFieldMapper.addIfNotNull(
           infoLines,
-          ResourceFieldMapper.createTimelineLine(periodDisplay,
-              prefix: 'Collection Period'),
+          ResourceFieldMapper.createTimelineLine(
+            periodDisplay,
+            prefix: l10n.fieldCollectionPeriod,
+          ),
         );
       }
 
       // Collector (Person who collected)
-      final collector =
-          FhirFieldExtractor.extractReferenceDisplay(collection!.collector);
+      final collector = FhirFieldExtractor.extractReferenceDisplay(
+        collection!.collector,
+      );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createUserLine(collector, prefix: 'Collected By'),
+        ResourceFieldMapper.createUserLine(
+          collector,
+          prefix: l10n.fieldCollectedBy,
+        ),
       );
 
       // Body Site (Where sample was taken from)
-      final bodySite =
-          FhirFieldExtractor.extractCodeableConceptText(collection!.bodySite);
+      final bodySite = FhirFieldExtractor.extractCodeableConceptText(
+        collection!.bodySite,
+      );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createBodySiteLine(bodySite, prefix: 'Body Site'),
+        ResourceFieldMapper.createBodySiteLine(
+          bodySite,
+          prefix: l10n.fieldBodySite,
+        ),
       );
 
       // Method (How it was collected)
-      final method =
-          FhirFieldExtractor.extractCodeableConceptText(collection!.method);
+      final method = FhirFieldExtractor.extractCodeableConceptText(
+        collection!.method,
+      );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createProcedureLine(method, prefix: 'Collection Method'),
+        ResourceFieldMapper.createProcedureLine(
+          method,
+          prefix: l10n.fieldCollectionMethod,
+        ),
       );
 
       // Quantity
       if (collection!.quantity != null) {
-        final quantityValue = collection!.quantity!.value?.valueDouble?.toStringAsFixed(2);
-        final quantityUnit = collection!.quantity!.unit ?? collection!.quantity!.code ?? '';
+        final quantityValue = collection!.quantity!.value?.valueDouble
+            ?.toStringAsFixed(2);
+        final quantityUnit =
+            collection!.quantity!.unit ?? collection!.quantity!.code ?? '';
         if (quantityValue != null) {
           ResourceFieldMapper.addIfNotNull(
             infoLines,
-            ResourceFieldMapper.createValueLine('$quantityValue $quantityUnit',
-                prefix: 'Quantity Collected'),
+            ResourceFieldMapper.createValueLine(
+              '$quantityValue $quantityUnit',
+              prefix: l10n.fieldQuantityCollected,
+            ),
           );
         }
       }
 
       // Duration (time taken to collect)
       if (collection!.duration != null) {
-        final durationValue = collection!.duration!.value?.valueDouble?.toStringAsFixed(1);
+        final durationValue = collection!.duration!.value?.valueDouble
+            ?.toStringAsFixed(1);
         final durationUnit = collection!.duration!.unit ?? 'minutes';
         if (durationValue != null) {
           ResourceFieldMapper.addIfNotNull(
             infoLines,
-            ResourceFieldMapper.createTimeLine('$durationValue $durationUnit',
-                prefix: 'Collection Duration'),
+            ResourceFieldMapper.createTimeLine(
+              '$durationValue $durationUnit',
+              prefix: l10n.fieldCollectionDuration,
+            ),
           );
         }
       }
@@ -217,20 +260,29 @@ class Specimen with _$Specimen implements IFhirResource {
       // Fasting Status
       if (collection!.fastingStatusCodeableConcept != null) {
         final fastingDisplay = FhirFieldExtractor.extractCodeableConceptText(
-            collection!.fastingStatusCodeableConcept);
+          collection!.fastingStatusCodeableConcept,
+        );
         ResourceFieldMapper.addIfNotNull(
           infoLines,
-          ResourceFieldMapper.createStatusLine(fastingDisplay,
-              prefix: 'Fasting Status'),
+          ResourceFieldMapper.createStatusLine(
+            fastingDisplay,
+            prefix: l10n.fieldFastingStatus,
+          ),
         );
       } else if (collection!.fastingStatusDuration != null) {
-        final fastingDuration = collection!.fastingStatusDuration!.value?.valueDouble?.toStringAsFixed(1);
+        final fastingDuration = collection!
+            .fastingStatusDuration!
+            .value
+            ?.valueDouble
+            ?.toStringAsFixed(1);
         final fastingUnit = collection!.fastingStatusDuration!.unit ?? 'hours';
         if (fastingDuration != null) {
           ResourceFieldMapper.addIfNotNull(
             infoLines,
-            ResourceFieldMapper.createStatusLine('Fasted for $fastingDuration $fastingUnit',
-                prefix: 'Fasting Status'),
+            ResourceFieldMapper.createStatusLine(
+              l10n.fastedFor('$fastingDuration $fastingUnit'),
+              prefix: l10n.fieldFastingStatus,
+            ),
           );
         }
       }
@@ -240,13 +292,17 @@ class Specimen with _$Specimen implements IFhirResource {
     final receivedTimeDisplay = receivedTime?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(receivedTimeDisplay,
-          prefix: 'Received at Lab'),
+      ResourceFieldMapper.createDateLine(
+        receivedTimeDisplay,
+        prefix: l10n.fieldReceivedAtLab,
+      ),
     );
 
-    if ((processing != null && processing!.isNotEmpty) || 
+    if ((processing != null && processing!.isNotEmpty) ||
         (container != null && container!.isNotEmpty)) {
-      infoLines.add(ResourceFieldMapper.createSectionHeader('Processing & Storage'));
+      infoLines.add(
+        ResourceFieldMapper.createSectionHeader(l10n.fieldProcessingStorage),
+      );
     }
 
     // Processing
@@ -254,31 +310,39 @@ class Specimen with _$Specimen implements IFhirResource {
       for (int i = 0; i < processing!.length; i++) {
         final proc = processing![i];
         final description = proc.description?.valueString;
-        final procedure = FhirFieldExtractor.extractCodeableConceptText(proc.procedure);
-        
+        final procedure = FhirFieldExtractor.extractCodeableConceptText(
+          proc.procedure,
+        );
+
         // Additive is just a list of References
         final additive = proc.additive != null && proc.additive!.isNotEmpty
             ? proc.additive!
-                .map((a) => FhirFieldExtractor.extractReferenceDisplay(a))
-                .where((a) => a != null && a.isNotEmpty)
-                .join(', ')
+                  .map(FhirFieldExtractor.extractReferenceDisplay)
+                  .where((a) => a != null && a.isNotEmpty)
+                  .join(', ')
             : null;
 
-        final processingTime = FhirFieldExtractor.extractPeriodFormatted(proc.timeX?.isAs<fhir_r4.Period>()) ??
+        final processingTime =
+            FhirFieldExtractor.extractPeriodFormatted(
+              proc.timeX?.isAs<fhir_r4.Period>(),
+              l10n: l10n,
+            ) ??
             proc.timeX?.isAs<fhir_r4.FhirDateTime>()?.valueString;
 
         final processingDisplay = [
           procedure,
           description,
-          if (additive != null) 'Additive: $additive',
-          if (processingTime != null) 'Time: $processingTime',
+          if (additive != null) '${l10n.fieldAdditive}: $additive',
+          if (processingTime != null) '${l10n.fieldTime}: $processingTime',
         ].where((s) => s != null && s.isNotEmpty).join(' - ');
 
         if (processingDisplay.isNotEmpty) {
           ResourceFieldMapper.addIfNotNull(
             infoLines,
-            ResourceFieldMapper.createProcedureLine(processingDisplay,
-                prefix: 'Processing ${i + 1}'),
+            ResourceFieldMapper.createProcedureLine(
+              processingDisplay,
+              prefix: l10n.fieldProcessingNumber(i + 1),
+            ),
           );
         }
       }
@@ -289,18 +353,23 @@ class Specimen with _$Specimen implements IFhirResource {
       // Show container count
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createLabLine('${container!.length} container(s)',
-            prefix: 'Containers'),
+        ResourceFieldMapper.createLabLine(
+          l10n.containerCount(container!.length),
+          prefix: l10n.fieldContainers,
+        ),
       );
 
       // Show details of first container
       final firstContainer = container!.first;
       final containerType = FhirFieldExtractor.extractCodeableConceptText(
-          firstContainer.type);
+        firstContainer.type,
+      );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createLabLine(containerType,
-            prefix: 'Container Type'),
+        ResourceFieldMapper.createLabLine(
+          containerType,
+          prefix: l10n.fieldContainerType,
+        ),
       );
 
       final containerCapacity = firstContainer.capacity != null
@@ -308,8 +377,10 @@ class Specimen with _$Specimen implements IFhirResource {
           : null;
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createValueLine(containerCapacity,
-            prefix: 'Container Capacity'),
+        ResourceFieldMapper.createValueLine(
+          containerCapacity,
+          prefix: l10n.fieldContainerCapacity,
+        ),
       );
 
       final specimenQuantity = firstContainer.specimenQuantity != null
@@ -317,73 +388,90 @@ class Specimen with _$Specimen implements IFhirResource {
           : null;
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createValueLine(specimenQuantity,
-            prefix: 'Specimen Quantity'),
+        ResourceFieldMapper.createValueLine(
+          specimenQuantity,
+          prefix: l10n.fieldSpecimenQuantity,
+        ),
       );
 
       // Additive in container
       if (firstContainer.additiveCodeableConcept != null) {
         final additiveDisplay = FhirFieldExtractor.extractCodeableConceptText(
-            firstContainer.additiveCodeableConcept);
+          firstContainer.additiveCodeableConcept,
+        );
         ResourceFieldMapper.addIfNotNull(
           infoLines,
-          ResourceFieldMapper.createLabLine(additiveDisplay,
-              prefix: 'Container Additive'),
+          ResourceFieldMapper.createLabLine(
+            additiveDisplay,
+            prefix: l10n.fieldContainerAdditive,
+          ),
         );
       } else if (firstContainer.additiveReference != null) {
         final additiveDisplay = FhirFieldExtractor.extractReferenceDisplay(
-            firstContainer.additiveReference);
+          firstContainer.additiveReference,
+        );
         ResourceFieldMapper.addIfNotNull(
           infoLines,
-          ResourceFieldMapper.createLabLine(additiveDisplay,
-              prefix: 'Container Additive'),
+          ResourceFieldMapper.createLabLine(
+            additiveDisplay,
+            prefix: l10n.fieldContainerAdditive,
+          ),
         );
       }
     }
 
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Additional Information'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader(l10n.fieldAdditionalInformation),
+    );
 
     // Parent Specimen (if derived from another specimen)
     if (parent != null && parent!.isNotEmpty) {
       final parentDisplay = parent!
-          .map((p) => FhirFieldExtractor.extractReferenceDisplay(p))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((p) => p != null && p.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createLabLine(
-            parentDisplay.isNotEmpty ? parentDisplay : null,
-            prefix: 'Parent Specimen'),
+          parentDisplay.isNotEmpty ? parentDisplay : null,
+          prefix: l10n.fieldParentSpecimen,
+        ),
       );
     }
 
     // Request (Orders that requested this specimen)
     if (request != null && request!.isNotEmpty) {
       final requestDisplay = request!
-          .map((r) => FhirFieldExtractor.extractReferenceDisplay(r))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((r) => r != null && r.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createDocumentLine(
-            requestDisplay.isNotEmpty ? requestDisplay : null,
-            prefix: 'Requested By'),
+          requestDisplay.isNotEmpty ? requestDisplay : null,
+          prefix: l10n.fieldRequestedBy,
+        ),
       );
     }
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: FhirFieldExtractor.formatRecordDate(date!, l10n.localeName),
+        ),
+      );
     }
 
     // Notes
     final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+      ResourceFieldMapper.createNotesLine(
+        notesDisplay,
+        prefix: l10n.fieldNotes,
+      ),
     );
 
     return infoLines;

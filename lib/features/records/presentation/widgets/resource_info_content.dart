@@ -1,10 +1,14 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/records/presentation/widgets/media_fullscreen_viewer.dart';
+import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 
 class ResourceInfoContent extends StatelessWidget {
   final IFhirResource resource;
@@ -34,34 +38,50 @@ class ResourceInfoContent extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          ...resource.additionalInfo
+          ..._infoLines(context)
               .where((infoLine) => !infoLine.isSection)
               .take(maxInfoLines)
-              .map((infoLine) => Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      infoLine.icon.svg(
-                        width: 16,
-                        colorFilter: ColorFilter.mode(
-                          context.colorScheme.onSurface.withValues(alpha: 0.6),
-                          BlendMode.srcIn,
-                        ),
+              .map(
+                (infoLine) => Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    infoLine.icon.svg(
+                      width: 16,
+                      colorFilter: ColorFilter.mode(
+                        context.colorScheme.onSurface.withValues(alpha: 0.6),
+                        BlendMode.srcIn,
                       ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          infoLine.info,
-                          style: AppTextStyle.labelLarge.copyWith(
-                            color:
-                                context.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        infoLine.info,
+                        style: AppTextStyle.labelLarge.copyWith(
+                          color: context.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
                           ),
                         ),
-                      )
-                    ],
-                  )),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
         ],
       ),
     );
+  }
+
+  /// An observation shows the same converted values as on the detail page.
+  /// Without the app's [UserBloc] (widget tests) values stay as reported.
+  List<RecordInfoLine> _infoLines(BuildContext context) {
+    try {
+      final region = context.select(
+        (UserBloc bloc) => bloc.state.regionPreset,
+      );
+      return resource.additionalInfoIn(region, context.l10n);
+    } on ProviderNotFoundException {
+      return resource.additionalInfo(context.l10n);
+    }
   }
 
   void _defaultNavigation(BuildContext context) {

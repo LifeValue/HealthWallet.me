@@ -160,6 +160,149 @@ class CountryIdentifier {
     return forCountry(countryCode);
   }
 
+  /// Words that tell a document's country. An identifier name weighs
+  /// [_strongMarker], a field label shared with neighbouring countries
+  /// [_weakMarker]. Matched case- and diacritic-insensitively on word
+  /// boundaries.
+  static const _documentMarkers = <String, (List<String>, List<String>)>{
+    'RO': (
+      ['CNP', 'Cod Numeric Personal'],
+      [
+        'Data nasterii',
+        'Data internarii',
+        'Data externarii',
+        'Bilet de iesire',
+        'Buletin de analize',
+        'Judetul',
+      ],
+    ),
+    'DE': (
+      [
+        'KVNR',
+        'Krankenversichertennummer',
+        'Versichertennummer',
+        'Versicherten-Nr',
+        'Krankenkasse',
+      ],
+      [
+        'Geburtsdatum',
+        'Aufnahmedatum',
+        'Entlassungsbrief',
+        'Laborbefund',
+        'Befunddatum',
+      ],
+    ),
+    'AT': (['SVNr', 'SV-Nr', 'Sozialversicherungsnummer', 'Österreich'], []),
+    'CH': (
+      ['AHV', 'AHV-Nr', 'AHV-Nummer', 'Schweiz', 'Suisse', 'Svizzera'],
+      [],
+    ),
+    'ES': (
+      ['DNI', 'CIP', 'Tarjeta sanitaria'],
+      [
+        'Fecha de nacimiento',
+        'Fecha de ingreso',
+        'Fecha de alta',
+        'Informe de alta',
+        'Informe de laboratorio',
+      ],
+    ),
+    'FR': (
+      ['NIR', 'Securite sociale', 'Carte Vitale'],
+      ['Date de naissance', "Date d'admission", 'Compte rendu'],
+    ),
+    'IT': (
+      ['Codice Fiscale', 'Tessera sanitaria'],
+      ['Data di nascita', 'Data di ricovero', 'Lettera di dimissione'],
+    ),
+    'NL': (
+      ['BSN', 'Burgerservicenummer'],
+      ['Geboortedatum', 'Opnamedatum', 'Ontslagbrief'],
+    ),
+    'PL': (['PESEL'], ['Data urodzenia', 'Data przyjecia', 'Wypis']),
+    'SE': (['Personnummer'], ['Fodelsedatum', 'Inskrivningsdatum', 'Epikris']),
+    'GB': (['NHS', 'NHS Number', 'GMC'], []),
+    'US': (
+      ['MRN', 'SSN', 'Medical Record Number'],
+      ['Date of Birth', 'DOB', 'Admission Date', 'Discharge Date'],
+    ),
+  };
+
+  static const _strongMarker = 3;
+  static const _weakMarker = 1;
+
+  static const _diacritics = {
+    'ă': 'a', 'â': 'a', 'à': 'a', 'á': 'a', 'ä': 'a', 'å': 'a', 'ą': 'a', //
+    'î': 'i', 'í': 'i', 'ì': 'i', 'ï': 'i',
+    'ș': 's', 'ş': 's', 'ś': 's', 'ț': 't', 'ţ': 't',
+    'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e', 'ę': 'e',
+    'ó': 'o', 'ò': 'o', 'ô': 'o', 'ö': 'o', 'ø': 'o',
+    'ú': 'u', 'ù': 'u', 'û': 'u', 'ü': 'u',
+    'ñ': 'n',
+    'ń': 'n',
+    'ç': 'c',
+    'ć': 'c',
+    'ł': 'l',
+    'ż': 'z',
+    'ź': 'z',
+    'ß': 'ss',
+  };
+
+  static String _fold(String text) {
+    final lower = text.toLowerCase();
+    final out = StringBuffer();
+    for (final rune in lower.runes) {
+      final char = String.fromCharCode(rune);
+      out.write(_diacritics[char] ?? char);
+    }
+    return out.toString();
+  }
+
+  static final Map<String, List<(RegExp, int)>> _markerPatterns = {
+    for (final MapEntry(key: country, value: (strong, weak))
+        in _documentMarkers.entries)
+      country: [
+        for (final m in strong) (_markerPattern(m), _strongMarker),
+        for (final m in weak) (_markerPattern(m), _weakMarker),
+      ],
+  };
+
+  static RegExp _markerPattern(String marker) =>
+      RegExp('(^|[^a-z0-9])${RegExp.escape(_fold(marker))}(\$|[^a-z0-9])');
+
+  /// The country whose markers score highest in [ocrText]; null when no
+  /// marker matches or the best score is shared.
+  static String? detectCountry(String ocrText) {
+    if (ocrText.trim().isEmpty) return null;
+    final folded = _fold(ocrText);
+    String? best;
+    var bestScore = 0;
+    var tie = false;
+    for (final MapEntry(key: country, value: patterns)
+        in _markerPatterns.entries) {
+      var score = 0;
+      for (final (pattern, weight) in patterns) {
+        if (pattern.hasMatch(folded)) score += weight;
+      }
+      if (score > bestScore) {
+        best = country;
+        bestScore = score;
+        tie = false;
+      } else if (score == bestScore && score > 0) {
+        tie = true;
+      }
+    }
+    return tie ? null : best;
+  }
+
+  /// The profile of the country [ocrText] comes from (see [detectCountry]),
+  /// else [forCurrentLocale]: a German document on a Romanian phone gets the
+  /// German hints.
+  static CountryIdentifier forDocument(String ocrText) {
+    final country = detectCountry(ocrText);
+    return country != null ? forCountry(country) : forCurrentLocale();
+  }
+
   static String? labelFromSystem(String system) {
     if (system.isEmpty) return null;
     for (final profile in _profiles.values) {

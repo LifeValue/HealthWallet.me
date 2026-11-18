@@ -2,10 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
+import 'package:health_wallet/features/wallet_pass/domain/entity/wallet_pass_labels.dart';
 import 'package:health_wallet/features/wallet_pass/domain/repository/wallet_pass_repository.dart';
 import 'package:health_wallet/features/wallet_pass/presentation/bloc/wallet_pass_bloc.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 Future<void> showShareOptionsMenu(
@@ -40,7 +43,7 @@ Future<void> showShareOptionsMenu(
               ),
             ),
             const SizedBox(width: 12),
-            Text('Export IPS (PDF)', style: AppTextStyle.menuItem),
+            Text(context.l10n.exportIpsPdf, style: AppTextStyle.menuItem),
           ],
         ),
       ),
@@ -59,7 +62,10 @@ Future<void> showShareOptionsMenu(
                 ),
               ),
               const SizedBox(width: 12),
-              Text('Add IPS to Apple Wallet', style: AppTextStyle.menuItem),
+              Text(
+                context.l10n.addIpsToAppleWallet,
+                style: AppTextStyle.menuItem,
+              ),
             ],
           ),
         ),
@@ -78,7 +84,10 @@ Future<void> showShareOptionsMenu(
                 ),
               ),
               const SizedBox(width: 12),
-              Text('Add IPS to Google Wallet', style: AppTextStyle.menuItem),
+              Text(
+                context.l10n.addIpsToGoogleWallet,
+                style: AppTextStyle.menuItem,
+              ),
             ],
           ),
         ),
@@ -88,27 +97,39 @@ Future<void> showShareOptionsMenu(
   if (value == null) return;
   if (!context.mounted) return;
 
+  // The export follows what Home shows; the pass is the whole person, with
+  // the same Patient row whatever the filter, so it updates the pass already
+  // in Wallet.
+  final scope = context.read<HomeBloc>().state.scope;
+  final holder = scope.holder;
+  final passPatientId = holder?.representativePatient.id ?? patientId ?? '';
   switch (value) {
     case 'export_ips':
       context.read<RecordsBloc>().add(
-            RecordsSharePressed(
-              patientName: patientName,
-              patientId: patientId,
-            ),
-          );
+        RecordsSharePressed(
+          patientName: patientName,
+          patientId: scope.patient?.id ?? patientId,
+          sourceId: scope.sourceFilter,
+          sourceIds: holder?.sourceIds,
+        ),
+      );
     case 'apple_wallet':
       context.read<WalletPassBloc>().add(
-            WalletPassRequested(
-              type: WalletPassType.apple,
-              patientId: patientId ?? '',
-            ),
-          );
+        WalletPassRequested(
+          type: WalletPassType.apple,
+          patientId: passPatientId,
+          sourceIds: holder?.sourceIds,
+          labels: WalletPassLabels.fromL10n(context.l10n),
+        ),
+      );
     case 'google_wallet':
       context.read<WalletPassBloc>().add(
-            WalletPassRequested(
-              type: WalletPassType.google,
-              patientId: patientId ?? '',
-            ),
-          );
+        WalletPassRequested(
+          type: WalletPassType.google,
+          patientId: passPatientId,
+          sourceIds: holder?.sourceIds,
+          labels: WalletPassLabels.fromL10n(context.l10n),
+        ),
+      );
   }
 }

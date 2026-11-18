@@ -1,9 +1,9 @@
+import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/utils/unit_converter.dart';
 import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
-import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 
 class PatientVitalFactory {
@@ -18,8 +18,10 @@ class PatientVitalFactory {
     for (final resource in resources) {
       if (resource is! Observation) continue;
 
-      final List<PatientVital> extracted =
-          _extractVitalSignsFromObservation(resource, region: region);
+      final List<PatientVital> extracted = _extractVitalSignsFromObservation(
+        resource,
+        region: region,
+      );
       for (final vital in extracted) {
         final String normalizedTitle = _normalizeTitle(vital.title);
         final PatientVital normalizedVital = (normalizedTitle == vital.title)
@@ -91,46 +93,8 @@ class PatientVitalFactory {
     return ordered;
   }
 
-  String _normalizeTitle(String title) {
-    final t = title.trim().toLowerCase();
-    if (t == 'body height' || t == 'height')
-      return PatientVitalType.height.title;
-    if (t == 'body weight' || t == 'weight')
-      return PatientVitalType.weight.title;
-    if (t == 'body mass index' || t == 'bmi' || t == 'body mass index (bmi)') {
-      return PatientVitalType.bmi.title;
-    }
-    if (t == 'oxygen saturation' ||
-        t == 'oxygen saturation in arterial blood' ||
-        t == 'blood oxygen saturation' ||
-        t == 'spo2' ||
-        t == 'pulse oximetry' ||
-        t == 'oximetry') {
-      return PatientVitalType.bloodOxygen.title;
-    }
-    if (t == 'body temperature' || t == 'temperature') {
-      return PatientVitalType.temperature.title;
-    }
-    if (t == 'heart rate' || t == 'pulse rate' || t == 'pulse') {
-      return PatientVitalType.heartRate.title;
-    }
-    if (t == 'respiratory rate') {
-      return PatientVitalType.respiratoryRate.title;
-    }
-    if (t == 'systolic blood pressure') {
-      return PatientVitalType.systolicBloodPressure.title;
-    }
-    if (t == 'diastolic blood pressure') {
-      return PatientVitalType.diastolicBloodPressure.title;
-    }
-    if (t == 'blood pressure') {
-      return PatientVitalType.bloodPressure.title;
-    }
-    if (t == 'blood glucose' || t == 'glucose') {
-      return PatientVitalType.bloodGlucose.title;
-    }
-    return title;
-  }
+  String _normalizeTitle(String title) =>
+      PatientVitalTypeX.normalizeTitle(title);
 
   List<PatientVital> _extractVitalSignsFromObservation(
     Observation observation, {
@@ -202,10 +166,16 @@ class PatientVitalFactory {
     final dia = _parseBloodPressureValue(diastolic.value);
     if (sys == null || dia == null) return;
 
-    final combinedStatus =
-        _determineBloodPressureStatus(systolic, diastolic, sys, dia);
+    final combinedStatus = _determineBloodPressureStatus(
+      systolic,
+      diastolic,
+      sys,
+      dia,
+    );
     final latestDate = _getLatestEffectiveDate(
-        systolic.effectiveDate, diastolic.effectiveDate);
+      systolic.effectiveDate,
+      diastolic.effectiveDate,
+    );
 
     final bp = PatientVital(
       title: PatientVitalType.bloodPressure.title,
@@ -236,7 +206,9 @@ class PatientVitalFactory {
   }
 
   String? _getFhirInterpretationStatus(
-      PatientVital systolic, PatientVital diastolic) {
+    PatientVital systolic,
+    PatientVital diastolic,
+  ) {
     if (_isValidFhirStatus(systolic.status)) return systolic.status;
 
     if (_isValidFhirStatus(diastolic.status)) return diastolic.status;
@@ -256,7 +228,7 @@ class PatientVitalFactory {
       'Critically High',
       'Critically Low',
       'Uncertain',
-      'Intermediate'
+      'Intermediate',
     };
 
     return validStatuses.contains(status);
@@ -278,13 +250,18 @@ class PatientVitalFactory {
   }
 
   void _updateBloodPressureInMap(
-      Map<String, PatientVital> latestByTitle, PatientVital bp) {
+    Map<String, PatientVital> latestByTitle,
+    PatientVital bp,
+  ) {
     latestByTitle
       ..remove(PatientVitalType.systolicBloodPressure.title)
       ..remove(PatientVitalType.diastolicBloodPressure.title)
       ..putIfAbsent(PatientVitalType.bloodPressure.title, () => bp)
-      ..update(PatientVitalType.bloodPressure.title, (_) => bp,
-          ifAbsent: () => bp);
+      ..update(
+        PatientVitalType.bloodPressure.title,
+        (_) => bp,
+        ifAbsent: () => bp,
+      );
   }
 
   PatientVital _processVitalSignStatus(PatientVital vital) {
@@ -346,8 +323,12 @@ class PatientVitalFactory {
   }
 
   String? _calculateTemperatureStatus(double value, String unit) {
-    final celsius = UnitConverter.normalizeToBaseUnit(
-            value, unit, PatientVitalType.temperature) ??
+    final celsius =
+        UnitConverter.normalizeToBaseUnit(
+          value,
+          unit,
+          PatientVitalType.temperature,
+        ) ??
         value;
     if (celsius < 35.0) return 'Low';
     if (celsius > 38.0) return 'High';
@@ -367,8 +348,12 @@ class PatientVitalFactory {
   }
 
   String? _calculateBloodGlucoseStatus(double value, String unit) {
-    final mgDl = UnitConverter.normalizeToBaseUnit(
-            value, unit, PatientVitalType.bloodGlucose) ??
+    final mgDl =
+        UnitConverter.normalizeToBaseUnit(
+          value,
+          unit,
+          PatientVitalType.bloodGlucose,
+        ) ??
         value;
     if (mgDl < 70) return 'Low';
     if (mgDl > 140) return 'High';

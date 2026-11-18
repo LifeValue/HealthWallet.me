@@ -2,21 +2,22 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/config/constants/country_identifier.dart';
+import 'package:health_wallet/core/constants/blood_types.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/features/sync/presentation/widgets/patient_dialog_card.dart';
-import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
-import 'package:health_wallet/core/constants/blood_types.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
+import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
+import 'package:health_wallet/features/sync/presentation/widgets/patient_dialog_card.dart';
+import 'package:health_wallet/features/user/domain/services/id_card_extractor.dart';
+import 'package:health_wallet/features/user/domain/utils/gender_mapper.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/dialog_content.dart';
-import 'package:health_wallet/core/config/constants/country_identifier.dart';
-import 'package:health_wallet/features/user/domain/services/id_card_extractor.dart';
-import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
-import 'package:health_wallet/features/user/domain/utils/gender_mapper.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/mixins/id_card_scan_mixin.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/dialog_content.dart';
 
 class PatientSetupDialog extends StatefulWidget {
   final Patient patient;
@@ -66,7 +67,10 @@ class PatientSetupDialog extends StatefulWidget {
 class _PatientSetupDialogState extends State<PatientSetupDialog>
     with IdCardScanMixin {
   DateTime? _selectedBirthDate;
-  String _selectedGender = 'Prefer not to say';
+
+  /// A code of [GenderMapper.normalizeFhirGenderCode]; [build] shows its
+  /// label, so a theme or language change keeps the choice.
+  String _selectedGenderCode = 'unknown';
   String _selectedBloodType = 'N/A';
   String _selectedContactPhone = '';
   bool _isLoading = false;
@@ -113,16 +117,20 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
       _selectedBirthDate = DateTime.tryParse(result.dateOfBirth!);
     }
     if (result.gender != null) {
-      _selectedGender = GenderMapper.mapFhirGenderToDisplay(
-          result.gender!, context.l10n);
+      _selectedGenderCode = GenderMapper.normalizeFhirGenderCode(
+        result.gender,
+      );
     }
   }
 
-  List<String> _getGenderOptions(AppLocalizations l10n) =>
-      [l10n.male, l10n.female, l10n.preferNotToSay];
+  List<String> _getGenderOptions(AppLocalizations l10n) => [
+    l10n.male,
+    l10n.female,
+    l10n.preferNotToSay,
+  ];
   final List<String> _bloodTypeOptions = [
     'N/A',
-    ...BloodTypes.getAllBloodTypes()
+    ...BloodTypes.getAllBloodTypes(),
   ];
 
   @override
@@ -133,18 +141,12 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
     _familyController = TextEditingController();
     _identifierController = TextEditingController();
     _selectedBloodType = 'N/A';
-    _selectedCountryCode = WidgetsBinding
-            .instance.platformDispatcher.locale.countryCode
+    _selectedCountryCode =
+        WidgetsBinding.instance.platformDispatcher.locale.countryCode
             ?.toUpperCase() ??
         'US';
 
     _initializeCurrentPatient();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _selectedGender = context.l10n.preferNotToSay;
   }
 
   void _initializeCurrentPatient() {
@@ -154,15 +156,9 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
       final blocState = context.read<PatientBloc>().state;
       final patientGroup = blocState.patientGroups[widget.patient.id];
 
-      final walletPatient = patientGroup?.allPatientInstances
-          .where((p) => p.sourceId.startsWith('wallet'))
-          .firstOrNull;
-
-      if (walletPatient != null) {
-        _currentPatient = walletPatient;
-      } else {
-        _currentPatient = patientGroup?.representativePatient ?? widget.patient;
-      }
+      // The row the patient card shows (see HolderService), so the form
+      // edits what the user sees.
+      _currentPatient = patientGroup?.representativePatient ?? widget.patient;
 
       setState(() {});
     });
@@ -190,15 +186,20 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
       final familyChanged = currentFamilyValue.isNotEmpty;
       final nameChanged = givenChanged || familyChanged;
       final birthDateChanged = _selectedBirthDate != null;
-      final genderChanged = _selectedGender != context.l10n.preferNotToSay;
+      final genderChanged = _selectedGenderCode != 'unknown';
       final bloodTypeChanged = _selectedBloodType != 'N/A';
       final identifierChanged = currentIdentifierValue.isNotEmpty;
+      // The phone field reports the number with its dial code, or '' when
+      // it is empty.
+      final contactPhoneChanged = _selectedContactPhone.isNotEmpty;
 
       if (mounted) {
-        final patientFieldsChanged = nameChanged ||
+        final patientFieldsChanged =
+            nameChanged ||
             birthDateChanged ||
             genderChanged ||
             identifierChanged ||
+            contactPhoneChanged ||
             bloodTypeChanged;
 
         if (patientFieldsChanged) {
@@ -209,26 +210,29 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
               : null;
 
           context.read<PatientBloc>().add(
-                PatientEditSaved(
-                  patientId: _currentPatient!.id,
-                  sourceId: _currentPatient!.sourceId,
-                  given: givenList,
-                  family:
-                      currentFamilyValue.isNotEmpty ? currentFamilyValue : null,
-                  birthDate: _selectedBirthDate,
-                  gender: _selectedGender,
-                  bloodType: _selectedBloodType,
-                  identifierValue: currentIdentifierValue.isNotEmpty ? currentIdentifierValue : null,
-                  contactPhone: _selectedContactPhone.isNotEmpty ? _selectedContactPhone : null,
-                  availableSources: homeState.sources,
-                ),
-              );
+            PatientEditSaved(
+              patientId: _currentPatient!.id,
+              given: givenList,
+              family: currentFamilyValue.isNotEmpty ? currentFamilyValue : null,
+              birthDate: _selectedBirthDate,
+              gender: _selectedGenderCode,
+              bloodType: _selectedBloodType,
+              identifierValue: currentIdentifierValue.isNotEmpty
+                  ? currentIdentifierValue
+                  : null,
+              contactPhone: _selectedContactPhone.isNotEmpty
+                  ? _selectedContactPhone
+                  : null,
+              availableSources: homeState.sources,
+            ),
+          );
         }
 
         context.popDialog();
         widget.onDismiss?.call();
       }
-    } catch (e) {
+    } catch (e, s) {
+      logger.e('Saving the patient failed', e, s);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -300,7 +304,10 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
             selectedFamily: '',
             selectedIdentifier: '',
             selectedBirthDate: _selectedBirthDate,
-            selectedGender: _selectedGender,
+            selectedGender: GenderMapper.mapFhirGenderToDisplay(
+              _selectedGenderCode,
+              context.l10n,
+            ),
             selectedBloodType: _selectedBloodType,
             genderOptions: _getGenderOptions(context.l10n),
             bloodTypeOptions: _bloodTypeOptions,
@@ -317,8 +324,13 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
             identifierController: _identifierController,
             onBirthDateChanged: (DateTime? date) =>
                 setState(() => _selectedBirthDate = date),
-            onGenderChanged: (String value) =>
-                setState(() => _selectedGender = value),
+            onGenderChanged: (String value) => setState(
+              () => _selectedGenderCode =
+                  GenderMapper.mapLocalizedDisplayToFhirCode(
+                    value,
+                    context.l10n,
+                  ),
+            ),
             onBloodTypeChanged: (String value) =>
                 setState(() => _selectedBloodType = value),
           ),

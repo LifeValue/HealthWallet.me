@@ -1,17 +1,23 @@
+import 'dart:async';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/services/screen_security_service.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/custom_app_bar.dart';
+import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_bloc.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
+import 'package:health_wallet/features/share_records/presentation/views/code_verification_view.dart';
 import 'package:health_wallet/features/share_records/presentation/views/ephemeral_viewer_view.dart';
 import 'package:health_wallet/features/share_records/presentation/views/peer_discovery_view.dart';
 import 'package:health_wallet/features/share_records/presentation/views/record_selection_view.dart';
@@ -19,10 +25,7 @@ import 'package:health_wallet/features/share_records/presentation/views/session_
 import 'package:health_wallet/features/share_records/presentation/views/session_monitoring_view.dart';
 import 'package:health_wallet/features/share_records/presentation/views/transfer_views.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/exit_confirmation_dialog.dart';
-import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
-import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 
 @RoutePage()
 class ShareRecordsPage extends StatelessWidget {
@@ -58,16 +61,21 @@ class ShareRecordsPage extends StatelessWidget {
           if (preSelectedResources != null &&
               preSelectedResources!.isNotEmpty) {
             bloc.add(
-                ShareRecordsEvent.allRecordsSelected(preSelectedResources!));
+              ShareRecordsEvent.allRecordsSelected(preSelectedResources!),
+            );
           }
         } else if (hasReceivedData) {
           bloc.add(const ShareRecordsEvent.receiverInitializedWithData());
         } else if (pendingInvitationId != null) {
-          bloc.add(ShareRecordsEvent.receiverInitializedWithInvitation(
-            invitationId: pendingInvitationId!,
-            deviceName: pendingInvitationDeviceName ?? context.l10n.shareUnknownDevice,
-            preAccepted: invitationPreAccepted,
-          ));
+          bloc.add(
+            ShareRecordsEvent.receiverInitializedWithInvitation(
+              invitationId: pendingInvitationId!,
+              deviceName:
+                  pendingInvitationDeviceName ??
+                  context.l10n.shareUnknownDevice,
+              preAccepted: invitationPreAccepted,
+            ),
+          );
         } else {
           bloc.add(const ShareRecordsEvent.symmetricDiscoveryStarted());
         }
@@ -97,23 +105,51 @@ class _ShareRecordsView extends StatefulWidget {
 
 class _ShareRecordsViewState extends State<_ShareRecordsView> {
   bool _showInfo = false;
+  bool _screenSecured = false;
+  SharePhase? _lastPhase;
   final GlobalKey _appBarInfoIconKey = GlobalKey();
   final GlobalKey _viewingInfoIconKey = GlobalKey();
 
   @override
   void dispose() {
     CustomArrowTooltip.dismiss();
+    // Kept on until the page goes, so records opened on top of it stay
+    // protected while they close after the session ends.
+    if (_screenSecured) ScreenSecurityService.disable();
     super.dispose();
+  }
+
+  void _onPhaseChanged(BuildContext context, ShareRecordsState state) {
+    final previous = _lastPhase;
+    _lastPhase = state.phase;
+    if (state.phase == SharePhase.viewingRecords && !_screenSecured) {
+      _screenSecured = true;
+      ScreenSecurityService.enable();
+    }
+    if (previous == SharePhase.viewingRecords &&
+        state.phase != SharePhase.viewingRecords) {
+      // Close records, documents and dialogs opened from the viewer.
+      final ownRoute = ModalRoute.of(context);
+      Navigator.of(context).popUntil((route) => route == ownRoute);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ShareRecordsBloc, ShareRecordsState>(
-      listenWhen: (prev, curr) =>
-          prev.mode != ShareMode.idle && curr.mode == ShareMode.idle,
-      listener: (context, state) {
-        context.maybePop();
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<ShareRecordsBloc, ShareRecordsState>(
+          listenWhen: (prev, curr) =>
+              prev.mode != ShareMode.idle && curr.mode == ShareMode.idle,
+          listener: (context, state) {
+            context.maybePop();
+          },
+        ),
+        BlocListener<ShareRecordsBloc, ShareRecordsState>(
+          listenWhen: (prev, curr) => prev.phase != curr.phase,
+          listener: _onPhaseChanged,
+        ),
+      ],
       child: BlocConsumer<ShareRecordsBloc, ShareRecordsState>(
         listenWhen: (previous, current) =>
             previous.showExitConfirmationDialog !=
@@ -140,7 +176,8 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
         },
         builder: (context, state) {
           return PopScope(
-            canPop: state.mode == ShareMode.idle ||
+            canPop:
+                state.mode == ShareMode.idle ||
                 state.phase == SharePhase.sessionEnded ||
                 state.phase == SharePhase.selectingRecords ||
                 state.showExitConfirmationDialog,
@@ -161,58 +198,69 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
                       titleWidget: _buildSelectionAppBarContent(context, state),
                     )
                   : state.phase == SharePhase.viewingRecords
-                      ? CustomAppBar(
-                          automaticallyImplyLeading: false,
-                          titleWidget: _buildViewingAppBarContent(context, state),
-                        )
-                      : state.phase == SharePhase.sessionEnded
-                          ? null
-                          : state.phase == SharePhase.monitoringSession
-                              ? CustomAppBar(
-                                  leading: IconButton(
-                                    icon: const Icon(Icons.close, size: 22),
-                                    onPressed: () async {
-                                      final confirmed = await ExitConfirmationDialog.show(context: context);
-                                      if (confirmed == true && context.mounted) {
-                                        context.read<ShareRecordsBloc>().add(
-                                              const ShareRecordsEvent.killSessionRequested(),
-                                            );
-                                      }
-                                    },
-                                  ),
-                                  titleWidget: Text(
-                                    _getTitle(context, state),
-                                    style: AppTextStyle.bodyLarge,
-                                  ),
-                                )
-                              : state.phase == SharePhase.connecting
-                                  ? CustomAppBar(
-                                      leading: IconButton(
-                                        icon: const Icon(Icons.close, size: 22),
-                                        onPressed: () {
-                                          final bloc = context.read<ShareRecordsBloc>();
-                                          if (state.isSending) {
-                                            bloc.add(const ShareRecordsEvent.sendModeSelected());
-                                          } else {
-                                            bloc.add(const ShareRecordsEvent.modeCleared());
-                                          }
-                                        },
-                                      ),
-                                      titleWidget: Text(
-                                        _getTitle(context, state),
-                                        style: AppTextStyle.bodyLarge,
-                                      ),
-                                    )
-                                  : CustomAppBar(
-                                      titleWidget: Text(
-                                        _getTitle(context, state),
-                                        style: AppTextStyle.bodyLarge,
-                                      ),
-                                    ),
+                  ? (MediaQuery.of(context).size.width >= 600 &&
+                            MediaQuery.of(context).orientation !=
+                                Orientation.portrait
+                        ? null
+                        : CustomAppBar(
+                            automaticallyImplyLeading: false,
+                            titleWidget: _buildViewingAppBarContent(
+                              context,
+                              state,
+                            ),
+                          ))
+                  : state.phase == SharePhase.sessionEnded
+                  ? null
+                  : state.phase == SharePhase.monitoringSession ||
+                        state.phase == SharePhase.awaitingViewer
+                  ? CustomAppBar(
+                      leading: IconButton(
+                        icon: const Icon(Icons.close, size: 22),
+                        onPressed: () async {
+                          final confirmed = await ExitConfirmationDialog.show(
+                            context: context,
+                          );
+                          if (confirmed == true && context.mounted) {
+                            context.read<ShareRecordsBloc>().add(
+                              const ShareRecordsEvent.killSessionRequested(),
+                            );
+                          }
+                        },
+                      ),
+                      titleWidget: Text(
+                        _getTitle(context, state),
+                        style: AppTextStyle.bodyLarge,
+                      ),
+                    )
+                  : state.phase == SharePhase.connecting
+                  ? CustomAppBar(
+                      leading: IconButton(
+                        icon: const Icon(Icons.close, size: 22),
+                        onPressed: () {
+                          final bloc = context.read<ShareRecordsBloc>();
+                          if (state.isSending) {
+                            bloc.add(
+                              const ShareRecordsEvent.sendModeSelected(),
+                            );
+                          } else {
+                            bloc.add(const ShareRecordsEvent.modeCleared());
+                          }
+                        },
+                      ),
+                      titleWidget: Text(
+                        _getTitle(context, state),
+                        style: AppTextStyle.bodyLarge,
+                      ),
+                    )
+                  : CustomAppBar(
+                      titleWidget: Text(
+                        _getTitle(context, state),
+                        style: AppTextStyle.bodyLarge,
+                      ),
+                    ),
               body: Column(
                 children: [
-                  if (_showInfo &&
-                      state.phase == SharePhase.selectingRecords)
+                  if (_showInfo && state.phase == SharePhase.selectingRecords)
                     _buildInfoBanner(context),
                   Expanded(child: _buildBody(context, state)),
                 ],
@@ -225,7 +273,9 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
   }
 
   Widget _buildSelectionAppBarContent(
-      BuildContext context, ShareRecordsState state) {
+    BuildContext context,
+    ShareRecordsState state,
+  ) {
     final count = state.selection.totalCount;
     final hasSelection = state.selection.isNotEmpty;
 
@@ -254,10 +304,12 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
+              color: Theme.of(context).colorScheme.onSurface
+                  .withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12),
+                color: Theme.of(context).colorScheme.onSurface
+                    .withValues(alpha: 0.12),
                 width: 1,
               ),
             ),
@@ -279,39 +331,48 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
             final recordsBloc = context.read<RecordsBloc>();
             final allRecords = recordsBloc.state.resources;
             context.read<ShareRecordsBloc>().add(
-                  ShareRecordsEvent.allRecordsSelected(allRecords),
-                );
+              ShareRecordsEvent.allRecordsSelected(allRecords),
+            );
           },
           style: TextButton.styleFrom(
             minimumSize: Size.zero,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: Text(context.l10n.selectAll, style: const TextStyle(fontSize: 12)),
+          child: Text(
+            context.l10n.selectAll,
+            style: const TextStyle(fontSize: 12),
+          ),
         ),
         if (hasSelection)
           TextButton(
             onPressed: () {
               context.read<ShareRecordsBloc>().add(
-                    const ShareRecordsEvent.allRecordsDeselected(),
-                  );
+                const ShareRecordsEvent.allRecordsDeselected(),
+              );
             },
             style: TextButton.styleFrom(
               minimumSize: Size.zero,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: Text(context.l10n.clearAll, style: const TextStyle(fontSize: 12)),
+            child: Text(
+              context.l10n.clearAll,
+              style: const TextStyle(fontSize: 12),
+            ),
           ),
       ],
     );
   }
 
   Widget _buildViewingAppBarContent(
-      BuildContext context, ShareRecordsState state) {
+    BuildContext context,
+    ShareRecordsState state,
+  ) {
     final receivedData = state.receivedData;
     final recordCount = receivedData?.recordCount ?? 0;
-    final deviceName = receivedData?.senderDeviceName ?? context.l10n.shareUnknownDevice;
+    final deviceName =
+        receivedData?.senderDeviceName ?? context.l10n.shareUnknownDevice;
 
     return Row(
       children: [
@@ -343,7 +404,7 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                TextSpan(text: ' '),
+                const TextSpan(text: ' '),
                 TextSpan(text: context.l10n.shareSharedFrom(deviceName)),
               ],
             ),
@@ -366,10 +427,12 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
+              color: Theme.of(context).colorScheme.onSurface
+                  .withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12),
+                color: Theme.of(context).colorScheme.onSurface
+                    .withValues(alpha: 0.12),
                 width: 1,
               ),
             ),
@@ -414,7 +477,7 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
           Expanded(
             child: Text(
               context.l10n.shareInfoBannerMessage,
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppColors.warning,
                 fontWeight: FontWeight.w500,
                 fontSize: 12,
@@ -430,7 +493,7 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
             ),
             child: Text(
               context.l10n.ok,
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppColors.warning,
                 fontWeight: FontWeight.w700,
               ),
@@ -446,11 +509,18 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
       case SharePhase.selectingRecords:
         return context.l10n.shareTitle;
       case SharePhase.discoveringPeers:
-        return state.isSending ? context.l10n.shareFindDevices : context.l10n.shareWaiting;
+        return state.isSending
+            ? context.l10n.shareFindDevices
+            : context.l10n.shareWaiting;
       case SharePhase.connecting:
         return context.l10n.shareConnectingTitle;
       case SharePhase.transferring:
-        return state.isSending ? context.l10n.shareSending : context.l10n.shareReceiving;
+        return state.isSending
+            ? context.l10n.shareSending
+            : context.l10n.shareReceiving;
+      case SharePhase.verifyingCode:
+        return context.l10n.shareVerifyTitle;
+      case SharePhase.awaitingViewer:
       case SharePhase.monitoringSession:
         return context.l10n.shareSessionActive;
       case SharePhase.viewingRecords:
@@ -475,6 +545,10 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
         return ConnectingView(state: state);
       case SharePhase.transferring:
         return TransferProgressView(state: state);
+      case SharePhase.verifyingCode:
+        return CodeVerificationView(state: state);
+      case SharePhase.awaitingViewer:
+        return AwaitingViewerView(state: state);
       case SharePhase.monitoringSession:
         return SessionMonitoringView(state: state);
       case SharePhase.viewingRecords:
@@ -489,11 +563,14 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
   void _handleBackPress(BuildContext context, ShareRecordsState state) async {
     final bloc = context.read<ShareRecordsBloc>();
 
-    if (state.phase == SharePhase.monitoringSession) {
+    if (state.phase == SharePhase.monitoringSession ||
+        state.phase == SharePhase.awaitingViewer) {
       final confirmed = await ExitConfirmationDialog.show(context: context);
       if (confirmed == true && context.mounted) {
         bloc.add(const ShareRecordsEvent.killSessionRequested());
       }
+    } else if (state.phase == SharePhase.verifyingCode) {
+      CodeVerificationView.cancel(context, state);
     } else if (state.phase == SharePhase.discoveringPeers) {
       bloc.add(const ShareRecordsEvent.sendModeSelected());
     } else if (state.receivedData != null) {
@@ -501,7 +578,7 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
     } else if (state.mode != ShareMode.idle) {
       bloc.add(const ShareRecordsEvent.modeCleared());
     } else {
-      context.maybePop();
+      unawaited(context.maybePop());
     }
   }
 
@@ -510,7 +587,9 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(context.l10n.sharePermissionsRequired),
-        content: Text(SharePermissionsHelper.getPermissionExplanation()),
+        content: Text(
+          SharePermissionsHelper.getPermissionExplanation(context.l10n),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
@@ -536,14 +615,14 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
     if (result == true) {
       if (context.mounted) {
         context.read<ShareRecordsBloc>().add(
-              const ShareRecordsEvent.dataDestructionConfirmed(),
-            );
+          const ShareRecordsEvent.dataDestructionConfirmed(),
+        );
       }
     } else {
       if (context.mounted) {
         context.read<ShareRecordsBloc>().add(
-              const ShareRecordsEvent.continueViewing(),
-            );
+          const ShareRecordsEvent.continueViewing(),
+        );
       }
     }
   }

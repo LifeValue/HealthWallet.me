@@ -1,20 +1,22 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_code_labels.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
 
 part 'condition.freezed.dart';
 
 @freezed
-class Condition with _$Condition implements IFhirResource {
+abstract class Condition with _$Condition implements IFhirResource {
   const Condition._();
 
   const factory Condition({
@@ -26,6 +28,7 @@ class Condition with _$Condition implements IFhirResource {
     @Default({}) Map<String, dynamic> rawResource,
     @Default('') String encounterId,
     @Default('') String subjectId,
+    String? specialtyOverride,
     Narrative? text,
     List<Identifier>? identifier,
     CodeableConcept? clinicalStatus,
@@ -62,6 +65,7 @@ class Condition with _$Condition implements IFhirResource {
       rawResource: resourceJson,
       encounterId: data.encounterId ?? '',
       subjectId: data.subjectId ?? '',
+      specialtyOverride: data.specialtyOverride,
       text: fhirCondition.text,
       identifier: fhirCondition.identifier,
       clinicalStatus: fhirCondition.clinicalStatus,
@@ -85,16 +89,16 @@ class Condition with _$Condition implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'Condition',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'Condition',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -109,34 +113,38 @@ class Condition with _$Condition implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
+    final List<RecordInfoLine> infoLines = [];
 
-    // Clinical Status
-    final statusDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(clinicalStatus);
+    // Clinical and verification status first: a resolved, refuted or
+    // entered-in-error condition is flagged on the card.
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusDisplay,
-          prefix: 'Clinical Status'),
+      FhirCodeLabels.statusConceptLine(
+        clinicalStatus,
+        l10n,
+        prefix: l10n.fieldClinicalStatus,
+      ),
     );
-
-    // Verification Status
-    final verificationDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(verificationStatus);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(verificationDisplay,
-          prefix: 'Verification'),
+      FhirCodeLabels.statusConceptLine(
+        verificationStatus,
+        l10n,
+        prefix: l10n.fieldVerification,
+      ),
     );
 
     // Severity
-    final severityDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(severity);
+    final severityDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      severity,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createWarningLine(severityDisplay,
-          prefix: 'Severity'),
+      ResourceFieldMapper.createWarningLine(
+        severityDisplay,
+        prefix: l10n.fieldSeverity,
+      ),
     );
 
     // Category
@@ -144,8 +152,10 @@ class Condition with _$Condition implements IFhirResource {
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(categoryDisplay,
-          prefix: 'Category'),
+      ResourceFieldMapper.createCategoryLine(
+        categoryDisplay,
+        prefix: l10n.fieldCategory,
+      ),
     );
 
     // Body Site
@@ -153,63 +163,88 @@ class Condition with _$Condition implements IFhirResource {
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(bodySite);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createBodySiteLine(bodySiteDisplay,
-          prefix: 'Body Site'),
+      ResourceFieldMapper.createBodySiteLine(
+        bodySiteDisplay,
+        prefix: l10n.fieldBodySite,
+      ),
     );
 
     // Onset Date
-    final onsetDisplay = FhirFieldExtractor.extractOnsetX(onsetX);
+    final onsetDisplay = FhirFieldExtractor.extractOnsetX(onsetX, l10n: l10n);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(onsetDisplay, prefix: 'Onset'),
+      ResourceFieldMapper.createDateLine(onsetDisplay, prefix: l10n.fieldOnset),
     );
 
     // Abatement Date
-    final abatementDisplay = FhirFieldExtractor.extractAbatementX(abatementX);
+    final abatementDisplay = FhirFieldExtractor.extractAbatementX(
+      abatementX,
+      l10n: l10n,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(abatementDisplay, prefix: 'Resolved'),
+      ResourceFieldMapper.createDateLine(
+        abatementDisplay,
+        prefix: l10n.fieldResolved,
+      ),
     );
 
     // Stage
     if (stage != null && stage!.isNotEmpty) {
       final stageDisplay = FhirFieldExtractor.extractCodeableConceptText(
-          stage!.first.summary);
+        stage!.first.summary,
+      );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createActivityLine(stageDisplay, prefix: 'Stage'),
+        ResourceFieldMapper.createActivityLine(
+          stageDisplay,
+          prefix: l10n.fieldStage,
+        ),
       );
     }
 
     // Recorder
-    final recorderDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(recorder);
+    final recorderDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      recorder,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(recorderDisplay, prefix: 'Recorder'),
+      ResourceFieldMapper.createUserLine(
+        recorderDisplay,
+        prefix: l10n.fieldRecorder,
+      ),
     );
 
     // Asserter
-    final asserterDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(asserter);
+    final asserterDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      asserter,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(asserterDisplay, prefix: 'Asserter'),
+      ResourceFieldMapper.createUserLine(
+        asserterDisplay,
+        prefix: l10n.fieldAsserter,
+      ),
     );
 
     // Recorded Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: FhirFieldExtractor.formatRecordDate(date!, l10n.localeName),
+        ),
+      );
     }
 
     // Notes
     final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+      ResourceFieldMapper.createNotesLine(
+        notesDisplay,
+        prefix: l10n.fieldNotes,
+      ),
     );
 
     return infoLines;
@@ -227,5 +262,7 @@ class Condition with _$Condition implements IFhirResource {
 
   @override
   String get statusDisplay =>
-      FhirFieldExtractor.extractCodeableConceptText(clinicalStatus) ?? '';
+      FhirFieldExtractor.extractCodeableConceptText(clinicalStatus) ??
+      FhirCodeLabels.statusCodeOf(clinicalStatus) ??
+      '';
 }

@@ -1,6 +1,13 @@
+// FhirType names are the FHIR resourceType strings (stored via `.name`), so they keep FHIR's casing.
+// ignore_for_file: constant_identifier_names
+
 import 'dart:convert';
 
+import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/core/utils/wallet_source_identifier.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -17,6 +24,7 @@ abstract class IFhirResource {
   Map<String, dynamic> get rawResource;
   String get encounterId;
   String get subjectId;
+  String? get specialtyOverride;
 
   factory IFhirResource.fromLocalDto(FhirResourceLocalDto dto) {
     switch (dto.resourceType) {
@@ -78,68 +86,138 @@ abstract class IFhirResource {
         return ExplanationOfBenefit.fromLocalData(dto);
       case 'Coverage':
         return Coverage.fromLocalData(dto);
+      case 'VisionPrescription':
+        try {
+          return VisionPrescription.fromLocalData(dto);
+        } catch (e) {
+          // A row without the fields FHIR requires (an older or foreign
+          // writer) is still listed, as a generic resource.
+          logger.w('Unreadable VisionPrescription ${dto.id}: $e');
+          return _general(dto);
+        }
       default:
-        return GeneralResource(
-          id: dto.id,
-          sourceId: dto.sourceId ?? '',
-          resourceId: dto.resourceId ?? '',
-          title: dto.title ?? '',
-          date: dto.date,
-          rawResource: jsonDecode(dto.resourceRaw),
-        );
+        return _general(dto);
     }
   }
+
+  static GeneralResource _general(FhirResourceLocalDto dto) => GeneralResource(
+    id: dto.id,
+    sourceId: dto.sourceId ?? '',
+    resourceId: dto.resourceId ?? '',
+    title: dto.title ?? '',
+    date: dto.date,
+    rawResource: jsonDecode(dto.resourceRaw),
+    specialtyOverride: dto.specialtyOverride,
+  );
 
   FhirResourceDto toDto();
 
   String get displayTitle;
-  List<RecordInfoLine> get additionalInfo;
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n);
   List<String?> get resourceReferences;
   String get statusDisplay;
 }
 
+extension RegionalInfo on IFhirResource {
+  /// [additionalInfo] in the units of [region]: weight, height, temperature
+  /// and glucose observations convert their values (kg and lbs, cm and ft/in,
+  /// °C and °F, mmol/L and mg/dL), other records are unchanged. A record read
+  /// from a scanned or imported document shows exactly what the document says,
+  /// so it is never converted. Every screen that lists a record's values uses
+  /// this, so the list and the record details show the same numbers.
+  List<RecordInfoLine> additionalInfoIn(
+    RegionPreset region,
+    AppLocalizations l10n,
+  ) {
+    final resource = this;
+    return resource is Observation &&
+            !WalletSourceIdentifier.isWalletSource(resource.sourceId)
+        ? resource.additionalInfoForRegion(region, l10n)
+        : additionalInfo(l10n);
+  }
+}
+
 enum FhirType {
-  AdverseEvent("Adverse Event"),
-  AllergyIntolerance("Allergy"),
-  Binary("Binary"),
-  CareTeam("Care Team"),
-  Claim("Claim"),
-  Condition("Condition"),
-  Coverage("Coverage"),
-  DiagnosticReport("Diagnostic Report"),
-  DocumentReference("Document"),
-  Encounter("Encounter"),
-  ExplanationOfBenefit("Explanation of Benefit"),
-  Goal("Goal"),
-  Immunization("Immunization"),
-  Location("Location"),
-  Media("Media"),
-  Medication("Medication"),
-  MedicationAdministration("Medication Administration"),
-  MedicationDispense("Medication Dispense"),
-  MedicationRequest("Medication Request"),
-  MedicationStatement("MedicationStatement"),
-  Observation("Observation"),
-  Organization("Organization"),
-  Patient("Patient"),
-  Practitioner("Practitioner"),
-  PractitionerRole("Practitioner Role"),
-  Procedure("Procedure"),
-  RelatedPerson("Related Person"),
-  ServiceRequest("Service Request"),
-  Specimen("Specimen"),
-  GeneralResource("Resource");
+  AdverseEvent('Adverse Event'),
+  AllergyIntolerance('Allergy'),
+  Binary('Binary'),
+  CareTeam('Care Team'),
+  Claim('Claim'),
+  Condition('Condition'),
+  Coverage('Coverage'),
+  DiagnosticReport('Diagnostic Report'),
+  DocumentReference('Document'),
+  Encounter('Encounter'),
+  ExplanationOfBenefit('Explanation of Benefit'),
+  Goal('Goal'),
+  Immunization('Immunization'),
+  Location('Location'),
+  Media('Media'),
+  Medication('Medication'),
+  MedicationAdministration('Medication Administration'),
+  MedicationDispense('Medication Dispense'),
+  MedicationRequest('Medication Request'),
+  MedicationStatement('MedicationStatement'),
+  Observation('Observation'),
+  Organization('Organization'),
+  Patient('Patient'),
+  Practitioner('Practitioner'),
+  PractitionerRole('Practitioner Role'),
+  Procedure('Procedure'),
+  RelatedPerson('Related Person'),
+  ServiceRequest('Service Request'),
+  Specimen('Specimen'),
+  VisionPrescription('Vision Prescription'),
+  GeneralResource('Resource');
 
   const FhirType(this.display);
 
   final String display;
 
+  static const Set<FhirType> mainRecordTypes = {
+    FhirType.Encounter,
+    FhirType.DiagnosticReport,
+    FhirType.Condition,
+    FhirType.AllergyIntolerance,
+    FhirType.MedicationRequest,
+    FhirType.MedicationStatement,
+    FhirType.MedicationAdministration,
+    FhirType.MedicationDispense,
+    FhirType.Procedure,
+    FhirType.Immunization,
+    FhirType.Observation,
+    FhirType.ServiceRequest,
+    FhirType.Goal,
+    FhirType.CareTeam,
+    FhirType.AdverseEvent,
+    FhirType.Claim,
+    FhirType.ExplanationOfBenefit,
+    FhirType.Coverage,
+    FhirType.VisionPrescription,
+  };
+
+  static const Set<FhirType> supportingTypes = {
+    FhirType.Patient,
+    FhirType.Practitioner,
+    FhirType.PractitionerRole,
+    FhirType.Organization,
+    FhirType.Location,
+    FhirType.RelatedPerson,
+    FhirType.DocumentReference,
+    FhirType.Binary,
+    FhirType.Media,
+    FhirType.Medication,
+    FhirType.Specimen,
+    FhirType.GeneralResource,
+  };
+
   SvgGenImage get icon {
     if (this == FhirType.GeneralResource) return Assets.icons.stethoscope;
 
-    return HomeRecordsCategory.values
-        .firstWhere((category) => category.resourceTypes.contains(this))
-        .icon;
+    final match = HomeRecordsCategory.values
+        .where((category) => category.resourceTypes.contains(this))
+        .firstOrNull;
+    return match?.icon ?? Assets.icons.stethoscope;
   }
 }
 

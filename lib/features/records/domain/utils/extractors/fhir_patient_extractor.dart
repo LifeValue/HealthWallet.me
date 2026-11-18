@@ -1,6 +1,8 @@
-import 'package:health_wallet/core/config/constants/country_identifier.dart';
-import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
+import 'package:health_wallet/core/config/constants/country_identifier.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/holders/domain/entity/holder_patient.dart';
+import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
 
 class FhirPatientExtractor {
@@ -103,25 +105,26 @@ class FhirPatientExtractor {
     return patient.id;
   }
 
-  static String extractPatientAge(Patient patient) {
-    if (patient.birthDate == null) return 'N/A';
+  /// The patient's age in years; English unless [l10n] is given.
+  static String extractPatientAge(Patient patient, {AppLocalizations? l10n}) {
+    if (patient.birthDate == null) return l10n?.homeNA ?? 'N/A';
 
     try {
       final birthDateStr = patient.birthDate!.toString();
-      if (birthDateStr.isEmpty) return 'N/A';
+      if (birthDateStr.isEmpty) return l10n?.homeNA ?? 'N/A';
 
       final birthDate = DateTime.parse(birthDateStr);
       final now = DateTime.now();
-      final age = now.year - birthDate.year;
+      var age = now.year - birthDate.year;
 
       if (now.month < birthDate.month ||
           (now.month == birthDate.month && now.day < birthDate.day)) {
-        return '${age - 1} years';
+        age -= 1;
       }
 
-      return '$age years';
+      return l10n?.ageYears(age) ?? '$age years';
     } catch (e) {
-      return 'N/A';
+      return l10n?.homeNA ?? 'N/A';
     }
   }
 
@@ -138,14 +141,24 @@ class FhirPatientExtractor {
     }
   }
 
-  static String extractPatientGender(Patient patient) {
+  /// The FHIR gender code; a missing gender is 'Unknown', localized when
+  /// [l10n] is given.
+  static String extractPatientGender(
+    Patient patient, {
+    AppLocalizations? l10n,
+  }) {
     final gender = FhirCommonExtractor.extractStatus(patient.gender);
-    return gender ?? 'Unknown';
+    return gender ?? l10n?.genderUnknown ?? 'Unknown';
   }
 
-  static String extractPatientIdentifierLabel(Patient patient) {
+  /// The label of the patient's main identifier. National ID names (CNP,
+  /// SVNr, …) are not translated; only the passport label follows [l10n].
+  static String extractPatientIdentifierLabel(
+    Patient patient, {
+    AppLocalizations? l10n,
+  }) {
     if (patient.identifier == null || patient.identifier!.isEmpty) {
-      return 'ID';
+      return l10n?.id ?? 'ID';
     }
 
     for (final id in patient.identifier!) {
@@ -161,31 +174,50 @@ class FhirPatientExtractor {
                 coding.first.display?.toString().toUpperCase() ?? '';
             final combined = '$displayText $codingDisplay';
             if (combined.contains('CNP') ||
-                combined.contains('COD NUMERIC PERSONAL')) return 'CNP';
+                combined.contains('COD NUMERIC PERSONAL')) {
+              return 'CNP';
+            }
             if (combined.contains('SVNR') ||
-                combined.contains('SOZIALVERSICHERUNGSNUMMER')) return 'SVNr';
+                combined.contains('SOZIALVERSICHERUNGSNUMMER')) {
+              return 'SVNr';
+            }
             if (combined.contains('KVNR') ||
-                combined.contains('KRANKENVERSICHERTENNUMMER')) return 'KVNR';
+                combined.contains('KRANKENVERSICHERTENNUMMER')) {
+              return 'KVNR';
+            }
             if (combined.contains('NHS')) return 'NHS';
             if (combined.contains('CIP') ||
-                combined.contains('CÓDIGO DE IDENTIFICACIÓN PERSONAL')) return 'CIP';
+                combined.contains('CÓDIGO DE IDENTIFICACIÓN PERSONAL')) {
+              return 'CIP';
+            }
             if (combined.contains('NIR') ||
-                combined.contains('SÉCURITÉ SOCIALE')) return 'NIR';
+                combined.contains('SÉCURITÉ SOCIALE')) {
+              return 'NIR';
+            }
             if (combined.contains('CODICE FISCALE') ||
-                combined.contains(' CF')) return 'CF';
+                combined.contains(' CF')) {
+              return 'CF';
+            }
             if (combined.contains('BSN') ||
-                combined.contains('BURGERSERVICENUMMER')) return 'BSN';
+                combined.contains('BURGERSERVICENUMMER')) {
+              return 'BSN';
+            }
             if (combined.contains('PESEL')) return 'PESEL';
-            if (combined.contains('PERSONNUMMER') ||
-                combined.contains('PNR')) return 'PNR';
+            if (combined.contains('PERSONNUMMER') || combined.contains('PNR')) {
+              return 'PNR';
+            }
             if (combined.contains('AHV') ||
-                combined.contains('HINTERLASSENENVERSICHERUNG')) return 'AHV';
+                combined.contains('HINTERLASSENENVERSICHERUNG')) {
+              return 'AHV';
+            }
             final system = id.system?.toString() ?? '';
             final systemLabel = CountryIdentifier.labelFromSystem(system);
             if (systemLabel != null) return systemLabel;
             final profile = CountryIdentifier.forCurrentLocale();
-            if (profile.identifierFhirCode == 'SS') return profile.identifierLabel;
-            return 'ID';
+            if (profile.identifierFhirCode == 'SS') {
+              return profile.identifierLabel;
+            }
+            return l10n?.id ?? 'ID';
           case 'NI':
             final displayText = id.type?.text?.toString().toUpperCase() ?? '';
             if (displayText.contains('DNI')) return 'DNI';
@@ -195,7 +227,7 @@ class FhirPatientExtractor {
           case 'DL':
             return 'DL';
           case 'PPN':
-            return 'Passport';
+            return l10n?.identifierPassport ?? 'Passport';
         }
       }
     }
@@ -207,10 +239,18 @@ class FhirPatientExtractor {
       return firstWithType.type!.text!.toString();
     }
 
-    return 'ID';
+    return l10n?.id ?? 'ID';
   }
 
+  /// The patient's main identifier, or '' when there is none. The default
+  /// holder's placeholder ([HolderPatient.placeholderRowId]) is not a real
+  /// identifier, so it reads as none too.
   static String extractPatientIdentifierValue(Patient patient) {
+    final value = _identifierValue(patient);
+    return value == HolderPatient.placeholderRowId ? '' : value;
+  }
+
+  static String _identifierValue(Patient patient) {
     if (patient.identifier == null || patient.identifier!.isEmpty) {
       return '';
     }
@@ -228,7 +268,9 @@ class FhirPatientExtractor {
               false,
         );
         if (match.value != null) return match.value!.toString();
-      } catch (_) {}
+      } catch (_) {
+        // No identifier matches (firstWhere throws StateError); try the next rule.
+      }
     }
 
     try {
@@ -243,7 +285,9 @@ class FhirPatientExtractor {
       if (mrnIdentifier.value != null) {
         return mrnIdentifier.value!.toString();
       }
-    } catch (_) {}
+    } catch (_) {
+      // No identifier matches (firstWhere throws StateError); try the next rule.
+    }
 
     try {
       final textMatch = patient.identifier!.firstWhere(
@@ -253,7 +297,9 @@ class FhirPatientExtractor {
             (id.type?.text?.toString().toUpperCase().contains('MRN') ?? false),
       );
       return textMatch.value!.toString();
-    } catch (_) {}
+    } catch (_) {
+      // No identifier matches (firstWhere throws StateError); try the next rule.
+    }
 
     final first = patient.identifier!
         .where((id) => id.value != null && id.value!.toString().isNotEmpty)
@@ -286,24 +332,32 @@ class FhirPatientExtractor {
     }
   }
 
-  static String? extractMultipleBirth(dynamic multipleBirthX) {
+  /// English unless [l10n] is given.
+  static String? extractMultipleBirth(
+    dynamic multipleBirthX, {
+    AppLocalizations? l10n,
+  }) {
     if (multipleBirthX == null) return null;
 
     final boolValue = multipleBirthX.isAs<fhir_r4.FhirBoolean>();
     if (boolValue != null) {
-      return boolValue.valueBoolean == true ? 'Yes' : 'No';
+      return boolValue.valueBoolean == true
+          ? (l10n?.yes ?? 'Yes')
+          : (l10n?.no ?? 'No');
     }
 
     final intValue = multipleBirthX.isAs<fhir_r4.FhirInteger>();
     if (intValue != null) {
-      return 'Yes (Birth order: $intValue)';
+      return l10n?.multipleBirthOrder(intValue.toString()) ??
+          'Yes (Birth order: $intValue)';
     }
 
     return null;
   }
 
   static String? extractCommunicationLanguages(
-      List<fhir_r4.PatientCommunication>? communication) {
+    List<fhir_r4.PatientCommunication>? communication,
+  ) {
     if (communication == null || communication.isEmpty) return null;
 
     final languages = communication
@@ -327,7 +381,9 @@ class FhirPatientExtractor {
   }
 
   static String? extractIdentifierByType(
-      List<fhir_r4.Identifier>? identifiers, String typeCode) {
+    List<fhir_r4.Identifier>? identifiers,
+    String typeCode,
+  ) {
     if (identifiers == null) return null;
 
     for (final id in identifiers) {
@@ -340,8 +396,10 @@ class FhirPatientExtractor {
   }
 
   static String? extractTelecomBySystem(
-      List<fhir_r4.ContactPoint>? telecom, String system,
-      {String? use}) {
+    List<fhir_r4.ContactPoint>? telecom,
+    String system, {
+    String? use,
+  }) {
     if (telecom == null) return null;
 
     for (final contact in telecom) {
@@ -355,7 +413,9 @@ class FhirPatientExtractor {
   }
 
   static List<Map<String, String>> extractAllTelecomBySystem(
-      List<fhir_r4.ContactPoint>? telecom, String system) {
+    List<fhir_r4.ContactPoint>? telecom,
+    String system,
+  ) {
     if (telecom == null) return [];
 
     final results = <Map<String, String>>[];
@@ -430,7 +490,9 @@ class FhirPatientExtractor {
   }
 
   static String? extractRaceOrEthnicity(
-      Map<String, dynamic> rawResource, String extensionUrl) {
+    Map<String, dynamic> rawResource,
+    String extensionUrl,
+  ) {
     final extensions = rawResource['extension'] as List<dynamic>?;
     if (extensions == null) return null;
 
@@ -456,7 +518,9 @@ class FhirPatientExtractor {
   }
 
   static String? extractExtensionValue(
-      Map<String, dynamic> rawResource, String extensionUrl) {
+    Map<String, dynamic> rawResource,
+    String extensionUrl,
+  ) {
     final extensions = rawResource['extension'] as List<dynamic>?;
     if (extensions == null) return null;
 

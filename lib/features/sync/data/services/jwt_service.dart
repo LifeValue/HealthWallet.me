@@ -6,7 +6,7 @@ class JwtService {
     try {
       final parts = token.split('.');
       if (parts.length != 3) return null;
-      
+
       final payload = parts[1];
       final normalized = base64Url.normalize(payload);
       final resp = utf8.decode(base64Url.decode(normalized));
@@ -22,10 +22,10 @@ class JwtService {
     try {
       final decoded = decodeJWT(token);
       if (decoded == null) return null;
-      
+
       final exp = decoded['exp'];
       if (exp == null) return null;
-      
+
       return DateTime.fromMillisecondsSinceEpoch(exp * 1000);
     } catch (e) {
       return null;
@@ -36,7 +36,7 @@ class JwtService {
   static bool isExpired(String token) {
     final expirationTime = getExpirationTime(token);
     if (expirationTime == null) return true;
-    
+
     return DateTime.now().isAfter(expirationTime);
   }
 
@@ -49,10 +49,10 @@ class JwtService {
   static Duration? getTimeUntilExpiration(String token) {
     final expirationTime = getExpirationTime(token);
     if (expirationTime == null) return null;
-    
+
     final now = DateTime.now();
     if (now.isAfter(expirationTime)) return Duration.zero;
-    
+
     return expirationTime.difference(now);
   }
 
@@ -60,7 +60,7 @@ class JwtService {
   static String getExpirationDescription(String token) {
     final timeUntilExpiration = getTimeUntilExpiration(token);
     if (timeUntilExpiration == null) return 'Invalid token';
-    
+
     if (timeUntilExpiration.isNegative) {
       final expiredDuration = timeUntilExpiration.abs();
       if (expiredDuration.inDays > 0) {

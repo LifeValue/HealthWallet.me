@@ -1,0 +1,28 @@
+# Editor defaults for every file type. The formatters in .pre-commit-config.yaml
+# enforce the same settings; ktlint and shfmt read their options from here.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{kt,kts}]
+indent_size = 4
+max_line_length = 100
+ktlint_code_style = android_studio
+
+[*.{swift,h,m,mm}]
+indent_size = 4
+
+[*.{pbxproj,xcscheme,xcworkspacedata,storyboard,xib,plist,entitlements}]
+indent_style = tab
+
+[{Makefile,*.mk}]
+indent_style = tab

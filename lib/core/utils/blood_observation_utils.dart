@@ -1,6 +1,7 @@
-import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
-import 'package:health_wallet/core/constants/blood_types.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir;
+import 'package:health_wallet/core/constants/blood_types.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 
 class BloodObservationUtils {
   static Observation createBloodTypeObservation({
@@ -22,6 +23,7 @@ class BloodObservationUtils {
       id: observationId,
       sourceId: patientSourceId,
       resourceId: observationId,
+      // Stored FHIR data: the observation title stays English in every locale.
       title: 'Blood Type: $bloodType',
       date: now,
       status: fhir.ObservationStatus.final_,
@@ -30,7 +32,8 @@ class BloodObservationUtils {
           coding: [
             fhir.Coding(
               system: fhir.FhirUri(
-                  'http://terminology.hl7.org/CodeSystem/observation-category'),
+                'http://terminology.hl7.org/CodeSystem/observation-category',
+              ),
               code: fhir.FhirCode('laboratory'),
               display: fhir.FhirString('Laboratory'),
             ),
@@ -87,8 +90,11 @@ class BloodObservationUtils {
         BloodTypes.getAllBloodTypes().contains(bloodType);
   }
 
-  static String getBloodTypeDisplayName(String bloodType) {
-    if (bloodType == 'N/A') return 'Not Available';
+  static String getBloodTypeDisplayName(
+    String bloodType,
+    AppLocalizations l10n,
+  ) {
+    if (bloodType == 'N/A') return l10n.bloodTypeNotAvailable;
     return BloodTypes.getDisplayName(bloodType);
   }
 

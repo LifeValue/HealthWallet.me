@@ -1,12 +1,12 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
-
-import java.util.Properties
-        import java.io.FileInputStream
 
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
@@ -22,8 +22,8 @@ if (localPropertiesFile.exists()) {
 
 android {
     namespace = "com.techstackapps.healthwallet"
-    compileSdk = 36
-    ndkVersion = "27.0.12077973"
+    compileSdk = 37
+    ndkVersion = "28.2.13676358"
 
     packaging {
         jniLibs {
@@ -35,7 +35,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    
+
     kotlin {
         jvmToolchain(17)
     }
@@ -81,4 +81,9 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // On-device OCR behind the dev.lifevalue.healthwallet/ocr channel (ocr/TextRecognitionHandler.kt)
+    implementation("com.google.mlkit:text-recognition:16.0.1")
 }

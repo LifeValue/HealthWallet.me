@@ -2,13 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:uuid/uuid.dart';
-
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/utils/file_url.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
 import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
 
 class FhirBundleMapper {
   static const _uuid = Uuid();
@@ -23,8 +24,9 @@ class FhirBundleMapper {
     final entries = <Map<String, dynamic>>[];
 
     for (final resource in records) {
-      final rawResource =
-          Map<String, dynamic>.from(resource.rawResource as Map);
+      final rawResource = Map<String, dynamic>.from(
+        resource.rawResource as Map,
+      );
 
       await _embedAttachmentData(rawResource);
 
@@ -56,7 +58,8 @@ class FhirBundleMapper {
   }
 
   static Future<void> _embedAttachmentData(
-      Map<String, dynamic> rawResource) async {
+    Map<String, dynamic> rawResource,
+  ) async {
     if (rawResource['resourceType'] != 'DocumentReference') return;
 
     final content = rawResource['content'] as List?;
@@ -66,7 +69,7 @@ class FhirBundleMapper {
       final attachment = item['attachment'] as Map<String, dynamic>?;
       final url = attachment?['url'] as String?;
       if (url != null && url.startsWith('file://')) {
-        final resolvedFile = await _resolveFile(url.substring(7));
+        final resolvedFile = await _resolveFile(filePathOfUrl(url));
         if (resolvedFile != null) {
           final bytes = await resolvedFile.readAsBytes();
           attachment!['data'] = base64Encode(bytes);
@@ -108,7 +111,10 @@ class FhirBundleMapper {
         final candidate = File('$dir/$fileName');
         if (await candidate.exists()) return candidate;
       }
-    } catch (_) {}
+    } catch (e) {
+      // Treated as a missing file: the record is shared without it.
+      logger.w('Could not look for the attachment file $fileName', e);
+    }
 
     return null;
   }
@@ -129,7 +135,8 @@ class FhirBundleMapper {
         final resourceType = resourceJson['resourceType'] as String?;
         if (resourceType == null) continue;
 
-        final resourceId = entry['_resourceId']?.toString() ??
+        final resourceId =
+            entry['_resourceId']?.toString() ??
             resourceJson['id']?.toString() ??
             _uuid.v4();
 
@@ -202,52 +209,53 @@ class FhirBundleMapper {
     }
   }
 
-  static String _extractTitle(
-      Map<String, dynamic> json, String resourceType) {
-    switch (resourceType) {
-      case 'Encounter':
-        final type = json['type'] as List?;
-        if (type != null && type.isNotEmpty) {
-          final coding = type[0]['coding'] as List?;
-          if (coding != null && coding.isNotEmpty) {
-            return coding[0]['display']?.toString() ?? 'Encounter';
-          }
-          final text = type[0]['text']?.toString();
-          if (text != null) return text;
-        }
-        return 'Encounter';
-      case 'Observation':
-        return _extractCodeableConceptTitle(json['code'], 'Observation');
-      case 'Condition':
-        return _extractCodeableConceptTitle(json['code'], 'Condition');
-      case 'Procedure':
-        return _extractCodeableConceptTitle(json['code'], 'Procedure');
-      case 'Immunization':
-        return _extractCodeableConceptTitle(
-            json['vaccineCode'], 'Immunization');
-      case 'MedicationRequest':
-        return _extractCodeableConceptTitle(
-            json['medicationCodeableConcept'], 'Medication Request');
-      case 'DiagnosticReport':
-        return _extractCodeableConceptTitle(
-            json['code'], 'Diagnostic Report');
-      default:
-        return resourceType;
-    }
+  /// The record's name from its code, or '' when it has none readable; the
+  /// record then names itself ([IFhirResource.displayTitle]), localized.
+  static String _extractTitle(Map<String, dynamic> json, String resourceType) {
+    return switch (resourceType) {
+      'Encounter' => _extractCodeableConceptTitle(
+        (json['type'] as List?)?.firstOrNull,
+      ),
+      'Observation' ||
+      'Condition' ||
+      'Procedure' ||
+      'DiagnosticReport' => _extractCodeableConceptTitle(json['code']),
+      'Immunization' => _extractCodeableConceptTitle(json['vaccineCode']),
+      'MedicationRequest' => _extractCodeableConceptTitle(
+        json['medicationCodeableConcept'],
+      ),
+      'VisionPrescription' => _extractCodeableConceptTitle(
+        _lensProduct(json['lensSpecification']),
+      ),
+      _ => '',
+    };
   }
 
-  static String _extractCodeableConceptTitle(
-      dynamic codeableConcept, String fallback) {
-    if (codeableConcept is! Map<String, dynamic>) return fallback;
-    final coding = codeableConcept['coding'] as List?;
-    if (coding != null && coding.isNotEmpty) {
-      return coding[0]['display']?.toString() ?? fallback;
+  /// The title the document printed for a prescription (its lenses'
+  /// product text), never a code's display.
+  static Map<String, dynamic>? _lensProduct(dynamic lenses) {
+    if (lenses is! List || lenses.isEmpty || lenses.first is! Map) return null;
+    final product = (lenses.first as Map)['product'];
+    return product is Map ? {'text': product['text']} : null;
+  }
+
+  /// The first coding's display that has one, then the text, then ''.
+  static String _extractCodeableConceptTitle(dynamic codeableConcept) {
+    if (codeableConcept is! Map) return '';
+    final coding = codeableConcept['coding'];
+    if (coding is List) {
+      for (final c in coding) {
+        final display = c is Map ? c['display']?.toString() : null;
+        if (display != null && display.isNotEmpty) return display;
+      }
     }
-    return codeableConcept['text']?.toString() ?? fallback;
+    return codeableConcept['text']?.toString() ?? '';
   }
 
   static DateTime? _extractDate(
-      Map<String, dynamic> json, String resourceType) {
+    Map<String, dynamic> json,
+    String resourceType,
+  ) {
     String? dateString;
 
     switch (resourceType) {
@@ -255,15 +263,17 @@ class FhirBundleMapper {
         dateString = json['period']?['start']?.toString();
         break;
       case 'Observation':
-        dateString = json['effectiveDateTime']?.toString() ??
-            json['issued']?.toString();
+        dateString =
+            json['effectiveDateTime']?.toString() ?? json['issued']?.toString();
         break;
       case 'Condition':
-        dateString = json['onsetDateTime']?.toString() ??
+        dateString =
+            json['onsetDateTime']?.toString() ??
             json['recordedDate']?.toString();
         break;
       case 'Procedure':
-        dateString = json['performedDateTime']?.toString() ??
+        dateString =
+            json['performedDateTime']?.toString() ??
             json['performedPeriod']?['start']?.toString();
         break;
       case 'Immunization':
@@ -272,12 +282,17 @@ class FhirBundleMapper {
       case 'MedicationRequest':
         dateString = json['authoredOn']?.toString();
         break;
+      case 'VisionPrescription':
+        dateString =
+            json['dateWritten']?.toString() ?? json['created']?.toString();
+        break;
       case 'DiagnosticReport':
-        dateString = json['effectiveDateTime']?.toString() ??
-            json['issued']?.toString();
+        dateString =
+            json['effectiveDateTime']?.toString() ?? json['issued']?.toString();
         break;
       default:
-        dateString = json['date']?.toString() ??
+        dateString =
+            json['date']?.toString() ??
             json['issued']?.toString() ??
             json['recordedDate']?.toString();
     }
@@ -309,14 +324,17 @@ class FhirBundleMapper {
     final contextEncounter = context['encounter'] as List?;
     if (contextEncounter != null && contextEncounter.isNotEmpty) {
       return _parseReferenceString(
-          contextEncounter[0]['reference']?.toString());
+        contextEncounter[0]['reference']?.toString(),
+      );
     }
 
     return _extractReferenceId(context, 'encounter');
   }
 
   static String? _extractReferenceId(
-      Map<String, dynamic> json, String fieldName) {
+    Map<String, dynamic> json,
+    String fieldName,
+  ) {
     return _parseReferenceString(json[fieldName]?['reference']?.toString());
   }
 
