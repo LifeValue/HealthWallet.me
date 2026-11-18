@@ -1,5 +1,5 @@
 <!-- android/app/src/main/AndroidManifest.xml -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
   <!-- Permissions -->
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -20,6 +20,11 @@
     android:name="android.permission.NEARBY_WIFI_DEVICES"
     android:usesPermissionFlags="neverForLocation"
   />
+  <!-- The app runs no foreground service. The airdrop plugin declares these
+       without using them, and Play rejects a release that declares them
+       without a matching foreground service use case. -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" tools:node="remove" />
   <application
     android:name="${applicationName}"
     android:label="HealthWallet.me"
@@ -93,6 +98,12 @@
     <!-- Flutter meta-data -->
     <meta-data android:name="flutterEmbedding" android:value="2" />
     <meta-data android:name="io.flutter.embedding.android.EnableImpeller" android:value="false" />
+    <!-- background_downloader's user-initiated job service (unused: model
+         downloads don't run at priority 0) is a job, not a foreground service. -->
+    <service
+      android:name="com.bbflight.background_downloader.UIDTJobService"
+      tools:remove="android:foregroundServiceType"
+    />
   </application>
   <!-- Package visibility (keep for plugins like url_launcher) -->
   <queries>
