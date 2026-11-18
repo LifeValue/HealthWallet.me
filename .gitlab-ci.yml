@@ -16,9 +16,12 @@
 #   macos:direct            manual on develop, release/* and master   shell-macmini (fastlane)
 #                           → notarized DMG on the GitLab Release
 #   windows                 manual on develop, release/* and master   `windows` runner (ST1, PowerShell)
-#                           → the same GitLab Release with zip + msix
+#                           → Microsoft Store package flight, and the
+#                           zip + msix on the same GitLab Release
 #   linux                   manual on develop, release/* and master   Linux instance runner (Docker)
-#                           → the same GitLab Release with .deb + tar.gz
+#                           → Snap Store (edge from develop, beta
+#                           otherwise), and the .deb + tar.gz on the
+#                           same GitLab Release
 #   cdn:publish             manual on develop, release/* and master,  Linux instance runner (Docker)
 #                           once windows and linux succeeded
 #                           → the release's zip, .deb, tar.gz and DMG
@@ -31,8 +34,11 @@
 # on an unprotected branch the job stops at its first step and says so.
 #
 # Every deploy is started by hand from the pipeline, including on develop: a beta goes to TestFlight
-# (iOS, macOS) and the Play internal track only when someone runs it. Nothing goes to production from CI: a tested beta is promoted to the App Store / Play production
-# in App Store Connect and Play Console.
+# (iOS, macOS), the Play internal track, the Microsoft Store package flight and the Snap Store's
+# edge or beta channel only when someone runs it. Nothing goes to production from CI: a tested beta
+# is promoted to the App Store / Play production in App Store Connect and Play Console, a flight's
+# package to the Store's non-flighted submission in Partner Center, and a snap revision to stable on
+# snapcraft.io.
 #
 # The Flutter version comes from .fvmrc, the same pin FVM uses locally.
 #
@@ -58,6 +64,10 @@
 #        ANDROID_KEYSTORE_BASE64                      masked
 #        ANDROID_STORE_PASSWORD, ANDROID_KEY_PASSWORD, ANDROID_KEY_ALIAS   masked
 #        PLAY_STORE_SERVICE_ACCOUNT_BASE64            masked
+#        MSSTORE_TENANT_ID, MSSTORE_SELLER_ID, MSSTORE_CLIENT_ID   NOT from GitHub; see windows:store
+#        MSSTORE_CLIENT_SECRET                        masked; NOT from GitHub
+#        MSSTORE_APP_ID, MSSTORE_FLIGHT_ID            NOT from GitHub; see windows:store
+#        SNAPCRAFT_STORE_CREDENTIALS                  masked; NOT from GitHub; see linux:snap
 #      The download CDN for cdn:publish (RustFS, S3-compatible; server setup in
 #      _bmad-output/planning-artifacts/download-cdn.md), new, not from GitHub:
 #        CDN_S3_ENDPOINT                              e.g. https://s3.example.org
@@ -101,6 +111,9 @@ variables:
   ANDROID_JDK_VERSION: "17.0.20.1+1"
   ANDROID_JDK_URL: "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.20.1%2B1/OpenJDK17U-jdk_aarch64_mac_hotspot_17.0.20.1_1.tar.gz"
   ANDROID_JDK_SHA256: "196d13ba5f10414bef7f6a05a9b3f00edacb18ebacef2b99485db9e2ee18f0e8"
+  # Microsoft Store Developer CLI for windows:store: a self-contained build, no .NET needed.
+  MSSTORE_CLI_VERSION: "0.4.4"
+  MSSTORE_CLI_SHA256: "d288a324541dc68244a683eb5b6445e9239bb47d1e6acf5cca4d1476017f1447"
 
 stages:
   - check
@@ -554,6 +567,14 @@ test:integration:
     when: manual
     allow_failure: true
 
+# TEMPORARY, while windows:store and linux:snap are set up: they also run from their branch, and
+# don't wait for the checks. Remove this and restore `needs: *all_checks` and
+# `rules: *on_deploy_branches` on both jobs before merging.
+.on_store_setup_branches: &on_store_setup_branches
+  - if: $CI_COMMIT_BRANCH == "feature/windows-store-publishing" || $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH =~ /^release\//
+    when: manual
+    allow_failure: true
+
 .on_master: &on_master
   - if: $CI_COMMIT_BRANCH == "master"
     when: manual
@@ -644,12 +665,9 @@ shorebird:patch-ios:
     - *ios_cocoapods
     - shorebird patch --platforms ios --release-version=latest --no-codesign --allow-asset-diffs
 
-# =============================================================================
-# Desktop releases — one GitLab Release per version, which each platform's job adds its files to
-# =============================================================================
 # master       → release      v<version>
 # other branch → pre-release  v<version>-dev.<pipeline iid>
-# (scripts/release_tag.sh; windows:release applies the same rule in PowerShell.)
+# (scripts/release_tag.sh; windows:store applies the same rule in PowerShell.)
 # Each job uploads its packages to the project's generic package registry (healthwallet-macos,
 # healthwallet-windows, healthwallet-linux), creates the release for the tag when it does not
 # exist yet (on the commit that was built) and links its packages to it, so the macOS, Windows
@@ -677,20 +695,60 @@ macos:direct:
     - cd ..
     - scripts/gitlab_release.sh healthwallet-macos build/macos/packages
 
-# Windows: portable zip + Store MSIX, built by scripts/build_windows.ps1.
+# =============================================================================
+# Windows: Microsoft Store package flight
+# =============================================================================
+# Builds the portable zip and the MSIX with scripts/build_windows.ps1, adds both to the GitLab
+# Release, then submits the MSIX to the package flight MSSTORE_FLIGHT_ID of the Store app
+# MSSTORE_APP_ID through the Microsoft Store Developer CLI. The release comes first, so the
+# website's download (cdn:publish) does not depend on the Store accepting the submission.
+# The job ends once Partner Center has accepted the submission (a few minutes); certification follows
+# and takes from a few hours to about three days, after which the flight group's testers get the
+# update from the Store. A tested flight goes to everyone by hand in Partner Center: a new
+# submission of the app, Packages → copy the packages from the flight.
+#
+# Store package versions are <major>.<minor>.<pipeline iid>.0 from pubspec.yaml's version: every
+# upload needs a higher version than the last, the Store requires the fourth part to be 0 and each
+# part stays below 65536. The app itself still shows the pubspec version.
+#
+# The job keeps the MSIX and the portable zip as artifacts. The Store signs the package, so that
+# MSIX does not install outside it; the zip runs anywhere.
+#
+# One-time setup, in Partner Center under Life Value's developer account:
+#   1. Reserve the app name. msix_config in pubspec.yaml must match the app's Product identity page
+#      (identity_name = Package/Identity/Name, publisher = Package/Identity/Publisher,
+#      publisher_display_name = Package/Properties/PublisherDisplayName). MSSTORE_APP_ID is the
+#      Store ID on the same page (9…).
+#   2. Publish the first submission by hand (listing, age ratings, privacy policy, pricing): flights
+#      only exist once the app has a published submission. Its MSIX can come from this job's
+#      artifacts: the job builds and keeps it before it checks the MSSTORE_* variables.
+#   3. Create a known user group with the testers' Microsoft account emails and a package flight
+#      for it. MSSTORE_FLIGHT_ID is the flight's ID (the last part of its Partner Center URL, or
+#      `msstore flights list <app id>`).
+#   4. Account settings → User management → Microsoft Entra applications: add an application with
+#      the Manager role and create a key for it. That page gives MSSTORE_TENANT_ID, MSSTORE_CLIENT_ID
+#      and the key, MSSTORE_CLIENT_SECRET; Account settings → Legal info → Developer gives
+#      MSSTORE_SELLER_ID. The key expires (at most after two years): renew it there and update the
+#      variable before it does.
+#
 # Runs on the `windows` runner ST1: an x64 Windows machine with a protected project runner (shell
 # executor, Windows PowerShell 5.1, builds in C:\gl\builds to keep paths short), started as a
 # service under the local, non-admin user ciagent. It only takes jobs from protected branches and
 # must be on when the job starts. Installed on it (the script's header lists the same): Git for
 # Windows, Visual Studio 2022 Build Tools with the C++ workload and ATL, FVM on the machine PATH
 # (it installs the Flutter version from .fvmrc on first use), Developer Mode and long paths. A
-# service only sees PATH changes after Windows restarts.
-windows:release:
+# service only sees PATH changes after Windows restarts. The job downloads the Store CLI itself and
+# removes the credentials it stored for ciagent when it ends.
+windows:store:
   stage: deploy
   tags: [windows]
   interruptible: false
-  needs: *all_checks
-  rules: *on_deploy_branches
+  needs: [] # TEMPORARY, see .on_store_setup_branches
+  rules: *on_store_setup_branches
+  # One submission at a time: the CLI deletes the flight's pending submission before it creates its
+  # own, so two pipelines would cancel each other's upload.
+  resource_group: windows:store
+  environment: { name: store-flight-windows }
   # Same rewrite as .private_deps. The braces matter: in "$env:CI_SERVER_HOST:2822" PowerShell reads
   # ":2822" as part of the variable name, which expands to nothing.
   before_script:
@@ -700,51 +758,140 @@ windows:release:
   script:
     - if (-not $env:ENV_FILE_CONTENT) { throw "Protected CI/CD variables are not available on $env:CI_COMMIT_BRANCH. Protect this branch to deploy from it." }
     - Copy-Item $env:ENV_FILE_CONTENT .env
-    - .\scripts\build_windows.ps1 -Msix
     - $version = ((Select-String -Path pubspec.yaml -Pattern '^version:\s*([^+\s]+)').Matches[0].Groups[1].Value)
+    - $parts = $version.Split(".")
+    - $storeVersion = "$($parts[0]).$($parts[1]).$env:CI_PIPELINE_IID.0"
+    - .\scripts\build_windows.ps1 -Msix -MsixVersion $storeVersion
     - if ($env:CI_COMMIT_BRANCH -eq "master") { $tag = "v$version" } else { $tag = "v$version-dev.$env:CI_PIPELINE_IID" }
-    - $headers = @{ "JOB-TOKEN" = $env:CI_JOB_TOKEN }
-    - $packageUrl = "$env:CI_API_V4_URL/projects/$env:CI_PROJECT_ID/packages/generic/healthwallet-windows/$tag"
-    - $files = Get-ChildItem build\windows\packages
-    - foreach ($file in $files) { Invoke-RestMethod -Method Put -Uri "$packageUrl/$($file.Name)" -Headers $headers -InFile $file.FullName }
-    - $releases = "$env:CI_API_V4_URL/projects/$env:CI_PROJECT_ID/releases"
+    # The release (for cdn:publish) does not stop the Store submission: a retried job fails to link
+    # files the first run linked already, and should still reach the Store. A failed release fails
+    # the job at the end.
     - |
-      $release = @{
-        tag_name    = $tag
-        ref         = $env:CI_COMMIT_SHA
-        name        = $tag
-        description = "## HealthWallet $tag`n`nBranch: ``$env:CI_COMMIT_BRANCH``, commit: ``$env:CI_COMMIT_SHA```n`n- **macOS (.dmg):** open it and drag HealthWallet to Applications (macOS 14 or newer)`n- **Windows installer (.msix):** double-click to install (Windows 10+)`n- **Windows portable (.zip):** extract and run ``health_wallet.exe```n- **Linux (.deb):** ``sudo apt install ./HealthWallet-Linux-*.deb`` (Ubuntu 24.04, Debian 13 or newer)`n- **Linux portable (.tar.gz):** extract and run ``HealthWallet/health_wallet``"
-      } | ConvertTo-Json
-      # Sent as UTF-8 bytes: Windows PowerShell 5.1 would otherwise encode a string body as Latin-1.
-      # 409 means the other platform's job created the release already; anything else fails the job
-      # with GitLab's reason.
+      $releaseError = $null
       try {
-        Invoke-RestMethod -Method Post -Uri $releases -Headers $headers -ContentType "application/json; charset=utf-8" -Body ([System.Text.Encoding]::UTF8.GetBytes($release)) | Out-Null
+        $headers = @{ "JOB-TOKEN" = $env:CI_JOB_TOKEN }
+        $packageUrl = "$env:CI_API_V4_URL/projects/$env:CI_PROJECT_ID/packages/generic/healthwallet-windows/$tag"
+        $files = Get-ChildItem build\windows\packages
+        foreach ($file in $files) { Invoke-RestMethod -Method Put -Uri "$packageUrl/$($file.Name)" -Headers $headers -InFile $file.FullName | Out-Null }
+        $releases = "$env:CI_API_V4_URL/projects/$env:CI_PROJECT_ID/releases"
+        $release = @{
+          tag_name    = $tag
+          ref         = $env:CI_COMMIT_SHA
+          name        = $tag
+          description = "## HealthWallet $tag`n`nBranch: ``$env:CI_COMMIT_BRANCH``, commit: ``$env:CI_COMMIT_SHA```n`n- **macOS (.dmg):** open it and drag HealthWallet to Applications (macOS 14 or newer)`n- **Windows installer (.msix):** double-click to install (Windows 10+)`n- **Windows portable (.zip):** extract and run ``health_wallet.exe```n- **Linux (.deb):** ``sudo apt install ./HealthWallet-Linux-*.deb`` (Ubuntu 24.04, Debian 13 or newer)`n- **Linux portable (.tar.gz):** extract and run ``HealthWallet/health_wallet``"
+        } | ConvertTo-Json
+        # Sent as UTF-8 bytes: Windows PowerShell 5.1 would otherwise encode a string body as
+        # Latin-1. 409 means another platform's job created the release already.
+        try {
+          Invoke-RestMethod -Method Post -Uri $releases -Headers $headers -ContentType "application/json; charset=utf-8" -Body ([System.Text.Encoding]::UTF8.GetBytes($release)) | Out-Null
+        } catch {
+          $status = [int]$_.Exception.Response.StatusCode
+          if ($status -ne 409) { throw "Creating release $tag failed (HTTP $status): $($_.ErrorDetails.Message)" }
+        }
+        foreach ($file in $files) { Invoke-RestMethod -Method Post -Uri "$releases/$tag/assets/links" -Headers $headers -Body @{ name = $file.Name; url = "$packageUrl/$($file.Name)"; link_type = "package" } | Out-Null }
       } catch {
-        $status = [int]$_.Exception.Response.StatusCode
-        if ($status -ne 409) { throw "Creating release $tag failed (HTTP $status): $($_.ErrorDetails.Message)" }
+        $releaseError = "Adding the packages to release $tag failed: $_"
+        Write-Warning "$releaseError. Submitting to the Store regardless."
       }
-    - foreach ($file in $files) { Invoke-RestMethod -Method Post -Uri "$releases/$tag/assets/links" -Headers $headers -Body @{ name = $file.Name; url = "$packageUrl/$($file.Name)"; link_type = "package" } | Out-Null }
+    - $missing = @("MSSTORE_TENANT_ID", "MSSTORE_SELLER_ID", "MSSTORE_CLIENT_ID", "MSSTORE_CLIENT_SECRET", "MSSTORE_APP_ID", "MSSTORE_FLIGHT_ID") | Where-Object { -not [Environment]::GetEnvironmentVariable($_) }
+    - if ($missing) { throw "Not submitted to the Store, $($missing -join ', ') not set (see windows:store in .gitlab-ci.yml). The MSIX $storeVersion is in the job's artifacts." }
+    - $cli = "build\msstore-cli"
+    - New-Item -ItemType Directory -Force -Path $cli | Out-Null
+    # curl.exe ships with Windows 10 1803 and later; Invoke-WebRequest in Windows PowerShell is slow
+    # and may not offer TLS 1.2.
+    - curl.exe -fsSL --retry 3 -o "$cli\msstore.zip" "https://github.com/microsoft/msstore-cli/releases/download/v$env:MSSTORE_CLI_VERSION/MSStoreCLI-win-x64.zip"
+    - if ((Get-FileHash "$cli\msstore.zip" -Algorithm SHA256).Hash -ne $env:MSSTORE_CLI_SHA256) { throw "Checksum mismatch for the Microsoft Store Developer CLI $env:MSSTORE_CLI_VERSION" }
+    - Expand-Archive "$cli\msstore.zip" -DestinationPath $cli -Force
+    - $msstore = (Resolve-Path "$cli\msstore.exe").Path
+    - "& $msstore settings --enableTelemetry false"
+    - "& $msstore reconfigure --tenantId $env:MSSTORE_TENANT_ID --sellerId $env:MSSTORE_SELLER_ID --clientId $env:MSSTORE_CLIENT_ID --clientSecret $env:MSSTORE_CLIENT_SECRET"
+    - if ($LASTEXITCODE -ne 0) { throw "Signing in to Partner Center failed (exit code $LASTEXITCODE)" }
+    - '& $msstore publish . --inputDirectory build\windows\packages --appId $env:MSSTORE_APP_ID --flightId $env:MSSTORE_FLIGHT_ID'
+    - if ($LASTEXITCODE -ne 0) { throw "Submitting $storeVersion to the Store failed (exit code $LASTEXITCODE)" }
+    - if ($releaseError) { throw $releaseError }
   after_script:
     - Remove-Item -Force -ErrorAction SilentlyContinue .env
+    # The CLI keeps the client secret in ciagent's Windows Credential Manager and its settings in
+    # LocalAppData; neither should outlive the job.
+    - if ($env:MSSTORE_CLIENT_ID) { cmdkey /delete:"MicrosoftStoreCli:user=$env:MSSTORE_CLIENT_ID" | Out-Null }
+    - Remove-Item -Recurse -Force -ErrorAction SilentlyContinue "$env:LOCALAPPDATA\Microsoft\MSStore.CLI"
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - build/windows/packages/
 
-# Linux: .deb + portable tarball, built by flutter build linux and scripts/package_linux.sh, for
-# the runner's architecture. Built on Ubuntu 24.04, the oldest system the packages support:
-# llamadart's prebuilt libraries need glibc 2.38.
-linux:release:
+# =============================================================================
+# Linux: Snap Store
+# =============================================================================
+# develop                 → edge
+# release/* and master    → beta
+# Builds the Flutter bundle, packs it as a strict snap with snap/snapcraft.yaml and uploads it to the
+# Snap Store, released to the channel above. Edge and beta are the testers' channels, like
+# TestFlight and the Play internal track: testers install it with `snap install health-wallet
+# --edge` or `--beta`. Nothing goes to stable from CI: promote a tested revision by hand at
+# snapcraft.io/health-wallet/releases. The version is the pubspec version; the store numbers each
+# upload with a revision, as the mobile stores number builds.
+#
+# Every upload goes through the store's automated review. A revision that needs a human reviewer
+# (see step 3 below) is still uploaded: the job passes and says so. Once a reviewer approves it,
+# check that it is on its channel at snapcraft.io/health-wallet/releases.
+# The .deb and portable tarball from scripts/package_linux.sh go to the GitLab Release first
+# (scripts/gitlab_release.sh), so the website's download (cdn:publish) does not depend on the Snap
+# Store, and stay in the job's artifacts.
+#
+# Runs in Canonical's snapcraft image (Ubuntu 24.04 with Snapcraft 8 for core24 snaps; pinned by
+# digest, as it only has moving tags), on the runner's architecture. Ubuntu 24.04 is also the oldest
+# system llamadart's prebuilt libraries run on (glibc 2.38). snapcraft packs in destructive mode,
+# in the job's own container; snapcraft.yaml says why that is enough.
+#
+# One-time setup:
+#   1. Register the name: `snapcraft register health-wallet`, or snapcraft.io/register-snap.
+#   2. Export store credentials that can only upload and release this snap, and keep them as the
+#      masked, protected variable SNAPCRAFT_STORE_CREDENTIALS. From a Mac, through the same image:
+#        docker run --rm -it -v "$PWD":/out --entrypoint snapcraft ghcr.io/canonical/snapcraft:8_core24 \
+#          export-login --snaps=health-wallet --channels=edge,beta \
+#          --acls=package_access,package_push,package_update,package_release \
+#          --expires=<date, at most a year ahead> /out/snap-credentials.txt
+#      then paste the file's contents into the variable and delete the file. Renew it before it
+#      expires.
+#   3. In one post in the forum's store-requests category (forum.snapcraft.io), ask the store to
+#      allow the dbus-health-wallet slot (snapcraft.yaml says why the app owns its bus name) and
+#      to auto-connect password-manager-service (pairing keys) and avahi-control (discovery).
+#      Until the slot is allowed, every revision waits for a reviewer ("human review required due
+#      to 'deny-connection' constraint (interface attributes)"). Until the plugs auto-connect,
+#      testers connect them after installing:
+#        sudo snap connect health-wallet:password-manager-service
+#        sudo snap connect health-wallet:avahi-control
+linux:snap:
   stage: deploy
   extends: .flutter_job
-  image: ubuntu:24.04
+  image:
+    name: ghcr.io/canonical/snapcraft:8_core24@sha256:f51fc5081f844bece0bb69d7b19a9c543f4666685da630dd9f9f7d0fb74e08f5
+    # The image runs snapcraft through Pebble; the job runs its own commands.
+    entrypoint: [""]
   interruptible: false
-  needs: *all_checks
-  rules: *on_deploy_branches
+  needs: [] # TEMPORARY, see .on_store_setup_branches
+  rules: *on_store_setup_branches
+  # Uploads from two pipelines would otherwise be released to the channel in whatever order they
+  # finish.
+  resource_group: linux:snap
+  environment: { name: snap-store }
   cache:
     - <<: *flutter_sdk_cache
       policy: pull
     - <<: *pub_cache
       policy: pull
+  variables:
+    # What the image sets for its own snapcraft service: build in this container, with craftctl on
+    # PATH.
+    SNAPCRAFT_BUILD_ENVIRONMENT: host
   before_script:
     - '[ -n "$ENV_FILE_CONTENT" ] || { echo "Protected CI/CD variables are not available on $CI_COMMIT_BRANCH. Protect this branch (Settings → Repository → Protected branches) to deploy from it."; exit 1; }'
+    - export PATH="/usr/libexec/snapcraft:$PATH"
+    # The image ships the extensions' launcher scripts in site-packages, but snapcraft looks for them
+    # in an empty /usr/share/snapcraft/extensions.
+    - ln -sfn /usr/lib/python3*/site-packages/extensions/* /usr/share/snapcraft/extensions/
     - export DEBIAN_FRONTEND=noninteractive
     - apt-get update -qq
     # Flutter's Linux toolchain, the libraries the runner and the plugins link, and dpkg-deb.
@@ -759,9 +906,28 @@ linux:release:
     - dart run build_runner build --delete-conflicting-outputs
     - flutter build linux --release --target lib/main_desktop.dart
     - scripts/package_linux.sh
-    - scripts/gitlab_release.sh healthwallet-linux build/linux/packages
+    # The release (for cdn:publish) does not stop the snap upload: a retried job fails to link the
+    # files the first run linked already, and should still reach the store. A failed release fails
+    # the job at the end.
+    - scripts/gitlab_release.sh healthwallet-linux build/linux/packages || release_failed=1
+    - '[ -n "$SNAPCRAFT_STORE_CREDENTIALS" ] || { echo "Not uploaded to the Snap Store: SNAPCRAFT_STORE_CREDENTIALS is not set; see linux:snap in .gitlab-ci.yml."; exit 1; }'
+    - if [ "$CI_COMMIT_BRANCH" = develop ]; then channel=edge; else channel=beta; fi
+    - snapcraft pack --output build/linux/packages/
+    # snapcraft exits non-zero when the revision needs a human reviewer, although the upload worked.
+    - |
+      set -o pipefail
+      if ! snapcraft upload --release="$channel" build/linux/packages/*.snap 2>&1 | tee snap-upload.log; then
+        grep -q "will need manual review" snap-upload.log || exit 1
+        echo "Uploaded. The revision waits for a Snap Store reviewer. Once approved, check that it is on $channel at snapcraft.io/health-wallet/releases and release it there if not."
+      fi
+    - '[ -z "${release_failed:-}" ] || { echo "Adding the packages to the GitLab Release failed (see above); the snap was uploaded regardless."; exit 1; }'
   after_script:
     - rm -f .env
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - build/linux/packages/
 
 # =============================================================================
 # Download CDN — the website's download buttons
@@ -775,8 +941,8 @@ linux:release:
 # master publishes to stable/, develop and release/* to beta/. Server setup and the versions.json
 # contract: _bmad-output/planning-artifacts/download-cdn.md.
 #
-# It becomes playable once windows:release and linux:release have both succeeded (they in turn
-# need every check), and its rules mirror .on_deploy_branches, adding the channel. One publish at
+# It becomes playable once windows:store and linux:snap have run (they in turn need every
+# check), and its rules mirror .on_deploy_branches, adding the channel. One publish at
 # a time, so two pipelines cannot interleave their versions.json writes.
 # Playing cdn:publish on an older pipeline rolls the website back to that version: this is the
 # intended rollback path.
@@ -787,9 +953,9 @@ cdn:publish:
     entrypoint: [""]
   interruptible: false
   needs:
-    - job: windows:release
+    - job: windows:store
       artifacts: false
-    - job: linux:release
+    - job: linux:snap
       artifacts: false
   rules:
     - if: $CI_COMMIT_BRANCH == "master"

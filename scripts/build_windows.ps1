@@ -1,6 +1,6 @@
 # Builds the Windows desktop app with the Flutter version pinned in .fvmrc and packages it as a
 # portable zip and, with -Msix, a Store MSIX, in build\windows\packages\. The CI job
-# windows:release runs this script.
+# windows:store runs this script and submits the MSIX to the Microsoft Store.
 #
 # Needs: Git for Windows, Visual Studio 2022 with "Desktop development with C++" including ATL
 # (flutter_secure_storage needs atlstr.h; the Build Tools' C++ workload leaves it out), Developer
@@ -10,10 +10,13 @@
 # that Dart is older than 3.6), and SSH access to
 # git.lifevalue.com (port 2822) for the private packages (CI rewrites them to HTTPS with its job token).
 #
-# Usage: .\scripts\build_windows.ps1 [-Msix] [-SkipCodegen] [-Clean]
+# Usage: .\scripts\build_windows.ps1 [-Msix [-MsixVersion <a.b.c.0>]] [-SkipCodegen] [-Clean]
+# -MsixVersion defaults to pubspec.yaml's version with a fourth part of 0; CI passes a higher one
+# for every Store upload.
 
 param(
     [switch]$Msix,
+    [string]$MsixVersion,
     [switch]$SkipCodegen,
     [switch]$Clean
 )
@@ -79,8 +82,9 @@ Compress-Archive -Path "$Release\*" -DestinationPath $Zip -Force
 Write-Host $Zip
 
 if ($Msix) {
+    if (-not $MsixVersion) { $MsixVersion = "$Version.0" }
     # msix_config in pubspec.yaml; the Store signs the package.
-    Invoke-Step "MSIX" { & $Dart run msix:create --version "$Version.0" }
+    Invoke-Step "MSIX $MsixVersion" { & $Dart run msix:create --version $MsixVersion }
     $Package = Get-ChildItem -Path $Release -Filter "*.msix" | Select-Object -First 1
     $MsixOut = "$Out\HealthWallet-Windows-v$Version-setup.msix"
     Copy-Item $Package.FullName $MsixOut
