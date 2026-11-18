@@ -158,13 +158,31 @@ class _CheckedModelFile extends Fake implements File {
   }
 }
 
-/// background_downloader stand-in that records cancels; no task may start.
-class _IdleFileDownloader extends Fake implements FileDownloader {
+/// background_downloader stand-in whose task runs until it is cancelled.
+class _PendingFileDownloader extends Fake implements FileDownloader {
   final cancelledTaskIds = <String>[];
+  final _running = <String, (DownloadTask, Completer<TaskStatusUpdate>)>{};
+
+  @override
+  Future<TaskStatusUpdate> download(
+    DownloadTask task, {
+    void Function(TaskStatus)? onStatus,
+    void Function(double)? onProgress,
+    void Function(Duration)? onElapsedTime,
+    Duration? elapsedTimeInterval,
+  }) {
+    final done = Completer<TaskStatusUpdate>();
+    _running[task.taskId] = (task, done);
+    return done.future;
+  }
 
   @override
   Future<bool> cancelTaskWithId(String taskId) async {
     cancelledTaskIds.add(taskId);
+    final running = _running.remove(taskId);
+    if (running == null) return false;
+    final (task, done) = running;
+    done.complete(TaskStatusUpdate(task, TaskStatus.canceled));
     return true;
   }
 }
@@ -334,9 +352,9 @@ void main() {
   });
 
   group('background_downloader (mobile)', () {
-    test('a cancel that lands while the downloader is being set up starts '
-        'no task', () async {
-      final downloader = _IdleFileDownloader();
+    test('a cancel that lands as the task is handed to the downloader '
+        'cancels that task', () async {
+      final downloader = _PendingFileDownloader();
       final dataSource = AiInferenceDataSourceImpl(
         prefs,
         fileDownloader: downloader,
@@ -351,8 +369,8 @@ void main() {
               dataSource.downloadModelForVariant(_variant, onProgress: (_) {}),
           _DownloadIo(
             _modelId,
-            // Lands after the download's own cancel check, before the task
-            // is handed to the downloader.
+            // Lands after the download's own cancel check, once the task
+            // has been handed to the downloader.
             onModelFileChecked: () => scheduleMicrotask(
               () => cancel ??= dataSource.cancelModelDownloadForVariant(
                 _variant,

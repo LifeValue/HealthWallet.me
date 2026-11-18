@@ -403,33 +403,6 @@ class AiInferenceDataSourceImpl
   @override
   bool isVisionModelAvailable() => _engine != null && _hasVisionProjector;
 
-  Future<void> _configureDownloaderForLargeFile() async {
-    if (!Platform.isAndroid) return;
-
-    _fileDownloader.configureNotificationForGroup(
-      'smart_downloads',
-      running: const TaskNotification(
-        'Downloading AI Model',
-        'Progress: {progress}',
-      ),
-      complete: const TaskNotification(
-        'AI Model Downloaded',
-        'Ready to use',
-      ),
-      error: const TaskNotification(
-        'Download Failed',
-        'Tap to retry',
-      ),
-      progressBar: true,
-    );
-
-    await _fileDownloader.configure(
-      androidConfig: [
-        (Config.runInForeground, Config.always),
-      ],
-    );
-  }
-
   Future<void> _downloadFile({
     required String url,
     required String filename,
@@ -702,11 +675,6 @@ class AiInferenceDataSourceImpl
     );
     // Known before the first await, so a cancel can always reach the task.
     transfer.taskId = task.taskId;
-
-    await _configureDownloaderForLargeFile();
-    if (transfer.isCancelled) {
-      throw ModelDownloadCancelledException(filename);
-    }
 
     // The file moves into ai_models/ only once the task completes, so a
     // cancelled task leaves nothing there.
