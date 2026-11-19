@@ -84,7 +84,7 @@ class _ResourcesFormState extends State<ResourcesForm> {
             if (patient?.hasSelection == true)
               _buildResourceForm(
                 context,
-                resource: _resolvePatient(patient!),
+                resource: patient!.shown,
                 canRemove: false,
                 isStagedResource: true,
                 isLocked: widget.isAttachmentLocked,
@@ -784,19 +784,11 @@ class _ResourcesFormState extends State<ResourcesForm> {
     return null;
   }
 
-  void _swapPatient(
-    BuildContext context,
-    StagedPatient patient,
-    ImportMode targetMode,
-  ) {
+  void _swapPatient(BuildContext context, StagedPatient patient) {
     context.read<ProcessingBloc>().add(
       EncounterAttached(
         sessionId: widget.sessionId,
-        patient: StagedPatient(
-          draft: patient.draft,
-          existing: patient.existing,
-          mode: targetMode,
-        ),
+        patient: patient.swapped,
         encounter: widget.encounter ?? const StagedEncounter(),
       ),
     );
@@ -825,122 +817,86 @@ class _ResourcesFormState extends State<ResourcesForm> {
     );
   }
 
-  MappingPatient _resolvePatient(StagedPatient patient) {
-    if (patient.draft != null && patient.existing != null) {
-      final isSamePerson = patient.draft!.id == patient.existing!.id;
-      if (isSamePerson || patient.mode == ImportMode.createNew) {
-        return patient.draft!;
-      }
-      return MappingPatient.fromFhirResource(patient.existing!);
-    }
-    if (patient.draft != null) {
-      return patient.draft!;
-    }
-    if (patient.existing != null) {
-      return MappingPatient.fromFhirResource(patient.existing!);
-    }
-    return const MappingPatient();
-  }
-
   Widget _buildPatientMatchBanner(BuildContext context, StagedPatient patient) {
-    final hasBoth = patient.draft != null && patient.existing != null;
-    final isNewPatient = patient.existing == null && patient.draft != null;
-    final isNewWithExisting = hasBoth && patient.mode == ImportMode.createNew;
-    final isModified = hasBoth && patient.mode == ImportMode.linkExisting;
+    final shown = patient.shown;
+    final shownName = '${shown.givenName.value} ${shown.familyName.value}'
+        .trim();
+    final swap = patient.canSwap ? () => _swapPatient(context, patient) : null;
+    final swapIcon = patient.canSwap ? Icons.swap_horiz : null;
 
-    if (isNewPatient && !patient.draft!.isIdentified) {
-      return _buildBanner(
-        context,
-        icon: Icons.person_search_outlined,
-        color: context.colorScheme.tertiary,
-        text: context.l10n.processingNoPatientFound,
-      );
-    }
-
-    if (isNewPatient) {
-      final draftName = patient.draft != null
-          ? '${patient.draft!.givenName.value} ${patient.draft!.familyName.value}'
-                .trim()
-          : '';
-      return _buildBanner(
-        context,
-        icon: Icons.person_add_outlined,
-        color: context.colorScheme.tertiary,
-        text: draftName.isNotEmpty
-            ? '${context.l10n.newPatient}: $draftName'
-            : context.l10n.newPatient,
-      );
-    }
-
-    if (isNewWithExisting) {
-      final draftName = patient.draft != null
-          ? '${patient.draft!.givenName.value} ${patient.draft!.familyName.value}'
-                .trim()
-          : '';
-      return _buildBanner(
-        context,
-        icon: Icons.person_add_outlined,
-        color: context.colorScheme.tertiary,
-        text: draftName.isNotEmpty
-            ? '${context.l10n.newPatient}: $draftName'
-            : context.l10n.newPatient,
-        onAction: () => _swapPatient(context, patient, ImportMode.linkExisting),
-        actionIcon: Icons.swap_horiz,
-      );
-    }
-
-    final displayName = patient.existing!.displayTitle;
-
-    if (isModified) {
-      final isSamePerson = patient.draft!.id == patient.existing!.id;
-
-      if (isSamePerson && widget.isAttachmentLocked) {
+    switch (patient.review) {
+      case PatientReview.unidentified:
         return _buildBanner(
           context,
-          icon: Icons.save_outlined,
-          color: AppColors.success,
-          text: context.l10n.patientSavingModified(displayName),
+          icon: Icons.person_search_outlined,
+          color: context.colorScheme.tertiary,
+          text: context.l10n.processingNoPatientFound,
+          onAction: swap,
+          actionIcon: swapIcon,
+        );
+      case PatientReview.newPerson:
+        return _buildBanner(
+          context,
+          icon: Icons.person_add_outlined,
+          color: context.colorScheme.tertiary,
+          text: shownName.isNotEmpty
+              ? '${context.l10n.newPatient}: $shownName'
+              : context.l10n.newPatient,
+          onAction: swap,
+          actionIcon: swapIcon,
+        );
+      case PatientReview.you:
+        return _buildBanner(
+          context,
+          icon: Icons.person_outline,
+          color: context.colorScheme.primary,
+          text: shownName.isNotEmpty
+              ? context.l10n.patientIsYou(shownName)
+              : context.l10n.patientSavedAsYou,
+          onAction: swap,
+          actionIcon: swapIcon,
+        );
+      case PatientReview.existing:
+        return _buildBanner(
+          context,
+          icon: Icons.check_circle,
+          color: context.colorScheme.primary,
+          text: context.l10n.patientMatchFound(patient.existing!.displayTitle),
+        );
+      case PatientReview.existingEdited:
+        final displayName = patient.existing!.displayTitle;
+        return _buildBanner(
+          context,
+          icon: widget.isAttachmentLocked
+              ? Icons.save_outlined
+              : Icons.edit_outlined,
+          color: widget.isAttachmentLocked
+              ? AppColors.success
+              : AppColors.warning,
+          text: widget.isAttachmentLocked
+              ? context.l10n.patientSavingModified(displayName)
+              : context.l10n.patientModifiedUpdating(displayName),
           onAction: () => context.read<ProcessingBloc>().add(
             PatientReverted(sessionId: widget.sessionId),
           ),
         );
-      }
-
-      if (isSamePerson) {
+      case PatientReview.changedTo:
         return _buildBanner(
           context,
-          icon: Icons.edit_outlined,
-          color: AppColors.warning,
-          text: context.l10n.patientModifiedUpdating(displayName),
-          onAction: () => context.read<ProcessingBloc>().add(
-            PatientReverted(sessionId: widget.sessionId),
+          leadingIcon: Assets.icons.information.svg(
+            width: 16,
+            height: 16,
+            colorFilter: ColorFilter.mode(
+              context.colorScheme.secondary,
+              BlendMode.srcIn,
+            ),
           ),
+          color: context.colorScheme.secondary,
+          text: context.l10n.patientChangedTo(patient.existing!.displayTitle),
+          onAction: swap,
+          actionIcon: swapIcon,
         );
-      }
-
-      return _buildBanner(
-        context,
-        leadingIcon: Assets.icons.information.svg(
-          width: 16,
-          height: 16,
-          colorFilter: ColorFilter.mode(
-            context.colorScheme.secondary,
-            BlendMode.srcIn,
-          ),
-        ),
-        color: context.colorScheme.secondary,
-        text: context.l10n.patientChangedTo(displayName),
-        onAction: () => _swapPatient(context, patient, ImportMode.createNew),
-        actionIcon: Icons.swap_horiz,
-      );
     }
-
-    return _buildBanner(
-      context,
-      icon: Icons.check_circle,
-      color: context.colorScheme.primary,
-      text: context.l10n.patientMatchFound(displayName),
-    );
   }
 
   Widget _buildBanner(

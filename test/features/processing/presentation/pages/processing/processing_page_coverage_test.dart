@@ -88,6 +88,12 @@ class _FakeLayoutExtractionService extends Fake
 
 final _en = lookupAppLocalizations(const Locale('en'));
 
+const _ana = MappingPatient(
+  id: 'p1',
+  givenName: MappedProperty(value: 'Ana'),
+  familyName: MappedProperty(value: 'Pop'),
+);
+
 const _picked = (
   StagedPatient(draft: MappingPatient(id: 'p-picked')),
   StagedEncounter(draft: MappingEncounter(id: 'e-picked')),
@@ -649,7 +655,7 @@ void main() {
           const ProcessingSession(
             id: 's1',
             status: ProcessingStatus.draft,
-            patient: StagedPatient(draft: MappingPatient(id: 'p1')),
+            patient: StagedPatient(draft: _ana),
             encounter: encounter,
           ),
         ),
@@ -668,7 +674,7 @@ void main() {
           const ProcessingSession(
             id: 's1',
             status: ProcessingStatus.draft,
-            patient: StagedPatient(draft: MappingPatient(id: 'p1')),
+            patient: StagedPatient(draft: _ana),
             diagnosticReport: StagedDiagnosticReport(
               draft: MappingDiagnosticReport(
                 id: 'r1',
@@ -686,7 +692,8 @@ void main() {
       expect(bloc.events, [const ResourceCreationInitiated(sessionId: 's1')]);
     });
 
-    testPage('an empty encounter name blocks the save', (tester) async {
+    testPage('a new patient the document does not name blocks the save '
+        'until they have a name', (tester) async {
       await pumpPage(
         tester,
         stateWith(
@@ -694,6 +701,64 @@ void main() {
             id: 's1',
             status: ProcessingStatus.draft,
             patient: StagedPatient(draft: MappingPatient(id: 'p1')),
+            encounter: encounter,
+          ),
+        ),
+      );
+
+      await tapText(tester, _en.done);
+
+      expect(find.text(_en.patientNameRequired), findsOne);
+      expect(find.byType(Dialog), findsNothing);
+      expect(bloc.events, isEmpty);
+    });
+
+    testPage('the unnamed user is saved without asking to confirm an '
+        'update', (tester) async {
+      await pumpPage(
+        tester,
+        stateWith(
+          const ProcessingSession(
+            id: 's1',
+            status: ProcessingStatus.draft,
+            patient: StagedPatient(
+              draft: _ana,
+              existing: Patient(
+                id: 'p-me',
+                title: 'Health Wallet Holder',
+                rawResource: {
+                  'name': [
+                    {
+                      'family': 'Holder',
+                      'given': ['Health Wallet'],
+                    },
+                  ],
+                  'identifier': [
+                    {'value': 'default_patient'},
+                  ],
+                },
+              ),
+              mode: ImportMode.linkExisting,
+            ),
+            encounter: encounter,
+          ),
+        ),
+      );
+
+      await tapText(tester, _en.done);
+
+      expect(find.byType(Dialog), findsNothing);
+      expect(bloc.events, [const ResourceCreationInitiated(sessionId: 's1')]);
+    });
+
+    testPage('an empty encounter name blocks the save', (tester) async {
+      await pumpPage(
+        tester,
+        stateWith(
+          const ProcessingSession(
+            id: 's1',
+            status: ProcessingStatus.draft,
+            patient: StagedPatient(draft: _ana),
             encounter: StagedEncounter(draft: MappingEncounter(id: 'e1')),
           ),
         ),

@@ -865,6 +865,18 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
+  String patientIsYou(String name) {
+    return 'Acesta ești tu: $name';
+  }
+
+  @override
+  String get patientSavedAsYou => 'Se salvează ca tine';
+
+  @override
+  String get patientNameRequired =>
+      'Introdu numele pacientului sau alege pe cineva care este deja în portofelul tău.';
+
+  @override
   String patientMatchFound(String name) {
     return 'Pacient existent: $name';
   }

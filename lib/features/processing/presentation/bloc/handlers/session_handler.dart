@@ -19,7 +19,6 @@ import 'package:health_wallet/features/processing/domain/entity/staged_resource.
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/layout_extraction/layout_extraction_service.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
-import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -593,32 +592,16 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     );
 
     if (event.isDraftPatient == true) {
-      MappingPatient draftPatient;
-      ImportMode newMode;
-
-      if (activeSession.patient.mode == ImportMode.linkExisting &&
-          activeSession.patient.existing != null) {
-        draftPatient =
-            activeSession.patient.draft ??
-            MappingPatient.fromFhirResource(activeSession.patient.existing!);
-        newMode = ImportMode.linkExisting;
-        ProcessingLogBuffer.instance.log(
-          '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] patient modified: ${event.propertyKey} changed, will create new patient',
-        );
-      } else {
-        draftPatient = activeSession.patient.draft ?? const MappingPatient();
-        newMode = activeSession.patient.mode;
-      }
-
+      // The edit applies to the details the review shows, which are the
+      // ones saving writes.
+      final patient = activeSession.patient;
       updateSession(
         emit,
         sessionId: event.sessionId,
-        patient: StagedPatient(
-          draft: draftPatient.copyWithMap({
+        patient: patient.copyWith(
+          draft: patient.shown.copyWithMap({
             event.propertyKey: event.newValue,
           }) as MappingPatient,
-          existing: activeSession.patient.existing,
-          mode: newMode,
         ),
         updateDb: true,
       );

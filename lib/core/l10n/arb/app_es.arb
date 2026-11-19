@@ -258,6 +258,9 @@
   "newLabel": "Nuevo",
   "newPatient": "Nuevo paciente",
   "patientChangedTo": "Cambiado a: {name}",
+  "patientIsYou": "Eres tú: {name}",
+  "patientSavedAsYou": "Se guarda como tú",
+  "patientNameRequired": "Introduce el nombre del paciente o elige a alguien que ya esté en tu cartera.",
   "patientMatchFound": "Paciente existente: {name}",
   "@patientMatchFound": {
     "placeholders": {

@@ -284,8 +284,19 @@ class _FakeHolderService extends Fake implements HolderService {
           );
   }
 
+  /// The holders still unnamed, by holder id.
+  final unnamed = <String>{};
+
   @override
-  bool isUnnamed(Holder holder) => false;
+  bool isUnnamed(Holder holder) => unnamed.contains(holder.id);
+
+  @override
+  Holder? soleUnnamedHolder(HolderDirectory directory) {
+    final people = directory.holders;
+    return people.length == 1 && isUnnamed(people.single)
+        ? people.single
+        : null;
+  }
 
   @override
   Future<Source> walletSourceOf(String holderId) async {
@@ -360,6 +371,26 @@ class _FakeDocumentReferenceService extends Fake
     return const [];
   }
 }
+
+/// The default holder no one has named yet.
+const _unnamed = Patient(
+  id: 'p-me',
+  sourceId: 'wallet-p-me',
+  title: 'Health Wallet Holder',
+  rawResource: {
+    'resourceType': 'Patient',
+    'id': 'p-me',
+    'name': [
+      {
+        'family': 'Holder',
+        'given': ['Health Wallet'],
+      },
+    ],
+    'identifier': [
+      {'value': 'default_patient'},
+    ],
+  },
+);
 
 Patient _patient(String id, {String? identifier, String title = ''}) => Patient(
   id: id,
@@ -720,6 +751,26 @@ void main() {
       expect(staged.patient.mode, ImportMode.createNew);
       expect(holders.candidates, isEmpty);
       expect(bloc.state.status, isNot(isA<Failure>()));
+    });
+
+    test('a document without a patient is the user\'s while they are the '
+        'only, unnamed person', () async {
+      repository.extractedPatient = const MappingPatient(
+        id: 'p-none',
+        dateOfBirth: MappedProperty(value: '1980-01-01'),
+      );
+      records.patients = [_unnamed];
+      holders.unnamed.add(_FakeHolderService.holderOf(_unnamed.id));
+      seed(withPages);
+
+      bloc.add(const MappingInitiated(sessionId: 's'));
+      await settle();
+
+      final patient = session('s').patient;
+      expect(patient.mode, ImportMode.linkExisting);
+      expect(patient.existing, _unnamed);
+      expect(patient.draft?.id, 'p-none');
+      expect(patient.review, PatientReview.you);
     });
 
     test('a session removed while its patient is matched is neither staged '
@@ -1470,6 +1521,66 @@ void main() {
       expect(primaries.single.sourceId, 'wallet-p-old');
       expect(selection.selected, ['holder-p-old']);
       expect(bloc.state.status, const PipelineStatus.success(sessionId: 's'));
+    });
+
+    group('the user, proposed while they were unnamed,', () {
+      const alex = MappingPatient(
+        id: 'p-scan',
+        givenName: MappedProperty(value: 'Alexandru'),
+        familyName: MappedProperty(value: 'Szilagyi'),
+      );
+
+      ProcessingSession you(MappingPatient? draft) => ProcessingSession(
+        id: 's',
+        status: ProcessingStatus.draft,
+        patient: StagedPatient(
+          existing: _unnamed,
+          draft: draft,
+          mode: ImportMode.linkExisting,
+        ),
+        encounter: const StagedEncounter(draft: MappingEncounter(id: 'enc')),
+      );
+
+      setUp(() => records.patients = [_unnamed]);
+
+      test('are named with the document\'s details', () async {
+        holders.unnamed.add(_FakeHolderService.holderOf(_unnamed.id));
+
+        await save(you(alex));
+
+        final written = holders.linked.single;
+        expect(written.patientId, 'p-me');
+        expect(written.scanned, alex);
+        expect(selection.selected, ['holder-p-me']);
+      });
+
+      test('but named since, are not renamed: someone else in the document '
+          'is saved as a new person', () async {
+        await save(you(alex));
+
+        expect(holders.linked, isEmpty);
+        final patient = sync.saved.first.first;
+        expect(patient.fhirType, FhirType.Patient);
+        expect(patient.id, 'p-scan');
+        expect(selection.selected, ['p-scan']);
+      });
+
+      test('but named since, still get the document when it is them', () async {
+        holders.match = _unnamed;
+
+        await save(you(alex));
+
+        final written = holders.linked.single;
+        expect(written.patientId, 'p-me');
+        // Named: the scan fills nothing in.
+        expect(written.scanned, isNull);
+      });
+
+      test('but named since, still get a document that names no one', () async {
+        await save(you(null));
+
+        expect(holders.linked.single.patientId, 'p-me');
+      });
     });
 
     test('a linked patient and encounter save no new primary records, and '

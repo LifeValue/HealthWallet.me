@@ -258,6 +258,9 @@
   "newLabel": "Neu",
   "newPatient": "Neuer Patient",
   "patientChangedTo": "Geändert zu: {name}",
+  "patientIsYou": "Das bist du: {name}",
+  "patientSavedAsYou": "Wird als du gespeichert",
+  "patientNameRequired": "Gib den Namen des Patienten ein oder wähle jemanden, der schon in deinem Wallet ist.",
   "patientMatchFound": "Bestehender Patient: {name}",
   "@patientMatchFound": {
     "placeholders": {
