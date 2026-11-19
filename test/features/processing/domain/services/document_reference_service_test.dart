@@ -5,6 +5,7 @@ import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/features/processing/data/services/pdf_generation_service.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/records/domain/entity/diagnostic_report/diagnostic_report.dart';
 import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
 
 import '../../../desktop/lww_sync/lww_sync_test_helpers.dart';
@@ -112,7 +113,7 @@ void main() {
       final ids = await service.saveGroupedDocumentsAsFhirRecords(
         filePaths: ['/in/a.pdf'],
         patientId: 'pat-1',
-        encounter: const Encounter(resourceId: 'enc-1'),
+        container: const Encounter(resourceId: 'enc-1'),
         sourceId: 'wallet-1',
       );
 
@@ -148,7 +149,29 @@ void main() {
       expect(raw['context']['encounter'][0]['reference'], 'Encounter/enc-1');
     });
 
-    test('without an encounter the record has no visit', () async {
+    test('a DiagnosticReport container is the related record, and its id '
+        'files the document under it as its other records are', () async {
+      pdfs.groups = [await pdfGroup('c.pdf', 'PDF: c')];
+
+      final ids = await service.saveGroupedDocumentsAsFhirRecords(
+        filePaths: ['/in/c.pdf'],
+        patientId: 'pat-1',
+        container: const DiagnosticReport(id: 'rep-1', resourceId: 'rep-1'),
+        sourceId: 'wallet-1',
+      );
+
+      final row = (await fetchRow(
+        db,
+        'fhir_resource',
+        'wallet-1_${ids.single}',
+      ))!;
+      expect(row['encounter_id'], 'rep-1');
+      final context = jsonDecode(row['resource_raw'] as String)['context'];
+      expect(context['encounter'], isNull);
+      expect(context['related'][0]['reference'], 'DiagnosticReport/rep-1');
+    });
+
+    test('without a container the record has no visit', () async {
       pdfs.groups = [await pdfGroup('b.pdf', 'PDF: b')];
 
       final ids = await service.saveGroupedDocumentsAsFhirRecords(

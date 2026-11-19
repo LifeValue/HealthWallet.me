@@ -81,7 +81,7 @@ void main() {
         sessionId: sessionId,
         filePaths: files,
         patientId: 'pat',
-        encounter: encounter,
+        container: encounter,
         sourceId: 'wallet-pat',
       );
 

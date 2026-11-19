@@ -797,14 +797,13 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       if (fhirResources.isNotEmpty) {
         await syncRepository.saveResources(fhirResources);
       }
-      final encounterForDoc = finalContainer is Encounter
-          ? finalContainer
-          : null;
+      // The scan is attached to the record it was filed as, whether a visit
+      // or a report.
       await documentReferenceService.replaceSessionDocuments(
         sessionId: activeSession.id,
         filePaths: activeSession.filePaths,
         patientId: subjectId,
-        encounter: encounterForDoc,
+        container: finalContainer,
         sourceId: sourceId,
         title: finalContainer.displayTitle,
       );

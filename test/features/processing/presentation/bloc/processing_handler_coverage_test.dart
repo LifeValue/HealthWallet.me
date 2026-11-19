@@ -329,7 +329,7 @@ typedef _DocumentsCall = ({
   String sessionId,
   List<String> filePaths,
   String patientId,
-  Encounter? encounter,
+  IFhirResource container,
   String sourceId,
   String? title,
 });
@@ -344,7 +344,7 @@ class _FakeDocumentReferenceService extends Fake
     required String sessionId,
     required List<String> filePaths,
     required String patientId,
-    Encounter? encounter,
+    required IFhirResource container,
     required String sourceId,
     String? title,
   }) async {
@@ -353,7 +353,7 @@ class _FakeDocumentReferenceService extends Fake
       sessionId: sessionId,
       filePaths: filePaths,
       patientId: patientId,
-      encounter: encounter,
+      container: container,
       sourceId: sourceId,
       title: title,
     ));
@@ -1393,7 +1393,8 @@ void main() {
       expect(docs.filePaths, ['/a.jpg', '/b.jpg']);
       expect(docs.patientId, 'p-new');
       expect(docs.sourceId, 'wallet-p-new');
-      expect(docs.encounter?.id, 'enc');
+      expect(docs.container, isA<Encounter>());
+      expect(docs.container.id, 'enc');
       expect(docs.title, 'Checkup');
       // The 200 dpi pages are no longer needed once the records are saved.
       expect(ocr.discarded, ['s']);
@@ -1497,7 +1498,7 @@ void main() {
       expect(saved.subjectId, 'p-old');
       expect(saved.rawResource['meta'], isNull);
       final docs = documents.calls.single;
-      expect(docs.encounter, encounter);
+      expect(docs.container, encounter);
       expect(docs.title, 'Old visit');
       expect(bloc.state.status, const PipelineStatus.success(sessionId: 's'));
     });
@@ -1524,8 +1525,8 @@ void main() {
       expect(bloc.state.status, const PipelineStatus.success(sessionId: 's'));
     });
 
-    test('a report container is saved as the report and the documents get '
-        'no encounter', () async {
+    test('a report container is saved as the report and the documents are '
+        'attached to it', () async {
       await save(
         const ProcessingSession(
           id: 's',
@@ -1548,7 +1549,7 @@ void main() {
       ]);
       expect(primaries.last.subjectId, 'p-new');
       final docs = documents.calls.single;
-      expect(docs.encounter, isNull);
+      expect(docs.container, primaries.last);
       expect(docs.title, 'CBC');
     });
 

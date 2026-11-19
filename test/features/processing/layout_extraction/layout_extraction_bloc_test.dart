@@ -142,11 +142,11 @@ class _FakeDocuments extends Fake implements DocumentReferenceService {
     required String sessionId,
     required List<String> filePaths,
     required String patientId,
-    Encounter? encounter,
+    required IFhirResource container,
     required String sourceId,
     String? title,
   }) async {
-    wallet.documents.add((sessionId: sessionId, encounterId: encounter?.id));
+    wallet.documents.add((sessionId: sessionId, encounterId: container.id));
     return const [];
   }
 }

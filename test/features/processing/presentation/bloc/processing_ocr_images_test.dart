@@ -200,7 +200,7 @@ class _FakeDocumentReferenceService extends Fake
     required String sessionId,
     required List<String> filePaths,
     required String patientId,
-    Encounter? encounter,
+    required IFhirResource container,
     required String sourceId,
     String? title,
   }) async => [];
