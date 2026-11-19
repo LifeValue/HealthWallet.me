@@ -567,14 +567,6 @@ test:integration:
     when: manual
     allow_failure: true
 
-# TEMPORARY, while windows:store and linux:snap are set up: they also run from their branch, and
-# don't wait for the checks. Remove this and restore `needs: *all_checks` and
-# `rules: *on_deploy_branches` on both jobs before merging.
-.on_store_setup_branches: &on_store_setup_branches
-  - if: $CI_COMMIT_BRANCH == "feature/windows-store-publishing" || $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH =~ /^release\//
-    when: manual
-    allow_failure: true
-
 .on_master: &on_master
   - if: $CI_COMMIT_BRANCH == "master"
     when: manual
@@ -743,8 +735,8 @@ windows:store:
   stage: deploy
   tags: [windows]
   interruptible: false
-  needs: [] # TEMPORARY, see .on_store_setup_branches
-  rules: *on_store_setup_branches
+  needs: *all_checks
+  rules: *on_deploy_branches
   # One submission at a time: the CLI deletes the flight's pending submission before it creates its
   # own, so two pipelines would cancel each other's upload.
   resource_group: windows:store
@@ -871,8 +863,8 @@ linux:snap:
     # The image runs snapcraft through Pebble; the job runs its own commands.
     entrypoint: [""]
   interruptible: false
-  needs: [] # TEMPORARY, see .on_store_setup_branches
-  rules: *on_store_setup_branches
+  needs: *all_checks
+  rules: *on_deploy_branches
   # Uploads from two pipelines would otherwise be released to the channel in whatever order they
   # finish.
   resource_group: linux:snap
