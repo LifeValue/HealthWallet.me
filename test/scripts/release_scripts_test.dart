@@ -74,7 +74,7 @@ void main() {
       expect(result.stdout, 'v1.3.0\n');
     });
 
-    for (final branch in ['develop', 'release/1.3.0']) {
+    for (final branch in ['develop', 'release/1.3.0', 'hotfix/1.3.1']) {
       test('tags $branch as a dev pre-release of the pipeline', () async {
         final result = await run(
           'release_tag.sh',

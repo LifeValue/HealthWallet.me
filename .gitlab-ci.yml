@@ -6,29 +6,34 @@
 #   lint                    formatters on the files the branch        Linux instance runner (Docker)
 #                           changed
 #   lint:commits            commit messages (commitlint); not on      Linux instance runner (Docker)
-#                           develop, release/* or master, and no
-#                           deploy waits for it
+#                           develop, release/*, hotfix/* or master,
+#                           and no deploy waits for it
 #   scan:dependencies       known vulnerabilities in every lockfile   Linux instance runner (Docker)
 #   scan:secrets            secrets anywhere in the git history       Linux instance runner (Docker)
 #
 # Deploys follow Gitflow and only start once every check has passed:
-#   ios / android / macos   manual on develop, release/* and master   shell-macmini (fastlane)
-#   macos:direct            manual on develop, release/* and master   shell-macmini (fastlane)
+#   ios / android / macos   manual on develop, release/*, hotfix/*    shell-macmini (fastlane)
+#                           and master
+#   macos:direct            manual on develop, release/*, hotfix/*    shell-macmini (fastlane)
+#                           and master
 #                           → notarized DMG on the GitLab Release
-#   windows                 manual on develop, release/* and master   `windows` runner (ST1, PowerShell)
+#   windows                 manual on develop, release/*, hotfix/*    `windows` runner (ST1, PowerShell)
+#                           and master
 #                           → Microsoft Store package flight, and the
 #                           zip + msix on the same GitLab Release
-#   linux                   manual on develop, release/* and master   Linux instance runner (Docker)
+#   linux                   manual on develop, release/*, hotfix/*    Linux instance runner (Docker)
+#                           and master
 #                           → Snap Store (edge from develop, beta
 #                           otherwise), and the .deb + tar.gz on the
 #                           same GitLab Release
-#   cdn:publish             manual on develop, release/* and master,  Linux instance runner (Docker)
-#                           once windows and linux succeeded
+#   cdn:publish             manual on develop, release/*, hotfix/*    Linux instance runner (Docker)
+#                           and master, once windows and linux
+#                           succeeded
 #                           → the release's zip, .deb, tar.gz and DMG
 #                           (if built) on the download CDN: master to
 #                           stable/, the others to beta/
 #   shorebird patches       manual on master                          shell-macmini
-# feature/*, bugfix/* and hotfix/* branches get the checks only.
+# feature/* and bugfix/* branches get the checks only.
 #
 # Deploy jobs need the PROTECTED CI/CD variables, which GitLab only exposes to protected branches;
 # on an unprotected branch the job stops at its first step and says so.
@@ -43,7 +48,7 @@
 # The Flutter version comes from .fvmrc, the same pin FVM uses locally.
 #
 # One-time project setup — the pipeline cannot do these itself:
-#   1. Protect `develop`, `master` and `release/*` (Settings → Repository). Protected variables
+#   1. Protect `develop`, `master`, `release/*` and `hotfix/*` (Settings → Repository). Protected variables
 #      below are only exposed to protected branches. Turn on "Pipelines must succeed"
 #      (Settings → Merge requests) so a failing check blocks the merge.
 #   2. In mobile/flutter/packages/flutter-airdrop and mobile/health-wallet/fhir-ips-export:
@@ -337,9 +342,9 @@ lint:
     - pre-commit run --show-diff-on-failure --from-ref "$BASE" --to-ref HEAD
 
 # Commit messages against Conventional Commits (commitlint.config.mjs), checked where they can
-# still be amended: on the working branches. Commits that reached develop, release/* or master are
-# shared history, and rewording them would mean a force-push, so those branches skip this job and
-# no deploy waits for it (it is not in `all_checks`).
+# still be amended: on the working branches. Commits that reached develop, release/*, hotfix/* or
+# master are shared history, and rewording them would mean a force-push, so those branches skip
+# this job and no deploy waits for it (it is not in `all_checks`).
 lint:commits:
   stage: check
   image: node:22.23.3-bookworm
@@ -352,7 +357,7 @@ lint:commits:
       paths:
         - .cache/npm/
   rules:
-    - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH =~ /^release\//
+    - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH =~ /^(release|hotfix)\//
       when: never
     - if: $CI_COMMIT_BRANCH
   before_script:
@@ -558,12 +563,12 @@ test:integration:
   after_script:
     - xcrun simctl delete "health-wallet-ci-$CI_JOB_ID" || true
 
-# Deploys follow Gitflow: only develop, release/* and master can deploy; feature/*, bugfix/* and
-# hotfix/* branches get no deploy jobs. allow_failure: a manual job from `rules:` defaults to
+# Deploys follow Gitflow: only develop, release/*, hotfix/* and master can deploy (a hotfix needs
+# the same betas and store review as a release); feature/* and bugfix/* branches get no deploy jobs. allow_failure: a manual job from `rules:` defaults to
 # false, which would leave every pipeline "blocked" until someone ran each deploy. Deploys are
 # optional, so the pipeline passes on the checks alone.
 .on_deploy_branches: &on_deploy_branches
-  - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH =~ /^release\//
+  - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH =~ /^(release|hotfix)\//
     when: manual
     allow_failure: true
 
@@ -817,7 +822,8 @@ windows:store:
 # Linux: Snap Store
 # =============================================================================
 # develop                 → edge
-# release/* and master    → beta
+# release/*, hotfix/*,
+# and master              → beta
 # Builds the Flutter bundle, packs it as a strict snap with snap/snapcraft.yaml and uploads it to the
 # Snap Store, released to the channel above. Edge and beta are the testers' channels, like
 # TestFlight and the Play internal track: testers install it with `snap install health-wallet
@@ -930,7 +936,7 @@ linux:snap:
 # tag (otherwise it is skipped; run cdn:publish again after macos:direct to add it). Files go to
 # <channel>/<tag>/ and are never overwritten with other content; <channel>/versions.json, written
 # last, tells the website the current version. No Android APK (Google Play) and no MSIX (Store).
-# master publishes to stable/, develop and release/* to beta/. Server setup and the versions.json
+# master publishes to stable/, develop, release/* and hotfix/* to beta/. Server setup and the versions.json
 # contract: _bmad-output/planning-artifacts/download-cdn.md.
 #
 # It becomes playable once windows:store and linux:snap have run (they in turn need every
@@ -955,7 +961,7 @@ cdn:publish:
       allow_failure: true
       variables:
         CDN_CHANNEL: stable
-    - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH =~ /^release\//
+    - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH =~ /^(release|hotfix)\//
       when: manual
       allow_failure: true
       variables:
