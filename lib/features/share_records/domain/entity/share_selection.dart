@@ -4,7 +4,7 @@ import 'package:health_wallet/features/records/domain/entity/entity.dart';
 part 'share_selection.freezed.dart';
 
 @freezed
-class ShareSelection with _$ShareSelection {
+abstract class ShareSelection with _$ShareSelection {
   const ShareSelection._();
 
   const factory ShareSelection({
@@ -22,7 +22,8 @@ class ShareSelection with _$ShareSelection {
 
   bool isSelected(String resourceId) => selectedRecords.containsKey(resourceId);
 
-  Map<FhirType, int> get countByType => selectedRecords.values.toList().countByType();
+  Map<FhirType, int> get countByType =>
+      selectedRecords.values.toList().countByType();
 
   ShareSelection _withUpdatedRecords(Map<String, IFhirResource> newRecords) {
     final newTypes = newRecords.values.map((r) => r.fhirType).toSet();

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
+import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class UserSection extends StatefulWidget {
@@ -35,18 +37,22 @@ class _UserSectionState extends State<UserSection> {
     _nameFocusNode.requestFocus();
   }
 
+  /// The field stays open until the name is saved, so a failed save keeps
+  /// the typed name and ✓ tries again.
   void _saveName() {
     final newName = _nameController.text.trim();
     if (newName.isNotEmpty) {
-      setState(() {
-        _isEditing = false;
-      });
-      _nameFocusNode.unfocus();
-
-      // Update the user name through BLoC
       context.read<UserBloc>().add(UserNameUpdated(newName));
     }
   }
+
+  /// The result of a name save: true when it was saved, false when it
+  /// failed, null for any other status.
+  static bool? _nameSaveResult(UserStatus status) => status.maybeWhen(
+    success: (setting) => setting == UserSetting.name ? true : null,
+    failure: (_, setting) => setting == UserSetting.name ? false : null,
+    orElse: () => null,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -57,16 +63,16 @@ class _UserSectionState extends State<UserSection> {
     return BlocListener<UserBloc, UserState>(
       listenWhen: (previous, current) =>
           previous.status != current.status &&
-          current.status.runtimeType.toString().contains('Failure'),
+          _nameSaveResult(current.status) != null,
       listener: (context, state) {
-        if (state.status.runtimeType.toString().contains('Failure')) {
-          // Show error message
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                  '${context.l10n.failedToUpdateDisplayName}: ${state.status.toString()}'),
-              backgroundColor: context.colorScheme.error,
-            ),
+        if (_nameSaveResult(state.status)!) {
+          setState(() => _isEditing = false);
+          _nameFocusNode.unfocus();
+        } else {
+          AppSnackBar.show(
+            context,
+            message: context.l10n.failedToUpdateDisplayName,
+            type: AppSnackBarType.error,
           );
         }
       },
@@ -78,8 +84,8 @@ class _UserSectionState extends State<UserSection> {
               final displayName = user.name.isNotEmpty
                   ? user.name
                   : (syncState.syncQrData?.tokenMeta.fullName.isNotEmpty == true
-                      ? syncState.syncQrData!.tokenMeta.fullName
-                      : 'User');
+                        ? syncState.syncQrData!.tokenMeta.fullName
+                        : context.l10n.homeDefaultUserName);
 
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: Insets.normal),
@@ -119,7 +125,6 @@ class _UserSectionState extends State<UserSection> {
                                     contentPadding: EdgeInsets.zero,
                                   ),
                                   onSubmitted: (_) => _saveName(),
-                                  onEditingComplete: _saveName,
                                 )
                               : Text(
                                   displayName,
@@ -149,9 +154,11 @@ class _UserSectionState extends State<UserSection> {
                                   ),
                             onPressed: _isEditing
                                 ? _saveName
-                                : () => _startEditing(user.name.isNotEmpty
-                                    ? user.name
-                                    : displayName),
+                                : () => _startEditing(
+                                    user.name.isNotEmpty
+                                        ? user.name
+                                        : displayName,
+                                  ),
                             padding: EdgeInsets.zero,
                           ),
                         ),

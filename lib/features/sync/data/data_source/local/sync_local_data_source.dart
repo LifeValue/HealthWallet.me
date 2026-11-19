@@ -2,24 +2,23 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:health_wallet/core/data/local/app_database.dart' as db;
+import 'package:health_wallet/core/data/local/soft_delete.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart'
     as domain;
-import 'package:health_wallet/core/utils/logger.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 abstract class SyncLocalDataSource {
   Future<void> cacheFhirResources(List<FhirResourceDto> fhirResources);
-  Future<void> deleteAllFhirResources();
   Future<String?> getLastSyncTimestamp();
   Future<void> setLastSyncTimestamp(String timestamp);
   Future<void> cacheSources(List<domain.Source> sources);
-  Future<List<domain.Source>> getSources({String? patientId});
-  Future<void> deleteAllSources();
+  Future<void> cacheProviderSources(List<domain.Source> sources);
+  Future<List<domain.Source>> getSources();
   Future<void> markResourcesAsDeleted(List<FhirResourceDto> deletions);
   Future<void> updateSourceLabel(String sourceId, String newLabel);
-  Future<void> createWalletSource();
   Future<void> createDemoDataSource();
   Future<void> deleteSource(String sourceId);
 }
@@ -31,21 +30,89 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
 
   SyncLocalDataSourceImpl(this._appDatabase, this._sharedPreferences);
 
+  /// The row id of each resource: its FHIR id, unless that id already
+  /// belongs to a resource of another source or type, which would otherwise
+  /// be replaced. Then it is `sourceId/type/id`. Rows keep the id they have,
+  /// so a later sync updates them.
+  Future<List<String>> _rowIds(List<FhirResourceDto> resources) async {
+    String composite(FhirResourceDto e) =>
+        '${e.sourceId}/${e.resourceType}/${e.resourceId}';
+
+    final candidates = {
+      for (final e in resources) ...[e.resourceId!, composite(e)],
+    };
+    final owners = <String, (String?, String?)>{
+      for (final row in await (_appDatabase.select(
+        _appDatabase.fhirResource,
+      )..where((r) => r.id.isIn(candidates))).get())
+        row.id: (row.sourceId, row.resourceType),
+    };
+
+    return [
+      for (final e in resources)
+        () {
+          final owner = (e.sourceId, e.resourceType);
+          final bare = e.resourceId!;
+          final id =
+              !owners.containsKey(composite(e)) &&
+                  (owners[bare] == null || owners[bare] == owner)
+              ? bare
+              : composite(e);
+          owners[id] = owner;
+          return id;
+        }(),
+    ];
+  }
+
   @override
   Future<void> cacheFhirResources(List<FhirResourceDto> fhirResources) async {
-    final resources = fhirResources.map((e) {
+    final withId = fhirResources
+        .where((e) => e.resourceId?.isNotEmpty ?? false)
+        .toList();
+    if (withId.length < fhirResources.length) {
+      logger.w(
+        'Skipped ${fhirResources.length - withId.length} resources without '
+        'an id',
+      );
+    }
+    // A source the user deleted stays deleted: a provider sync that lists
+    // its records again doesn't bring them back.
+    final deleted = {
+      for (final row
+          in await (_appDatabase.select(_appDatabase.sources)..where(
+                (s) =>
+                    s.deletedAt.isNotNull() &
+                    s.id.isIn(withId.map((e) => e.sourceId ?? '').toSet()),
+              ))
+              .get())
+        row.id,
+    };
+    if (deleted.isNotEmpty) {
+      final skipped = withId.where((e) => deleted.contains(e.sourceId));
+      logger.i(
+        'Skipped ${skipped.length} resources of deleted sources '
+        '${deleted.join(', ')}',
+      );
+      withId.removeWhere((e) => deleted.contains(e.sourceId));
+    }
+    final rowIds = await _rowIds(withId);
+
+    final resources = withId.indexed.map((entry) {
+      final (i, e) = entry;
       return db.FhirResourceCompanion.insert(
-        id: e.resourceId ?? '',
+        id: rowIds[i],
         sourceId: Value(e.sourceId),
         resourceType: Value(e.resourceType),
         resourceId: Value(e.resourceId),
         title: Value(e.title),
         date: Value(e.date),
         resourceRaw: jsonEncode(e.resourceRaw),
-        encounterId:
-            e.encounterId != null ? Value(e.encounterId) : const Value.absent(),
-        subjectId:
-            e.subjectId != null ? Value(e.subjectId) : const Value.absent(),
+        encounterId: e.encounterId != null
+            ? Value(e.encounterId)
+            : const Value.absent(),
+        subjectId: e.subjectId != null
+            ? Value(e.subjectId)
+            : const Value.absent(),
       );
     }).toList();
     await _appDatabase.batch((batch) {
@@ -58,11 +125,6 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
   }
 
   @override
-  Future<void> deleteAllFhirResources() {
-    return _appDatabase.delete(_appDatabase.fhirResource).go();
-  }
-
-  @override
   Future<String?> getLastSyncTimestamp() {
     return Future.value(_sharedPreferences.getString('lastSyncTimestamp'));
   }
@@ -72,6 +134,52 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
     return _sharedPreferences.setString('lastSyncTimestamp', timestamp);
   }
 
+  /// The sources a provider lists. A new one is added with the provider's
+  /// label; one already here gets only the provider's own fields, so the
+  /// label the user gave it, its holder and a delete stay. Unchanged rows
+  /// aren't written, so a fetch doesn't send every source to the desktop.
+  @override
+  Future<void> cacheProviderSources(List<domain.Source> sources) async {
+    final existing = {
+      for (final row in await (_appDatabase.select(
+        _appDatabase.sources,
+      )..where((s) => s.id.isIn(sources.map((s) => s.id)))).get())
+        row.id: row,
+    };
+    await _appDatabase.batch((batch) {
+      for (final source in sources) {
+        final row = existing[source.id];
+        if (row == null) {
+          batch.insert(
+            _appDatabase.sources,
+            db.SourcesCompanion.insert(
+              id: source.id,
+              platformName: Value(source.platformName),
+              logo: Value(source.logo),
+              labelSource: Value(source.labelSource),
+              platformType: Value(source.platformType),
+              createdAt: Value(source.createdAt),
+            ),
+          );
+        } else if (row.platformName != source.platformName ||
+            row.logo != source.logo ||
+            row.platformType != source.platformType) {
+          batch.update(
+            _appDatabase.sources,
+            db.SourcesCompanion(
+              platformName: Value(source.platformName),
+              logo: Value(source.logo),
+              platformType: Value(source.platformType),
+            ),
+            where: (s) => s.id.equals(source.id),
+          );
+        }
+      }
+    });
+  }
+
+  /// Writes the sources, clearing a tombstone, and keeps the holder a
+  /// source already has unless one is given.
   @override
   Future<void> cacheSources(List<domain.Source> sources) async {
     final sourceEntries = sources.map((e) {
@@ -82,33 +190,22 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
         labelSource: Value(e.labelSource),
         platformType: Value(e.platformType),
         createdAt: Value(e.createdAt),
-        updatedAt: Value(e.updatedAt),
+        deletedAt: const Value(null),
+        holderId: e.holderId == null ? const Value.absent() : Value(e.holderId),
+        // updated_at is stamped by the trigger, in milliseconds like every
+        // other synced row; drift would store seconds.
       );
     }).toList();
     await _appDatabase.batch((batch) {
-      batch.insertAll(
-        _appDatabase.sources,
-        sourceEntries,
-        mode: InsertMode.insertOrReplace,
-      );
+      batch.insertAllOnConflictUpdate(_appDatabase.sources, sourceEntries);
     });
   }
 
   @override
-  Future<void> deleteAllSources() {
-    return _appDatabase.delete(_appDatabase.sources).go();
-  }
-
-  @override
-  Future<List<domain.Source>> getSources({String? patientId}) async {
+  Future<List<domain.Source>> getSources() async {
     // First get unique source IDs from FHIR resources
-    final query = _appDatabase.select(_appDatabase.fhirResource);
-
-    if (patientId != null) {
-      query.where((tbl) => tbl.sourceId.equals(patientId));
-    } else {
-      query.where((tbl) => tbl.sourceId.isNotNull());
-    }
+    final query = _appDatabase.select(_appDatabase.fhirResource)
+      ..where((tbl) => tbl.deletedAt.isNull() & tbl.sourceId.isNotNull());
 
     final results = await query.get();
     final uniqueSourceIds = results
@@ -119,7 +216,9 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
         .toList();
 
     // Get all sources from Sources table (including those without resources)
-    final allSources = await _appDatabase.select(_appDatabase.sources).get();
+    final allSources = await (_appDatabase.select(
+      _appDatabase.sources,
+    )..where((s) => s.deletedAt.isNull())).get();
     final allSourceIds = allSources.map((source) => source.id).toSet();
 
     // Combine source IDs from both FHIR resources and Sources table
@@ -127,25 +226,27 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
 
     // Get source labels from Sources table
     final sourceLabelMap = {
-      for (final source in allSources) source.id: source.labelSource
+      for (final source in allSources) source.id: source.labelSource,
     };
 
     final sources = combinedSourceIds.map(
       (sourceId) {
         final dbSource = allSources.cast<db.Source?>().firstWhere(
-              (s) => s?.id == sourceId,
-              orElse: () => null,
-            );
+          (s) => s?.id == sourceId,
+          orElse: () => null,
+        );
 
         return domain.Source(
           id: sourceId,
           platformName: _getSourcePlatformName(sourceId),
           logo: null,
-          labelSource: sourceLabelMap[sourceId] ??
+          labelSource:
+              sourceLabelMap[sourceId] ??
               (sourceId == 'demo_data' ? 'Demo' : null),
           platformType: _getSourcePlatformType(sourceId, dbSource),
           createdAt: dbSource?.createdAt,
-          updatedAt: dbSource?.updatedAt,
+          updatedAt: _fromStamp(dbSource?.updatedAt),
+          holderId: dbSource?.holderId,
         );
       },
     ).toList();
@@ -154,26 +255,29 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
   }
 
   String? _getSourcePlatformName(String sourceId) {
-    if (sourceId.startsWith('wallet-')) return 'wallet';
     if (sourceId == 'demo_data') return 'wallet-manual';
+    if (_isWalletId(sourceId)) return 'wallet';
     return sourceId;
   }
 
-  /// Determines the platform type based on source ID and database record
-  /// Following the clean architecture:
-  /// - WALLET sources (wallet, demo_data) are 'wallet' type
-  /// - All other sources (from Fasten API) are 'fasten' type
+  /// The type of a source: its row's, or for records without a row, the
+  /// wallet for the app's own ids and otherwise a provider's. Records only
+  /// arrive without their source row from the one provider integration so
+  /// far, hence 'fasten'; the app only asks whether a source is the wallet.
   String _getSourcePlatformType(String sourceId, db.Source? dbSource) {
-    // Check if database has explicit platformType
     if (dbSource?.platformType != null) {
       return dbSource!.platformType;
     }
-
-    if (sourceId.startsWith('wallet-') || sourceId == 'demo_data') {
-      return 'wallet';
-    }
-    return 'fasten';
+    return _isWalletId(sourceId) ? 'wallet' : 'fasten';
   }
+
+  /// The app's own sources: per-person wallets, the demo data, and the one
+  /// `wallet` source of versions before 9, whose records an upgrade could
+  /// leave without a row.
+  static bool _isWalletId(String sourceId) =>
+      sourceId.startsWith('wallet-') ||
+      sourceId == 'wallet' ||
+      sourceId == 'demo_data';
 
   @override
   Future<void> markResourcesAsDeleted(List<FhirResourceDto> deletions) async {
@@ -193,11 +297,12 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
   @override
   Future<void> updateSourceLabel(String sourceId, String newLabel) async {
     try {
-      await _appDatabase.into(_appDatabase.sources).insertOnConflictUpdate(
+      await _appDatabase
+          .into(_appDatabase.sources)
+          .insertOnConflictUpdate(
             db.SourcesCompanion(
               id: Value(sourceId),
               labelSource: Value(newLabel.isEmpty ? null : newLabel),
-              updatedAt: Value(DateTime.now()),
             ),
           );
     } catch (e) {
@@ -206,51 +311,23 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
     }
   }
 
-  @override
-  Future<void> createWalletSource() async {
-    try {
-      // Check if wallet source already exists
-      final existingWallet = await (_appDatabase.select(_appDatabase.sources)
-            ..where((s) => s.id.equals('wallet')))
-          .getSingleOrNull();
-
-      if (existingWallet != null) {
-        // Wallet source already exists, no need to create
-        return;
-      }
-
-      final now = DateTime.now();
-      // Create Wallet source in sources table
-      await _appDatabase.into(_appDatabase.sources).insert(
-            db.SourcesCompanion.insert(
-              id: 'wallet',
-              platformName: Value('wallet'),
-              labelSource: Value('Wallet'),
-              platformType: const Value('wallet'),
-              createdAt: Value(now),
-              updatedAt: Value(now),
-            ),
-            mode: InsertMode.insertOrIgnore,
-          );
-    } catch (e) {
-      logger.e('Error creating wallet source: $e');
-      rethrow;
-    }
-  }
-
   /// Create demo_data source in the database with proper name and label
+  @override
   Future<void> createDemoDataSource() async {
     try {
-      final now = DateTime.now();
-      // Create demo_data source in sources table with correct name for display logic
-      await _appDatabase.into(_appDatabase.sources).insert(
+      // Create demo_data source in sources table with correct name for
+      // display logic. Replacing the row clears a tombstone; `updated_at` is
+      // left to the trigger, in milliseconds (drift would store seconds), so
+      // the new row beats the tombstone on the peer.
+      await _appDatabase
+          .into(_appDatabase.sources)
+          .insert(
             db.SourcesCompanion.insert(
               id: 'demo_data',
-              platformName: Value('wallet-manual'), // Platform name
-              labelSource: Value('Demo Data'), // Custom display label
+              platformName: const Value('wallet-manual'), // Platform name
+              labelSource: const Value('Demo Data'), // Custom display label
               platformType: const Value('wallet'),
-              createdAt: Value(now),
-              updatedAt: Value(now),
+              createdAt: Value(DateTime.now()),
             ),
             mode: InsertMode.insertOrReplace,
           );
@@ -260,20 +337,17 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
     }
   }
 
+  /// Soft-deletes the source, its records and their notes, so the delete
+  /// reaches the paired device (see [SoftDelete]).
   @override
-  Future<void> deleteSource(String sourceId) async {
-    if (sourceId == 'demo_data') {
-      throw Exception('Cannot delete the demo data source');
-    }
+  Future<void> deleteSource(String sourceId) =>
+      _appDatabase.softDeleteSource(sourceId);
 
-    // Delete from sources table
-    await (_appDatabase.delete(_appDatabase.sources)
-          ..where((tbl) => tbl.id.equals(sourceId)))
-        .go();
-
-    // Delete all FHIR resources associated with this source
-    await (_appDatabase.delete(_appDatabase.fhirResource)
-          ..where((tbl) => tbl.sourceId.equals(sourceId)))
-        .go();
-  }
+  /// `updated_at` holds the sync stamp in milliseconds, which drift's
+  /// DateTime column reads as seconds.
+  static DateTime? _fromStamp(DateTime? read) => read == null
+      ? null
+      : DateTime.fromMillisecondsSinceEpoch(
+          read.millisecondsSinceEpoch ~/ 1000,
+        );
 }

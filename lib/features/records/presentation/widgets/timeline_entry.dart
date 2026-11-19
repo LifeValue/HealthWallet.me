@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 
 class TimelineEntry extends StatelessWidget {
   final bool isFirst;
@@ -30,7 +31,9 @@ class TimelineEntry extends StatelessWidget {
   Widget build(BuildContext context) {
     return IntrinsicHeight(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: EdgeInsets.symmetric(
+          horizontal: context.screenHorizontalPadding,
+        ),
         child: Stack(
           children: [
             Padding(
@@ -68,8 +71,7 @@ class TimelineEntry extends StatelessWidget {
                   Expanded(
                     child: Container(
                       width: _lineWidth,
-                      color:
-                          !isFirst ? AppColors.primary : Colors.transparent,
+                      color: !isFirst ? AppColors.primary : Colors.transparent,
                     ),
                   ),
                   Container(
@@ -89,15 +91,14 @@ class TimelineEntry extends StatelessWidget {
                           offset: const Offset(0, 1),
                           color: AppColors.primary.withValues(alpha: 0.6),
                           blurRadius: 3,
-                        )
+                        ),
                       ],
                     ),
                   ),
                   Expanded(
                     child: Container(
                       width: _lineWidth,
-                      color:
-                          !isLast ? AppColors.primary : Colors.transparent,
+                      color: !isLast ? AppColors.primary : Colors.transparent,
                     ),
                   ),
                 ],

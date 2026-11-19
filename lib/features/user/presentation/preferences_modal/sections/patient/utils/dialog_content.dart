@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:health_wallet/core/config/constants/country_identifier.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
+
 import 'date_field.dart';
 import 'form_fields.dart';
 import 'phone_input_field.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/gen/assets.gen.dart';
 
 class DialogContent extends StatelessWidget {
   final Patient patient;
@@ -87,9 +88,12 @@ class DialogContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!showNameField)
-            Text(patient.displayTitle,
-                style: AppTextStyle.bodyMedium
-                    .copyWith(fontWeight: FontWeight.w500)),
+            Text(
+              patient.displayTitle,
+              style: AppTextStyle.bodyMedium.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           if (!showNameField) const SizedBox(height: Insets.medium),
           if (showNameField && onCountryChanged != null) ...[
             _CountrySelector(
@@ -225,8 +229,10 @@ class _CountrySelector extends StatelessWidget {
           countryItems,
           (value) {
             final code = _countries.entries
-                .firstWhere((e) => e.value == value,
-                    orElse: () => const MapEntry('US', ''))
+                .firstWhere(
+                  (e) => e.value == value,
+                  orElse: () => const MapEntry('US', ''),
+                )
                 .key;
             onChanged(code);
           },
@@ -291,7 +297,10 @@ class _ScanIdCardButton extends StatelessWidget {
                   Assets.icons.information.svg(
                     width: 14,
                     height: 14,
-                    colorFilter: ColorFilter.mode(AppColors.warning, BlendMode.srcIn),
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.warning,
+                      BlendMode.srcIn,
+                    ),
                   ),
                   const SizedBox(width: 4),
                   Expanded(
@@ -316,7 +325,9 @@ class _ScanIdCardButton extends StatelessWidget {
                   label: Text(context.l10n.retry),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
-                    side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
+                    side: BorderSide(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: Insets.small),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -336,8 +347,12 @@ class _ScanIdCardButton extends StatelessWidget {
                     label: Text(context.l10n.retry),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primary,
-                      side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
-                      padding: const EdgeInsets.symmetric(vertical: Insets.small),
+                      side: BorderSide(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: Insets.small,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),

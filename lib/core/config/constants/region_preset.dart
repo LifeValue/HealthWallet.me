@@ -6,7 +6,6 @@ enum RegionPreset {
     heightUnit: 'ft/in',
     temperatureUnit: '°F',
     glucoseUnit: 'mg/dL',
-    displayName: 'US',
   ),
   europe(
     dateFormat: 'dd-MM-yyyy',
@@ -15,7 +14,6 @@ enum RegionPreset {
     heightUnit: 'cm',
     temperatureUnit: '°C',
     glucoseUnit: 'mmol/L',
-    displayName: 'Europe',
   ),
   uk(
     dateFormat: 'dd-MM-yyyy',
@@ -24,7 +22,6 @@ enum RegionPreset {
     heightUnit: 'ft/in',
     temperatureUnit: '°C',
     glucoseUnit: 'mmol/L',
-    displayName: 'UK',
   );
 
   final String dateFormat;
@@ -33,7 +30,6 @@ enum RegionPreset {
   final String heightUnit;
   final String temperatureUnit;
   final String glucoseUnit;
-  final String displayName;
 
   const RegionPreset({
     required this.dateFormat,
@@ -42,7 +38,6 @@ enum RegionPreset {
     required this.heightUnit,
     required this.temperatureUnit,
     required this.glucoseUnit,
-    required this.displayName,
   });
 
   String formatDate(DateTime date) {

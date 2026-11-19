@@ -1,17 +1,19 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:airdrop/airdrop.dart';
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/features/share_records/data/crypto/share_crypto.dart';
 import 'package:health_wallet/features/share_records/data/service/share_records_service.dart';
-import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
 import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:injectable/injectable.dart';
@@ -19,39 +21,49 @@ import 'package:injectable/injectable.dart';
 @Singleton(as: ReceiveModeService)
 class ReceiveModeManager implements ReceiveModeService {
   final ShareRecordsService _shareRecordsService;
-  final NotificationBloc _notificationBloc;
+  // The invitation dialog can open while the app is backgrounded, from a
+  // context outside any screen, so its texts come from the provider.
+  final AppStringsProvider _strings;
 
   StreamSubscription<Map<String, dynamic>>? _invitationSubscription;
   StreamSubscription<ReceivedData>? _receivedDataSubscription;
   StreamSubscription<List<String>>? _receivedFilesSubscription;
   bool _isListening = false;
+  bool _isPaused = false;
   bool _isRestarting = false;
 
   String? _pendingInvitationId;
   String? _pendingInvitationDeviceName;
 
-  EphemeralRecordsContainer? _pendingReceivedData;
+  Uint8List? _pendingPayload;
 
-  ReceiveModeManager(
-    this._shareRecordsService,
-    this._notificationBloc,
-  );
+  ReceiveModeManager(this._shareRecordsService, this._strings);
 
+  @override
   bool get isListening => _isListening;
 
-  String? get pendingInvitationId => _pendingInvitationId;
-  String? get pendingInvitationDeviceName => _pendingInvitationDeviceName;
-  EphemeralRecordsContainer? get pendingReceivedData => _pendingReceivedData;
+  @override
+  bool get isPaused => _isPaused;
 
+  @override
+  String? get pendingInvitationId => _pendingInvitationId;
+  @override
+  String? get pendingInvitationDeviceName => _pendingInvitationDeviceName;
+  @override
+  Uint8List? get pendingPayload => _pendingPayload;
+
+  @override
   void clearPendingInvitation() {
     _pendingInvitationId = null;
     _pendingInvitationDeviceName = null;
   }
 
-  void clearPendingReceivedData() {
-    _pendingReceivedData = null;
+  @override
+  void clearPendingPayload() {
+    _pendingPayload = null;
   }
 
+  @override
   Future<void> startListening() async {
     if (_isListening) {
       debugPrint('[ReceiveMode] Already listening, skipping start');
@@ -59,6 +71,7 @@ class ReceiveModeManager implements ReceiveModeService {
     }
 
     _isListening = true;
+    _isPaused = false;
 
     try {
       debugPrint('[ReceiveMode] Starting background listener...');
@@ -81,6 +94,7 @@ class ReceiveModeManager implements ReceiveModeService {
     }
   }
 
+  @override
   Future<void> stopListening() async {
     if (!_isListening) {
       debugPrint('[ReceiveMode] Not listening, skipping stop');
@@ -98,8 +112,9 @@ class ReceiveModeManager implements ReceiveModeService {
 
       await _shareRecordsService.disconnect();
       _isListening = false;
+      _isPaused = false;
       clearPendingInvitation();
-      clearPendingReceivedData();
+      clearPendingPayload();
 
       debugPrint('[ReceiveMode] Background listener stopped');
     } catch (e) {
@@ -107,7 +122,9 @@ class ReceiveModeManager implements ReceiveModeService {
     }
   }
 
+  @override
   void pauseListening() {
+    _isPaused = true;
     _invitationSubscription?.cancel();
     _invitationSubscription = null;
     _receivedDataSubscription?.cancel();
@@ -117,11 +134,13 @@ class ReceiveModeManager implements ReceiveModeService {
     debugPrint('[ReceiveMode] Paused all listening (bloc took over)');
   }
 
+  @override
   Future<void> resumeListening() async {
+    _isPaused = false;
     if (!_isListening) return;
-    _invitationSubscription?.cancel();
-    _receivedDataSubscription?.cancel();
-    _receivedFilesSubscription?.cancel();
+    unawaited(_invitationSubscription?.cancel());
+    unawaited(_receivedDataSubscription?.cancel());
+    unawaited(_receivedFilesSubscription?.cancel());
 
     try {
       await _shareRecordsService.startSymmetricDiscovery();
@@ -135,56 +154,63 @@ class ReceiveModeManager implements ReceiveModeService {
   }
 
   void _subscribeToInvitations() {
-    _invitationSubscription =
-        _shareRecordsService.invitationStream.listen((invitation) {
+    _invitationSubscription = _shareRecordsService.invitationStream.listen((
+      invitation,
+    ) {
       debugPrint('[ReceiveMode] Invitation received: $invitation');
       _showInvitationNotification(invitation);
     });
   }
 
   void _subscribeToReceivedData() {
-    _receivedDataSubscription =
-        _shareRecordsService.receivedDataStream.listen((data) {
+    _receivedDataSubscription = _shareRecordsService.receivedDataStream.listen((
+      data,
+    ) {
       debugPrint('[ReceiveMode] Data received in background');
       _handleReceivedData(data);
     });
 
-    _receivedFilesSubscription =
-        _shareRecordsService.receivedFilesStream.listen((filePaths) {
+    _receivedFilesSubscription = _shareRecordsService.receivedFilesStream.listen((
+      filePaths,
+    ) {
       debugPrint(
-          '[ReceiveMode] Files received in background: ${filePaths.length} files');
+        '[ReceiveMode] Files received in background: ${filePaths.length} files',
+      );
       _handleReceivedFiles(filePaths);
     });
   }
 
-  Future<void> _handleReceivedData(ReceivedData data) async {
-    final container = await _shareRecordsService.parseReceivedData(data);
-    if (container != null) {
-      _onDataParsed(container);
+  // The share screen decrypts the payload, since the users have to compare
+  // the verification code there.
+  void _handleReceivedData(ReceivedData data) {
+    if (ShareEnvelope.looksLikeEnvelope(data.data)) {
+      _onPayloadReceived(data.data);
+    } else {
+      debugPrint('[ReceiveMode] Ignoring data that is not a share envelope');
     }
   }
 
   Future<void> _handleReceivedFiles(List<String> filePaths) async {
     for (final filePath in filePaths) {
-      final container = await _shareRecordsService.parseReceivedFile(filePath);
-      if (container != null) {
-        _onDataParsed(container);
+      final bytes = await _shareRecordsService.readReceivedFile(filePath);
+      if (bytes != null && ShareEnvelope.looksLikeEnvelope(bytes)) {
+        _onPayloadReceived(bytes);
         return;
       }
     }
   }
 
-  void _onDataParsed(EphemeralRecordsContainer container) {
-    _pendingReceivedData = container;
+  void _onPayloadReceived(Uint8List payload) {
+    _pendingPayload = payload;
 
     if (_pendingInvitationId != null) {
       debugPrint(
-          '[ReceiveMode] Data arrived while invitation pending, stored for BLoC');
+        '[ReceiveMode] Data arrived while invitation pending, stored for BLoC',
+      );
       return;
     }
 
-    debugPrint(
-        '[ReceiveMode] Auto-navigating to viewer: ${container.recordCount} records from ${container.senderDeviceName}');
+    debugPrint('[ReceiveMode] Auto-navigating to the share screen');
     final router = getIt<AppRouter>();
     router.push(ShareRecordsRoute(hasReceivedData: true));
   }
@@ -192,21 +218,23 @@ class ReceiveModeManager implements ReceiveModeService {
   void _showInvitationNotification(Map<String, dynamic> invitation) {
     final deviceName =
         invitation['senderDeviceName'] as String? ??
-            invitation['deviceName'] as String? ??
-            'Unknown Device';
+        invitation['deviceName'] as String? ??
+        _strings.l10n.shareUnknownDevice;
     final invitationId = invitation['invitationId'] as String? ?? '';
 
     debugPrint('[ReceiveMode] Invitation from: $deviceName');
 
     if (_pendingInvitationId != null) {
-      debugPrint('[ReceiveMode] Already handling an invitation, skipping duplicate');
+      debugPrint(
+        '[ReceiveMode] Already handling an invitation, skipping duplicate',
+      );
       return;
     }
 
     _pendingInvitationId = invitationId;
     _pendingInvitationDeviceName = deviceName;
 
-    if (_pendingReceivedData != null) {
+    if (_pendingPayload != null) {
       debugPrint('[ReceiveMode] Data already received, skipping dialog');
       return;
     }
@@ -220,13 +248,16 @@ class ReceiveModeManager implements ReceiveModeService {
 
     if (context == null) {
       debugPrint('[ReceiveMode] No context for dialog, navigating directly');
-      router.push(ShareRecordsRoute(
-        pendingInvitationId: invitationId,
-        pendingInvitationDeviceName: deviceName,
-      ));
+      router.push(
+        ShareRecordsRoute(
+          pendingInvitationId: invitationId,
+          pendingInvitationDeviceName: deviceName,
+        ),
+      );
       return;
     }
 
+    final l10n = _strings.l10n;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -243,129 +274,145 @@ class ReceiveModeManager implements ReceiveModeService {
           child: Dialog(
             backgroundColor: Colors.transparent,
             insetPadding: const EdgeInsets.all(Insets.normal),
-            child: Container(
-              decoration: BoxDecoration(
-                color: dialogContext.colorScheme.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: borderColor, width: 1),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(Insets.normal),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Incoming Health Records',
-                      style: AppTextStyle.titleSmall.copyWith(color: textColor),
-                    ),
-                    const SizedBox(height: Insets.small),
-                    Text(
-                      '$deviceName wants to share health records with you',
-                      style: AppTextStyle.bodyMedium.copyWith(color: textColor),
-                    ),
-                    const SizedBox(height: Insets.normal),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.warning.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: AppColors.warning.withValues(alpha: 0.3),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: dialogContext.dialogWidth),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: dialogContext.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: borderColor, width: 1),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(Insets.normal),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        l10n.shareIncomingHealthRecords,
+                        style: AppTextStyle.titleSmall.copyWith(
+                          color: textColor,
                         ),
                       ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Assets.icons.information.svg(
+                      const SizedBox(height: Insets.small),
+                      Text(
+                        l10n.shareDeviceWantsToShareHealthRecords(deviceName),
+                        style: AppTextStyle.bodyMedium.copyWith(
+                          color: textColor,
+                        ),
+                      ),
+                      const SizedBox(height: Insets.normal),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.warning.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AppColors.warning.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Assets.icons.information.svg(
                               width: 20,
                               height: 20,
                               colorFilter: const ColorFilter.mode(
                                 AppColors.warning,
                                 BlendMode.srcIn,
                               ),
-                          ),
-                          const SizedBox(width: 10),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                l10n.shareViewOnlyWarning,
+                                style: AppTextStyle.labelLarge.copyWith(
+                                  color: textColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: Insets.normal),
+                      Row(
+                        children: [
                           Expanded(
-                            child: Text(
-                              'Records will be view-only and automatically deleted when you exit',
-                              style: AppTextStyle.labelLarge.copyWith(
-                                color: textColor,
+                            child: TextButton(
+                              onPressed: () async {
+                                Navigator.of(dialogContext).pop();
+                                await _shareRecordsService.rejectInvitation(
+                                  invitationId,
+                                );
+                                clearPendingInvitation();
+
+                                await Future.delayed(
+                                  const Duration(seconds: 4),
+                                );
+                                if (_isListening && !_isRestarting) {
+                                  _isRestarting = true;
+                                  debugPrint(
+                                    '[ReceiveMode] Restarting discovery after rejection',
+                                  );
+                                  try {
+                                    await _shareRecordsService
+                                        .startSymmetricDiscovery();
+                                  } finally {
+                                    _isRestarting = false;
+                                  }
+                                }
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: AppColors.primary,
+                                padding: const EdgeInsets.all(8),
+                                fixedSize: const Size.fromHeight(36),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                              child: Text(
+                                l10n.shareDecline,
+                                style: AppTextStyle.buttonSmall.copyWith(
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.of(dialogContext).pop();
+                                router.push(
+                                  ShareRecordsRoute(
+                                    pendingInvitationId: invitationId,
+                                    pendingInvitationDeviceName: deviceName,
+                                    invitationPreAccepted: true,
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.all(8),
+                                fixedSize: const Size.fromHeight(36),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: Text(
+                                l10n.shareAccept,
+                                style: AppTextStyle.buttonSmall.copyWith(
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: Insets.normal),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextButton(
-                            onPressed: () async {
-                              Navigator.of(dialogContext).pop();
-                              await _shareRecordsService.rejectInvitation(invitationId);
-                              clearPendingInvitation();
-
-                              await Future.delayed(const Duration(seconds: 4));
-                              if (_isListening && !_isRestarting) {
-                                _isRestarting = true;
-                                debugPrint('[ReceiveMode] Restarting discovery after rejection');
-                                try {
-                                  await _shareRecordsService.startSymmetricDiscovery();
-                                } finally {
-                                  _isRestarting = false;
-                                }
-                              }
-                            },
-                            style: TextButton.styleFrom(
-                              foregroundColor: AppColors.primary,
-                              padding: const EdgeInsets.all(8),
-                              fixedSize: const Size.fromHeight(36),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                            ),
-                            child: Text(
-                              'Decline',
-                              style: AppTextStyle.buttonSmall.copyWith(
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.of(dialogContext).pop();
-                              router.push(ShareRecordsRoute(
-                                pendingInvitationId: invitationId,
-                                pendingInvitationDeviceName: deviceName,
-                                invitationPreAccepted: true,
-                              ));
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.all(8),
-                              fixedSize: const Size.fromHeight(36),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: Text(
-                              'Accept',
-                              style: AppTextStyle.buttonSmall.copyWith(
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -375,6 +422,7 @@ class ReceiveModeManager implements ReceiveModeService {
     );
   }
 
+  @override
   @disposeMethod
   Future<void> dispose() async {
     await stopListening();

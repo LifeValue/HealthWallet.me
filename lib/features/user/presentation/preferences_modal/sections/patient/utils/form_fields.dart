@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_dropdown_field.dart';
+import 'package:health_wallet/core/widgets/app_input_field.dart';
 
 class FormFields {
   static Widget buildFieldLabel(BuildContext context, String label) {
     return Padding(
       padding: const EdgeInsets.only(bottom: Insets.smaller),
-      child: Text(label,
-          style: AppTextStyle.bodySmall.copyWith(
-            color: context.isDarkMode
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimary,
-          )),
+      child: Text(
+        label,
+        style: AppTextStyle.bodySmall.copyWith(
+          color: context.isDarkMode
+              ? AppColors.textPrimaryDark
+              : AppColors.textPrimary,
+        ),
+      ),
     );
   }
 
@@ -45,41 +48,13 @@ class FormFields {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         buildFieldLabel(context, label),
-        Container(
-          height: 36,
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: context.borderColor,
-              width: 1.5,
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: TextField(
-            controller: textController,
-            enabled: onChanged != null,
-            onChanged: onChanged,
-            keyboardType: keyboardType,
-            inputFormatters: inputFormatters,
-            style: AppTextStyle.labelLarge.copyWith(
-              color: context.isDarkMode
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimary,
-            ),
-            decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: Insets.small,
-                vertical: Insets.small,
-              ),
-              border: InputBorder.none,
-              isDense: true,
-              hintText: hintText,
-              hintStyle: AppTextStyle.labelLarge.copyWith(
-                color: context.isDarkMode
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondary,
-              ),
-            ),
-          ),
+        AppInputField(
+          controller: textController,
+          enabled: onChanged != null,
+          onChanged: onChanged,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+          hintText: hintText,
         ),
       ],
     );
@@ -110,8 +85,8 @@ class FormFields {
     required VoidCallback onCancel,
     required VoidCallback? onSave,
     required bool isLoading,
-    String cancelLabel = 'Cancel',
-    String saveLabel = 'Save details',
+    required String cancelLabel,
+    required String saveLabel,
   }) {
     return Row(
       children: [
@@ -124,7 +99,8 @@ class FormFields {
               elevation: 0,
               padding: const EdgeInsets.symmetric(vertical: Insets.small),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6)),
+                borderRadius: BorderRadius.circular(6),
+              ),
             ),
             child: Text(cancelLabel, style: AppTextStyle.buttonSmall),
           ),
@@ -139,7 +115,8 @@ class FormFields {
               elevation: 0,
               padding: const EdgeInsets.symmetric(vertical: Insets.small),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6)),
+                borderRadius: BorderRadius.circular(6),
+              ),
             ),
             child: isLoading
                 ? const SizedBox(

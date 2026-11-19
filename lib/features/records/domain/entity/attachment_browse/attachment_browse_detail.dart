@@ -1,0 +1,16 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
+
+part 'attachment_browse_detail.freezed.dart';
+
+@freezed
+abstract class AttachmentBrowseDetail with _$AttachmentBrowseDetail {
+  const factory AttachmentBrowseDetail({
+    required IFhirResource record,
+    @Default([]) List<AttachmentBrowseFile> attachments,
+    String? patientName,
+    String? organizationName,
+    String? practitionerName,
+    String? specialtyName,
+  }) = _AttachmentBrowseDetail;
+}

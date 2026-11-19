@@ -1,0 +1,6 @@
+# C and C++ in windows/runner and linux/runner follow Flutter's runner template, which uses
+# Google style.
+BasedOnStyle: Google
+# Windows headers can depend on include order, so includes stay as written.
+SortIncludes: Never
+IncludeBlocks: Preserve

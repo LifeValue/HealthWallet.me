@@ -1,0 +1,373 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:health_wallet/core/config/constants/ai_model_config.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/processing/data/data_source/local/processing_local_data_source.dart';
+import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
+import 'package:health_wallet/features/processing/data/repository/ai_extraction_repository.dart';
+import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
+import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
+import 'package:injectable/injectable.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
+
+@LazySingleton(as: ProcessingRepository)
+class ProcessingRepositoryImpl extends Object
+    with AiExtractionRepository
+    implements ProcessingRepository {
+  ProcessingRepositoryImpl(
+    this._networkDataSource,
+    this._localDataSource,
+    this._textRecognitionService,
+    this._pathResolver,
+  );
+
+  final AiInferenceDataSource _networkDataSource;
+  final ProcessingLocalDataSource _localDataSource;
+  final TextRecognitionService _textRecognitionService;
+  final PathResolver _pathResolver;
+
+  /// AI runs started and not yet ended, oldest first. Each waits for the
+  /// one before it, so two never share the engine.
+  final List<_AiRun> _runs = [];
+
+  /// The run that holds the engine.
+  _AiRun? _activeRun;
+
+  @override
+  AiInferenceDataSource get networkDataSource => _networkDataSource;
+
+  @override
+  TextRecognitionService get textRecognitionService => _textRecognitionService;
+
+  /// Whether the run holding the engine was cancelled; false between runs.
+  @override
+  bool get shouldCancelGeneration => _activeRun?.cancelled ?? false;
+
+  /// Registers a run behind the ones still running; [_takeTurn] waits for
+  /// them and [_endRun] lets the next one start.
+  _AiRun _enqueueRun() {
+    final run = _AiRun(_runs.lastOrNull);
+    _runs.add(run);
+    return run;
+  }
+
+  Future<void> _takeTurn(_AiRun run) async {
+    await run.previous?.ended;
+    run.previous = null;
+    _activeRun = run;
+  }
+
+  void _endRun(_AiRun run) {
+    if (identical(_activeRun, run)) _activeRun = null;
+    _runs.remove(run);
+    run.end();
+  }
+
+  /// Runs [body] in its turn, after the AI runs started before it.
+  Future<T> _inTurn<T>(Future<T> Function() body) async {
+    final run = _enqueueRun();
+    try {
+      await _takeTurn(run);
+      return await body();
+    } finally {
+      _endRun(run);
+    }
+  }
+
+  @override
+  Future<String> saveScannedDocument(String sourcePath) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final scanDir = Directory(path.join(directory.path, 'scanned_documents'));
+
+      if (!await scanDir.exists()) {
+        await scanDir.create(recursive: true);
+      }
+
+      final sourceFile = File(sourcePath);
+      if (!await sourceFile.exists()) {
+        throw Exception('Source file does not exist: $sourcePath');
+      }
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final extension = path.extension(sourcePath);
+      final newFileName = 'document_$timestamp$extension';
+      final newPath = path.join(scanDir.path, newFileName);
+
+      await sourceFile.copy(newPath);
+
+      return await _pathResolver.toRelative(newPath);
+    } catch (e) {
+      throw Exception('Failed to save document: $e');
+    }
+  }
+
+  @override
+  Future<ProcessingSession> createProcessingSession({
+    required List<String> filePaths,
+    required ProcessingOrigin origin,
+    String? id,
+  }) async {
+    final relativePaths = await Future.wait(
+      filePaths.map(_pathResolver.toRelative),
+    );
+    final absolutePaths = await _pathResolver.resolveAll(relativePaths);
+
+    final session = ProcessingSession(
+      id: id ?? const Uuid().v4(),
+      filePaths: absolutePaths,
+      origin: origin,
+      createdAt: DateTime.now(),
+    );
+
+    final sessionForDb = session.copyWith(filePaths: relativePaths);
+    await _localDataSource.cacheProcessingSession(sessionForDb.toDbCompanion());
+
+    return session;
+  }
+
+  @override
+  Future<List<ProcessingSession>> getProcessingSessions() async {
+    final dtos = await _localDataSource.getProcessingSessions();
+    final sessions = dtos.map(ProcessingSession.fromDto).toList();
+
+    return Future.wait(
+      sessions.map((s) async {
+        final absolutePaths = await _pathResolver.resolveAll(s.filePaths);
+        return s.copyWith(filePaths: absolutePaths);
+      }),
+    );
+  }
+
+  @override
+  Future<int> editProcessingSession(ProcessingSession session) async {
+    final relativePaths = await Future.wait(
+      session.filePaths.map(_pathResolver.toRelative),
+    );
+    final sessionForDb = session.copyWith(filePaths: relativePaths);
+    return _localDataSource.updateProcessingSession(
+      session.id,
+      sessionForDb.toDbCompanion(),
+    );
+  }
+
+  @override
+  Future<int> deleteProcessingSession(ProcessingSession session) async {
+    for (final filePath in session.filePaths) {
+      try {
+        final file = File(await _pathResolver.toAbsolute(filePath));
+        if (await file.exists()) await file.delete();
+      } catch (e, s) {
+        // The session goes anyway; a leftover file only takes space.
+        logger.w('Deleting a file of session ${session.id} failed', e, s);
+      }
+    }
+
+    return _localDataSource.deleteProcessingSession(session.id);
+  }
+
+  @override
+  Future<bool> checkModelExistence() async {
+    return _networkDataSource.checkModelExistence();
+  }
+
+  @override
+  Stream<double> downloadModelForVariant(AiModelVariant variant) =>
+      _cancellableDownload(
+        (onProgress) => _networkDataSource.downloadModelForVariant(
+          variant,
+          onProgress: onProgress,
+        ),
+        cancel: () => _networkDataSource.cancelModelDownloadForVariant(variant),
+      );
+
+  @override
+  Future<bool> checkModelExistenceForVariant(AiModelVariant variant) async {
+    return _networkDataSource.checkModelExistenceForVariant(variant);
+  }
+
+  @override
+  Future<void> deleteModelForVariant(AiModelVariant variant) async {
+    return _networkDataSource.deleteModelForVariant(variant);
+  }
+
+  @override
+  Stream<double> downloadMmprojForVariant(AiModelVariant variant) =>
+      _cancellableDownload(
+        (onProgress) => _networkDataSource.downloadMmprojForVariant(
+          variant,
+          onProgress: onProgress,
+        ),
+        cancel: () =>
+            _networkDataSource.cancelMmprojDownloadForVariant(variant),
+      );
+
+  /// Progress of the download [start] begins. Cancelling the subscription
+  /// stops that transfer through [cancel], and the cancel completes once the
+  /// transfer has ended and its partial file is gone.
+  Stream<double> _cancellableDownload(
+    Future<void> Function(void Function(int) onProgress) start, {
+    required Future<void> Function() cancel,
+  }) {
+    // Set once the transfer has ended, so a late cancel (onCancel also runs
+    // after the done event) never reaches a newer transfer of the same file.
+    var ended = false;
+    final controller = StreamController<double>(
+      onCancel: () async {
+        if (ended) return;
+        try {
+          await cancel();
+        } catch (e, s) {
+          logger.e('Could not cancel the model download', e, s);
+        }
+      },
+    );
+
+    start((progress) {
+      if (!controller.isClosed) controller.add(progress.toDouble());
+    }).then(
+      (_) {
+        ended = true;
+        controller.close();
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        ended = true;
+        controller.addError(error, stackTrace);
+        controller.close();
+      },
+    );
+
+    return controller.stream;
+  }
+
+  @override
+  Future<bool> checkMmprojExistenceForVariant(AiModelVariant variant) async {
+    return _networkDataSource.checkMmprojExistenceForVariant(variant);
+  }
+
+  @override
+  Future<(MappingPatient, MappingResource)> mapBasicInfo(
+    List<String> imagePaths, {
+    int? maxTokens,
+    int? gpuLayers,
+    int? threads,
+    int? contextSize,
+    ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
+  }) => _inTurn(
+    () => processMapBasicInfo(
+      imagePaths,
+      maxTokens: maxTokens,
+      gpuLayers: gpuLayers,
+      threads: threads,
+      contextSize: contextSize,
+      outputMode: outputMode,
+    ),
+  );
+
+  @override
+  Future<MappingResource> mapContainerOnly(
+    String ocrText, {
+    int? maxTokens,
+    int? gpuLayers,
+    int? threads,
+    int? contextSize,
+    ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
+  }) => _inTurn(
+    () => super.mapContainerOnly(
+      ocrText,
+      maxTokens: maxTokens,
+      gpuLayers: gpuLayers,
+      threads: threads,
+      contextSize: contextSize,
+      outputMode: outputMode,
+    ),
+  );
+
+  @override
+  Stream<MappingResourcesWithProgress> mapRemainingResources(
+    List<String> imagePaths, {
+    String? documentCategory,
+    bool useVision = false,
+    int? maxTokens,
+    int? gpuLayers,
+    int? threads,
+    int? contextSize,
+    ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
+  }) async* {
+    final run = _enqueueRun();
+    try {
+      await _takeTurn(run);
+      yield* processMapRemainingResources(
+        imagePaths,
+        documentCategory: documentCategory,
+        useVision: useVision,
+        maxTokens: maxTokens,
+        gpuLayers: gpuLayers,
+        threads: threads,
+        contextSize: contextSize,
+        outputMode: outputMode,
+      );
+    } finally {
+      try {
+        await disposeModelInRun();
+      } finally {
+        _endRun(run);
+      }
+    }
+  }
+
+  /// Waits for the AI runs started so far to end; a run started later is
+  /// not waited for.
+  @override
+  Future<void> waitForStreamCompletion() async {
+    final last = _runs.lastOrNull;
+    if (last != null) await last.ended;
+  }
+
+  /// Cancels the AI runs started so far, the one holding the engine and the
+  /// ones waiting for it, and stops the running generation. A run started
+  /// later is not affected.
+  @override
+  Future<void> cancelGeneration() async {
+    if (_runs.isEmpty) return;
+    for (final run in _runs) {
+      run.cancelled = true;
+    }
+    _networkDataSource.cancelGeneration();
+  }
+
+  /// Waits for the AI runs started so far, so a run that is using the
+  /// engine (another session's, say) keeps it until it ends.
+  @override
+  Future disposeModel() => _inTurn(_networkDataSource.disposeModel);
+
+  @override
+  Future<void> disposeModelInRun() => _networkDataSource.disposeModel();
+}
+
+/// One call that uses the AI engine: a patient step, a container-only step or
+/// a records stream.
+class _AiRun {
+  _AiRun(this.previous);
+
+  /// The run started before this one, until this one's turn has come.
+  _AiRun? previous;
+
+  bool cancelled = false;
+
+  final _ended = Completer<void>();
+
+  Future<void> get ended => _ended.future;
+
+  void end() {
+    if (!_ended.isCompleted) _ended.complete();
+  }
+}

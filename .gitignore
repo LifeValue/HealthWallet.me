@@ -1,5 +1,9 @@
 # Claude Code
 .claude/
+.mcp.json
+
+# BMad install (each developer runs the BMad installer; planning output in _bmad-output/ stays tracked)
+_bmad/
 
 # Secrets & Signing Keys - NEVER commit these
 **/private_keys/
@@ -10,6 +14,9 @@
 *.pem
 assets/certs/*
 !assets/certs/.gitkeep
+!assets/certs/android/
+assets/certs/android/*
+!assets/certs/android/.gitkeep
 *.jks
 *.keystore
 **/key.properties
@@ -31,6 +38,9 @@ assets/certs/*
 .swiftpm/
 migrate_working_dir/
 
+# Bundler's local settings and the plugins it installs from the Gemfiles
+**/.bundle/
+
 # exclude the API key from version control
 env.g.dart
 *.env
@@ -50,12 +60,19 @@ env.g.dart
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+/coverage/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
 .pub-cache/
 .pub/
 /build/
+
+# snapcraft pack (snap/snapcraft.yaml) on the host or in destructive mode
+/parts/
+/stage/
+/prime/
+/*.snap
 
 # Symbolication related
 app.*.symbols
@@ -64,6 +81,7 @@ app.*.symbols
 app.*.map.json
 
 # Android Studio will place build artifacts here
+/android/build/
 /android/app/debug
 /android/app/profile
 /android/app/release
@@ -75,12 +93,18 @@ app.*.map.json
 **/*.config.dart
 **/*.gr.dart
 
+pubspec_overrides.yaml
+
 # FVM Version Cache
 .fvm/
-.fvmrc
 
 .vscode/settings.json
 
 # Fastlane
 ios/fastlane/Appfile
 ios/fastlane/Matchfile
+# Node (Prettier tooling)
+node_modules/
+
+# Temporary test written by scripts/coverage.sh
+test/coverage_all_files_test.dart

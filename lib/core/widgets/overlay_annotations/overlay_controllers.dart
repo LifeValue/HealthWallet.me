@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/widgets/overlay_annotations/highlight_overlay.dart';
 import 'package:health_wallet/core/widgets/overlay_annotations/overlay_step.dart';
 import 'package:health_wallet/core/widgets/overlay_annotations/tooltip_position.dart';
@@ -125,7 +126,7 @@ class StepByStepOverlayController {
       builder: (overlayContext) => MultiHighlightOverlay(
         targetKeys: [step.targetKey],
         message: step.message,
-        subtitle: step.subtitle ?? 'Tap to continue',
+        subtitle: step.subtitle ?? overlayContext.l10n.tapToContinue,
         tooltipPosition: TooltipPosition.top,
         onDismiss: () {
           hide();

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
@@ -59,8 +59,9 @@ class ThemeToggleButton extends StatelessWidget {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 250),
                     decoration: BoxDecoration(
-                      color:
-                          isDarkMode ? colorScheme.primary : Colors.transparent,
+                      color: isDarkMode
+                          ? colorScheme.primary
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Center(

@@ -1,23 +1,30 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
-import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/core/services/pdf_preview_service.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
+import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
+import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
+import 'package:health_wallet/features/home/presentation/widgets/specialty_picker.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
-import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
-import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
-import 'package:health_wallet/core/services/pdf_preview_service.dart';
-import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/features/records/presentation/widgets/delete_record_dialog.dart';
+import 'package:health_wallet/features/records/presentation/widgets/vision_prescription_table.dart';
 import 'package:health_wallet/features/share_records/core/ephemeral_session_manager.dart';
+import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 @RoutePage()
@@ -38,15 +45,25 @@ class RecordDetailsPage extends StatefulWidget {
 class _RecordDetailsPageState extends State<RecordDetailsPage> {
   final PdfPreviewService _pdfPreviewService = getIt<PdfPreviewService>();
   late final bool _isEphemeral;
-  late final RecordsBloc _appRecordsBloc;
+  RecordsBloc? _appRecordsBloc;
   List<IFhirResource> _ephemeralRelatedResources = [];
+  late MedicalSpecialty? _currentSpecialty;
 
   @override
   void initState() {
     super.initState();
-    _appRecordsBloc = context.read<RecordsBloc>();
-    _isEphemeral = widget.ephemeralRecords.isNotEmpty ||
+    final parsed = MedicalSpecialty.values
+        .where((s) => s.name == widget.resource.specialtyOverride)
+        .firstOrNull;
+    _currentSpecialty =
+        parsed ??
+        getIt<SpecialtyClassifier>().classify(widget.resource).firstOrNull;
+    _isEphemeral =
+        widget.ephemeralRecords.isNotEmpty ||
         EphemeralSessionManager.instance.hasActiveSession;
+    if (!_isEphemeral) {
+      _appRecordsBloc = context.read<RecordsBloc>();
+    }
     if (_isEphemeral) {
       _ephemeralRelatedResources = _findRelatedInMemory();
     }
@@ -63,16 +80,11 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     );
   }
 
-  List<RecordInfoLine> _getAdditionalInfo(BuildContext context) {
-    final resource = widget.resource;
-    if (resource is Observation) {
-      try {
-        final region = context.read<UserBloc>().state.regionPreset;
-        return resource.additionalInfoForRegion(region);
-      } catch (_) {}
-    }
-    return resource.additionalInfo;
-  }
+  List<RecordInfoLine> _getAdditionalInfo(BuildContext context) =>
+      widget.resource.additionalInfoIn(
+        context.read<UserBloc>().state.regionPreset,
+        context.l10n,
+      );
 
   void _onViewDocument(IFhirResource resource) {
     if (_isEphemeral) {
@@ -100,20 +112,34 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
   }
 
   Widget _buildScaffold(
-      BuildContext context, List<IFhirResource> relatedResources) {
-    IFhirResource? encounter = relatedResources.firstWhere(
+    BuildContext context,
+    List<IFhirResource> relatedResources,
+  ) {
+    final IFhirResource encounter = relatedResources.firstWhere(
       (resource) => resource.fhirType == FhirType.Encounter,
       orElse: () => const GeneralResource(),
     );
 
-    final isEphemeral = widget.ephemeralRecords.isNotEmpty;
-
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'Record Details',
-        actions: isEphemeral
+        title: context.l10n.recordDetails,
+        actions: _isEphemeral
             ? null
             : [
+                IconButton(
+                  icon:
+                      (_currentSpecialty?.icon ??
+                              Assets.specialities.generalCare)
+                          .svg(
+                            width: 22,
+                            height: 22,
+                            colorFilter: ColorFilter.mode(
+                              context.colorScheme.primary,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                  onPressed: () => _showSpecialtyPicker(context),
+                ),
                 IconButton(
                   icon: Assets.icons.trashCan.svg(
                     colorFilter: ColorFilter.mode(
@@ -160,7 +186,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
               vertical: Insets.extraSmall,
             ),
             decoration: BoxDecoration(
-              color: context.colorScheme.onSurface.withOpacity(0.1),
+              color: context.colorScheme.onSurface.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -172,7 +198,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  widget.resource.fhirType.display,
+                  widget.resource.fhirType.localizedName(context.l10n),
                   style: AppTextStyle.labelSmall,
                 ),
               ],
@@ -185,12 +211,14 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
               color: context.colorScheme.onSurface,
             ),
           ),
+          if (widget.resource case final VisionPrescription prescription)
+            VisionPrescriptionTable(rows: prescription.eyeRows),
           if (widget.resource.fhirType == FhirType.DocumentReference ||
               widget.resource.fhirType == FhirType.Media)
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: AppButton(
-                label: 'View Document',
+                label: context.l10n.viewDocument,
                 onPressed: () => _onViewDocument(widget.resource),
                 icon: const Icon(Icons.visibility_outlined),
                 variant: AppButtonVariant.outlined,
@@ -224,7 +252,9 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                       padding: const EdgeInsets.only(top: 2),
                       child: infoLine.icon.svg(
                         width: 16,
-                        color: context.colorScheme.onSurface.withOpacity(0.7),
+                        color: context.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -235,7 +265,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                           color: context.colorScheme.onSurface,
                         ),
                       ),
-                    )
+                    ),
                   ],
                 ),
               ],
@@ -250,13 +280,15 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Encounter details", style: AppTextStyle.buttonSmall),
+        Text(context.l10n.encounterDetails, style: AppTextStyle.buttonSmall),
         const SizedBox(height: 4),
         InkWell(
-          onTap: () => context.router.push(RecordDetailsRoute(
-            resource: encounter,
-            ephemeralRecords: widget.ephemeralRecords,
-          )),
+          onTap: () => context.router.push(
+            RecordDetailsRoute(
+              resource: encounter,
+              ephemeralRecords: widget.ephemeralRecords,
+            ),
+          ),
           child: _buildRelatedResourceInfo(context, encounter),
         ),
         Padding(
@@ -268,49 +300,60 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
   }
 
   Widget _buildRelatedResourcesSection(
-      BuildContext context, List<IFhirResource> resources) {
+    BuildContext context,
+    List<IFhirResource> resources,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Related resources", style: AppTextStyle.buttonSmall),
+        Text(context.l10n.relatedResources, style: AppTextStyle.buttonSmall),
         const SizedBox(height: 16),
-        ...resources.map((resource) => InkWell(
-              onTap: () => context.router.push(RecordDetailsRoute(
+        ...resources.map(
+          (resource) => InkWell(
+            onTap: () => context.router.push(
+              RecordDetailsRoute(
                 resource: resource,
                 ephemeralRecords: widget.ephemeralRecords,
-              )),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(resource.displayTitle,
-                      style: AppTextStyle.labelLarge),
-                  if (resource.fhirType == FhirType.Media ||
-                      resource.fhirType == FhirType.DocumentReference)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: AppButton(
-                        label: 'View Document',
-                        onPressed: () => _onViewDocument(resource),
-                        icon: const Icon(Icons.visibility_outlined),
-                        variant: AppButtonVariant.outlined,
-                        fullWidth: false,
-                        height: 36,
-                        fontSize: 12,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                      ),
-                    ),
-                  _buildRelatedResourceInfo(context, resource),
-                  const SizedBox(height: 16),
-                ],
               ),
-            ))
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(resource.displayTitle, style: AppTextStyle.labelLarge),
+                if (resource.fhirType == FhirType.Media ||
+                    resource.fhirType == FhirType.DocumentReference)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: AppButton(
+                      label: context.l10n.viewDocument,
+                      onPressed: () => _onViewDocument(resource),
+                      icon: const Icon(Icons.visibility_outlined),
+                      variant: AppButtonVariant.outlined,
+                      fullWidth: false,
+                      height: 36,
+                      fontSize: 12,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                    ),
+                  ),
+                _buildRelatedResourceInfo(context, resource),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildRelatedResourceInfo(
-      BuildContext context, IFhirResource resource) {
-    final infoLines = resource.additionalInfo
+    BuildContext context,
+    IFhirResource resource,
+  ) {
+    final infoLines = resource
+        .additionalInfoIn(
+          context.read<UserBloc>().state.regionPreset,
+          context.l10n,
+        )
         .where((line) => !line.isSection)
         .take(2)
         .toList();
@@ -327,17 +370,21 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                   children: [
                     infoLine.icon.svg(
                       width: 16,
-                      color: context.colorScheme.onSurface.withOpacity(0.6),
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.6,
+                      ),
                     ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         infoLine.info,
                         style: AppTextStyle.labelLarge.copyWith(
-                          color: context.colorScheme.onSurface.withOpacity(0.6),
+                          color: context.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
-                    )
+                    ),
                   ],
                 ),
               ],
@@ -347,8 +394,84 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     );
   }
 
+  void _showSpecialtyPicker(BuildContext outerContext) async {
+    final currentSpecialty = _currentSpecialty;
+
+    final selected = await showModalBottomSheet<MedicalSpecialty?>(
+      context: outerContext,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      isScrollControlled: true,
+      builder: (sheetContext) => SpecialtyPicker(
+        currentSpecialty: currentSpecialty,
+        onSelected: (specialty) async {
+          if (specialty == currentSpecialty) {
+            Navigator.of(sheetContext).pop();
+            return;
+          }
+
+          final isRemove = specialty == null && currentSpecialty != null;
+
+          final confirmed = await AppSimpleDialog.showConfirmation(
+            context: sheetContext,
+            title: outerContext.l10n.changeSpecialty,
+            message: isRemove
+                ? outerContext.l10n.removeSpecialtyConfirm
+                : outerContext.l10n.changeSpecialtyConfirm,
+            subtitleWidget: !isRemove && specialty != null
+                ? Row(
+                    children: [
+                      specialty.icon.svg(
+                        width: 24,
+                        height: 24,
+                        colorFilter: ColorFilter.mode(
+                          Theme.of(sheetContext).colorScheme.onSurface,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        specialty.localizedName(outerContext.l10n),
+                        style: AppTextStyle.bodyLarge.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(sheetContext).colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  )
+                : null,
+            confirmText: outerContext.l10n.confirm,
+            cancelText: outerContext.l10n.cancel,
+            onConfirm: () {},
+            onCancel: () {},
+          );
+
+          if (confirmed == true && sheetContext.mounted) {
+            Navigator.of(sheetContext).pop(specialty);
+          }
+        },
+      ),
+    );
+
+    if (selected == null && currentSpecialty == null) return;
+    if (selected == currentSpecialty) return;
+
+    final repo =
+        _appRecordsBloc?.recordsRepository ?? getIt<RecordsRepository>();
+    await repo.setSpecialtyOverride(widget.resource.id, selected?.name);
+
+    if (mounted && outerContext.mounted) {
+      setState(() {
+        _currentSpecialty = selected;
+      });
+      outerContext.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
+      outerContext.read<RecordsBloc>().add(RecordsRefreshRequested());
+    }
+  }
+
   void _showDeleteDialog(BuildContext context) async {
-    final relatedResources = await _appRecordsBloc.recordsRepository
+    final relatedResources = await _appRecordsBloc!.recordsRepository
         .getRelatedResourcesForDeletion(widget.resource.id);
 
     if (!context.mounted) return;
@@ -361,217 +484,25 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
       return;
     }
 
-    _showDeleteSelectionDialog(context, relatedResources);
+    await _showDeleteSelectionDialog(context, relatedResources);
   }
 
-  void _showDeleteSelectionDialog(
+  Future<void> _showDeleteSelectionDialog(
     BuildContext context,
     List<IFhirResource> relatedResources,
-  ) {
-    final selectedIds = <String>{};
+  ) async {
+    final selectedIds = await DeleteRecordDialog.show(
+      context,
+      recordTitle: widget.resource.displayTitle,
+      relatedResources: relatedResources,
+    );
+    if (selectedIds == null || !context.mounted) return;
 
-    showDialog(
+    _showDeleteConfirmation(
       context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (dialogContext, setDialogState) {
-            final textColor = context.primaryTextColor;
-            final borderColor = context.borderColor;
-
-            return Dialog(
-              backgroundColor: context.colorScheme.surface,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: borderColor, width: 1),
-              ),
-              insetPadding: const EdgeInsets.all(Insets.normal),
-              child: Padding(
-                padding: const EdgeInsets.all(Insets.normal),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      context.l10n.deletePage,
-                      style: AppTextStyle.bodyMedium.copyWith(
-                        color: textColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: Insets.normal),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(dialogContext).pop();
-                        _showDeleteConfirmation(
-                          context: context,
-                          onConfirm: () =>
-                              _deleteResource(context, selectedRelatedIds: []),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: context.colorScheme.error,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: Insets.smallNormal),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        '${widget.resource.fhirType.name} ${context.l10n.deletePage.toLowerCase()}',
-                      ),
-                    ),
-                    if (relatedResources.isNotEmpty) ...[
-                      const SizedBox(height: Insets.normal),
-                      Text(
-                        'Related resources',
-                        style: AppTextStyle.labelLarge.copyWith(
-                          color: textColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: Insets.small),
-                      ...relatedResources.map((resource) {
-                        final isSelected = selectedIds.contains(resource.id);
-                        return Padding(
-                          padding:
-                              const EdgeInsets.only(bottom: Insets.extraSmall),
-                          child: InkWell(
-                            onTap: () {
-                              setDialogState(() {
-                                if (isSelected) {
-                                  selectedIds.remove(resource.id);
-                                } else {
-                                  selectedIds.add(resource.id);
-                                }
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(8),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: Insets.smallNormal,
-                                vertical: Insets.small,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? context.colorScheme.error
-                                          .withValues(alpha: 0.5)
-                                      : borderColor,
-                                ),
-                                color: isSelected
-                                    ? context.colorScheme.error
-                                        .withValues(alpha: 0.05)
-                                    : null,
-                              ),
-                              child: Row(
-                                children: [
-                                  SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: Checkbox(
-                                      value: isSelected,
-                                      onChanged: (value) {
-                                        setDialogState(() {
-                                          if (value == true) {
-                                            selectedIds.add(resource.id);
-                                          } else {
-                                            selectedIds.remove(resource.id);
-                                          }
-                                        });
-                                      },
-                                      activeColor: context.colorScheme.error,
-                                      materialTapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                      visualDensity: VisualDensity.compact,
-                                    ),
-                                  ),
-                                  const SizedBox(width: Insets.small),
-                                  resource.fhirType.icon.svg(
-                                    width: 16,
-                                    color: context.colorScheme.onSurface
-                                        .withValues(alpha: 0.6),
-                                  ),
-                                  const SizedBox(width: Insets.small),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          resource.displayTitle,
-                                          style:
-                                              AppTextStyle.labelLarge.copyWith(
-                                            color: textColor,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        Text(
-                                          resource.fhirType.display,
-                                          style:
-                                              AppTextStyle.labelSmall.copyWith(
-                                            color: context
-                                                .colorScheme.onSurface
-                                                .withValues(alpha: 0.5),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
-                    if (selectedIds.isNotEmpty) ...[
-                      const SizedBox(height: Insets.small),
-                      OutlinedButton(
-                        onPressed: () {
-                          Navigator.of(dialogContext).pop();
-                          _showDeleteConfirmation(
-                            context: context,
-                            itemCount: 1 + selectedIds.length,
-                            onConfirm: () => _deleteResource(
-                              context,
-                              selectedRelatedIds: selectedIds.toList(),
-                            ),
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: context.colorScheme.error,
-                          side: BorderSide(
-                            color: context.colorScheme.error
-                                .withValues(alpha: 0.3),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              vertical: Insets.smallNormal),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          '${context.l10n.deletePage} + ${selectedIds.length} related',
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: Insets.small),
-                    TextButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(),
-                      child: Text(context.l10n.cancel),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
+      itemCount: 1 + selectedIds.length,
+      onConfirm: () =>
+          _deleteResource(context, selectedRelatedIds: selectedIds),
     );
   }
 
@@ -599,7 +530,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     BuildContext context, {
     List<String> selectedRelatedIds = const [],
   }) {
-    _appRecordsBloc.add(
+    _appRecordsBloc!.add(
       RecordsResourceDeleted(
         resourceId: widget.resource.id,
         selectedRelatedIds: selectedRelatedIds,

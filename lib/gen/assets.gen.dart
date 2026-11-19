@@ -12,16 +12,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart' as _svg;
 import 'package:vector_graphics/vector_graphics.dart' as _vg;
 
-class $AssetsFavIconsGen {
-  const $AssetsFavIconsGen();
-
-  /// File path: assets/favIcons/epic.svg
-  SvgGenImage get epic => const SvgGenImage('assets/favIcons/epic.svg');
-
-  /// List of all assets
-  List<SvgGenImage> get values => [epic];
-}
-
 class $AssetsFontGen {
   const $AssetsFontGen();
 
@@ -47,6 +37,10 @@ class $AssetsIconsGen {
   /// File path: assets/icons/attachment.svg
   SvgGenImage get attachment =>
       const SvgGenImage('assets/icons/attachment.svg');
+
+  /// File path: assets/icons/attachments-view.svg
+  SvgGenImage get attachmentsView =>
+      const SvgGenImage('assets/icons/attachments-view.svg');
 
   /// File path: assets/icons/blood-glucose.svg
   SvgGenImage get bloodGlucose =>
@@ -121,6 +115,10 @@ class $AssetsIconsGen {
   /// File path: assets/icons/filter.svg
   SvgGenImage get filter => const SvgGenImage('assets/icons/filter.svg');
 
+  /// File path: assets/icons/from-phone.svg
+  SvgGenImage get fromPhone =>
+      const SvgGenImage('assets/icons/from-phone.svg');
+
   /// File path: assets/icons/gender-female.svg
   SvgGenImage get genderFemale =>
       const SvgGenImage('assets/icons/gender-female.svg');
@@ -158,6 +156,9 @@ class $AssetsIconsGen {
   SvgGenImage get licenseDraftNotes =>
       const SvgGenImage('assets/icons/license-draft-notes.svg');
 
+  /// File path: assets/icons/list.svg
+  SvgGenImage get list => const SvgGenImage('assets/icons/list.svg');
+
   /// File path: assets/icons/medication.svg
   SvgGenImage get medication =>
       const SvgGenImage('assets/icons/medication.svg');
@@ -173,8 +174,6 @@ class $AssetsIconsGen {
   SvgGenImage get plugCharger =>
       const SvgGenImage('assets/icons/plug-charger.svg');
 
-  /// File path: assets/icons/qr-code.svg
-  SvgGenImage get qrCode => const SvgGenImage('assets/icons/qr-code.svg');
 
   /// File path: assets/icons/renew-sync.svg
   SvgGenImage get renewSync => const SvgGenImage('assets/icons/renew-sync.svg');
@@ -183,8 +182,6 @@ class $AssetsIconsGen {
   SvgGenImage get rulerHeight =>
       const SvgGenImage('assets/icons/ruler-height.svg');
 
-  /// File path: assets/icons/scalpel.svg
-  SvgGenImage get scalpel => const SvgGenImage('assets/icons/scalpel.svg');
 
   /// File path: assets/icons/scan.svg
   SvgGenImage get scan => const SvgGenImage('assets/icons/scan.svg');
@@ -199,8 +196,6 @@ class $AssetsIconsGen {
   SvgGenImage get shareNearby =>
       const SvgGenImage('assets/icons/share-nearby.svg');
 
-  /// File path: assets/icons/share.svg
-  SvgGenImage get share => const SvgGenImage('assets/icons/share.svg');
 
   /// File path: assets/icons/shield.svg
   SvgGenImage get shield => const SvgGenImage('assets/icons/shield.svg');
@@ -268,6 +263,7 @@ class $AssetsIconsGen {
         externalLink,
         faceMask,
         filter,
+        fromPhone,
         genderFemale,
         genderMale,
         heartFavorite,
@@ -282,15 +278,12 @@ class $AssetsIconsGen {
         moon,
         notificationBell,
         plugCharger,
-        qrCode,
         renewSync,
         rulerHeight,
-        scalpel,
         scan,
         search,
         settings,
         shareNearby,
-        share,
         shield,
         stethoscope,
         sun,
@@ -309,6 +302,10 @@ class $AssetsIconsGen {
 
 class $AssetsImagesGen {
   const $AssetsImagesGen();
+
+  /// File path: assets/images/app_launch_icon.png
+  AssetGenImage get appLaunchIcon =>
+      const AssetGenImage('assets/images/app_launch_icon.png');
 
   /// File path: assets/images/battery-plugged-in.svg
   SvgGenImage get batteryPluggedIn =>
@@ -345,17 +342,6 @@ class $AssetsImagesGen {
   SvgGenImage get placeholder =>
       const SvgGenImage('assets/images/placeholder.svg');
 
-  /// File path: assets/images/splash-android-padded.png
-  AssetGenImage get splashAndroidPadded =>
-      const AssetGenImage('assets/images/splash-android-padded.png');
-
-  /// File path: assets/images/splash-android.png
-  AssetGenImage get splashAndroid =>
-      const AssetGenImage('assets/images/splash-android.png');
-
-  /// File path: assets/images/splash.png
-  AssetGenImage get splash => const AssetGenImage('assets/images/splash.png');
-
   /// File path: assets/images/sync-ilustration.svg
   SvgGenImage get syncIlustration =>
       const SvgGenImage('assets/images/sync-ilustration.svg');
@@ -370,6 +356,7 @@ class $AssetsImagesGen {
 
   /// List of all assets
   List<dynamic> get values => [
+        appLaunchIcon,
         batteryPluggedIn,
         batteryWarning,
         completeCheck,
@@ -379,9 +366,6 @@ class $AssetsImagesGen {
         noDeviceFound,
         placeholderDark,
         placeholder,
-        splashAndroidPadded,
-        splashAndroid,
-        splash,
         syncIlustration,
         syncScanIlustration,
         viewingRecords
@@ -505,15 +489,40 @@ class $AssetsFontMatterFontGen {
       ];
 }
 
+class $AssetsSpecialitiesGen {
+  const $AssetsSpecialitiesGen();
+
+  SvgGenImage get allergology => const SvgGenImage('assets/specialities/allergology.svg');
+  SvgGenImage get cardiology => const SvgGenImage('assets/specialities/cardiology.svg');
+  SvgGenImage get dental => const SvgGenImage('assets/specialities/dental.svg');
+  SvgGenImage get dermatology => const SvgGenImage('assets/specialities/dermatology.svg');
+  SvgGenImage get emergencyMedicine => const SvgGenImage('assets/specialities/emergency-medicine.svg');
+  SvgGenImage get endocrinology => const SvgGenImage('assets/specialities/endocrinology.svg');
+  SvgGenImage get gastroenterology => const SvgGenImage('assets/specialities/gastroenterology.svg');
+  SvgGenImage get generalCare => const SvgGenImage('assets/specialities/general-care.svg');
+  SvgGenImage get gynecology => const SvgGenImage('assets/specialities/gynecology.svg');
+  SvgGenImage get nephrology => const SvgGenImage('assets/specialities/nephrology.svg');
+  SvgGenImage get neurology => const SvgGenImage('assets/specialities/neurology.svg');
+  SvgGenImage get oncology => const SvgGenImage('assets/specialities/oncology.svg');
+  SvgGenImage get ophthalmology => const SvgGenImage('assets/specialities/ophthalmology.svg');
+  SvgGenImage get orthopedics => const SvgGenImage('assets/specialities/orthopedics.svg');
+  SvgGenImage get psychiatry => const SvgGenImage('assets/specialities/psychiatry.svg');
+  SvgGenImage get pulmonology => const SvgGenImage('assets/specialities/pulmonology.svg');
+  SvgGenImage get rheumatology => const SvgGenImage('assets/specialities/rheumatology.svg');
+  SvgGenImage get urology => const SvgGenImage('assets/specialities/urology.svg');
+
+  List<SvgGenImage> get values => [allergology, cardiology, dental, dermatology, emergencyMedicine, endocrinology, gastroenterology, generalCare, gynecology, nephrology, neurology, oncology, ophthalmology, orthopedics, psychiatry, pulmonology, rheumatology, urology];
+}
+
 class Assets {
   const Assets._();
 
   static const String demoData = 'assets/demo_data.json';
-  static const $AssetsFavIconsGen favIcons = $AssetsFavIconsGen();
   static const $AssetsFontGen font = $AssetsFontGen();
   static const $AssetsIconsGen icons = $AssetsIconsGen();
   static const $AssetsImagesGen images = $AssetsImagesGen();
   static const $AssetsOnboardingGen onboarding = $AssetsOnboardingGen();
+  static const $AssetsSpecialitiesGen specialities = $AssetsSpecialitiesGen();
 
   /// List of all assets
   static List<String> get values => [demoData];

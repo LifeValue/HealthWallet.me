@@ -1,7 +1,7 @@
 part of 'records_bloc.dart';
 
 @freezed
-class RecordsState with _$RecordsState {
+abstract class RecordsState with _$RecordsState {
   const factory RecordsState({
     @Default(RecordsStatus.initial()) RecordsStatus status,
     @Default([]) List<IFhirResource> resources,
@@ -9,21 +9,27 @@ class RecordsState with _$RecordsState {
     String? sourceId,
     List<String>? sourceIds,
     @Default(false) bool hasMorePages,
+
+    /// The next page is loading below the list, which stays on screen.
+    @Default(false) bool isLoadingMore,
     @Default(RecordDetailStatus.initial())
     RecordDetailStatus recordDetailStatus,
     @Default([]) List<IFhirResource> relatedResources,
-    @Default(false) bool hasDemoData,
-    @Default(false) bool isLoadingDemoData,
-    String? demoDataError,
     @Default('') String searchQuery,
     @Default({}) Set<String> selectedResourceIds,
     @Default(false) bool isSelectionMode,
     DateFilter? dateFilter,
+    @Default([]) List<MedicalSpecialty> activeSpecialties,
+    @Default(IpsExportStatus.idle) IpsExportStatus ipsExportStatus,
   }) = _RecordsState;
 }
 
+/// Progress of an IPS export. Each export passes through [exporting], so a
+/// second failure in a row is still a new [failed] state for listeners.
+enum IpsExportStatus { idle, exporting, failed }
+
 @freezed
-class RecordsStatus with _$RecordsStatus {
+sealed class RecordsStatus with _$RecordsStatus {
   const factory RecordsStatus.initial() = _Initial;
   const factory RecordsStatus.loading() = _Loading;
   const factory RecordsStatus.success() = _Success;
@@ -32,7 +38,7 @@ class RecordsStatus with _$RecordsStatus {
 }
 
 @freezed
-class RecordDetailStatus with _$RecordDetailStatus {
+sealed class RecordDetailStatus with _$RecordDetailStatus {
   const factory RecordDetailStatus.initial() = _DetailInitial;
   const factory RecordDetailStatus.loading() = _DetailLoading;
   const factory RecordDetailStatus.success() = _DetailSuccess;

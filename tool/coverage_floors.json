@@ -1,0 +1,23 @@
+{
+  "Emergency QR + wallet pass": 99.5,
+  "LWW sync": 99.4,
+  "Desktop wire protocol": 91.1,
+  "Backup": 98.0,
+  "Handover": 94.8,
+  "Database + migrations": 67.3,
+  "FHIR record extractors": 98.0,
+  "Records data": 98.7,
+  "Records BLoCs": 79.8,
+  "Processing BLoC": 98.4,
+  "Sync BLoC": 97.8,
+  "Onboarding": 31.7,
+  "Notifications BLoC": 98.3,
+  "Scan → FHIR mapping": 70.3,
+  "Patient services": 47.9,
+  "Holders and sources": 94.9,
+  "Share records": 94.1,
+  "Sync data": 89.7,
+  "App lock": 99.0,
+  "Temp file sweeper": 100.0,
+  "Deep links": 98.2
+}

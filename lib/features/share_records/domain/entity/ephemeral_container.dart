@@ -5,7 +5,7 @@ import 'package:health_wallet/features/records/domain/entity/record_note/record_
 part 'ephemeral_container.freezed.dart';
 
 @freezed
-class EphemeralRecordsContainer with _$EphemeralRecordsContainer {
+abstract class EphemeralRecordsContainer with _$EphemeralRecordsContainer {
   const EphemeralRecordsContainer._();
 
   const factory EphemeralRecordsContainer({
@@ -33,13 +33,13 @@ class EphemeralRecordsContainer with _$EphemeralRecordsContainer {
   Map<FhirType, int> get countByType => records.countByType();
 
   static EphemeralRecordsContainer empty() => EphemeralRecordsContainer(
-        sessionId: '',
-        senderDeviceName: '',
-        receivedAt: DateTime.now(),
-        viewDuration: Duration.zero,
-        records: const [],
-        isExpired: true,
-        notes: const {},
-        tempAttachmentPaths: const [],
-      );
+    sessionId: '',
+    senderDeviceName: '',
+    receivedAt: DateTime.now(),
+    viewDuration: Duration.zero,
+    records: const [],
+    isExpired: true,
+    notes: const {},
+    tempAttachmentPaths: const [],
+  );
 }

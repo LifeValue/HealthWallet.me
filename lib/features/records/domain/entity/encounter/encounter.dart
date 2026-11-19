@@ -1,21 +1,22 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
-import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
 
 part 'encounter.freezed.dart';
 
 @freezed
-class Encounter with _$Encounter implements IFhirResource {
+abstract class Encounter with _$Encounter implements IFhirResource {
   const Encounter._();
 
   const factory Encounter({
@@ -27,6 +28,7 @@ class Encounter with _$Encounter implements IFhirResource {
     @Default({}) Map<String, dynamic> rawResource,
     @Default('') String encounterId,
     @Default('') String subjectId,
+    String? specialtyOverride,
     Narrative? text,
     List<Identifier>? identifier,
     EncounterStatus? status,
@@ -70,6 +72,7 @@ class Encounter with _$Encounter implements IFhirResource {
         rawResource: resourceJson,
         encounterId: data.encounterId ?? '',
         subjectId: data.subjectId ?? '',
+        specialtyOverride: data.specialtyOverride,
         text: fhirEncounter.text,
         identifier: fhirEncounter.identifier,
         status: fhirEncounter.status,
@@ -97,7 +100,8 @@ class Encounter with _$Encounter implements IFhirResource {
       );
     } catch (e) {
       logger.e(
-          'Failed to parse Encounter ${data.id}, creating minimal entity: $e');
+        'Failed to parse Encounter ${data.id}, creating minimal entity: $e',
+      );
       return Encounter(
         id: data.id,
         sourceId: data.sourceId ?? '',
@@ -150,7 +154,8 @@ class Encounter with _$Encounter implements IFhirResource {
       );
     } catch (e) {
       logger.e(
-          'Failed to parse Encounter ${dto.id}, creating minimal entity: $e');
+        'Failed to parse Encounter ${dto.id}, creating minimal entity: $e',
+      );
       return Encounter(
         id: dto.id ?? '',
         sourceId: dto.sourceId ?? '',
@@ -164,16 +169,16 @@ class Encounter with _$Encounter implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'Encounter',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'Encounter',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -181,38 +186,54 @@ class Encounter with _$Encounter implements IFhirResource {
       return title;
     }
 
-    final displayText =
-        FhirFieldExtractor.extractFirstCodeableConceptFromArray(type);
+    final displayText = FhirFieldExtractor.extractFirstCodeableConceptFromArray(
+      type,
+    );
     if (displayText != null) return displayText;
 
     return fhirType.display;
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Visit Details'));
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
+    final List<RecordInfoLine> infoLines = [];
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader(l10n.fieldVisitDetails),
+    );
 
     // Class (Inpatient/Outpatient/Emergency - CRITICAL)
     final classDisplay = FhirFieldExtractor.extractCodingDisplay(class_);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(classDisplay, prefix: 'Visit Type'),
+      ResourceFieldMapper.createCategoryLine(
+        classDisplay,
+        prefix: l10n.fieldVisitType,
+      ),
     );
 
     // Type (specific type of encounter)
-    final typeDisplay =
-        FhirFieldExtractor.extractFirstCodeableConceptFromArray(type);
+    final typeDisplay = FhirFieldExtractor.extractFirstCodeableConceptFromArray(
+      type,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(typeDisplay, prefix: 'Encounter Type'),
+      ResourceFieldMapper.createStatusLine(
+        typeDisplay,
+        prefix: l10n.fieldEncounterType,
+      ),
     );
 
     // Period (Start and End times - CRITICAL)
-    final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(period);
+    final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(
+      period,
+      l10n: l10n,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createTimelineLine(periodDisplay, prefix: 'Time Period'),
+      ResourceFieldMapper.createTimelineLine(
+        periodDisplay,
+        prefix: l10n.fieldTimePeriod,
+      ),
     );
 
     // Length/Duration
@@ -222,175 +243,221 @@ class Encounter with _$Encounter implements IFhirResource {
       if (lengthValue != null) {
         ResourceFieldMapper.addIfNotNull(
           infoLines,
-          ResourceFieldMapper.createTimeLine('$lengthValue $lengthUnit',
-              prefix: 'Duration'),
+          ResourceFieldMapper.createTimeLine(
+            '$lengthValue $lengthUnit',
+            prefix: l10n.fieldDuration,
+          ),
         );
       }
     }
 
     // Participants (Doctors/Nurses involved - IMPORTANT)
-    final participantsDisplay =
-        FhirFieldExtractor.extractParticipants(participant);
+    final participantsDisplay = FhirFieldExtractor.extractParticipants(
+      participant,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(participantsDisplay,
-          prefix: 'Care Team'),
+      ResourceFieldMapper.createUserLine(
+        participantsDisplay,
+        prefix: l10n.fieldCareTeam,
+      ),
     );
 
     // Reason Code (Chief Complaint/Reason for visit - CRITICAL)
-    final reasonCodeDisplay =
-        FhirFieldExtractor.extractReasonCodes(reasonCode);
+    final reasonCodeDisplay = FhirFieldExtractor.extractReasonCodes(reasonCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason for Visit'),
+      ResourceFieldMapper.createNotesLine(
+        reasonCodeDisplay,
+        prefix: l10n.fieldReasonForVisit,
+      ),
     );
 
     // Diagnosis (Conditions addressed - CRITICAL)
     final diagnosisDisplay = FhirFieldExtractor.extractDiagnoses(diagnosis);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(diagnosisDisplay, prefix: 'Diagnoses'),
+      ResourceFieldMapper.createNotesLine(
+        diagnosisDisplay,
+        prefix: l10n.fieldDiagnoses,
+      ),
     );
 
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Location & Provider'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader(l10n.fieldLocationProvider),
+    );
 
     // Service Provider (Hospital/Clinic)
-    final serviceProviderDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(serviceProvider);
+    final serviceProviderDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      serviceProvider,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createOrganizationLine(serviceProviderDisplay,
-          prefix: 'Healthcare Facility'),
+      ResourceFieldMapper.createOrganizationLine(
+        serviceProviderDisplay,
+        prefix: l10n.fieldHealthcareFacility,
+      ),
     );
 
     // Location (Where it happened - specific room/department)
     final locationDisplay = FhirFieldExtractor.extractLocations(location);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createLocationLine(locationDisplay,
-          prefix: 'Location'),
+      ResourceFieldMapper.createLocationLine(
+        locationDisplay,
+        prefix: l10n.fieldLocation,
+      ),
     );
 
     // Service Type
-    final serviceTypeDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(serviceType);
+    final serviceTypeDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      serviceType,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createActivityLine(serviceTypeDisplay,
-          prefix: 'Service Type'),
+      ResourceFieldMapper.createActivityLine(
+        serviceTypeDisplay,
+        prefix: l10n.fieldServiceType,
+      ),
     );
 
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Additional Information'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader(l10n.fieldAdditionalInformation),
+    );
 
     // Status
     final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(
+        statusText,
+        prefix: l10n.fieldStatus,
+      ),
     );
 
     // Priority
-    final priorityDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(priority);
+    final priorityDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      priority,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createWarningLine(priorityDisplay, prefix: 'Priority'),
+      ResourceFieldMapper.createWarningLine(
+        priorityDisplay,
+        prefix: l10n.fieldPriority,
+      ),
     );
 
     // Hospitalization Details (if applicable)
     if (hospitalization != null) {
       // Admission Source
       final admitSourceDisplay = FhirFieldExtractor.extractCodeableConceptText(
-          hospitalization!.admitSource);
+        hospitalization!.admitSource,
+      );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createStatusLine(admitSourceDisplay,
-            prefix: 'Admission Source'),
+        ResourceFieldMapper.createStatusLine(
+          admitSourceDisplay,
+          prefix: l10n.fieldAdmissionSource,
+        ),
       );
 
       // Re-admission indicator
       final reAdmission = FhirFieldExtractor.extractCodeableConceptText(
-          hospitalization!.reAdmission);
+        hospitalization!.reAdmission,
+      );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createStatusLine(reAdmission,
-            prefix: 'Re-admission'),
+        ResourceFieldMapper.createStatusLine(
+          reAdmission,
+          prefix: l10n.fieldReAdmission,
+        ),
       );
 
       // Diet Preference
-      if (hospitalization!.dietPreference != null && 
+      if (hospitalization!.dietPreference != null &&
           hospitalization!.dietPreference!.isNotEmpty) {
         final dietDisplay = hospitalization!.dietPreference!
-            .map((d) => FhirFieldExtractor.extractCodeableConceptText(d))
+            .map(FhirFieldExtractor.extractCodeableConceptText)
             .where((d) => d != null && d.isNotEmpty)
             .join(', ');
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createNotesLine(
-              dietDisplay.isNotEmpty ? dietDisplay : null,
-              prefix: 'Diet Preference'),
+            dietDisplay.isNotEmpty ? dietDisplay : null,
+            prefix: l10n.fieldDietPreference,
+          ),
         );
       }
 
       // Special Arrangements
-      if (hospitalization!.specialArrangement != null && 
+      if (hospitalization!.specialArrangement != null &&
           hospitalization!.specialArrangement!.isNotEmpty) {
         final arrangementsDisplay = hospitalization!.specialArrangement!
-            .map((a) => FhirFieldExtractor.extractCodeableConceptText(a))
+            .map(FhirFieldExtractor.extractCodeableConceptText)
             .where((a) => a != null && a.isNotEmpty)
             .join(', ');
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createNotesLine(
-              arrangementsDisplay.isNotEmpty ? arrangementsDisplay : null,
-              prefix: 'Special Arrangements'),
+            arrangementsDisplay.isNotEmpty ? arrangementsDisplay : null,
+            prefix: l10n.fieldSpecialArrangements,
+          ),
         );
       }
 
       // Discharge Disposition
-      final dischargeDisposition = FhirFieldExtractor.extractCodeableConceptText(
-          hospitalization!.dischargeDisposition);
+      final dischargeDisposition =
+          FhirFieldExtractor.extractCodeableConceptText(
+            hospitalization!.dischargeDisposition,
+          );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createStatusLine(dischargeDisposition,
-            prefix: 'Discharge Disposition'),
+        ResourceFieldMapper.createStatusLine(
+          dischargeDisposition,
+          prefix: l10n.fieldDischargeDisposition,
+        ),
       );
 
       // Discharge Destination
       final dischargeDestination = FhirFieldExtractor.extractReferenceDisplay(
-          hospitalization!.destination);
+        hospitalization!.destination,
+      );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createLocationLine(dischargeDestination,
-            prefix: 'Discharge To'),
+        ResourceFieldMapper.createLocationLine(
+          dischargeDestination,
+          prefix: l10n.fieldDischargeTo,
+        ),
       );
     }
 
     // Appointment reference
     if (appointment != null && appointment!.isNotEmpty) {
       final appointmentDisplay = appointment!
-          .map((a) => FhirFieldExtractor.extractReferenceDisplay(a))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((a) => a != null && a.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createTimelineLine(
-            appointmentDisplay.isNotEmpty ? appointmentDisplay : null,
-            prefix: 'Related Appointment'),
+          appointmentDisplay.isNotEmpty ? appointmentDisplay : null,
+          prefix: l10n.fieldRelatedAppointment,
+        ),
       );
     }
 
     // Episode of Care
     if (episodeOfCare != null && episodeOfCare!.isNotEmpty) {
       final episodeDisplay = episodeOfCare!
-          .map((e) => FhirFieldExtractor.extractReferenceDisplay(e))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((e) => e != null && e.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createTimelineLine(
-            episodeDisplay.isNotEmpty ? episodeDisplay : null,
-            prefix: 'Episode of Care'),
+          episodeDisplay.isNotEmpty ? episodeDisplay : null,
+          prefix: l10n.fieldEpisodeOfCare,
+        ),
       );
     }
 
@@ -398,16 +465,23 @@ class Encounter with _$Encounter implements IFhirResource {
     final partOfDisplay = FhirFieldExtractor.extractReferenceDisplay(partOf);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(partOfDisplay,
-          prefix: 'Part Of'),
+      ResourceFieldMapper.createStatusLine(
+        partOfDisplay,
+        prefix: l10n.fieldPartOf,
+      ),
     );
 
     // Status History (show if status changed during encounter)
-    if (statusHistory != null && statusHistory!.isNotEmpty && statusHistory!.length > 1) {
+    if (statusHistory != null &&
+        statusHistory!.isNotEmpty &&
+        statusHistory!.length > 1) {
       final statusChanges = statusHistory!
           .map((h) {
-            final status = h.status?.valueString;
-            final period = FhirFieldExtractor.extractPeriodFormatted(h.period);
+            final status = h.status.valueString;
+            final period = FhirFieldExtractor.extractPeriodFormatted(
+              h.period,
+              l10n: l10n,
+            );
             return status != null && period != null
                 ? '$status: $period'
                 : status ?? period;
@@ -418,17 +492,20 @@ class Encounter with _$Encounter implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createTimelineLine(
-            statusChanges.isNotEmpty ? statusChanges : null,
-            prefix: 'Status History'),
+          statusChanges.isNotEmpty ? statusChanges : null,
+          prefix: l10n.fieldStatusHistory,
+        ),
       );
     }
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: FhirFieldExtractor.formatRecordDate(date!, l10n.localeName),
+        ),
+      );
     }
 
     return infoLines;

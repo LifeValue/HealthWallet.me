@@ -1,20 +1,24 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_code_labels.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
 
 part 'medication_statement.freezed.dart';
 
 @freezed
-class MedicationStatement with _$MedicationStatement implements IFhirResource {
+abstract class MedicationStatement
+    with _$MedicationStatement
+    implements IFhirResource {
   const MedicationStatement._();
 
   const factory MedicationStatement({
@@ -26,6 +30,7 @@ class MedicationStatement with _$MedicationStatement implements IFhirResource {
     @Default({}) Map<String, dynamic> rawResource,
     @Default('') String encounterId,
     @Default('') String subjectId,
+    String? specialtyOverride,
     Narrative? text,
     List<Identifier>? identifier,
     List<Reference>? basedOn,
@@ -51,8 +56,9 @@ class MedicationStatement with _$MedicationStatement implements IFhirResource {
 
   factory MedicationStatement.fromLocalData(FhirResourceLocalDto data) {
     final resourceJson = jsonDecode(data.resourceRaw);
-    final fhirMedicationStatement =
-        fhir_r4.MedicationStatement.fromJson(resourceJson);
+    final fhirMedicationStatement = fhir_r4.MedicationStatement.fromJson(
+      resourceJson,
+    );
 
     return MedicationStatement(
       id: data.id,
@@ -63,6 +69,7 @@ class MedicationStatement with _$MedicationStatement implements IFhirResource {
       rawResource: resourceJson,
       encounterId: data.encounterId ?? '',
       subjectId: data.subjectId ?? '',
+      specialtyOverride: data.specialtyOverride,
       text: fhirMedicationStatement.text,
       identifier: fhirMedicationStatement.identifier,
       basedOn: fhirMedicationStatement.basedOn,
@@ -86,22 +93,28 @@ class MedicationStatement with _$MedicationStatement implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'MedicationStatement',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'MedicationStatement',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
     if (title.isNotEmpty) {
       return title;
     }
+
+    final medicationName = FhirFieldExtractor.extractMedicationName(
+      medicationX,
+      rawResource,
+    );
+    if (medicationName != null) return medicationName;
 
     final displayText = FhirFieldExtractor.extractCodeableConceptText(category);
     if (displayText != null) return displayText;
@@ -110,22 +123,28 @@ class MedicationStatement with _$MedicationStatement implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
+    final List<RecordInfoLine> infoLines = [];
+
+    // Status first, so a stopped or cancelled medication can't be read as
+    // a current one on the card.
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      FhirCodeLabels.statusLine(
+        status?.valueString,
+        l10n,
+        prefix: l10n.fieldStatus,
+      ),
+    );
 
     // Medication
-    final medicationDisplay = FhirFieldExtractor.extractCodeableConceptText(
-        medicationX?.isAs<CodeableConcept>());
+    final medicationDisplay = FhirFieldExtractor.extractMedicationName(
+      medicationX,
+      rawResource,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createMedicationLine(medicationDisplay),
-    );
-
-    // Status
-    final statusDisplay = status?.display?.valueString;
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createStatusLine(statusDisplay, prefix: 'Status'),
     );
 
     // Status Reason
@@ -133,64 +152,87 @@ class MedicationStatement with _$MedicationStatement implements IFhirResource {
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(statusReason);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusReasonDisplay,
-          prefix: 'Status Reason'),
+      ResourceFieldMapper.createStatusLine(
+        statusReasonDisplay,
+        prefix: l10n.fieldStatusReason,
+      ),
     );
 
     // Category
-    final categoryDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(category);
+    final categoryDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      category,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(categoryDisplay,
-          prefix: 'Category'),
+      ResourceFieldMapper.createCategoryLine(
+        categoryDisplay,
+        prefix: l10n.fieldCategory,
+      ),
     );
 
     // Effective Period
-    final effectiveDisplay = FhirFieldExtractor.extractEffectiveX(effectiveX);
+    final effectiveDisplay = FhirFieldExtractor.extractEffectiveX(
+      effectiveX,
+      l10n: l10n,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(effectiveDisplay, prefix: 'Effective'),
+      ResourceFieldMapper.createDateLine(
+        effectiveDisplay,
+        prefix: l10n.fieldEffective,
+      ),
     );
 
     // Information Source
-    final informationSourceDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(informationSource);
+    final informationSourceDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      informationSource,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(informationSourceDisplay,
-          prefix: 'Information Source'),
+      ResourceFieldMapper.createUserLine(
+        informationSourceDisplay,
+        prefix: l10n.fieldInformationSource,
+      ),
     );
 
     // Dosage Instructions
-    final dosageDisplay =
-        FhirFieldExtractor.extractDosageInstructions(dosage);
+    final dosageDisplay = FhirFieldExtractor.extractDosageInstructions(dosage);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(dosageDisplay, prefix: 'Dosage'),
+      ResourceFieldMapper.createNotesLine(
+        dosageDisplay,
+        prefix: l10n.fieldDosage,
+      ),
     );
 
     // Reason Code
-    final reasonCodeDisplay =
-        FhirFieldExtractor.extractReasonCodes(reasonCode);
+    final reasonCodeDisplay = FhirFieldExtractor.extractReasonCodes(reasonCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
+      ResourceFieldMapper.createNotesLine(
+        reasonCodeDisplay,
+        prefix: l10n.fieldReason,
+      ),
     );
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: FhirFieldExtractor.formatRecordDate(date!, l10n.localeName),
+        ),
+      );
     }
 
     // Notes
     final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+      ResourceFieldMapper.createNotesLine(
+        notesDisplay,
+        prefix: l10n.fieldNotes,
+      ),
     );
 
     return infoLines;

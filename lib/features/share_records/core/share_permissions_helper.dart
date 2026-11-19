@@ -1,9 +1,15 @@
 import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class SharePermissionsHelper {
   static Future<PermissionResult> requestSharePermissions() async {
+    if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+      return const PermissionGranted();
+    }
+
     if (Platform.isIOS) {
       final bluetoothStatus = await Permission.bluetooth.status;
 
@@ -25,18 +31,7 @@ class SharePermissionsHelper {
       return const PermissionDenied([Permission.bluetooth]);
     }
 
-    final bluetoothPermissions = <Permission>[
-      Permission.bluetoothConnect,
-      Permission.bluetoothScan,
-      Permission.bluetoothAdvertise,
-    ];
-
-    final networkPermissions = <Permission>[
-      Permission.nearbyWifiDevices,
-      Permission.locationWhenInUse,
-    ];
-
-    final allPermissions = [...bluetoothPermissions, ...networkPermissions];
+    final allPermissions = await _androidPermissions();
 
     final notGranted = <Permission>[];
     for (final permission in allPermissions) {
@@ -75,18 +70,16 @@ class SharePermissionsHelper {
   }
 
   static Future<bool> hasRequiredPermissions() async {
+    if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+      return true;
+    }
+
     if (Platform.isIOS) {
       final bluetoothStatus = await Permission.bluetooth.status;
       return bluetoothStatus.isGranted;
     }
 
-    final permissions = <Permission>[
-      Permission.bluetoothConnect,
-      Permission.bluetoothScan,
-      Permission.bluetoothAdvertise,
-      Permission.nearbyWifiDevices,
-      Permission.locationWhenInUse,
-    ];
+    final permissions = await _androidPermissions();
 
     for (final permission in permissions) {
       final status = await permission.status;
@@ -98,21 +91,27 @@ class SharePermissionsHelper {
     return true;
   }
 
+  /// NEARBY_WIFI_DEVICES only exists from Android 13 (API 33). Below that,
+  /// permission_handler finds nothing to check and reports it as denied
+  /// forever, so asking for it would keep Share Proximity locked.
+  static Future<List<Permission>> _androidPermissions() async {
+    final sdkInt = (await DeviceInfoPlugin().androidInfo).version.sdkInt;
+    return [
+      Permission.bluetoothConnect,
+      Permission.bluetoothScan,
+      Permission.bluetoothAdvertise,
+      if (sdkInt >= 33) Permission.nearbyWifiDevices,
+      Permission.locationWhenInUse,
+    ];
+  }
+
   static Future<bool> openSettings() async {
     return openAppSettings();
   }
 
-  static String getPermissionExplanation() {
-    if (Platform.isIOS) {
-      return 'To share records with nearby devices, HealthWallet needs access to:\n\n'
-          '• Bluetooth - to discover and connect to nearby devices\n\n'
-          'This allows you to securely share health records with other devices nearby.';
-    }
-
-    return 'To share records with nearby devices, HealthWallet needs access to:\n\n'
-        '• Bluetooth - to discover and connect to nearby devices\n'
-        '• Location/Nearby Devices - required by Android to scan for Bluetooth and WiFi Direct devices\n\n'
-        'Your location is never stored or transmitted.';
+  static String getPermissionExplanation(AppLocalizations l10n) {
+    if (Platform.isIOS) return l10n.sharePermissionExplanationIos;
+    return l10n.sharePermissionExplanationAndroid;
   }
 }
 
@@ -128,16 +127,13 @@ class PermissionDenied extends PermissionResult {
   final List<Permission> permissions;
   const PermissionDenied(this.permissions);
 
-  String get message {
-    return 'Please grant all permissions to share records with nearby devices.';
-  }
+  String message(AppLocalizations l10n) => l10n.sharePermissionsDeniedMessage;
 }
 
 class PermissionPermanentlyDenied extends PermissionResult {
   final List<Permission> permissions;
   const PermissionPermanentlyDenied(this.permissions);
 
-  String get message {
-    return 'Some permissions were denied. Please enable them in Settings to use this feature.';
-  }
+  String message(AppLocalizations l10n) =>
+      l10n.sharePermissionsPermanentlyDeniedMessage;
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -44,7 +45,9 @@ class SyncLoadingWidget extends StatelessWidget {
                   child: CircularProgressIndicator(
                     strokeWidth: 8,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      context.isDarkMode ? Colors.white : Color(0xFF1E1E1E),
+                      context.isDarkMode
+                          ? Colors.white
+                          : const Color(0xFF1E1E1E),
                     ),
                     strokeCap: StrokeCap.round,
                   ),
@@ -88,8 +91,9 @@ class SyncLoadingWidget extends StatelessWidget {
                 ),
                 child: Text(
                   cancelButtonText ?? context.l10n.cancel,
-                  style: AppTextStyle.buttonSmall
-                      .copyWith(color: context.colorScheme.primary),
+                  style: AppTextStyle.buttonSmall.copyWith(
+                    color: context.colorScheme.primary,
+                  ),
                 ),
               ),
             ),

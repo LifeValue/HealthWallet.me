@@ -4,7 +4,7 @@ part 'share_payload.freezed.dart';
 part 'share_payload.g.dart';
 
 @freezed
-class SharePayload with _$SharePayload {
+abstract class SharePayload with _$SharePayload {
   const SharePayload._();
 
   const factory SharePayload({
@@ -22,7 +22,7 @@ class SharePayload with _$SharePayload {
 }
 
 @freezed
-class SharePayloadBundle with _$SharePayloadBundle {
+abstract class SharePayloadBundle with _$SharePayloadBundle {
   const factory SharePayloadBundle({
     @Default('Bundle') String resourceType,
     @Default('collection') String type,

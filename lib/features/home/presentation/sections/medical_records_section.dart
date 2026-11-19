@@ -1,9 +1,13 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
 import 'package:health_wallet/features/home/presentation/widgets/reorderable_grid.dart';
-import 'package:health_wallet/core/theme/app_insets.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/home/presentation/widgets/shaking_card.dart';
 
 class MedicalRecordsSection extends StatelessWidget {
@@ -38,7 +42,43 @@ class MedicalRecordsSection extends StatelessWidget {
   }
 
   double _getChildAspectRatio(double screenWidth) {
+    if (screenWidth >= 900) return 4.2;
+    if (screenWidth >= 600) return 3.2;
     return screenWidth < _breakpoint ? 2.07 : 2.1;
+  }
+
+  static const double _cardBorderWidth = 1;
+
+  double _iconSize(double screenWidth) => screenWidth < _breakpoint ? 22 : 26;
+
+  double _verticalPadding(double screenWidth) =>
+      screenWidth >= 600 ? Insets.small : Insets.normal;
+
+  TextStyle _categoryStyle(BuildContext context, double screenWidth) =>
+      AppTextStyle.bodySmall.copyWith(
+        fontSize: screenWidth < _breakpoint ? 10 : 14,
+        color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+      );
+
+  TextStyle _countStyle(BuildContext context, double screenWidth) =>
+      AppTextStyle.bodyMedium.copyWith(
+        fontSize: screenWidth < _breakpoint ? 14 : 16,
+        color: context.colorScheme.onSurface,
+      );
+
+  /// What a card's content needs inside the padding and the border: on a
+  /// tablet the name and the count share a row, on a phone they stack.
+  double _minCardHeight(BuildContext context, double screenWidth) {
+    final name = measureLineHeight(
+      context,
+      _categoryStyle(context, screenWidth),
+    );
+    final count = measureLineHeight(context, _countStyle(context, screenWidth));
+    final text = screenWidth >= 600
+        ? math.max(name, count)
+        : name + Insets.small + count;
+    return math.max(_iconSize(screenWidth), text) +
+        2 * (_verticalPadding(screenWidth) + _cardBorderWidth);
   }
 
   @override
@@ -53,6 +93,7 @@ class MedicalRecordsSection extends StatelessWidget {
       crossAxisSpacing: _getCrossAxisSpacing(screenWidth),
       mainAxisSpacing: _getCrossAxisSpacing(screenWidth),
       childAspectRatio: _getChildAspectRatio(screenWidth),
+      minItemHeight: _minCardHeight(context, screenWidth),
       itemBuilder: (context, card, index) {
         final isFirstCard = index == 0 && !editMode;
         final cardContent = _buildOverviewCard(
@@ -90,27 +131,16 @@ class MedicalRecordsSection extends StatelessWidget {
   }
 
   Widget _buildOverviewCard(
-      BuildContext context, OverviewCard card, double screenWidth,
-      {Key? key}) {
-    final bool isSmall = screenWidth < _breakpoint;
-    final double iconSize = isSmall ? 14 : 16;
+    BuildContext context,
+    OverviewCard card,
+    double screenWidth, {
+    Key? key,
+  }) {
+    final bool isTabletLayout = screenWidth >= 600;
+    final double iconSize = _iconSize(screenWidth);
 
-    final TextStyle categoryStyle = isSmall
-        ? AppTextStyle.bodySmall.copyWith(
-            fontSize: 10,
-            color: context.colorScheme.onSurface.withOpacity(0.6),
-          )
-        : AppTextStyle.bodySmall.copyWith(
-            color: context.colorScheme.onSurface.withOpacity(0.6),
-          );
-
-    final TextStyle countStyle = isSmall
-        ? AppTextStyle.titleSmall.copyWith(
-            color: context.colorScheme.onSurface,
-          )
-        : AppTextStyle.titleSmall.copyWith(
-            color: context.colorScheme.onSurface,
-          );
+    final TextStyle categoryStyle = _categoryStyle(context, screenWidth);
+    final TextStyle countStyle = _countStyle(context, screenWidth);
 
     return Container(
       key: key,
@@ -119,51 +149,67 @@ class MedicalRecordsSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: context.theme.dividerColor,
-          width: 1,
+          width: _cardBorderWidth,
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(Insets.normal),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: iconSize,
-                  height: iconSize,
-                  child: card.category.icon.svg(
-                    colorFilter: ColorFilter.mode(
-                      context.colorScheme.onSurface,
-                      BlendMode.srcIn,
-                    ),
+        padding: EdgeInsets.symmetric(
+          horizontal: Insets.normal,
+          vertical: _verticalPadding(screenWidth),
+        ),
+        child: Center(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: iconSize,
+                height: iconSize,
+                child: card.category.icon.svg(
+                  colorFilter: ColorFilter.mode(
+                    context.colorScheme.onSurface,
+                    BlendMode.srcIn,
                   ),
                 ),
-                const SizedBox(width: Insets.small),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        card.category.display,
+              ),
+              const SizedBox(width: Insets.small),
+              Expanded(
+                child: isTabletLayout
+                    ? Text(
+                        card.category.localizedName(context.l10n),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: categoryStyle,
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            card.category.localizedName(context.l10n),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: categoryStyle,
+                          ),
+                          const SizedBox(height: Insets.small),
+                          Text(
+                            card.count,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: countStyle,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: Insets.small),
-                      Text(
-                        card.count,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: countStyle,
-                      ),
-                    ],
-                  ),
+              ),
+              if (isTabletLayout) ...[
+                const SizedBox(width: Insets.small),
+                Text(
+                  card.count,
+                  maxLines: 1,
+                  style: countStyle,
                 ),
               ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

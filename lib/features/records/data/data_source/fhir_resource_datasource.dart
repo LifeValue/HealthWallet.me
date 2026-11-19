@@ -1,5 +1,6 @@
-import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:drift/drift.dart';
+import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/data/local/soft_delete.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/tables/fhir_resource_table.dart';
 
 class FhirResourceDatasource {
@@ -7,6 +8,9 @@ class FhirResourceDatasource {
 
   FhirResourceDatasource(this.db);
 
+  /// Records of one source ([sourceId]) or of several ([sourceIds], usually
+  /// one patient's); neither means every source. An empty [sourceIds] means a
+  /// patient with no sources and matches nothing, never every patient.
   Future<List<FhirResourceLocalDto>> getResources({
     required List<String> resourceTypes,
     String? sourceId,
@@ -14,14 +18,14 @@ class FhirResourceDatasource {
     int? limit,
     int? offset,
   }) async {
-    SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query =
-        db.select(db.fhirResource)..orderBy([(f) => OrderingTerm.desc(f.date)]);
+    if (sourceId == null && sourceIds != null && sourceIds.isEmpty) return [];
 
-    if (sourceId != null) {
-      query.where((f) => f.sourceId.equals(sourceId));
-    } else if (sourceIds != null && sourceIds.isNotEmpty) {
-      query.where((f) => f.sourceId.isIn(sourceIds));
-    }
+    final SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query =
+        db.select(db.fhirResource)
+          ..where((f) => f.deletedAt.isNull())
+          ..orderBy(_newestFirst);
+
+    _whereScope(query, sourceId: sourceId, sourceIds: sourceIds);
 
     if (resourceTypes.isNotEmpty) {
       query.where((f) => f.resourceType.isIn(resourceTypes));
@@ -29,18 +33,31 @@ class FhirResourceDatasource {
 
     if (limit != null) {
       query.limit(limit, offset: offset);
+    } else if (offset != null && offset > 0) {
+      // SQLite needs a LIMIT for an OFFSET; -1 means no limit.
+      query.limit(-1, offset: offset);
     }
 
     return await query.get();
+  }
+
+  /// The records [ids] that aren't deleted, newest first.
+  Future<List<FhirResourceLocalDto>> getResourcesByIds(List<String> ids) {
+    if (ids.isEmpty) return Future.value([]);
+    return (db.select(db.fhirResource)
+          ..where((f) => f.id.isIn(ids) & f.deletedAt.isNull())
+          ..orderBy(_newestFirst))
+        .get();
   }
 
   Future<List<FhirResourceLocalDto>> getResourcesByEncounterId({
     required String encounterId,
     String? sourceId,
   }) async {
-    SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query = db
-        .select(db.fhirResource)
-      ..where((f) => f.encounterId.equals(encounterId));
+    final SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query =
+        db.select(db.fhirResource)..where(
+          (f) => f.encounterId.equals(encounterId) & f.deletedAt.isNull(),
+        );
 
     if (sourceId != null) {
       query.where((f) => f.sourceId.equals(sourceId));
@@ -55,7 +72,7 @@ class FhirResourceDatasource {
       final uuid = reference.substring(9);
 
       final query = db.select(db.fhirResource)
-        ..where((tbl) => tbl.resourceId.equals(uuid))
+        ..where((tbl) => tbl.resourceId.equals(uuid) & tbl.deletedAt.isNull())
         ..limit(1);
 
       return await query.getSingleOrNull();
@@ -64,8 +81,12 @@ class FhirResourceDatasource {
     final parts = reference.split('/');
     if (parts.length == 2) {
       final query = db.select(db.fhirResource)
-        ..where((tbl) =>
-            tbl.resourceType.equals(parts[0]) & tbl.resourceId.equals(parts[1]))
+        ..where(
+          (tbl) =>
+              tbl.resourceType.equals(parts[0]) &
+              tbl.resourceId.equals(parts[1]) &
+              tbl.deletedAt.isNull(),
+        )
         ..limit(1);
 
       return await query.getSingleOrNull();
@@ -81,6 +102,7 @@ class FhirResourceDatasource {
   // TODO: Implement legacy methods that work with old data during migration
   // or remove if not needed
 
+  /// Inserts or updates [resource]. Saving a deleted record brings it back.
   Future<int> insertResource(FhirResourceLocalDto resource) async {
     return db.fhirResource.insertOnConflictUpdate(
       FhirResourceCompanion.insert(
@@ -97,41 +119,42 @@ class FhirResourceDatasource {
         subjectId: resource.subjectId != null
             ? Value(resource.subjectId)
             : const Value.absent(),
+        deletedAt: const Value(null),
       ),
     );
   }
 
-  Future<int> deleteResourceById(String id) async {
-    return (db.delete(db.fhirResource)
-          ..where((f) => f.id.equals(id)))
-        .go();
-  }
+  /// Soft-deletes the record and its notes (see [SoftDelete]).
+  Future<int> deleteResourceById(String id) => db.softDeleteResources([id]);
 
-  Future<int> deleteResourcesByIds(List<String> ids) async {
-    return (db.delete(db.fhirResource)
-          ..where((f) => f.id.isIn(ids)))
-        .go();
-  }
+  /// Soft-deletes the records and their notes (see [SoftDelete]).
+  Future<int> deleteResourcesByIds(List<String> ids) =>
+      db.softDeleteResources(ids);
 
   Future<int> getRelatedResourceCount(String encounterId) async {
     final count = db.fhirResource.id.count();
     final query = db.selectOnly(db.fhirResource)
       ..addColumns([count])
-      ..where(db.fhirResource.encounterId.equals(encounterId));
+      ..where(
+        db.fhirResource.encounterId.equals(encounterId) &
+            db.fhirResource.deletedAt.isNull(),
+      );
     final result = await query.getSingle();
     return result.read(count) ?? 0;
   }
 
-  Future<int> deleteResourcesBySourceId(String sourceId) async {
-    return (db.delete(db.fhirResource)
-          ..where((f) => f.sourceId.equals(sourceId)))
-        .go();
-  }
+  /// Soft-deletes the records of [sourceId] and their notes (see
+  /// [SoftDelete]).
+  Future<int> deleteResourcesBySourceId(String sourceId) =>
+      db.softDeleteResourcesOfSource(sourceId);
 
   Future<List<String>> getSourceIdsForSubject(String subjectId) async {
     final query = db.selectOnly(db.fhirResource, distinct: true)
       ..addColumns([db.fhirResource.sourceId])
-      ..where(db.fhirResource.subjectId.equals(subjectId));
+      ..where(
+        db.fhirResource.subjectId.equals(subjectId) &
+            db.fhirResource.deletedAt.isNull(),
+      );
 
     final results = await query.get();
     return results
@@ -141,12 +164,16 @@ class FhirResourceDatasource {
         .toList();
   }
 
+  /// Searches within the same scope as [getResources].
   Future<List<FhirResourceLocalDto>> searchResources({
     required String query,
     required List<String> resourceTypes,
     String? sourceId,
+    List<String>? sourceIds,
     int? limit,
   }) async {
+    if (sourceId == null && sourceIds != null && sourceIds.isEmpty) return [];
+
     final searchTerms = query
         .toLowerCase()
         .split(' ')
@@ -157,12 +184,12 @@ class FhirResourceDatasource {
       return [];
     }
 
-    SimpleSelectStatement<FhirResource, FhirResourceLocalDto> selectQuery =
-        db.select(db.fhirResource)..orderBy([(f) => OrderingTerm.desc(f.date)]);
+    final SimpleSelectStatement<FhirResource, FhirResourceLocalDto>
+    selectQuery = db.select(db.fhirResource)
+      ..where((f) => f.deletedAt.isNull())
+      ..orderBy(_newestFirst);
 
-    if (sourceId != null) {
-      selectQuery.where((f) => f.sourceId.equals(sourceId));
-    }
+    _whereScope(selectQuery, sourceId: sourceId, sourceIds: sourceIds);
 
     if (resourceTypes.isNotEmpty) {
       selectQuery.where((f) => f.resourceType.isIn(resourceTypes));
@@ -170,9 +197,11 @@ class FhirResourceDatasource {
 
     if (searchTerms.isNotEmpty) {
       for (final term in searchTerms) {
-        selectQuery.where((f) =>
-            f.title.lower().contains(term) |
-            f.resourceRaw.lower().contains(term));
+        selectQuery.where(
+          (f) =>
+              f.title.lower().contains(term) |
+              f.resourceRaw.lower().contains(term),
+        );
       }
     }
 
@@ -192,15 +221,19 @@ class FhirResourceDatasource {
     }).toList();
 
     results.sort((a, b) {
-      final aResourceTypeMatch = searchTerms
-          .any((term) => a.resourceType?.toLowerCase() == term.toLowerCase());
-      final bResourceTypeMatch = searchTerms
-          .any((term) => b.resourceType?.toLowerCase() == term.toLowerCase());
+      final aResourceTypeMatch = searchTerms.any(
+        (term) => a.resourceType?.toLowerCase() == term.toLowerCase(),
+      );
+      final bResourceTypeMatch = searchTerms.any(
+        (term) => b.resourceType?.toLowerCase() == term.toLowerCase(),
+      );
 
-      final aInTitle = searchTerms
-          .any((term) => a.title?.toLowerCase().contains(term) ?? false);
-      final bInTitle = searchTerms
-          .any((term) => b.title?.toLowerCase().contains(term) ?? false);
+      final aInTitle = searchTerms.any(
+        (term) => a.title?.toLowerCase().contains(term) ?? false,
+      );
+      final bInTitle = searchTerms.any(
+        (term) => b.title?.toLowerCase().contains(term) ?? false,
+      );
 
       if (aResourceTypeMatch && !bResourceTypeMatch) return -1;
       if (!aResourceTypeMatch && bResourceTypeMatch) return 1;
@@ -212,5 +245,23 @@ class FhirResourceDatasource {
     });
 
     return results;
+  }
+
+  /// Newest first; the id breaks ties so pages never overlap or skip rows.
+  static final _newestFirst = <OrderClauseGenerator<FhirResource>>[
+    (f) => OrderingTerm.desc(f.date),
+    (f) => OrderingTerm.asc(f.id),
+  ];
+
+  void _whereScope(
+    SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query, {
+    String? sourceId,
+    List<String>? sourceIds,
+  }) {
+    if (sourceId != null) {
+      query.where((f) => f.sourceId.equals(sourceId));
+    } else if (sourceIds != null) {
+      query.where((f) => f.sourceId.isIn(sourceIds));
+    }
   }
 }

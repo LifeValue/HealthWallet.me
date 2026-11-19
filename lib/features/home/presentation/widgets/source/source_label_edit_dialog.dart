@@ -1,10 +1,14 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
@@ -73,13 +77,13 @@ class _SourceLabelEditDialogState extends State<SourceLabelEditDialog> {
       if (mounted) {
         Navigator.of(context).pop();
       }
-    } catch (e) {
+    } catch (e, s) {
+      logger.w('Could not update the source label', e, s);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${context.l10n.errorUpdatingSourceLabel}: $e'),
-            backgroundColor: Colors.red,
-          ),
+        AppSnackBar.show(
+          context,
+          message: context.l10n.errorUpdatingSourceLabel,
+          type: AppSnackBarType.error,
         );
       }
     } finally {
@@ -97,7 +101,6 @@ class _SourceLabelEditDialogState extends State<SourceLabelEditDialog> {
   Widget build(BuildContext context) {
     final borderColor = context.theme.dividerColor;
     final textColor = context.primaryTextColor;
-    final iconColor = context.secondaryTextColor;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -114,7 +117,9 @@ class _SourceLabelEditDialogState extends State<SourceLabelEditDialog> {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(
-                  horizontal: Insets.normal, vertical: Insets.small),
+                horizontal: Insets.normal,
+                vertical: Insets.small,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -124,31 +129,40 @@ class _SourceLabelEditDialogState extends State<SourceLabelEditDialog> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(6)),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                         child: IconButton(
                           icon: Assets.icons.edit.svg(
-                            colorFilter:
-                                ColorFilter.mode(textColor, BlendMode.srcIn),
+                            colorFilter: ColorFilter.mode(
+                              textColor,
+                              BlendMode.srcIn,
+                            ),
                           ),
                           onPressed: _handleCancel,
                           padding: EdgeInsets.zero,
                         ),
                       ),
                       const SizedBox(width: Insets.small),
-                      Text(context.l10n.editSourceLabel,
-                          style: AppTextStyle.bodySmall
-                              .copyWith(fontWeight: FontWeight.w500)),
+                      Text(
+                        context.l10n.editSourceLabel,
+                        style: AppTextStyle.bodySmall.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ],
                   ),
                   Container(
                     width: 36,
                     height: 36,
-                    decoration:
-                        BoxDecoration(borderRadius: BorderRadius.circular(6)),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                     child: IconButton(
                       icon: Assets.icons.close.svg(
-                        colorFilter:
-                            ColorFilter.mode(textColor, BlendMode.srcIn),
+                        colorFilter: ColorFilter.mode(
+                          textColor,
+                          BlendMode.srcIn,
+                        ),
                       ),
                       onPressed: _handleCancel,
                       padding: EdgeInsets.zero,
@@ -231,8 +245,9 @@ class _SourceLabelEditDialogState extends State<SourceLabelEditDialog> {
                           ? IconButton(
                               icon: Assets.icons.close.svg(
                                 colorFilter: ColorFilter.mode(
-                                  context.colorScheme.onSurface
-                                      .withOpacity(0.6),
+                                  context.colorScheme.onSurface.withValues(
+                                    alpha: 0.6,
+                                  ),
                                   BlendMode.srcIn,
                                 ),
                                 width: 16,
@@ -268,13 +283,17 @@ class _SourceLabelEditDialogState extends State<SourceLabelEditDialog> {
                         backgroundColor: Colors.transparent,
                         foregroundColor: AppColors.primary,
                         elevation: 0,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: Insets.small),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: Insets.small,
+                        ),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6)),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                       ),
-                      child: Text(context.l10n.cancel,
-                          style: AppTextStyle.buttonSmall),
+                      child: Text(
+                        context.l10n.cancel,
+                        style: AppTextStyle.buttonSmall,
+                      ),
                     ),
                   ),
                   const SizedBox(width: Insets.small),
@@ -285,10 +304,12 @@ class _SourceLabelEditDialogState extends State<SourceLabelEditDialog> {
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: Insets.small),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: Insets.small,
+                        ),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6)),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                       ),
                       child: _isLoading
                           ? const SizedBox(
@@ -296,12 +317,15 @@ class _SourceLabelEditDialogState extends State<SourceLabelEditDialog> {
                               height: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
-                          : Text(context.l10n.saveDetails,
-                              style: AppTextStyle.buttonSmall),
+                          : Text(
+                              context.l10n.saveDetails,
+                              style: AppTextStyle.buttonSmall,
+                            ),
                     ),
                   ),
                 ],

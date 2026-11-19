@@ -13,7 +13,7 @@ class BloodTypes {
     'AB+',
     'AB-',
     'O+',
-    'O-'
+    'O-',
   ];
 
   static const Map<String, String> snomedCodes = {

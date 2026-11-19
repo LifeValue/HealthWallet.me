@@ -1,0 +1,436 @@
+import 'dart:ui';
+
+import 'package:auto_route/auto_route.dart';
+import 'package:collection/collection.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/services/device_capability_service.dart';
+import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/utils/handover_utils.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/dialog_helper.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/model_management_dialog.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
+
+@RoutePage()
+class LoadModelPage extends StatefulWidget {
+  const LoadModelPage({
+    this.canAttachToEncounter = false,
+    this.sessionId,
+    super.key,
+  });
+
+  final bool canAttachToEncounter;
+
+  /// The document waiting for the model; without one the page offers no
+  /// handover to the desktop.
+  final String? sessionId;
+
+  @override
+  State<LoadModelPage> createState() => _LoadModelPageState();
+}
+
+class _LoadModelPageState extends State<LoadModelPage> {
+  late final LoadModelBloc _bloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _bloc = getIt.get<LoadModelBloc>();
+    _bloc.add(const LoadModelInitialized());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider.value(
+      value: _bloc,
+      child: BlocConsumer<LoadModelBloc, LoadModelState>(
+        listenWhen: (previous, current) => previous.status != current.status,
+        listener: (context, state) {
+          if (state.status == LoadModelStatus.modelLoaded) {
+            // The model list may still be open over this page when its
+            // download ends: close it first, or the pop below closes the
+            // list and this page stays, ready but never leaving.
+            Navigator.of(
+              context,
+              rootNavigator: true,
+            ).popUntil((route) => route is! PopupRoute);
+            context.router.maybePop(true);
+          }
+          if (state.status == LoadModelStatus.error &&
+              state.errorMessage != null) {
+            if (state.errorMessage == kNoInternetErrorKey) {
+              _showNoInternetDialog(context);
+            } else {
+              DialogHelper.showErrorDialog(context, state.errorMessage!);
+            }
+          }
+        },
+        builder: (context, state) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(
+                context.l10n.aiModelTitle,
+                style: AppTextStyle.titleMedium,
+              ),
+              automaticallyImplyLeading: true,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+            ),
+            body: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: context.screenHorizontalPadding,
+                  ),
+                  child: _buildView(context, state),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showNoInternetDialog(BuildContext context) {
+    final textColor = context.primaryTextColor;
+    final borderColor = context.borderColor;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(Insets.normal),
+          child: Container(
+            width: context.dialogWidth,
+            decoration: BoxDecoration(
+              color: context.colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: borderColor, width: 1),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(Insets.normal),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.wifi_off,
+                    size: 40,
+                    color: context.colorScheme.error,
+                  ),
+                  const SizedBox(height: Insets.smallNormal),
+                  Text(
+                    context.l10n.noInternetConnectionTitle,
+                    style: AppTextStyle.bodyMedium.copyWith(color: textColor),
+                  ),
+                  const SizedBox(height: Insets.small),
+                  Text(
+                    context.l10n.noInternetConnectionDescription,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyle.labelLarge.copyWith(color: textColor),
+                  ),
+                  const SizedBox(height: Insets.normal),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.all(8),
+                        fixedSize: const Size.fromHeight(36),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        context.l10n.ok,
+                        style: AppTextStyle.buttonSmall.copyWith(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildView(BuildContext context, LoadModelState state) {
+    if (state.status == LoadModelStatus.loading &&
+        state.downloadProgress == null &&
+        !state.isBackgroundDownload) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          Assets.onboarding.onboarding3.svg(height: 250),
+          Text(
+            context.l10n.aiModelUnlockTitle,
+            textAlign: TextAlign.center,
+            style: AppTextStyle.titleLarge.copyWith(
+              color: context.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 32),
+          _buildRichDescription(context, context.l10n.aiModelUnlockDescription),
+          const SizedBox(height: 32),
+          Text(
+            context.l10n.aiModelDownloadInfo,
+            textAlign: TextAlign.center,
+            style: AppTextStyle.bodySmall.copyWith(
+              color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+              height: 1.5,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 24),
+          if (state.status == LoadModelStatus.loading) ...[
+            CustomProgressIndicator(
+              progress: (state.downloadProgress ?? 0) / 100,
+              text: context.l10n.aiModelDownloading,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              context.l10n.downloadContinuesInBackground,
+              textAlign: TextAlign.center,
+              style: AppTextStyle.bodySmall.copyWith(
+                color: context.colorScheme.primary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () => context.router.maybePop(),
+                child: Text(
+                  widget.canAttachToEncounter
+                      ? context.l10n.continueWithoutAi
+                      : context.l10n.continueUsingApp,
+                ),
+              ),
+            ),
+          ] else ...[
+            if (state.deviceCapability == DeviceAiCapability.unsupported) ...[
+              if (widget.sessionId != null) ...[
+                AppButton(
+                  label: context.l10n.processOnDesktop,
+                  icon: const Icon(Icons.computer),
+                  variant: AppButtonVariant.primary,
+                  height: 48,
+                  onPressed: () => _handleProcessOnDesktop(context),
+                ),
+                const SizedBox(height: Insets.small),
+              ],
+              Center(
+                child: TextButton(
+                  onPressed: () => context.router.maybePop(false),
+                  child: Text(
+                    widget.canAttachToEncounter
+                        ? context.l10n.attachWithoutProcessing
+                        : context.l10n.cancel,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+              const SizedBox(height: Insets.normal),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: context.colorScheme.errorContainer.withValues(
+                    alpha: 0.3,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: context.colorScheme.error.withValues(alpha: 0.5),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          color: context.colorScheme.error,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            context.l10n.aiModelNotAvailableForDevice,
+                            style: AppTextStyle.bodySmall.copyWith(
+                              color: context.colorScheme.error,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 28),
+                      child: Text(
+                        context.l10n.aiModelNotAvailableForDeviceDescription,
+                        style: AppTextStyle.labelSmall.copyWith(
+                          color: context.colorScheme.error.withValues(
+                            alpha: 0.8,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ] else ...[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: context.colorScheme.primary,
+                    foregroundColor: context.isDarkMode
+                        ? Colors.white
+                        : context.colorScheme.onPrimary,
+                    padding: const EdgeInsets.all(8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadiusGeometry.circular(8),
+                    ),
+                  ),
+                  onPressed: () => ModelManagementDialog.show(context),
+                  child: Text(context.l10n.aiModelEnableDownload),
+                ),
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => context.router.maybePop(false),
+                  child: Text(
+                    widget.canAttachToEncounter
+                        ? context.l10n.attachWithoutProcessing
+                        : context.l10n.cancel,
+                  ),
+                ),
+              ),
+              if (widget.sessionId != null) ...[
+                const SizedBox(height: Insets.medium),
+                GestureDetector(
+                  onTap: () => _handleProcessOnDesktop(context),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.computer,
+                        size: 22,
+                        color: context.colorScheme.primary,
+                      ),
+                      const SizedBox(width: Insets.small),
+                      Text(
+                        context.l10n.processOnDesktop,
+                        style: AppTextStyle.bodyMedium.copyWith(
+                          color: context.colorScheme.primary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ],
+          const SizedBox(height: Insets.large),
+        ],
+      ),
+    );
+  }
+
+  /// Hands the document this page was opened for to the desktop, the same
+  /// way the processing screen does.
+  void _handleProcessOnDesktop(BuildContext context) {
+    final session = getIt<ProcessingBloc>().state.sessions.firstWhereOrNull(
+      (s) => s.id == widget.sessionId,
+    );
+    if (session == null) {
+      AppSnackBar.show(
+        context,
+        message: context.l10n.handoverSendFailed,
+        type: AppSnackBarType.error,
+      );
+      return;
+    }
+    HandoverUtils.initiateHandover(context, session: session);
+  }
+
+  Widget _buildRichDescription(BuildContext context, String description) {
+    if (description.contains('**')) {
+      final segments = description.split('**');
+      final spans = <TextSpan>[];
+      for (int i = 0; i < segments.length; i++) {
+        spans.add(
+          TextSpan(
+            text: segments[i],
+            style: i.isOdd
+                ? AppTextStyle.bodySmall.copyWith(
+                    color: context.colorScheme.onSurface.withValues(
+                      alpha: 0.85,
+                    ),
+                    height: 1.5,
+                    letterSpacing: -0.2,
+                    fontWeight: FontWeight.w700,
+                  )
+                : null,
+          ),
+        );
+      }
+      return RichText(
+        textAlign: TextAlign.center,
+        text: TextSpan(
+          style: AppTextStyle.bodySmall.copyWith(
+            color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+            height: 1.5,
+            letterSpacing: -0.2,
+          ),
+          children: spans,
+        ),
+      );
+    }
+    return Text(
+      description,
+      textAlign: TextAlign.center,
+      style: AppTextStyle.bodySmall.copyWith(
+        color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+        height: 1.5,
+        letterSpacing: -0.2,
+      ),
+    );
+  }
+}

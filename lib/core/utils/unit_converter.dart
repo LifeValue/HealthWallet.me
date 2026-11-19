@@ -49,6 +49,26 @@ class UnitConverter {
     }
   }
 
+  /// The units the region changes, as [knownUnit] names them.
+  static const Set<String> _regionUnits = {
+    'kg',
+    'lbs',
+    'cm',
+    'in',
+    '°c',
+    '°f',
+    'mg/dl',
+    'mmol/l',
+  };
+
+  /// [unit], a UCUM code or a written unit, as one of 'kg', 'lbs', 'cm',
+  /// 'in', '°c', '°f', 'mg/dl' and 'mmol/l', or null when it is none of them.
+  static String? knownUnit(String? unit) {
+    if (unit == null) return null;
+    final normalized = _normalizeUnit(unit);
+    return _regionUnits.contains(normalized) ? normalized : null;
+  }
+
   static String _normalizeUnit(String unit) {
     final u = unit.trim().toLowerCase();
     if (u == 'kg' || u == 'kilograms') return 'kg';
@@ -56,7 +76,8 @@ class UnitConverter {
       return 'lbs';
     }
     if (u == 'cm' || u == 'centimeters') return 'cm';
-    if (u == 'ft/in' || u == 'ft' || u == 'in' || u == '[in_i]') return 'ft/in';
+    if (u == 'in' || u == 'inch' || u == 'inches' || u == '[in_i]') return 'in';
+    if (u == 'ft/in' || u == 'ft') return 'ft/in';
     if (u == '°c' || u == 'cel' || u == 'celsius') return '°c';
     if (u == '°f' || u == 'degf' || u == '[degf]' || u == 'fahrenheit') {
       return '°f';
@@ -85,11 +106,8 @@ class UnitConverter {
     String normalizedFrom,
     String targetUnit,
   ) {
-    if (normalizedFrom == 'cm' && _normalizeUnit(targetUnit) == 'ft/in') {
-      return (value: value, unit: targetUnit);
-    }
-    if (normalizedFrom == 'ft/in' && _normalizeUnit(targetUnit) == 'cm') {
-      return (value: value, unit: targetUnit);
+    if (normalizedFrom == 'in' && _normalizeUnit(targetUnit) == 'cm') {
+      return (value: inchesToCm(value), unit: targetUnit);
     }
     return (value: value, unit: targetUnit);
   }
@@ -131,6 +149,16 @@ class UnitConverter {
   static double mgDlToMmolL(double mgDl) => mgDl / 18.0182;
   static double mmolLToMgDl(double mmolL) => mmolL * 18.0182;
 
+  static double inchesToCm(double inches) => inches * 2.54;
+
+  /// [value] in centimeters when [unit] is cm or inches, otherwise null.
+  static double? heightInCm(double value, String unit) =>
+      switch (_normalizeUnit(unit)) {
+        'cm' => value,
+        'in' => inchesToCm(value),
+        _ => null,
+      };
+
   static String cmToFeetInchesString(double cm) {
     final totalInches = cm / 2.54;
     final feet = totalInches ~/ 12;
@@ -164,7 +192,10 @@ class UnitConverter {
   }
 
   static double? normalizeToBaseUnit(
-      double value, String unit, PatientVitalType type) {
+    double value,
+    String unit,
+    PatientVitalType type,
+  ) {
     final normalized = _normalizeUnit(unit);
     switch (type) {
       case PatientVitalType.temperature:
@@ -177,6 +208,7 @@ class UnitConverter {
         if (normalized == 'lbs') return lbsToKg(value);
         return value;
       case PatientVitalType.height:
+        if (normalized == 'in') return inchesToCm(value);
         return value;
       default:
         return value;

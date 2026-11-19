@@ -5,44 +5,70 @@ abstract class PatientEvent {
 }
 
 @freezed
-class PatientInitialised extends PatientEvent with _$PatientInitialised {
+abstract class PatientInitialised extends PatientEvent
+    with _$PatientInitialised {
+  const PatientInitialised._();
+
   const factory PatientInitialised() = _PatientInitialised;
 }
 
 @freezed
-class PatientPatientsLoaded extends PatientEvent with _$PatientPatientsLoaded {
-  const factory PatientPatientsLoaded({
-    @Default(false) bool preserveOrder,
-    String? preservePatientId,
-  }) = _PatientPatientsLoaded;
+abstract class PatientPatientsLoaded extends PatientEvent
+    with _$PatientPatientsLoaded {
+  const PatientPatientsLoaded._();
+
+  /// [preserveOrder] keeps the list as it is, as after an edit.
+  const factory PatientPatientsLoaded({@Default(false) bool preserveOrder}) =
+      _PatientPatientsLoaded;
+}
+
+/// Reads the listed patients' blood types again, after one was saved.
+@freezed
+abstract class PatientBloodTypesRequested extends PatientEvent
+    with _$PatientBloodTypesRequested {
+  const PatientBloodTypesRequested._();
+
+  const factory PatientBloodTypesRequested() = _PatientBloodTypesRequested;
+}
+
+/// The selection changed (see `HolderSelection`).
+@freezed
+abstract class PatientScopeChanged extends PatientEvent
+    with _$PatientScopeChanged {
+  const PatientScopeChanged._();
+
+  const factory PatientScopeChanged(HolderScope scope) = _PatientScopeChanged;
 }
 
 @freezed
-class PatientReorder extends PatientEvent with _$PatientReorder {
+abstract class PatientReorder extends PatientEvent with _$PatientReorder {
+  const PatientReorder._();
+
   const factory PatientReorder(String patientId) = _PatientReorder;
 }
 
 @freezed
-class PatientDataUpdatedFromSync extends PatientEvent
-    with _$PatientDataUpdatedFromSync {
-  const factory PatientDataUpdatedFromSync() = _PatientDataUpdatedFromSync;
-}
+abstract class PatientEditStarted extends PatientEvent
+    with _$PatientEditStarted {
+  const PatientEditStarted._();
 
-@freezed
-class PatientEditStarted extends PatientEvent with _$PatientEditStarted {
   const factory PatientEditStarted(String patientId) = _PatientEditStarted;
 }
 
 @freezed
-class PatientEditCancelled extends PatientEvent with _$PatientEditCancelled {
+abstract class PatientEditCancelled extends PatientEvent
+    with _$PatientEditCancelled {
+  const PatientEditCancelled._();
+
   const factory PatientEditCancelled() = _PatientEditCancelled;
 }
 
 @freezed
-class PatientEditSaved extends PatientEvent with _$PatientEditSaved {
+abstract class PatientEditSaved extends PatientEvent with _$PatientEditSaved {
+  const PatientEditSaved._();
+
   const factory PatientEditSaved({
     required String patientId,
-    required String sourceId,
     List<String>? given,
     String? family,
     DateTime? birthDate,
@@ -55,9 +81,24 @@ class PatientEditSaved extends PatientEvent with _$PatientEditSaved {
 }
 
 @freezed
-class PatientSelectionChanged extends PatientEvent
+abstract class PatientSelectionChanged extends PatientEvent
     with _$PatientSelectionChanged {
+  const PatientSelectionChanged._();
+
   const factory PatientSelectionChanged({
     required String patientId,
   }) = _PatientSelectionChanged;
+}
+
+/// The user's answer to [HolderAsk]: [holderId] is the person picked, or
+/// null for someone else.
+@freezed
+abstract class PatientHolderAnswered extends PatientEvent
+    with _$PatientHolderAnswered {
+  const PatientHolderAnswered._();
+
+  const factory PatientHolderAnswered({
+    required HolderAsk ask,
+    String? holderId,
+  }) = _PatientHolderAnswered;
 }

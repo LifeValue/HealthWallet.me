@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
 import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
 import 'package:health_wallet/core/widgets/record_filter_header.dart';
@@ -35,9 +36,9 @@ class _RecordSelectionViewState extends State<RecordSelectionView> {
   @override
   void initState() {
     super.initState();
-    context
-        .read<RecordsBloc>()
-        .add(const RecordsInitialised(isShareContext: true));
+    context.read<RecordsBloc>().add(
+      const RecordsInitialised(isShareContext: true),
+    );
     _loadRecords();
     if (widget.appliedFilters != null && widget.appliedFilters!.isNotEmpty) {
       _filterTypes.addAll(widget.appliedFilters!);
@@ -70,7 +71,9 @@ class _RecordSelectionViewState extends State<RecordSelectionView> {
     var records = _allRecords;
 
     if (_filterTypes.isNotEmpty) {
-      records = records.where((r) => _filterTypes.contains(r.fhirType)).toList();
+      records = records
+          .where((r) => _filterTypes.contains(r.fhirType))
+          .toList();
     }
 
     if (_searchQuery.isNotEmpty && _searchQuery.length >= 2) {
@@ -79,15 +82,16 @@ class _RecordSelectionViewState extends State<RecordSelectionView> {
         final title = r.title.toLowerCase();
         final displayTitle = r.displayTitle.toLowerCase();
         final statusDisplay = r.statusDisplay.toLowerCase();
-        final additionalInfoText = r.additionalInfo
+        final additionalInfoText = r
+            .additionalInfo(context.l10n)
             .map((info) => info.info)
             .join(' ')
             .toLowerCase();
 
         return title.contains(query) ||
-               displayTitle.contains(query) ||
-               statusDisplay.contains(query) ||
-               additionalInfoText.contains(query);
+            displayTitle.contains(query) ||
+            statusDisplay.contains(query) ||
+            additionalInfoText.contains(query);
       }).toList();
     }
 
@@ -120,6 +124,15 @@ class _RecordSelectionViewState extends State<RecordSelectionView> {
               Expanded(
                 child: AnimatedStickyHeader(
                   padding: EdgeInsets.zero,
+                  body: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : SelectableRecordsList(
+                          filteredRecords: _filteredRecords,
+                          shareState: shareState,
+                          hasActiveFilters: _filterTypes.isNotEmpty,
+                          hasAppliedFilters:
+                              widget.appliedFilters?.isNotEmpty ?? false,
+                        ),
                   children: [
                     RecordFilterHeader(
                       records: _allRecords,
@@ -139,19 +152,18 @@ class _RecordSelectionViewState extends State<RecordSelectionView> {
                       },
                     ),
                   ],
-                  body: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : SelectableRecordsList(
-                          filteredRecords: _filteredRecords,
-                          shareState: shareState,
-                          hasActiveFilters: _filterTypes.isNotEmpty,
-                          hasAppliedFilters: widget.appliedFilters?.isNotEmpty ?? false,
-                        ),
                 ),
               ),
-              SelectionBottomBar(
-                shareState: shareState,
-                filterTypes: _filterTypes,
+              Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: context.wideDialogWidth,
+                  ),
+                  child: SelectionBottomBar(
+                    shareState: shareState,
+                    filterTypes: _filterTypes,
+                  ),
+                ),
               ),
             ],
           ),

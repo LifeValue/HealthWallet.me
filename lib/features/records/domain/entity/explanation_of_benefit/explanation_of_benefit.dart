@@ -1,20 +1,21 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
 
 part 'explanation_of_benefit.freezed.dart';
 
 @freezed
-class ExplanationOfBenefit
+abstract class ExplanationOfBenefit
     with _$ExplanationOfBenefit
     implements IFhirResource {
   const ExplanationOfBenefit._();
@@ -28,6 +29,7 @@ class ExplanationOfBenefit
     @Default({}) Map<String, dynamic> rawResource,
     @Default('') String encounterId,
     @Default('') String subjectId,
+    String? specialtyOverride,
     Narrative? text,
     List<Identifier>? identifier,
     String? status,
@@ -65,6 +67,7 @@ class ExplanationOfBenefit
       rawResource: resourceJson,
       encounterId: data.encounterId ?? '',
       subjectId: data.subjectId ?? '',
+      specialtyOverride: data.specialtyOverride,
       text: fhirEob.text,
       identifier: fhirEob.identifier,
       status: fhirEob.status.toString(),
@@ -89,16 +92,16 @@ class ExplanationOfBenefit
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'ExplanationOfBenefit',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'ExplanationOfBenefit',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -113,80 +116,97 @@ class ExplanationOfBenefit
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
+    final List<RecordInfoLine> infoLines = [];
 
     // Status
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(status, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(status, prefix: l10n.fieldStatus),
     );
 
     // Type
     final typeDisplay = FhirFieldExtractor.extractCodeableConceptText(type);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(typeDisplay, prefix: 'Type'),
+      ResourceFieldMapper.createCategoryLine(
+        typeDisplay,
+        prefix: l10n.fieldType,
+      ),
     );
 
     // Use
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(use, prefix: 'Use'),
+      ResourceFieldMapper.createStatusLine(use, prefix: l10n.fieldUse),
     );
 
     // Outcome
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(outcome, prefix: 'Outcome'),
+      ResourceFieldMapper.createStatusLine(outcome, prefix: l10n.fieldOutcome),
     );
 
     // Insurer
     final insurerDisplay = FhirFieldExtractor.extractReferenceDisplay(insurer);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createOrganizationLine(insurerDisplay,
-          prefix: 'Insurer'),
+      ResourceFieldMapper.createOrganizationLine(
+        insurerDisplay,
+        prefix: l10n.fieldInsurer,
+      ),
     );
 
     // Provider
-    final providerDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(provider);
+    final providerDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      provider,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createOrganizationLine(providerDisplay,
-          prefix: 'Provider'),
+      ResourceFieldMapper.createOrganizationLine(
+        providerDisplay,
+        prefix: l10n.fieldProvider,
+      ),
     );
 
     // Billable Period
-    final billablePeriodDisplay =
-        FhirFieldExtractor.extractPeriodFormatted(billablePeriod);
+    final billablePeriodDisplay = FhirFieldExtractor.extractPeriodFormatted(
+      billablePeriod,
+      l10n: l10n,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createTimelineLine(billablePeriodDisplay,
-          prefix: 'Billable Period'),
+      ResourceFieldMapper.createTimelineLine(
+        billablePeriodDisplay,
+        prefix: l10n.fieldBillablePeriod,
+      ),
     );
 
     // Disposition
     final dispositionText = disposition?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(dispositionText,
-          prefix: 'Disposition'),
+      ResourceFieldMapper.createNotesLine(
+        dispositionText,
+        prefix: l10n.fieldDisposition,
+      ),
     );
 
     // Total
     if (total != null && total!.isNotEmpty) {
       for (final totalItem in total!.take(2)) {
-        final category =
-            FhirFieldExtractor.extractCodeableConceptText(totalItem.category);
+        final category = FhirFieldExtractor.extractCodeableConceptText(
+          totalItem.category,
+        );
         final value = totalItem.amount.value?.valueDouble?.toStringAsFixed(2);
         final currency = totalItem.amount.currency?.toString() ?? '';
         if (value != null) {
           ResourceFieldMapper.addIfNotNull(
             infoLines,
-            ResourceFieldMapper.createValueLine('$currency $value',
-                prefix: category ?? 'Total'),
+            ResourceFieldMapper.createValueLine(
+              '$currency $value',
+              prefix: category ?? l10n.fieldTotal,
+            ),
           );
         }
       }
@@ -194,10 +214,12 @@ class ExplanationOfBenefit
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: FhirFieldExtractor.formatRecordDate(date!, l10n.localeName),
+        ),
+      );
     }
 
     return infoLines;

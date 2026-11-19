@@ -10,7 +10,8 @@ class SharePreferencesService {
   Future<Duration> getDefaultViewingDuration() async {
     final prefs = await SharedPreferences.getInstance();
     final minutes =
-        prefs.getInt(_keyDefaultViewingDurationMinutes) ?? _fallbackDefaultMinutes;
+        prefs.getInt(_keyDefaultViewingDurationMinutes) ??
+        _fallbackDefaultMinutes;
     return Duration(minutes: minutes);
   }
 

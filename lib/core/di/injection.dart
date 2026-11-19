@@ -10,8 +10,3 @@ Future<void> configureDependencies() async {
   // Initialize injectable
   await getIt.init();
 }
-
-@injectable
-class PdfStorageService {
-  // Implementation is in the artifact above
-}

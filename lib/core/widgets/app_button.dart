@@ -9,6 +9,7 @@ enum AppButtonVariant {
   transparent,
   outlined,
   tinted,
+  dashed,
 }
 
 class AppButton extends StatelessWidget {
@@ -48,7 +49,8 @@ class AppButton extends StatelessWidget {
 
     Widget button;
 
-    final effectivePadding = padding ??
+    final effectivePadding =
+        padding ??
         const EdgeInsets.symmetric(
           horizontal: Insets.medium,
           vertical: Insets.smallNormal,
@@ -126,23 +128,46 @@ class AppButton extends StatelessWidget {
       final borderColor = backgroundColor ?? colorScheme.primary;
       final textColor = backgroundColor ?? colorScheme.primary;
       final iconColor = backgroundColor ?? colorScheme.primary;
+      // The label takes the button's foreground colour, which follows hover.
       final labelWidget = Text(
         label,
         style: AppTextStyle.buttonMedium.copyWith(
-          color: textColor,
+          color: icon != null ? textColor : null,
           fontSize: fontSize,
         ),
       );
-      final style = OutlinedButton.styleFrom(
+      final baseStyle = OutlinedButton.styleFrom(
         backgroundColor: Colors.transparent,
         foregroundColor: textColor,
         side: BorderSide(color: borderColor, width: 1),
-        disabledForegroundColor: textColor.withOpacity(0.5),
+        disabledForegroundColor: textColor.withValues(alpha: 0.5),
         disabledBackgroundColor: Colors.transparent,
         padding: effectivePadding,
         fixedSize: fixedSize,
         shape: effectiveShape,
       );
+      // Without an icon, hovering or pressing fills it with its border colour
+      // and turns the label white, so it reads as a button under the mouse.
+      bool filled(Set<WidgetState> states) =>
+          !states.contains(WidgetState.disabled) &&
+          (states.contains(WidgetState.hovered) ||
+              states.contains(WidgetState.pressed));
+      final style = icon != null
+          ? baseStyle
+          : baseStyle.copyWith(
+              backgroundColor: WidgetStateProperty.resolveWith(
+                (states) => filled(states) ? borderColor : Colors.transparent,
+              ),
+              foregroundColor: WidgetStateProperty.resolveWith(
+                (states) => states.contains(WidgetState.disabled)
+                    ? textColor.withValues(alpha: 0.5)
+                    : filled(states)
+                    // The same label colour as a filled button's.
+                    ? (isDarkMode ? Colors.white : colorScheme.onPrimary)
+                    : textColor,
+              ),
+              overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+            );
 
       button = icon != null
           ? OutlinedButton.icon(
@@ -156,18 +181,58 @@ class AppButton extends StatelessWidget {
               style: style,
               child: labelWidget,
             );
+    } else if (variant == AppButtonVariant.dashed) {
+      final textColor = colorScheme.onSurface;
+      final borderColor = colorScheme.outline.withValues(alpha: 0.2);
+      final effectiveHeight = height ?? 48.0;
+
+      button = GestureDetector(
+        onTap: enabled ? onPressed : null,
+        child: CustomPaint(
+          painter: _DashedBorderPainter(
+            color: borderColor,
+            borderRadius: Insets.small,
+            dashWidth: 6,
+            dashGap: 6,
+            strokeWidth: 1,
+          ),
+          child: Container(
+            width: double.infinity,
+            height: effectiveHeight,
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  _buildIconWithColorFilter(icon!, textColor),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  label,
+                  style: AppTextStyle.buttonMedium.copyWith(
+                    color: textColor,
+                    fontSize: fontSize,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
     } else {
-      final bgColor = backgroundColor ??
+      final bgColor =
+          backgroundColor ??
           (variant == AppButtonVariant.primary
               ? colorScheme.primary
               : colorScheme.secondary);
       final fgColor = backgroundColor != null
           ? Colors.white
           : (isDarkMode
-              ? Colors.white
-              : (variant == AppButtonVariant.primary
-                  ? colorScheme.onPrimary
-                  : colorScheme.onSecondary));
+                ? Colors.white
+                : (variant == AppButtonVariant.primary
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSecondary));
       final labelWidget = Text(
         label,
         style: AppTextStyle.buttonMedium.copyWith(
@@ -178,8 +243,8 @@ class AppButton extends StatelessWidget {
       final style = ElevatedButton.styleFrom(
         backgroundColor: bgColor,
         foregroundColor: fgColor,
-        disabledBackgroundColor: bgColor.withOpacity(0.5),
-        disabledForegroundColor: fgColor.withOpacity(0.5),
+        disabledBackgroundColor: bgColor.withValues(alpha: 0.5),
+        disabledForegroundColor: fgColor.withValues(alpha: 0.5),
         padding: effectivePadding,
         fixedSize: fixedSize,
         shape: effectiveShape,
@@ -228,4 +293,50 @@ class AppButton extends StatelessWidget {
       ),
     );
   }
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double borderRadius;
+  final double dashWidth;
+  final double dashGap;
+  final double strokeWidth;
+
+  _DashedBorderPainter({
+    required this.color,
+    required this.borderRadius,
+    required this.dashWidth,
+    required this.dashGap,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final rrect = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      Radius.circular(borderRadius),
+    );
+
+    final path = Path()..addRRect(rrect);
+    final metrics = path.computeMetrics();
+
+    for (final metric in metrics) {
+      double distance = 0;
+      while (distance < metric.length) {
+        final end = (distance + dashWidth).clamp(0.0, metric.length);
+        final segment = metric.extractPath(distance, end);
+        canvas.drawPath(segment, paint);
+        distance += dashWidth + dashGap;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorderPainter oldDelegate) =>
+      color != oldDelegate.color || strokeWidth != oldDelegate.strokeWidth;
 }

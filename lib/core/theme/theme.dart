@@ -17,10 +17,10 @@ class AppTheme {
       onSurface: AppColors.textPrimary,
     ),
     textTheme: ThemeData.light().textTheme.apply(
-          fontFamily: 'Matter',
-          bodyColor: AppColors.textPrimary,
-          displayColor: AppColors.textPrimary,
-        ),
+      fontFamily: 'Matter',
+      bodyColor: AppColors.textPrimary,
+      displayColor: AppColors.textPrimary,
+    ),
     appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.surface,
       foregroundColor: AppColors.textPrimary,
@@ -57,10 +57,10 @@ class AppTheme {
       onSurface: AppColors.textPrimaryDark,
     ),
     textTheme: ThemeData.dark().textTheme.apply(
-          fontFamily: 'Matter',
-          bodyColor: AppColors.textPrimaryDark,
-          displayColor: AppColors.textPrimaryDark,
-        ),
+      fontFamily: 'Matter',
+      bodyColor: AppColors.textPrimaryDark,
+      displayColor: AppColors.textPrimaryDark,
+    ),
     appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.surfaceDark,
       foregroundColor: AppColors.textPrimaryDark,

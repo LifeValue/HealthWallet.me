@@ -8,4 +8,10 @@ abstract class HomePreferencesRepository {
   Future<void> saveRecordsVisibility(Map<String, bool> visibility);
   Future<Map<String, bool>?> getRecordsVisibility();
   Future<void> clearPreferences();
+  Future<void> saveSpecialtiesOrder(List<String> specialtiesOrder);
+  Future<List<String>?> getSpecialtiesOrder();
+  Future<void> saveSpecialtiesVisibility(Map<String, bool> visibility);
+  Future<Map<String, bool>?> getSpecialtiesVisibility();
+  Future<void> saveOverviewViewMode(String mode);
+  Future<String?> getOverviewViewMode();
 }

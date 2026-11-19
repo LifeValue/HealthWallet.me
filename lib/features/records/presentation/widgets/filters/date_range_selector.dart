@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+
 import 'date_field_dropdown.dart';
 import 'date_range_filter_model.dart';
 
@@ -69,7 +71,8 @@ class DateRangeSelector extends StatelessWidget {
           children: [
             Expanded(
               child: DateFieldDropdown(
-                label: 'Day',
+                label: context.l10n.day,
+                field: DateField.day,
                 value: day,
                 items: DateRangeDropdownService.getDays(year, month),
                 containerKey: containerKey,
@@ -82,9 +85,12 @@ class DateRangeSelector extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: DateFieldDropdown(
-                label: 'Month',
+                label: context.l10n.month,
+                field: DateField.month,
                 value: month,
-                items: DateRangeDropdownService.getMonths(),
+                items: DateRangeDropdownService.getMonths(
+                  context.l10n.localeName,
+                ),
                 containerKey: containerKey,
                 openUpward: openUpward,
                 onChanged: onMonthChanged,
@@ -93,7 +99,8 @@ class DateRangeSelector extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: DateFieldDropdown(
-                label: 'Year',
+                label: context.l10n.year,
+                field: DateField.year,
                 value: year,
                 items: DateRangeDropdownService.getYears(),
                 containerKey: containerKey,

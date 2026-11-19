@@ -1,20 +1,21 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
 
 part 'care_team.freezed.dart';
 
 @freezed
-class CareTeam with _$CareTeam implements IFhirResource {
+abstract class CareTeam with _$CareTeam implements IFhirResource {
   const CareTeam._();
 
   const factory CareTeam({
@@ -26,6 +27,7 @@ class CareTeam with _$CareTeam implements IFhirResource {
     @Default({}) Map<String, dynamic> rawResource,
     @Default('') String encounterId,
     @Default('') String subjectId,
+    String? specialtyOverride,
     Narrative? text,
     List<Identifier>? identifier,
     CareTeamStatus? status,
@@ -58,6 +60,7 @@ class CareTeam with _$CareTeam implements IFhirResource {
       rawResource: resourceJson,
       encounterId: data.encounterId ?? '',
       subjectId: data.subjectId ?? '',
+      specialtyOverride: data.specialtyOverride,
       text: fhirCareTeam.text,
       identifier: fhirCareTeam.identifier,
       status: fhirCareTeam.status,
@@ -77,16 +80,16 @@ class CareTeam with _$CareTeam implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'CareTeam',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'CareTeam',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -101,14 +104,17 @@ class CareTeam with _$CareTeam implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
+    final List<RecordInfoLine> infoLines = [];
 
     // Status
     final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(
+        statusText,
+        prefix: l10n.fieldStatus,
+      ),
     );
 
     // Category
@@ -116,56 +122,78 @@ class CareTeam with _$CareTeam implements IFhirResource {
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(categoryDisplay,
-          prefix: 'Category'),
+      ResourceFieldMapper.createCategoryLine(
+        categoryDisplay,
+        prefix: l10n.fieldCategory,
+      ),
     );
 
     // Managing Organization
     final organizationDisplay =
-        FhirFieldExtractor.extractMultipleReferenceDisplays(managingOrganization);
+        FhirFieldExtractor.extractMultipleReferenceDisplays(
+          managingOrganization,
+        );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createOrganizationLine(organizationDisplay,
-          prefix: 'Organization'),
+      ResourceFieldMapper.createOrganizationLine(
+        organizationDisplay,
+        prefix: l10n.fieldOrganization,
+      ),
     );
 
     // Participants/Members
-    final participantsDisplay =
-        FhirFieldExtractor.extractParticipants(participant);
+    final participantsDisplay = FhirFieldExtractor.extractParticipants(
+      participant,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createTeamLine(participantsDisplay,
-          prefix: 'Members'),
+      ResourceFieldMapper.createTeamLine(
+        participantsDisplay,
+        prefix: l10n.fieldMembers,
+      ),
     );
 
     // Period
-    final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(period);
+    final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(
+      period,
+      l10n: l10n,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createTimelineLine(periodDisplay, prefix: 'Period'),
+      ResourceFieldMapper.createTimelineLine(
+        periodDisplay,
+        prefix: l10n.fieldPeriod,
+      ),
     );
 
     // Reason Code
-    final reasonCodeDisplay =
-        FhirFieldExtractor.extractReasonCodes(reasonCode);
+    final reasonCodeDisplay = FhirFieldExtractor.extractReasonCodes(reasonCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
+      ResourceFieldMapper.createNotesLine(
+        reasonCodeDisplay,
+        prefix: l10n.fieldReason,
+      ),
     );
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: FhirFieldExtractor.formatRecordDate(date!, l10n.localeName),
+        ),
+      );
     }
 
     // Notes
     final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+      ResourceFieldMapper.createNotesLine(
+        notesDisplay,
+        prefix: l10n.fieldNotes,
+      ),
     );
 
     return infoLines;
@@ -177,8 +205,9 @@ class CareTeam with _$CareTeam implements IFhirResource {
       subject?.reference?.valueString,
       encounter?.reference?.valueString,
       ...?reasonReference?.map((reference) => reference.reference?.valueString),
-      ...?managingOrganization
-          ?.map((reference) => reference.reference?.valueString),
+      ...?managingOrganization?.map(
+        (reference) => reference.reference?.valueString,
+      ),
     }.where((reference) => reference != null).toList();
   }
 

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 
@@ -31,11 +31,9 @@ class _DurationWheelPickerState extends State<DurationWheelPicker> {
   FixedExtentScrollController _getHoursController(int hours) {
     final items = <int>[0, 1, 2, 3];
     final index = items.indexOf(hours);
-    if (_hoursController == null) {
-      _hoursController = FixedExtentScrollController(
-        initialItem: index >= 0 ? index : 0,
-      );
-    }
+    _hoursController ??= FixedExtentScrollController(
+      initialItem: index >= 0 ? index : 0,
+    );
     return _hoursController!;
   }
 
@@ -45,11 +43,9 @@ class _DurationWheelPickerState extends State<DurationWheelPicker> {
       items.add(i);
     }
     final index = items.indexOf(minutes);
-    if (_minutesController == null) {
-      _minutesController = FixedExtentScrollController(
-        initialItem: index >= 0 ? index : 0,
-      );
-    }
+    _minutesController ??= FixedExtentScrollController(
+      initialItem: index >= 0 ? index : 0,
+    );
     return _minutesController!;
   }
 
@@ -148,8 +144,12 @@ class _DurationWheelPickerState extends State<DurationWheelPicker> {
                     style: AppTextStyle.titleMedium.copyWith(
                       color: isSelected
                           ? context.colorScheme.onSurface
-                          : context.colorScheme.onSurface.withValues(alpha: 0.4),
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          : context.colorScheme.onSurface.withValues(
+                              alpha: 0.4,
+                            ),
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
                   ),
                 );

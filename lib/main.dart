@@ -1,22 +1,72 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:health_wallet/app/view/app.dart';
 import 'package:health_wallet/bootstrap.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/services/deep_link_service.dart';
 import 'package:health_wallet/core/services/share_intent_service.dart';
-import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/core/services/startup_hardening.dart';
+import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
+import 'package:health_wallet/features/desktop/communication/data/services/discovery_service.dart';
+import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
+import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
+import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/bloc/phone_handover_bloc.dart';
+import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_linking_service.dart';
+import 'package:health_wallet/features/processing/domain/services/ai_model_selection_guard.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
-  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  final WidgetsBinding widgetsBinding =
+      WidgetsFlutterBinding.ensureInitialized();
+
+  unawaited(hardenStartup(releaseMode: kReleaseMode));
+
+  final prefs = await SharedPreferences.getInstance();
+  if (prefs.containsKey('lww_offline_queue')) {
+    await prefs.remove('lww_offline_queue');
+  }
 
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
+  getIt.registerSingleton<AppPlatform>(AppPlatform.mobile);
+
   await configureDependencies();
 
-  getIt<ShareIntentService>().initialize();
-  getIt<DeepLinkService>().initialize();
-  getIt<ScanBloc>().add(const ScanInitialised());
+  // Before the first screen asks whose records to show.
+  await getIt<HolderLinkingService>().linkUnassigned();
+
+  // Before anything reads the selected AI model.
+  await getIt<AiModelSelectionGuard>().replaceUnsupportedModel();
+
+  getIt.registerLazySingleton<CommunicationBloc>(
+    () => CommunicationBloc(
+      getIt<AppPlatform>(),
+      getIt<PairingStorageService>(),
+      getIt<TcpService>(),
+      getIt<DiscoveryService>(),
+    ),
+  );
+
+  getIt<CommunicationBloc>().add(const CommunicationInitialised());
+  // Listening before the first connection, so the desktop's backup status
+  // sent on connect isn't missed.
+  getIt<BackupBloc>();
+
+  unawaited(getIt<ShareIntentService>().initialize());
+  unawaited(getIt<DeepLinkService>().initialize());
+  getIt<ProcessingBloc>().add(const ProcessingInitialised());
+  // Listening from the start, so what the desktop sends about a handed-over
+  // document (sent again on every connection until acknowledged) is applied.
+  getIt<PhoneHandoverBloc>().add(const PhoneHandoverInitialised());
+
+  getIt<LwwSyncBloc>().add(const LwwSyncInitialised());
 
   FlutterNativeSplash.remove();
 

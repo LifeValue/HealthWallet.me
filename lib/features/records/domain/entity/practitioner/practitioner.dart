@@ -1,20 +1,21 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
 
 part 'practitioner.freezed.dart';
 
 @freezed
-class Practitioner with _$Practitioner implements IFhirResource {
+abstract class Practitioner with _$Practitioner implements IFhirResource {
   const Practitioner._();
 
   const factory Practitioner({
@@ -26,6 +27,7 @@ class Practitioner with _$Practitioner implements IFhirResource {
     @Default({}) Map<String, dynamic> rawResource,
     @Default('') String encounterId,
     @Default('') String subjectId,
+    String? specialtyOverride,
     Narrative? text,
     List<Identifier>? identifier,
     FhirBoolean? active,
@@ -54,6 +56,7 @@ class Practitioner with _$Practitioner implements IFhirResource {
       rawResource: resourceJson,
       encounterId: data.encounterId ?? '',
       subjectId: data.subjectId ?? '',
+      specialtyOverride: data.specialtyOverride,
       text: fhirPractitioner.text,
       identifier: fhirPractitioner.identifier,
       active: fhirPractitioner.active,
@@ -69,16 +72,16 @@ class Practitioner with _$Practitioner implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'Practitioner',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'Practitioner',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -96,8 +99,8 @@ class Practitioner with _$Practitioner implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
+    final List<RecordInfoLine> infoLines = [];
     final professionalInfoStartIndex = infoLines.length;
 
     // Active Status
@@ -106,29 +109,38 @@ class Practitioner with _$Practitioner implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-            activeStatus ? 'Active' : 'Inactive',
-            prefix: 'Status'),
+          activeStatus ? l10n.active : l10n.inactive,
+          prefix: l10n.fieldStatus,
+        ),
       );
     }
 
     // Qualification
     if (qualification != null && qualification!.isNotEmpty) {
       for (final qual in qualification!) {
-        final qualCode = FhirFieldExtractor.extractCodeableConceptText(qual.code);
+        final qualCode = FhirFieldExtractor.extractCodeableConceptText(
+          qual.code,
+        );
         final issuer = FhirFieldExtractor.extractReferenceDisplay(qual.issuer);
-        final period = FhirFieldExtractor.extractPeriodFormatted(qual.period);
-        
+        final period = FhirFieldExtractor.extractPeriodFormatted(
+          qual.period,
+          l10n: l10n,
+        );
+
         String? qualDisplay = qualCode;
         if (issuer != null && qualCode != null) {
-          qualDisplay = '$qualCode (issued by $issuer)';
+          qualDisplay = l10n.qualificationIssuedBy(qualCode, issuer);
         }
         if (period != null && qualDisplay != null) {
-          qualDisplay = '$qualDisplay - Valid: $period';
+          qualDisplay = l10n.qualificationValidPeriod(qualDisplay, period);
         }
-        
+
         ResourceFieldMapper.addIfNotNull(
           infoLines,
-          ResourceFieldMapper.createStatusLine(qualDisplay, prefix: 'Qualification'),
+          ResourceFieldMapper.createStatusLine(
+            qualDisplay,
+            prefix: l10n.fieldQualification,
+          ),
         );
       }
     }
@@ -137,37 +149,49 @@ class Practitioner with _$Practitioner implements IFhirResource {
     final genderDisplay = gender?.display?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(genderDisplay, prefix: 'Gender'),
+      ResourceFieldMapper.createStatusLine(
+        genderDisplay,
+        prefix: l10n.fieldGender,
+      ),
     );
 
     // Communication/Languages
     if (communication != null && communication!.isNotEmpty) {
       final languages = communication!
-          .map((c) => FhirFieldExtractor.extractCodeableConceptText(c))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((l) => l != null && l.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-            languages.isNotEmpty ? languages : null,
-            prefix: 'Languages'),
+          languages.isNotEmpty ? languages : null,
+          prefix: l10n.fieldLanguages,
+        ),
       );
     }
 
     // Add section header only if we added content
     if (infoLines.length > professionalInfoStartIndex) {
-      infoLines.insert(professionalInfoStartIndex,
-        ResourceFieldMapper.createSectionHeader('Professional Information'));
+      infoLines.insert(
+        professionalInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader(
+          l10n.fieldProfessionalInformation,
+        ),
+      );
     }
 
     final contactInfoStartIndex = infoLines.length;
 
     // Address
-    final addressDisplay =
-        FhirFieldExtractor.formatAddress(address?.firstOrNull);
+    final addressDisplay = FhirFieldExtractor.formatAddress(
+      address?.firstOrNull,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createLocationLine(addressDisplay, prefix: 'Address'),
+      ResourceFieldMapper.createLocationLine(
+        addressDisplay,
+        prefix: l10n.fieldAddress,
+      ),
     );
 
     // Telecom (phone/email)
@@ -180,7 +204,7 @@ class Practitioner with _$Practitioner implements IFhirResource {
           ?.toString();
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createStatusLine(phone, prefix: 'Phone'),
+        ResourceFieldMapper.createStatusLine(phone, prefix: l10n.fieldPhone),
       );
 
       // Email
@@ -191,7 +215,7 @@ class Practitioner with _$Practitioner implements IFhirResource {
           ?.toString();
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createStatusLine(email, prefix: 'Email'),
+        ResourceFieldMapper.createStatusLine(email, prefix: l10n.fieldEmail),
       );
 
       // Fax
@@ -202,14 +226,16 @@ class Practitioner with _$Practitioner implements IFhirResource {
           ?.toString();
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createStatusLine(fax, prefix: 'Fax'),
+        ResourceFieldMapper.createStatusLine(fax, prefix: l10n.fieldFax),
       );
     }
 
     // Add section header only if we added content
     if (infoLines.length > contactInfoStartIndex) {
-      infoLines.insert(contactInfoStartIndex,
-        ResourceFieldMapper.createSectionHeader('Contact Information'));
+      infoLines.insert(
+        contactInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader(l10n.fieldContactInformation),
+      );
     }
 
     final additionalInfoStartIndex = infoLines.length;
@@ -218,21 +244,30 @@ class Practitioner with _$Practitioner implements IFhirResource {
     final birthDateDisplay = birthDate?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(birthDateDisplay, prefix: 'Birth Date'),
+      ResourceFieldMapper.createDateLine(
+        birthDateDisplay,
+        prefix: l10n.fieldBirthDate,
+      ),
     );
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: FhirFieldExtractor.formatRecordDate(date!, l10n.localeName),
+        ),
+      );
     }
 
     // Add section header only if we added content
     if (infoLines.length > additionalInfoStartIndex) {
-      infoLines.insert(additionalInfoStartIndex,
-        ResourceFieldMapper.createSectionHeader('Additional Information'));
+      infoLines.insert(
+        additionalInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader(
+          l10n.fieldAdditionalInformation,
+        ),
+      );
     }
 
     return infoLines;

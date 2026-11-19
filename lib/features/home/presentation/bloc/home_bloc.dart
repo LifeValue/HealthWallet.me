@@ -1,29 +1,33 @@
 import 'dart:async';
 import 'dart:math' as math;
+
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:health_wallet/core/utils/logger.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
-import 'package:health_wallet/features/home/domain/repository/home_preferences_repository.dart';
+import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
 import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
+import 'package:health_wallet/features/home/domain/entities/specialty_card.dart';
 import 'package:health_wallet/features/home/domain/factory/patient_vitals_factory.dart';
+import 'package:health_wallet/features/home/domain/repository/home_preferences_repository.dart';
+import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
+import 'package:health_wallet/features/home/presentation/bloc/handlers/home_data_handler.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
-import 'package:health_wallet/features/sync/domain/use_case/get_sources_use_case.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
-import 'package:health_wallet/features/home/presentation/bloc/handlers/home_data_handler.dart';
+import 'package:health_wallet/features/sync/domain/use_case/get_sources_use_case.dart';
+import 'package:injectable/injectable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'home_bloc.freezed.dart';
 part 'home_event.dart';
 part 'home_state.dart';
 
+@lazySingleton
 class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
   @override
   final RecordsRepository recordsRepository;
@@ -31,12 +35,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
   @override
   final HomePreferencesRepository homePreferences;
   final SyncRepository _syncRepository;
-  @override
-  final PatientDeduplicationService deduplicationService;
-  @override
-  final PatientSelectionService patientSelectionService;
+  final HolderSelection _selection;
+  late final StreamSubscription<HolderScope> _scopeChanges;
   @override
   final PatientVitalFactory patientVitalFactory = PatientVitalFactory();
+  final SpecialtyClassifier _specialtyClassifier;
+
+  @override
+  SpecialtyClassifier get specialtyClassifier => _specialtyClassifier;
 
   static const int _minVisibleVitalsCount = 4;
 
@@ -45,23 +51,61 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
     this.homePreferences,
     this.recordsRepository,
     this._syncRepository,
-    this.deduplicationService,
-    this.patientSelectionService,
+    this._selection,
+    this._specialtyClassifier,
   ) : super(const HomeState()) {
-    on<HomeInitialised>(_onInitialised);
-    on<HomeSourceChanged>(_onSourceChanged);
-    on<HomeRecordsFiltersChanged>(_onRecordsFiltersChanged);
-    on<HomeVitalsFiltersChanged>(_onVitalsFiltersChanged);
+    on<HomeInitialised>(_onInitialised, transformer: restartable());
+    on<HomeSourceChanged>(_onSourceChanged, transformer: sequential());
+    on<HomeScopeChanged>(_onScopeChanged, transformer: restartable());
+    on<HomeRecordsFiltersChanged>(
+      _onRecordsFiltersChanged,
+      transformer: restartable(),
+    );
+    on<HomeVitalsFiltersChanged>(
+      _onVitalsFiltersChanged,
+      transformer: sequential(),
+    );
     on<HomeEditModeChanged>(
-        (e, emit) => emit(state.copyWith(editMode: e.editMode)));
-    on<HomeRecordsReordered>(_onRecordsReordered);
-    on<HomeVitalsReordered>(_onVitalsReordered);
-    on<HomeVitalsExpansionToggled>((e, emit) =>
-        emit(state.copyWith(vitalsExpanded: !state.vitalsExpanded)));
-    on<HomeRefreshPreservingOrder>(_onRefreshPreservingOrder);
-    on<HomeScanCompleted>(_onScanCompleted);
-    on<HomeSourceLabelUpdated>(_onSourceLabelUpdated);
-    on<HomeSourceDeleted>(_onSourceDeleted);
+      (e, emit) => emit(state.copyWith(editMode: e.editMode)),
+      transformer: sequential(),
+    );
+    on<HomeRecordsReordered>(_onRecordsReordered, transformer: sequential());
+    on<HomeVitalsReordered>(_onVitalsReordered, transformer: sequential());
+    on<HomeVitalsExpansionToggled>(
+      (e, emit) => emit(state.copyWith(vitalsExpanded: !state.vitalsExpanded)),
+      transformer: sequential(),
+    );
+    on<HomeRefreshPreservingOrder>(
+      _onRefreshPreservingOrder,
+      transformer: restartable(),
+    );
+    on<HomeScanCompleted>(_onScanCompleted, transformer: sequential());
+    on<HomeSourceLabelUpdated>(
+      _onSourceLabelUpdated,
+      transformer: sequential(),
+    );
+    on<HomeSourceDeleted>(_onSourceDeleted, transformer: sequential());
+    on<HomeOverviewViewModeChanged>(
+      _onOverviewViewModeChanged,
+      transformer: sequential(),
+    );
+    on<HomeSpecialtiesReordered>(
+      _onSpecialtiesReordered,
+      transformer: sequential(),
+    );
+    on<HomeSpecialtiesFiltersChanged>(
+      _onSpecialtiesFiltersChanged,
+      transformer: sequential(),
+    );
+    _scopeChanges = _selection.changes.listen(
+      (_) => add(const HomeScopeChanged()),
+    );
+  }
+
+  @override
+  Future<void> close() async {
+    await _scopeChanges.cancel();
+    return super.close();
   }
 
   bool hasData({
@@ -78,20 +122,25 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
   }
 
   Future<void> _onInitialised(
-      HomeInitialised e, Emitter<HomeState> emit) async {
+    HomeInitialised e,
+    Emitter<HomeState> emit,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
-    final savedSource = prefs.getString('home_selected_source_id');
-
-    if (savedSource != null) {
-      emit(state.copyWith(selectedSource: savedSource));
-    } else {
-      emit(state.copyWith(selectedSource: 'All'));
+    final savedViewMode = prefs.getString(
+      SharedPrefsConstants.overviewViewMode,
+    );
+    if (savedViewMode != null) {
+      final mode = OverviewViewMode.values.firstWhere(
+        (m) => m.name == savedViewMode,
+        orElse: () => OverviewViewMode.specialties,
+      );
+      emit(state.copyWith(overviewViewMode: mode));
     }
 
     if (_hasExistingVitalsData() && !_shouldForceRefresh()) {
       emit(state.copyWith());
     } else {
-      await _reloadHomeData(emit, force: true, overrideSourceId: savedSource);
+      await _reloadHomeData(emit);
     }
   }
 
@@ -102,62 +151,70 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
   }
 
   bool _shouldForceRefresh() {
-    final hasOnlyPlaceholders = state.patientVitals.isNotEmpty &&
+    final hasOnlyPlaceholders =
+        state.patientVitals.isNotEmpty &&
         state.patientVitals.every((v) => v.value == 'N/A');
-    final hasOnlyZeroCounts = state.overviewCards.isNotEmpty &&
+    final hasOnlyZeroCounts =
+        state.overviewCards.isNotEmpty &&
         state.overviewCards.every((c) => c.count == '0');
     return hasOnlyPlaceholders || hasOnlyZeroCounts;
   }
 
   Future<void> _onRefreshPreservingOrder(
-      HomeRefreshPreservingOrder e, Emitter<HomeState> emit) async {
-    await _reloadHomeData(emit,
-        force: true, overrideSourceId: state.selectedSource);
+    HomeRefreshPreservingOrder e,
+    Emitter<HomeState> emit,
+  ) async {
+    await _reloadHomeData(emit);
   }
 
+  /// A scan shows all of the person's sources, so its records are in view.
   Future<void> _onScanCompleted(
-      HomeScanCompleted e, Emitter<HomeState> emit) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('home_selected_source_id', 'All');
-    emit(state.copyWith(selectedSource: 'All'));
-    await _reloadHomeData(emit, force: true);
-  }
+    HomeScanCompleted e,
+    Emitter<HomeState> emit,
+  ) => _selection.filter(null);
 
+  /// The new filter comes back as a [HomeScopeChanged].
   Future<void> _onSourceChanged(
-      HomeSourceChanged e, Emitter<HomeState> emit) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('home_selected_source_id', e.source);
+    HomeSourceChanged e,
+    Emitter<HomeState> emit,
+  ) => _selection.filter(e.source);
 
-    emit(state.copyWith(selectedSource: e.source));
-    await _reloadHomeData(emit,
-        force: true,
-        overrideSourceId: e.source,
-        patientSourceIds: e.patientSourceIds);
-  }
+  Future<void> _onScopeChanged(
+    HomeScopeChanged e,
+    Emitter<HomeState> emit,
+  ) => _reloadHomeData(emit);
 
   Future<void> _onVitalsFiltersChanged(
-      HomeVitalsFiltersChanged e, Emitter<HomeState> emit) async {
+    HomeVitalsFiltersChanged e,
+    Emitter<HomeState> emit,
+  ) async {
     final toSave = <String, bool>{
-      for (final entry in e.filters.entries) entry.key.title: entry.value
+      for (final entry in e.filters.entries) entry.key.title: entry.value,
     };
     await homePreferences.saveVitalsVisibility(toSave);
-    final filtered =
-        _filterVitalsByVisibility(state.allAvailableVitals, e.filters);
+    final filtered = _filterVitalsByVisibility(
+      state.allAvailableVitals,
+      e.filters,
+    );
     emit(state.copyWith(selectedVitals: e.filters, patientVitals: filtered));
   }
 
   Future<void> _onVitalsReordered(
-      HomeVitalsReordered e, Emitter<HomeState> emit) async {
+    HomeVitalsReordered e,
+    Emitter<HomeState> emit,
+  ) async {
     try {
       final master = List.of(state.allAvailableVitals);
-      if (!_validateReorderIndices(e.oldIndex, e.newIndex, master.length))
+      if (!_validateReorderIndices(e.oldIndex, e.newIndex, master.length)) {
         return;
+      }
 
       final moved = master.removeAt(e.oldIndex);
       master.insert(e.newIndex, moved);
       await _handleAutoVisibility(moved, e.newIndex, emit);
-      await homePreferences
-          .saveVitalsOrder(master.map((v) => v.title).toList());
+      await homePreferences.saveVitalsOrder(
+        master.map((v) => v.title).toList(),
+      );
       final filtered = _filterVitalsByVisibility(master, state.selectedVitals);
       emit(state.copyWith(allAvailableVitals: master, patientVitals: filtered));
     } catch (err) {
@@ -165,30 +222,74 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
     }
   }
 
+  Future<void> _onOverviewViewModeChanged(
+    HomeOverviewViewModeChanged e,
+    Emitter<HomeState> emit,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(SharedPrefsConstants.overviewViewMode, e.mode.name);
+    emit(state.copyWith(overviewViewMode: e.mode));
+  }
+
   Future<void> _onRecordsFiltersChanged(
-      HomeRecordsFiltersChanged e, Emitter<HomeState> emit) async {
+    HomeRecordsFiltersChanged e,
+    Emitter<HomeState> emit,
+  ) async {
     final toSave = <String, bool>{
-      for (final entry in e.filters.entries) entry.key.display: entry.value
+      for (final entry in e.filters.entries) entry.key.display: entry.value,
     };
     await homePreferences.saveRecordsVisibility(toSave);
     emit(state.copyWith(selectedRecordTypes: e.filters));
-    await _reloadHomeData(emit,
-        force: false,
-        overrideSourceId:
-            state.selectedSource != 'All' ? state.selectedSource : null);
+    await _reloadHomeData(emit);
   }
 
-  Future<void> _onRecordsReordered(
-      HomeRecordsReordered e, Emitter<HomeState> emit) async {
+  Future<void> _onSpecialtiesFiltersChanged(
+    HomeSpecialtiesFiltersChanged e,
+    Emitter<HomeState> emit,
+  ) async {
+    final toSave = <String, bool>{
+      for (final entry in e.filters.entries) entry.key.name: entry.value,
+    };
+    await homePreferences.saveSpecialtiesVisibility(toSave);
+    emit(state.copyWith(selectedSpecialties: e.filters));
+  }
+
+  Future<void> _onSpecialtiesReordered(
+    HomeSpecialtiesReordered e,
+    Emitter<HomeState> emit,
+  ) async {
     try {
-      final cards = List.of(state.overviewCards);
-      if (!_validateReorderIndices(e.oldIndex, e.newIndex, cards.length))
+      final cards = List.of(state.specialtyCards);
+      if (!_validateReorderIndices(e.oldIndex, e.newIndex, cards.length)) {
         return;
+      }
 
       final item = cards.removeAt(e.oldIndex);
       cards.insert(e.newIndex, item);
-      await homePreferences
-          .saveRecordsOrder(cards.map((c) => c.category.display).toList());
+      await homePreferences.saveSpecialtiesOrder(
+        cards.map((c) => c.specialty.name).toList(),
+      );
+      emit(state.copyWith(specialtyCards: cards));
+    } catch (err) {
+      logger.e('Specialties reorder error: $err');
+    }
+  }
+
+  Future<void> _onRecordsReordered(
+    HomeRecordsReordered e,
+    Emitter<HomeState> emit,
+  ) async {
+    try {
+      final cards = List.of(state.overviewCards);
+      if (!_validateReorderIndices(e.oldIndex, e.newIndex, cards.length)) {
+        return;
+      }
+
+      final item = cards.removeAt(e.oldIndex);
+      cards.insert(e.newIndex, item);
+      await homePreferences.saveRecordsOrder(
+        cards.map((c) => c.category.display).toList(),
+      );
       emit(state.copyWith(overviewCards: cards));
     } catch (err) {
       logger.e('Records reorder error: $err');
@@ -200,14 +301,17 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
     Map<PatientVitalType, bool> visibilityMap,
   ) {
     return allVitals
-        .where((v) => visibilityMap.entries
-            .where((entry) => entry.value)
-            .any((entry) => entry.key.title == v.title))
+        .where(
+          (v) => visibilityMap.entries
+              .where((entry) => entry.value)
+              .any((entry) => entry.key.title == v.title),
+        )
         .toList(growable: false);
   }
 
   bool _validateReorderIndices(int oldIndex, int newIndex, int length) {
-    final ok = oldIndex >= 0 &&
+    final ok =
+        oldIndex >= 0 &&
         oldIndex < length &&
         newIndex >= 0 &&
         newIndex <= length;
@@ -218,11 +322,17 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
   }
 
   Future<void> _handleAutoVisibility(
-      PatientVital vital, int newIndex, Emitter<HomeState> emit) async {
-    final currentVisibleCount =
-        state.selectedVitals.entries.where((e) => e.value).length;
-    final effectiveVisibleArea =
-        math.max(currentVisibleCount, _minVisibleVitalsCount);
+    PatientVital vital,
+    int newIndex,
+    Emitter<HomeState> emit,
+  ) async {
+    final currentVisibleCount = state.selectedVitals.entries
+        .where((e) => e.value)
+        .length;
+    final effectiveVisibleArea = math.max(
+      currentVisibleCount,
+      _minVisibleVitalsCount,
+    );
 
     if (newIndex < effectiveVisibleArea) {
       final vitalType = PatientVitalTypeX.fromTitle(vital.title);
@@ -237,26 +347,44 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
     }
   }
 
-  Future<void> _reloadHomeData(
-    Emitter<HomeState> emit, {
-    bool force = false,
-    String? overrideSourceId,
-    List<String>? patientSourceIds,
-  }) async {
-    emit(state.copyWith(status: const HomeStatus.loading()));
+  /// Loads what Home shows for the current selection.
+  Future<void> _reloadHomeData(Emitter<HomeState> emit) async {
+    final scope = _selection.scope;
+    emit(
+      state.copyWith(
+        status: const HomeStatus.loading(),
+        scope: scope,
+        selectedSource: scope.sourceFilter ?? 'All',
+      ),
+    );
     try {
-      final sourceId = _resolveSourceId(overrideSourceId);
+      final sourceId = scope.sourceFilter;
+      final sourceIds = scope.sourceIds;
 
-      final prefs = await SharedPreferences.getInstance();
-      final selectedPatientId = prefs.getString('selected_patient_id');
       final sources = await _getSourcesUseCase();
-      final overview =
-          await fetchOverviewCardsAndResources(sourceId, patientSourceIds);
-      final patientResources = await fetchPatientResources(
-          sourceId, patientSourceIds, selectedPatientId);
-      final vitalsData = await processVitalsData(sourceId, patientSourceIds);
-      final reorderedCards =
-          await applyOverviewCardsOrder(overview.overviewCards);
+      final overview = await fetchOverviewCardsAndResources(
+        sourceId,
+        sourceIds,
+      );
+      final vitalsData = await processVitalsData(sourceId, sourceIds);
+      final reorderedCards = await applyOverviewCardsOrder(
+        overview.overviewCards,
+      );
+      final specialtyCards = await classifyIntoSpecialties(
+        overview.allEnabledResources,
+      );
+
+      final savedSpecialtiesVisibility = await homePreferences
+          .getSpecialtiesVisibility();
+      final updatedSelectedSpecialties = Map<MedicalSpecialty, bool>.from(
+        state.selectedSpecialties,
+      );
+      if (savedSpecialtiesVisibility != null) {
+        updatedSelectedSpecialties.updateAll(
+          (specialty, value) =>
+              savedSpecialtiesVisibility[specialty.name] ?? value,
+        );
+      }
 
       final hasDataResult = hasData(
         patientVitals: vitalsData.patientVitals,
@@ -264,40 +392,32 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
         recentRecords: overview.allEnabledResources.take(3).toList(),
       );
 
-      final currentSelectedSource = state.selectedSource.isNotEmpty
-          ? state.selectedSource
-          : (sourceId ?? 'All');
-
-      emit(state.copyWith(
-        status: const HomeStatus.success(),
-        sources: sources,
-        selectedSource: currentSelectedSource,
-        patient: patientResources.isNotEmpty
-            ? patientResources.first as Patient
-            : null,
-        overviewCards: reorderedCards,
-        recentRecords: overview.allEnabledResources.take(3).toList(),
-        allAvailableVitals: vitalsData.allAvailableVitals,
-        patientVitals: vitalsData.patientVitals,
-        selectedVitals: vitalsData.selectedVitals,
-        selectedRecordTypes: overview.selectedRecordTypes,
-        hasDataLoaded: hasDataResult,
-      ));
+      emit(
+        state.copyWith(
+          status: const HomeStatus.success(),
+          sources: sources,
+          patient: scope.patient,
+          overviewCards: reorderedCards,
+          recentRecords: overview.allEnabledResources.take(3).toList(),
+          allAvailableVitals: vitalsData.allAvailableVitals,
+          patientVitals: vitalsData.patientVitals,
+          selectedVitals: vitalsData.selectedVitals,
+          selectedRecordTypes: overview.selectedRecordTypes,
+          hasDataLoaded: hasDataResult,
+          specialtyCards: specialtyCards,
+          selectedSpecialties: updatedSelectedSpecialties,
+        ),
+      );
     } catch (err, stackTrace) {
       logger.e('reloadHomeData error: $err');
       logger.e('reloadHomeData stack trace: $stackTrace');
-      emit(state.copyWith(
-        status: HomeStatus.failure('Failed to load home data: $err'),
-        errorMessage: err.toString(),
-      ));
+      emit(
+        state.copyWith(
+          status: HomeStatus.failure('Failed to load home data: $err'),
+          errorMessage: err.toString(),
+        ),
+      );
     }
-  }
-
-  String? _resolveSourceId(String? input) {
-    if (input == null || input == 'All') return null;
-    if (input == HomeDataHandler.demoSourceId) return HomeDataHandler.demoSourceId;
-    if (input.startsWith('wallet-')) return input;
-    return input;
   }
 
   Future<void> _onSourceLabelUpdated(
@@ -320,40 +440,26 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
     }
   }
 
+  /// Deletes the source and reads the people again, which drops it from
+  /// the selection and from the person's sources.
   Future<void> _onSourceDeleted(
     HomeSourceDeleted event,
     Emitter<HomeState> emit,
   ) async {
     try {
-      final deletedSource = state.sources.firstWhere(
-        (source) => source.id == event.sourceId,
-        orElse: () => throw Exception('Source not found: ${event.sourceId}'),
-      );
-      final isWalletSource = deletedSource.platformType == 'wallet';
-
-      await _syncRepository.deleteSource(event.sourceId);
-
-      final updatedSources =
-          state.sources.where((source) => source.id != event.sourceId).toList();
-
-      String? newSelectedSource = state.selectedSource;
-
-      if (state.selectedSource == event.sourceId) {
-        if (isWalletSource) {
-          newSelectedSource = 'All';
-        } else {
-          newSelectedSource = 'All';
-        }
+      // The demo data goes through its own removal, which also removes what
+      // was filed under the demo person and their files.
+      if (event.sourceId == HomeDataHandler.demoSourceId) {
+        await recordsRepository.clearDemoData();
+      } else {
+        await _syncRepository.deleteSource(event.sourceId);
       }
-
-      emit(state.copyWith(
-        sources: updatedSources,
-        selectedSource: newSelectedSource,
-      ));
-
-      await _reloadHomeData(emit,
-          force: true,
-          overrideSourceId: newSelectedSource);
+      emit(
+        state.copyWith(
+          sources: state.sources.where((s) => s.id != event.sourceId).toList(),
+        ),
+      );
+      await _selection.refresh();
     } catch (e) {
       logger.e('Error deleting source: $e');
     }

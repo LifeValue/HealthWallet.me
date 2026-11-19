@@ -9,13 +9,17 @@ class ScreenSecurityHandler {
     private var secureField: UITextField?
     private var nativeOverlay: UIView?
     private weak var windowRef: UIWindow?
+    private var windowProvider: () -> UIWindow? = { nil }
 
-    func register(with controller: FlutterViewController, window: UIWindow?) {
-        windowRef = window
+    // The window is looked up when protection is enabled: with the UIScene lifecycle it doesn't
+    // exist yet when the channel is registered.
+    func register(with messenger: FlutterBinaryMessenger, windowProvider: @escaping () -> UIWindow?)
+    {
+        self.windowProvider = windowProvider
 
         let methodChannel = FlutterMethodChannel(
             name: "app.screen_security",
-            binaryMessenger: controller.binaryMessenger
+            binaryMessenger: messenger
         )
 
         methodChannel.setMethodCallHandler { [weak self] (call, result) in
@@ -35,7 +39,8 @@ class ScreenSecurityHandler {
     }
 
     private func enable() {
-        guard secureField == nil, let window = windowRef else { return }
+        guard secureField == nil, let window = windowProvider() else { return }
+        windowRef = window
 
         let overlay = buildBrandedOverlay(frame: window.bounds)
         overlay.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -119,8 +124,10 @@ class ScreenSecurityHandler {
         NSLayoutConstraint.activate([
             stack.centerXAnchor.constraint(equalTo: container.centerXAnchor),
             stack.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-            stack.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor, constant: 32),
-            stack.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor, constant: -32),
+            stack.leadingAnchor.constraint(
+                greaterThanOrEqualTo: container.leadingAnchor, constant: 32),
+            stack.trailingAnchor.constraint(
+                lessThanOrEqualTo: container.trailingAnchor, constant: -32),
         ])
 
         return container

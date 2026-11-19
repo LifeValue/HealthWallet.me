@@ -22,7 +22,8 @@ sealed class ShareRecordsEvent with _$ShareRecordsEvent {
       RecordToggled;
 
   const factory ShareRecordsEvent.allRecordsSelected(
-      List<IFhirResource> resources) = AllRecordsSelected;
+    List<IFhirResource> resources,
+  ) = AllRecordsSelected;
 
   const factory ShareRecordsEvent.allRecordsDeselected() = AllRecordsDeselected;
 
@@ -49,7 +50,8 @@ sealed class ShareRecordsEvent with _$ShareRecordsEvent {
   const factory ShareRecordsEvent.transferStarted() = TransferStarted;
 
   const factory ShareRecordsEvent.transferProgressUpdated(
-      TransferProgress progress) = TransferProgressUpdated;
+    TransferProgress progress,
+  ) = TransferProgressUpdated;
 
   const factory ShareRecordsEvent.transferCompleted() = TransferCompleted;
 
@@ -70,13 +72,15 @@ sealed class ShareRecordsEvent with _$ShareRecordsEvent {
   const factory ShareRecordsEvent.invitationRejected(String invitationId) =
       InvitationRejected;
 
-  const factory ShareRecordsEvent.dataReceived(ReceivedData data) = DataReceived;
+  const factory ShareRecordsEvent.dataReceived(ReceivedData data) =
+      DataReceived;
 
   const factory ShareRecordsEvent.filesReceived(List<String> filePaths) =
       FilesReceived;
 
   const factory ShareRecordsEvent.ephemeralDataParsed(
-      EphemeralRecordsContainer container) = EphemeralDataParsed;
+    EphemeralRecordsContainer container,
+  ) = EphemeralDataParsed;
 
   const factory ShareRecordsEvent.sessionEndRequested() = SessionEndRequested;
 
@@ -123,13 +127,27 @@ sealed class ShareRecordsEvent with _$ShareRecordsEvent {
 
   const factory ShareRecordsEvent.remoteExtendRejected() = RemoteExtendRejected;
 
-  const factory ShareRecordsEvent.viewingStartedReceived() = ViewingStartedReceived;
+  const factory ShareRecordsEvent.viewingStartedReceived() =
+      ViewingStartedReceived;
 
-  const factory ShareRecordsEvent.remoteInvitationRejected() = RemoteInvitationRejected;
+  const factory ShareRecordsEvent.remoteInvitationRejected() =
+      RemoteInvitationRejected;
 
-  const factory ShareRecordsEvent.filtersApplied(List<FhirType> filters) = ShareFiltersApplied;
+  const factory ShareRecordsEvent.verificationCodeReady(String code) =
+      VerificationCodeReady;
+
+  const factory ShareRecordsEvent.verificationConfirmed() =
+      VerificationConfirmed;
+
+  const factory ShareRecordsEvent.secureShareFailed(String reason) =
+      SecureShareFailed;
+
+  const factory ShareRecordsEvent.filtersApplied(List<FhirType> filters) =
+      ShareFiltersApplied;
 
   const factory ShareRecordsEvent.wifiToggleRequested() = WifiToggleRequested;
 
-  const factory ShareRecordsEvent.connectionHealthUpdated(Map<String, dynamic> health) = ConnectionHealthUpdated;
+  const factory ShareRecordsEvent.connectionHealthUpdated(
+    Map<String, dynamic> health,
+  ) = ConnectionHealthUpdated;
 }

@@ -1,17 +1,20 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
-import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/onboarding/presentation/bloc/onboarding_bloc.dart';
-import 'package:health_wallet/features/scan/presentation/pages/load_model/bloc/load_model_bloc.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/model_management_dialog.dart';
+import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/model_management_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingNavigation extends StatelessWidget {
@@ -38,63 +41,76 @@ class OnboardingNavigation extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
           child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(height: isSmallScreen ? Insets.extraSmall : Insets.smaller),
-          ElevatedButton(
-            onPressed: () async {
-              if (isLastPage) {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('hasSeenOnboarding', true);
-                context.appRouter.replace(DashboardRoute());
-              } else {
-                context.read<OnboardingBloc>().add(const OnboardingNextPage());
-                pageController.nextPage(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.ease,
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: context.colorScheme.primary,
-              foregroundColor: context.isDarkMode
-                  ? Colors.white
-                  : context.colorScheme.onPrimary,
-              padding: EdgeInsets.all(isSmallScreen ? 10 : Insets.small),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadiusGeometry.circular(8)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  !isLastPage
-                      ? context.l10n.continueButton
-                      : context.l10n.getStarted,
-                  style: AppTextStyle.buttonMedium,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: isSmallScreen ? Insets.extraSmall : Insets.smaller,
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (isLastPage) {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool(
+                      SharedPrefsConstants.hasSeenOnboarding,
+                      true,
+                    );
+                    if (!context.mounted) return;
+                    unawaited(
+                      context.appRouter.replace(const DashboardRoute()),
+                    );
+                  } else {
+                    context.read<OnboardingBloc>().add(
+                      const OnboardingNextPage(),
+                    );
+                    pageController.nextPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.ease,
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: context.colorScheme.primary,
+                  foregroundColor: context.isDarkMode
+                      ? Colors.white
+                      : context.colorScheme.onPrimary,
+                  padding: EdgeInsets.all(isSmallScreen ? 10 : Insets.small),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadiusGeometry.circular(8),
+                  ),
                 ),
-                const SizedBox(width: 8),
-                if (!isLastPage) const Icon(Icons.arrow_forward),
-              ],
-            ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      !isLastPage
+                          ? context.l10n.continueButton
+                          : context.l10n.getStarted,
+                      style: AppTextStyle.buttonMedium,
+                    ),
+                    const SizedBox(width: 8),
+                    if (!isLastPage) const Icon(Icons.arrow_forward),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: isSmallScreen ? 32 : 40,
+                child: Center(
+                  child: _buildMiddleContent(context, isLastPage),
+                ),
+              ),
+              SizedBox(
+                height: isSmallScreen ? Insets.extraSmall : Insets.small,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  totalPages,
+                  (index) => _buildDot(index, context, currentPage),
+                ),
+              ),
+            ],
           ),
-          SizedBox(
-            height: isSmallScreen ? 32 : 40,
-            child: Center(
-              child: _buildMiddleContent(context, isLastPage),
-            ),
-          ),
-          SizedBox(height: isSmallScreen ? Insets.extraSmall : Insets.small),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              totalPages,
-              (index) => _buildDot(index, context, currentPage),
-            ),
-          ),
-        ],
-      ),
-      ),
+        ),
       ),
     );
   }
@@ -104,15 +120,15 @@ class OnboardingNavigation extends StatelessWidget {
       return GestureDetector(
         onTap: () {
           context.read<OnboardingBloc>().add(
-                const OnboardingLaunchUrl(
-                  'https://healthwallet.me/#contact',
-                ),
-              );
+            const OnboardingLaunchUrl(
+              'https://healthwallet.me/#contact',
+            ),
+          );
         },
         child: Text(
           context.l10n.onboardingRequestIntegration,
           style: AppTextStyle.bodySmall.copyWith(
-            color: context.colorScheme.onSurface.withOpacity(0.7),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.7),
             decoration: TextDecoration.underline,
             letterSpacing: -0.2,
           ),
@@ -132,7 +148,7 @@ class OnboardingNavigation extends StatelessWidget {
         child: Text(
           context.l10n.privacyPolicy,
           style: AppTextStyle.bodySmall.copyWith(
-            color: context.colorScheme.onSurface.withOpacity(0.7),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.7),
             decoration: TextDecoration.underline,
             letterSpacing: -0.2,
           ),
@@ -157,11 +173,12 @@ class OnboardingNavigation extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           color: currentPage == index
-              ? context.colorScheme.primary
-                  .withOpacity(context.isDarkMode ? 0.9 : 1.0)
-              : context.colorScheme.onSurface.withOpacity(0.3),
+              ? context.colorScheme.primary.withValues(
+                  alpha: context.isDarkMode ? 0.9 : 1.0,
+                )
+              : context.colorScheme.onSurface.withValues(alpha: 0.3),
           border: Border.all(
-            color: context.colorScheme.onSurface.withOpacity(0.15),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.15),
             width: currentPage == index ? 0 : 1,
           ),
         ),
@@ -222,7 +239,7 @@ class _LoadModelButtonState extends State<_LoadModelButton> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.wifi_off,
                     size: 40,
                     color: AppColors.error,
@@ -342,8 +359,9 @@ class _LoadModelButtonState extends State<_LoadModelButton> {
                       child: LinearProgressIndicator(
                         value: loadModelState.downloadProgress! / 100,
                         minHeight: 6,
-                        backgroundColor:
-                            context.colorScheme.primary.withOpacity(0.1),
+                        backgroundColor: context.colorScheme.primary.withValues(
+                          alpha: 0.1,
+                        ),
                         valueColor: AlwaysStoppedAnimation<Color>(
                           context.colorScheme.primary,
                         ),
@@ -351,9 +369,13 @@ class _LoadModelButtonState extends State<_LoadModelButton> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Downloading... ${loadModelState.downloadProgress!.toStringAsFixed(0)}%',
+                      context.l10n.aiModelDownloadingPercent(
+                        loadModelState.downloadProgress!.toStringAsFixed(0),
+                      ),
                       style: AppTextStyle.labelSmall.copyWith(
-                        color: context.colorScheme.onSurface.withOpacity(0.6),
+                        color: context.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                     ),
                   ],
@@ -375,13 +397,15 @@ class _LoadModelButtonState extends State<_LoadModelButton> {
                   Icon(
                     Icons.memory,
                     size: 20,
-                    color: context.colorScheme.onSurface.withOpacity(0.7),
+                    color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     context.l10n.aiModelEnableDownload,
                     style: AppTextStyle.bodySmall.copyWith(
-                      color: context.colorScheme.onSurface.withOpacity(0.7),
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.7,
+                      ),
                       decoration: TextDecoration.underline,
                     ),
                   ),

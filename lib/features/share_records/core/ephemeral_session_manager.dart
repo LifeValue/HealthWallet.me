@@ -101,15 +101,17 @@ class EphemeralSessionManager with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     debugPrint('[SESSION:🔍] App lifecycle changed: $state');
 
+    // `inactive` also fires for Control Center, the notification shade and
+    // system prompts; only leaving the app ends the session.
     switch (state) {
       case AppLifecycleState.paused:
-      case AppLifecycleState.inactive:
       case AppLifecycleState.detached:
       case AppLifecycleState.hidden:
         if (_currentSession != null) {
           destroySession(reason: 'app_lifecycle_$state');
         }
         break;
+      case AppLifecycleState.inactive:
       case AppLifecycleState.resumed:
         break;
     }

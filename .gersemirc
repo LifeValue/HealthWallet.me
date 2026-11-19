@@ -1,0 +1,4 @@
+indent: 2
+line_length: 100
+# Custom CMake functions the formatter should know (apply_standard_settings).
+definitions: [windows/CMakeLists.txt]

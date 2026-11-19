@@ -1,23 +1,69 @@
+import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:get_it/get_it.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/services/temp_file_sweeper.dart';
+import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
+import 'package:health_wallet/core/widgets/checked_pdf_view.dart';
+import 'package:health_wallet/core/widgets/desktop_pdf_view.dart';
+import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart'
     as entities;
-import 'package:health_wallet/features/scan/domain/services/document_reference_service.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:get_it/get_it.dart';
-import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:path_provider/path_provider.dart';
 
-class MediaFullscreenViewer extends StatelessWidget {
+class MediaFullscreenViewer extends StatefulWidget {
   final entities.Media media;
 
   const MediaFullscreenViewer({
     super.key,
     required this.media,
   });
+
+  @override
+  State<MediaFullscreenViewer> createState() => _MediaFullscreenViewerState();
+}
+
+class _MediaFullscreenViewerState extends State<MediaFullscreenViewer> {
+  entities.Media get media => widget.media;
+
+  /// The decoded PDF, written once and deleted when the viewer closes.
+  Future<File>? _pdfFile;
+
+  bool get _hasPdfData =>
+      media.content?.contentType?.valueString?.toLowerCase() ==
+          'application/pdf' &&
+      media.content?.data?.valueString != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_hasPdfData) _pdfFile = _createTempPdfFile();
+  }
+
+  @override
+  void dispose() {
+    unawaited(_deletePdfFile());
+    super.dispose();
+  }
+
+  Future<void> _deletePdfFile() async {
+    try {
+      final file = await _pdfFile;
+      if (file != null && await file.exists()) await file.delete();
+    } catch (e, s) {
+      // The startup sweep deletes it next time.
+      logger.w('Deleting a viewed Media PDF failed', e, s);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,15 +91,15 @@ class MediaFullscreenViewer extends StatelessWidget {
                 value: 'info',
                 child: ListTile(
                   leading: Assets.icons.information.svg(width: 24, height: 24),
-                  title: const Text('Media Info'),
+                  title: Text(context.l10n.mediaInfo),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 value: 'link',
                 child: ListTile(
-                  leading: Icon(Icons.link),
-                  title: Text('Link to Encounter'),
+                  leading: const Icon(Icons.link),
+                  title: Text(context.l10n.linkToEncounter),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
@@ -68,43 +114,46 @@ class MediaFullscreenViewer extends StatelessWidget {
   }
 
   Widget _buildPdfViewer(BuildContext context) {
-    if (media.content?.contentType?.valueString?.toLowerCase() !=
-            'application/pdf' ||
-        media.content?.data?.valueString == null) {
+    if (_pdfFile == null) {
       return _buildPlaceholder(
-          context, Icons.picture_as_pdf, 'No PDF data available');
+        context,
+        Icons.picture_as_pdf,
+        context.l10n.noPdfDataAvailable,
+      );
     }
+
     return FutureBuilder<File>(
-      future: _createTempPdfFile(),
+      future: _pdfFile,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.hasData) {
-            return PDFView(
-              filePath: snapshot.data!.path,
-              enableSwipe: true,
-              swipeHorizontal: true,
-              autoSpacing: true,
-              pageFling: true,
-              onError: (error) {
-                debugPrint('PDFView error: $error');
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error loading PDF: $error')),
-                  );
-                }
-              },
-              onPageError: (page, error) {
-                debugPrint('PDFView page error ($page): $error');
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error on page $page: $error')),
-                  );
-                }
-              },
+            final isDesktop = getIt<AppPlatform>().isDesktop;
+            final pdfPath = snapshot.data!.path;
+            return CheckedPdfView(
+              filePath: pdfPath,
+              builder: (context) => isDesktop
+                  ? DesktopPdfView(filePath: pdfPath)
+                  : PDFView(
+                      filePath: pdfPath,
+                      enableSwipe: true,
+                      swipeHorizontal: true,
+                      autoSpacing: true,
+                      pageFling: true,
+                      onError: (error) =>
+                          CheckedPdfView.reportViewerError(context, error),
+                      onPageError: (page, error) =>
+                          CheckedPdfView.reportViewerError(
+                            context,
+                            'page $page: $error',
+                          ),
+                    ),
             );
           } else {
             return _buildPlaceholder(
-                context, Icons.picture_as_pdf, 'Failed to load PDF document');
+              context,
+              Icons.picture_as_pdf,
+              context.l10n.failedToLoadPdf,
+            );
           }
         } else {
           return const Center(child: CircularProgressIndicator());
@@ -114,24 +163,23 @@ class MediaFullscreenViewer extends StatelessWidget {
   }
 
   Future<File> _createTempPdfFile() async {
-    try {
-      final bytes = base64Decode(media.content!.data!.valueString!);
-      final dir = await getTemporaryDirectory();
-      final file =
-          File('${dir.path}/${media.displayTitle.replaceAll(' ', '_')}.pdf');
-      await file.writeAsBytes(bytes, flush: true);
-      if (!await file.exists()) {
-        throw Exception('Failed to create PDF file on disk');
-      }
-      return file;
-    } catch (e) {
-      debugPrint('Error creating temp PDF file: $e');
-      rethrow;
+    final bytes = base64Decode(media.content!.data!.valueString!);
+    final dir = await getTemporaryDirectory();
+    final file = File(
+      '${dir.path}/${TempFileSweeper.recordPreviewName('pdf')}',
+    );
+    await file.writeAsBytes(bytes, flush: true);
+    if (!await file.exists()) {
+      throw Exception('Failed to create PDF file on disk');
     }
+    return file;
   }
 
   Widget _buildPlaceholder(
-      BuildContext context, IconData icon, String message) {
+    BuildContext context,
+    IconData icon,
+    String message,
+  ) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -154,39 +202,54 @@ class MediaFullscreenViewer extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Media Information'),
+        title: Text(context.l10n.mediaInformation),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildInfoRow('Title:', media.displayTitle),
+              _buildInfoRow(context.l10n.mediaInfoTitle, media.displayTitle),
               if (media.content?.contentType?.valueString != null)
                 _buildInfoRow(
-                    'Type:', media.content!.contentType!.valueString!),
+                  context.l10n.mediaInfoType,
+                  media.content!.contentType!.valueString!,
+                ),
               if (media.statusDisplay.isNotEmpty)
-                _buildInfoRow('Status:', media.statusDisplay),
+                _buildInfoRow(
+                  context.l10n.mediaInfoStatus,
+                  localizedStatusDisplay(media.statusDisplay, context.l10n),
+                ),
               if (media.subject?.display?.valueString != null)
-                _buildInfoRow('Patient:', media.subject!.display!.valueString!),
+                _buildInfoRow(
+                  context.l10n.mediaInfoPatient,
+                  media.subject!.display!.valueString!,
+                ),
               if (media.encounter?.display?.valueString != null)
                 _buildInfoRow(
-                    'Encounter:', media.encounter!.display!.valueString!),
+                  context.l10n.mediaInfoEncounter,
+                  media.encounter!.display!.valueString!,
+                ),
               if (media.content?.size?.valueString != null)
                 _buildInfoRow(
-                    'File Size:',
-                    _formatFileSize(
-                        _parseFileSize(media.content!.size!.valueString!))),
+                  context.l10n.mediaInfoFileSize,
+                  _formatFileSize(
+                    _parseFileSize(media.content!.size!.valueString!),
+                  ),
+                ),
               if (media.date != null)
-                _buildInfoRow('Created:', media.date!.toString().split(' ')[0]),
-              _buildInfoRow('Resource ID:', media.resourceId),
-              _buildInfoRow('Source:', media.sourceId),
+                _buildInfoRow(
+                  context.l10n.mediaInfoCreated,
+                  media.date!.toString().split(' ')[0],
+                ),
+              _buildInfoRow(context.l10n.mediaInfoResourceId, media.resourceId),
+              _buildInfoRow(context.l10n.mediaInfoSource, media.sourceId),
             ],
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+            child: Text(context.l10n.close),
           ),
         ],
       ),
@@ -234,18 +297,18 @@ class MediaFullscreenViewer extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Link to Encounter'),
+        title: Text(context.l10n.linkToEncounter),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Link this media resource to an encounter:'),
+            Text(context.l10n.linkMediaToEncounterDescription),
             const SizedBox(height: 16),
             TextFormField(
               controller: encounterController,
-              decoration: const InputDecoration(
-                labelText: 'Encounter ID',
-                hintText: 'e.g., encounter-123',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: context.l10n.encounterId,
+                hintText: context.l10n.encounterIdHint,
+                border: const OutlineInputBorder(),
               ),
             ),
           ],
@@ -253,7 +316,7 @@ class MediaFullscreenViewer extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -269,26 +332,25 @@ class MediaFullscreenViewer extends StatelessWidget {
 
                   if (context.mounted) {
                     Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Media linked to encounter successfully'),
-                        backgroundColor: Colors.green,
-                      ),
+                    AppSnackBar.show(
+                      context,
+                      message: context.l10n.mediaLinkedSuccess,
+                      type: AppSnackBarType.success,
                     );
                   }
-                } catch (e) {
+                } catch (e, s) {
+                  logger.w('Could not link media ${media.id}', e, s);
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Failed to link media: $e'),
-                        backgroundColor: Colors.red,
-                      ),
+                    AppSnackBar.show(
+                      context,
+                      message: context.l10n.linkMediaFailed,
+                      type: AppSnackBarType.error,
                     );
                   }
                 }
               }
             },
-            child: const Text('Link'),
+            child: Text(context.l10n.link),
           ),
         ],
       ),

@@ -1,12 +1,15 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:phone_numbers_parser/phone_numbers_parser.dart';
+import 'package:health_wallet/core/widgets/app_input_field.dart';
 import 'package:phone_numbers_parser/metadata.dart';
+import 'package:phone_numbers_parser/phone_numbers_parser.dart';
+
 import 'country_names.dart';
 import 'country_picker_dialog.dart';
 
@@ -24,24 +27,82 @@ class CountryEntry {
   });
 }
 
-List<CountryEntry> buildCountryList() {
+/// Every country with a dial code, named in [languageCode] and sorted by
+/// name, ignoring case and diacritics so "Österreich" sorts under O.
+List<CountryEntry> buildCountryList(String languageCode) {
   final entries = <CountryEntry>[];
   for (final iso in IsoCode.values) {
     final meta = metadataByIsoCode[iso];
     if (meta == null) continue;
-    entries.add(CountryEntry(
-      isoCode: iso,
-      dialCode: meta.countryCode,
-      flag: _isoToFlag(iso.name),
-      name: countryNames[iso] ?? iso.name,
-    ));
+    entries.add(
+      CountryEntry(
+        isoCode: iso,
+        dialCode: meta.countryCode,
+        flag: _isoToFlag(iso.name),
+        name: countryName(iso, languageCode),
+      ),
+    );
   }
-  entries.sort((a, b) => a.name.compareTo(b.name));
+  if (languageCode == 'en') {
+    // The English names have no diacritics that change the order.
+    entries.sort((a, b) => a.name.compareTo(b.name));
+  } else {
+    entries.sort((a, b) {
+      final byKey = foldCountryName(a.name).compareTo(foldCountryName(b.name));
+      return byKey != 0 ? byKey : a.name.compareTo(b.name);
+    });
+  }
   return entries;
 }
 
+const _foldedLetters = {
+  'á': 'a',
+  'à': 'a',
+  'â': 'a',
+  'ä': 'a',
+  'ã': 'a',
+  'å': 'a',
+  'ă': 'a',
+  'ç': 'c',
+  'č': 'c',
+  'é': 'e',
+  'è': 'e',
+  'ê': 'e',
+  'ë': 'e',
+  'í': 'i',
+  'ì': 'i',
+  'î': 'i',
+  'ï': 'i',
+  'ñ': 'n',
+  'ó': 'o',
+  'ò': 'o',
+  'ô': 'o',
+  'ö': 'o',
+  'õ': 'o',
+  'ø': 'o',
+  'ú': 'u',
+  'ù': 'u',
+  'û': 'u',
+  'ü': 'u',
+  'ý': 'y',
+  'ș': 's',
+  'ş': 's',
+  'š': 's',
+  'ț': 't',
+  'ţ': 't',
+  'ž': 'z',
+  'ß': 'ss',
+};
+
+/// Lower-cases [name] and folds its diacritics ("Österreich" ->
+/// "osterreich"), for sorting and searching country names.
+String foldCountryName(String name) =>
+    name.toLowerCase().split('').map((c) => _foldedLetters[c] ?? c).join();
+
 String _isoToFlag(String code) {
-  return code.toUpperCase().codeUnits
+  return code
+      .toUpperCase()
+      .codeUnits
       .map((c) => String.fromCharCode(c - 0x41 + 0x1F1E6))
       .join();
 }
@@ -92,7 +153,10 @@ class PhoneInputField extends StatefulWidget {
 }
 
 class _PhoneInputFieldState extends State<PhoneInputField> {
-  static final List<CountryEntry> _countries = buildCountryList();
+  /// English names; only the iso code, flag and dial code of these are
+  /// used. The picker lists the names in the app language.
+  static final List<CountryEntry> _countries = buildCountryList('en');
+  static final _localizedCountries = <String, List<CountryEntry>>{};
   late CountryEntry _selectedCountry;
   late TextEditingController _numberCtrl;
   bool _formatting = false;
@@ -101,12 +165,16 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
   CountryEntry get _defaultCountry {
     if (widget.defaultCountryCode != null) {
       final match = _countries
-          .where((c) => c.isoCode.name.toUpperCase() == widget.defaultCountryCode!.toUpperCase())
+          .where(
+            (c) =>
+                c.isoCode.name.toUpperCase() ==
+                widget.defaultCountryCode!.toUpperCase(),
+          )
           .firstOrNull;
       if (match != null) return match;
     }
-    final countryCode =
-        ui.PlatformDispatcher.instance.locale.countryCode?.toUpperCase();
+    final countryCode = ui.PlatformDispatcher.instance.locale.countryCode
+        ?.toUpperCase();
     if (countryCode != null) {
       final match = _countries
           .where((c) => c.isoCode.name.toUpperCase() == countryCode)
@@ -130,7 +198,9 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
     if (widget.value.isNotEmpty) {
       try {
         final parsed = PhoneNumber.parse(widget.value);
-        final hasRealDigits = parsed.nsn.replaceAll(RegExp(r'0'), '').isNotEmpty;
+        final hasRealDigits = parsed.nsn
+            .replaceAll(RegExp(r'0'), '')
+            .isNotEmpty;
         if (!hasRealDigits && widget.defaultCountryCode != null) {
           _selectedCountry = _defaultCountry;
           _lastDigits = '';
@@ -150,7 +220,10 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
           text: _formatNsn(parsed.isoCode, nsn),
         );
         return;
-      } catch (_) {}
+      } catch (_) {
+        // A saved number that no longer parses starts the field empty on the
+        // default country, as a new number would.
+      }
     }
     _selectedCountry = _defaultCountry;
     _numberCtrl = TextEditingController();
@@ -172,7 +245,8 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
     if (digits.length > maxLen) digits = digits.substring(0, maxLen);
 
     final prevFormatted = _formatNsn(_selectedCountry.isoCode, _lastDigits);
-    final isDeleting = _numberCtrl.text.length < prevFormatted.length &&
+    final isDeleting =
+        _numberCtrl.text.length < prevFormatted.length &&
         digits.length >= _lastDigits.length &&
         _lastDigits.isNotEmpty;
     if (isDeleting) {
@@ -203,12 +277,15 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
     _formatting = true;
     final digits = _numberCtrl.text.replaceAll(RegExp(r'[^\d]'), '');
     final maxLen = _maxNsnLength(entry.isoCode);
-    final capped = digits.length > maxLen ? digits.substring(0, maxLen) : digits;
+    final capped = digits.length > maxLen
+        ? digits.substring(0, maxLen)
+        : digits;
     setState(() => _selectedCountry = entry);
     _numberCtrl.value = TextEditingValue(
       text: _formatNsn(entry.isoCode, capped),
       selection: TextSelection.collapsed(
-          offset: _formatNsn(entry.isoCode, capped).length),
+        offset: _formatNsn(entry.isoCode, capped).length,
+      ),
     );
     _lastDigits = capped;
     _formatting = false;
@@ -223,7 +300,10 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
     final result = await showDialog<CountryEntry>(
       context: context,
       builder: (_) => CountryPickerDialog(
-        countries: _countries,
+        countries: _localizedCountries.putIfAbsent(
+          context.l10n.localeName,
+          () => buildCountryList(context.l10n.localeName),
+        ),
         selected: _selectedCountry,
       ),
     );
@@ -262,11 +342,11 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
     return GestureDetector(
       onTap: enabled ? _openPicker : null,
       child: Container(
-        height: 36,
+        height: kInputFieldHeight,
         padding: const EdgeInsets.symmetric(horizontal: Insets.small),
         decoration: BoxDecoration(
-          border: Border.all(color: bColor, width: 1.5),
-          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: bColor, width: kInputBorderWidth),
+          borderRadius: BorderRadius.circular(kInputBorderRadius),
         ),
         child: Row(
           children: [
@@ -277,8 +357,11 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
               style: AppTextStyle.labelLarge.copyWith(color: tColor),
             ),
             if (enabled)
-              Icon(Icons.expand_more,
-                  size: 16, color: tColor.withValues(alpha: 0.6)),
+              Icon(
+                Icons.expand_more,
+                size: 16,
+                color: tColor.withValues(alpha: 0.6),
+              ),
           ],
         ),
       ),
@@ -287,28 +370,32 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
 
   Widget _buildNumberField(Color bColor, Color tColor, bool enabled) {
     return Container(
-      height: 36,
+      height: kInputFieldHeight,
       decoration: BoxDecoration(
-        border: Border.all(color: bColor, width: 1.5),
-        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: bColor, width: kInputBorderWidth),
+        borderRadius: BorderRadius.circular(kInputBorderRadius),
       ),
+      alignment: Alignment.center,
       child: TextField(
         controller: _numberCtrl,
         enabled: enabled,
         keyboardType: TextInputType.phone,
-        style: AppTextStyle.labelLarge.copyWith(color: tColor),
+        style: inputFieldTextStyle(context),
         decoration: InputDecoration(
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: Insets.small,
-            vertical: Insets.small,
+            horizontal: Insets.smallNormal,
           ),
           border: InputBorder.none,
-          isDense: true,
+          enabledBorder: InputBorder.none,
+          disabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          isCollapsed: true,
           hintText: _getPlaceholder(),
           hintStyle: AppTextStyle.labelLarge.copyWith(
             color: context.isDarkMode
                 ? AppColors.textSecondaryDark
                 : AppColors.textSecondary,
+            height: 1.0,
           ),
         ),
       ),

@@ -1,13 +1,14 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 
 part 'general_resource.freezed.dart';
 
 @freezed
-class GeneralResource with _$GeneralResource implements IFhirResource {
+abstract class GeneralResource with _$GeneralResource implements IFhirResource {
   const GeneralResource._();
 
   const factory GeneralResource({
@@ -19,6 +20,7 @@ class GeneralResource with _$GeneralResource implements IFhirResource {
     @Default({}) Map<String, dynamic> rawResource,
     @Default('') String encounterId,
     @Default('') String subjectId,
+    String? specialtyOverride,
   }) = _GeneralResource;
 
   @override
@@ -33,27 +35,28 @@ class GeneralResource with _$GeneralResource implements IFhirResource {
       date: data.date,
       encounterId: data.encounterId ?? '',
       subjectId: data.subjectId ?? '',
+      specialtyOverride: data.specialtyOverride,
     );
   }
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: '',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: '',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
-  String get displayTitle => "Resource";
+  String get displayTitle => 'Resource';
 
   @override
-  List<RecordInfoLine> get additionalInfo => [];
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) => [];
 
   @override
   List<String> get resourceReferences => [];

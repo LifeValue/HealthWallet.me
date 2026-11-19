@@ -1,13 +1,16 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
-import 'package:health_wallet/core/widgets/dialogs/delete_confirmation_dialog.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/features/home/presentation/widgets/source/source_display_name.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
+import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class SourceListDialog extends StatefulWidget {
@@ -17,6 +20,9 @@ class SourceListDialog extends StatefulWidget {
   final Function(Source)? onSourceEdit;
   final Function(Source)? onSourceDelete;
 
+  /// The selected person's name, which their wallet source is shown under.
+  final String? holderName;
+
   const SourceListDialog({
     super.key,
     required this.sources,
@@ -24,6 +30,7 @@ class SourceListDialog extends StatefulWidget {
     required this.onSourceSelected,
     this.onSourceEdit,
     this.onSourceDelete,
+    this.holderName,
   });
 
   static void show(
@@ -33,6 +40,7 @@ class SourceListDialog extends StatefulWidget {
     Function(Source) onSourceSelected, {
     Function(Source)? onSourceEdit,
     Function(Source)? onSourceDelete,
+    String? holderName,
   }) {
     showDialog(
       context: context,
@@ -45,6 +53,7 @@ class SourceListDialog extends StatefulWidget {
             onSourceSelected: onSourceSelected,
             onSourceEdit: onSourceEdit,
             onSourceDelete: onSourceDelete,
+            holderName: holderName,
           ),
         );
       },
@@ -77,7 +86,9 @@ class _SourceListDialogState extends State<SourceListDialog> {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(
-                  horizontal: Insets.normal, vertical: Insets.small),
+                horizontal: Insets.normal,
+                vertical: Insets.small,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -87,31 +98,40 @@ class _SourceListDialogState extends State<SourceListDialog> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(6)),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                         child: IconButton(
                           icon: Assets.icons.settings.svg(
-                            colorFilter:
-                                ColorFilter.mode(textColor, BlendMode.srcIn),
+                            colorFilter: ColorFilter.mode(
+                              textColor,
+                              BlendMode.srcIn,
+                            ),
                           ),
                           onPressed: () => Navigator.of(context).pop(),
                           padding: EdgeInsets.zero,
                         ),
                       ),
                       const SizedBox(width: Insets.small),
-                      Text('Sources',
-                          style: AppTextStyle.bodySmall
-                              .copyWith(fontWeight: FontWeight.w500)),
+                      Text(
+                        context.l10n.sourcesTitle,
+                        style: AppTextStyle.bodySmall.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ],
                   ),
                   Container(
                     width: 36,
                     height: 36,
-                    decoration:
-                        BoxDecoration(borderRadius: BorderRadius.circular(6)),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                     child: IconButton(
                       icon: Assets.icons.close.svg(
-                        colorFilter:
-                            ColorFilter.mode(textColor, BlendMode.srcIn),
+                        colorFilter: ColorFilter.mode(
+                          textColor,
+                          BlendMode.srcIn,
+                        ),
                       ),
                       onPressed: () => Navigator.of(context).pop(),
                       padding: EdgeInsets.zero,
@@ -125,11 +145,30 @@ class _SourceListDialogState extends State<SourceListDialog> {
               child: ListView.builder(
                 shrinkWrap: true,
                 padding: const EdgeInsets.symmetric(vertical: Insets.small),
-                itemCount: _getSortedSources().length,
+                itemCount: _getSectionedItems().length,
                 itemBuilder: (context, index) {
-                  final source = _getSortedSources()[index];
+                  final item = _getSectionedItems()[index];
+                  if (item is String) {
+                    return Padding(
+                      padding: const EdgeInsets.only(
+                        left: Insets.normal,
+                        top: Insets.smallNormal,
+                        bottom: Insets.extraSmall,
+                      ),
+                      child: Text(
+                        item,
+                        style: AppTextStyle.labelSmall.copyWith(
+                          color: context.isDarkMode
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    );
+                  }
+                  final source = item as Source;
                   final isSelected = source.id == widget.selectedSource;
-                  final isWallet = source.id.startsWith('wallet-');
                   final isAll = source.id == 'All';
 
                   return InkWell(
@@ -139,10 +178,12 @@ class _SourceListDialogState extends State<SourceListDialog> {
                     },
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      margin:
-                          const EdgeInsets.symmetric(horizontal: Insets.small),
-                      padding:
-                          const EdgeInsets.symmetric(vertical: Insets.small),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: Insets.small,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: Insets.small,
+                      ),
                       child: Row(
                         children: [
                           Container(
@@ -153,20 +194,16 @@ class _SourceListDialogState extends State<SourceListDialog> {
                               color: Colors.transparent,
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: source.platformType == 'wallet'
-                                ? Assets.icons.wallet.svg(
-                                    width: 18,
-                                    height: 18,
-                                    colorFilter: const ColorFilter.mode(
-                                        Colors.green, BlendMode.srcIn),
-                                  )
-                                : Icon(
-                                    Icons.source,
-                                    size: 16,
-                                    color: isSelected
-                                        ? context.colorScheme.primary
-                                        : iconColor,
-                                  ),
+                            child: Assets.icons.wallet.svg(
+                              width: 18,
+                              height: 18,
+                              colorFilter: ColorFilter.mode(
+                                isSelected
+                                    ? context.colorScheme.primary
+                                    : iconColor,
+                                BlendMode.srcIn,
+                              ),
+                            ),
                           ),
                           const SizedBox(width: Insets.small),
                           Expanded(
@@ -180,8 +217,8 @@ class _SourceListDialogState extends State<SourceListDialog> {
                                     fontWeight: isSelected
                                         ? FontWeight.w600
                                         : (source.platformType == 'wallet'
-                                            ? FontWeight.w600
-                                            : FontWeight.normal),
+                                              ? FontWeight.w600
+                                              : FontWeight.normal),
                                     color: isSelected
                                         ? context.colorScheme.primary
                                         : textColor,
@@ -190,7 +227,11 @@ class _SourceListDialogState extends State<SourceListDialog> {
                                 if (source.platformName == 'wallet-manual' &&
                                     source.createdAt != null)
                                   Text(
-                                    'Uploaded ${DateFormatUtils.humanReadable(source.createdAt)}',
+                                    context.l10n.sourceUploadedOn(
+                                      DateFormatUtils.humanReadable(
+                                        source.createdAt,
+                                      ),
+                                    ),
                                     style: AppTextStyle.bodySmall.copyWith(
                                       color: context.isDarkMode
                                           ? AppColors.textSecondaryDark
@@ -203,10 +244,7 @@ class _SourceListDialogState extends State<SourceListDialog> {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              if (widget.onSourceEdit != null &&
-                                  !isAll &&
-                                  !(isWallet &&
-                                      source.platformType == 'wallet'))
+                              if (widget.onSourceEdit != null && !isAll)
                                 Padding(
                                   padding: const EdgeInsets.all(6),
                                   child: GestureDetector(
@@ -215,24 +253,29 @@ class _SourceListDialogState extends State<SourceListDialog> {
                                     },
                                     child: Assets.icons.edit.svg(
                                       width: 20,
-                                      color: context.theme.iconTheme.color ??
+                                      color:
+                                          context.theme.iconTheme.color ??
                                           context.colorScheme.onSurface,
                                     ),
                                   ),
                                 ),
                               if (widget.onSourceDelete != null &&
                                   !isAll &&
-                                  !(isWallet &&
-                                      source.platformType == 'wallet')) ...[
+                                  const SourceTypeService().canDeleteSource(
+                                    source,
+                                  )) ...[
                                 const SizedBox(width: 16),
                                 Padding(
                                   padding: const EdgeInsets.all(6),
                                   child: GestureDetector(
                                     onTap: () => _showDeleteConfirmationDialog(
-                                        context, source),
+                                      context,
+                                      source,
+                                    ),
                                     child: Assets.icons.trashCan.svg(
                                       width: 20,
-                                      color: context.theme.iconTheme.color ??
+                                      color:
+                                          context.theme.iconTheme.color ??
                                           context.colorScheme.onSurface,
                                     ),
                                   ),
@@ -253,24 +296,23 @@ class _SourceListDialogState extends State<SourceListDialog> {
     );
   }
 
-  List<Source> _getSortedSources() {
+  List<dynamic> _getSectionedItems() {
     final sources = List<Source>.from(widget.sources);
 
     final allSource = sources.where((s) => s.id == 'All').toList();
 
     final walletSource = sources
-        .where((s) =>
-            s.platformType == 'wallet' &&
-            s.id != 'All' &&
-            s.id != 'demo_data')
+        .where((s) => s.platformType == 'wallet' && s.id != 'All')
         .toList();
 
     final walletIds = walletSource.map((s) => s.id).toSet();
     final otherSources = sources
-        .where((s) =>
-            s.id != 'All' &&
-            !walletIds.contains(s.id) &&
-            s.platformType != 'wallet')
+        .where(
+          (s) =>
+              s.id != 'All' &&
+              !walletIds.contains(s.id) &&
+              s.platformType != 'wallet',
+        )
         .toList();
 
     otherSources.sort((a, b) {
@@ -279,34 +321,181 @@ class _SourceListDialogState extends State<SourceListDialog> {
       return nameA.compareTo(nameB);
     });
 
-    return [...allSource, ...walletSource, ...otherSources];
+    final items = <dynamic>[...allSource];
+    if (walletSource.isNotEmpty) {
+      items.add(context.l10n.sourceSectionWallet);
+      items.addAll(walletSource);
+    }
+    if (otherSources.isNotEmpty) {
+      items.add(context.l10n.sourceSectionEhr);
+      items.addAll(otherSources);
+    }
+    return items;
   }
 
-  String _getSourceDisplayName(BuildContext context, Source source) {
-    if (source.id == 'All') {
-      return 'All';
-    }
-
-    if (source.labelSource?.isNotEmpty == true) {
-      return source.labelSource!;
-    }
-    if (source.platformName?.isNotEmpty == true) {
-      return source.platformName!;
-    }
-    if (source.id.length > 20) {
-      return context.l10n.unknownSource;
-    }
-    return source.id;
-  }
+  String _getSourceDisplayName(BuildContext context, Source source) =>
+      sourceDisplayName(context.l10n, source, holderName: widget.holderName);
 
   void _showDeleteConfirmationDialog(BuildContext context, Source source) {
-    DeleteConfirmationDialog.show(
+    final sourceName = _getSourceDisplayName(context, source);
+    final controller = TextEditingController();
+    final isConfirmed = ValueNotifier<bool>(false);
+
+    controller.addListener(() {
+      isConfirmed.value = controller.text.trim() == sourceName;
+    });
+
+    showDialog(
       context: context,
-      title:
-          'Are you sure you want to delete\n"${_getSourceDisplayName(context, source)}"?',
-      onConfirm: () {
-        widget.onSourceDelete!(source);
-        Navigator.of(context).pop();
+      builder: (dialogContext) {
+        final textColor = context.primaryTextColor;
+        final borderColor = context.theme.dividerColor;
+
+        return Dialog(
+          backgroundColor: context.colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: borderColor, width: 1),
+          ),
+          insetPadding: const EdgeInsets.all(Insets.medium),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            padding: const EdgeInsets.all(Insets.normal),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(Insets.smallNormal),
+                  decoration: BoxDecoration(
+                    color: context.colorScheme.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: context.colorScheme.error.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: context.colorScheme.error,
+                        size: 20,
+                      ),
+                      const SizedBox(width: Insets.small),
+                      Expanded(
+                        child: Text(
+                          context.l10n.actionCannotBeUndone,
+                          style: AppTextStyle.regular.copyWith(
+                            color: context.colorScheme.error,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: Insets.normal),
+                RichText(
+                  text: TextSpan(
+                    style: AppTextStyle.bodySmall.copyWith(color: textColor),
+                    children: [
+                      TextSpan(text: context.l10n.deleteSourceConfirmPrefix),
+                      TextSpan(
+                        text: sourceName,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      TextSpan(text: context.l10n.deleteSourceConfirmSuffix),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: Insets.normal),
+                TextField(
+                  controller: controller,
+                  style: AppTextStyle.labelLarge,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    hintText: sourceName,
+                    hintStyle: AppTextStyle.labelLarge.copyWith(
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.3,
+                      ),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: context.colorScheme.error,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: Insets.normal),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        child: Text(
+                          context.l10n.cancel,
+                          style: AppTextStyle.buttonMedium.copyWith(
+                            color: context.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: Insets.small),
+                    Expanded(
+                      child: ValueListenableBuilder<bool>(
+                        valueListenable: isConfirmed,
+                        builder: (_, confirmed, _) {
+                          return ElevatedButton(
+                            onPressed: confirmed
+                                ? () {
+                                    Navigator.of(dialogContext).pop();
+                                    widget.onSourceDelete!(source);
+                                    Navigator.of(context).pop();
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: context.colorScheme.error,
+                              disabledBackgroundColor: context.colorScheme.error
+                                  .withValues(alpha: 0.3),
+                              foregroundColor: Colors.white,
+                              disabledForegroundColor: Colors.white.withValues(
+                                alpha: 0.5,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: Insets.smallNormal,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(context.l10n.deletePage),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
       },
     );
   }

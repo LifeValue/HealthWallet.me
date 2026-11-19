@@ -18,16 +18,39 @@ subprojects {
                 namespace = project.group.toString().ifEmpty {
                     val manifest = project.file("src/main/AndroidManifest.xml")
                     if (manifest.exists()) {
-                        val pkg = Regex("package=\"([^\"]+)\"").find(manifest.readText())?.groupValues?.get(1)
+                        val pkg = Regex(
+                            "package=\"([^\"]+)\""
+                        ).find(manifest.readText())?.groupValues?.get(1)
                         pkg ?: "com.${project.name.replace("-", ".")}"
                     } else {
                         "com.${project.name.replace("-", ".")}"
                     }
                 }
             }
+            // flutter_secure_storage 11 uses Java 16+ language features; AGP 9
+            // already runs on JDK 17+, so it compiles as Java 17.
+            val javaVersion =
+                if (project.name == "flutter_secure_storage") {
+                    JavaVersion.VERSION_17
+                } else {
+                    JavaVersion.VERSION_11
+                }
             compileOptions {
-                sourceCompatibility = JavaVersion.VERSION_11
-                targetCompatibility = JavaVersion.VERSION_11
+                sourceCompatibility = javaVersion
+                targetCompatibility = javaVersion
+            }
+            // Current AndroidX libraries and flutter_plugin_android_lifecycle require compileSdk 36+,
+            // but several plugins still compile against 31-35 (e.g. flutter_google_wallet 0.2.1, its
+            // latest release; bonsoir_android 5.x; desktop_drop 0.4.x; file_picker 8.x). compileSdk
+            // only affects which APIs compile; it doesn't change runtime behaviour (that's
+            // targetSdk), so raising it for them is safe.
+            if ((
+                    compileSdkVersion?.removePrefix("android-")?.substringBefore('.')?.toIntOrNull()
+                        ?: 0
+                    ) <
+                36
+            ) {
+                compileSdkVersion(37)
             }
         }
 

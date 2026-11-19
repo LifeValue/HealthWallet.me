@@ -1,11 +1,13 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/share_records/domain/entity/peer_device.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_bloc.dart';
@@ -53,14 +55,19 @@ class _PeerDiscoveryViewState extends State<PeerDiscoveryView> {
   void _handleRetry() {
     _startSearchTimer();
     context.read<ShareRecordsBloc>().add(
-          const ShareRecordsEvent.selectionConfirmed(),
-        );
+      const ShareRecordsEvent.selectionConfirmed(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     if (widget.state.isReceiving && widget.state.hasPendingInvitation) {
-      return PeerInvitationView(state: widget.state);
+      return Center(
+        child: SizedBox(
+          width: context.dialogWidth,
+          child: PeerInvitationView(state: widget.state),
+        ),
+      );
     }
 
     if (widget.state.discoveredPeers.isEmpty) {
@@ -88,7 +95,9 @@ class _PeerDiscoveryViewState extends State<PeerDiscoveryView> {
         Padding(
           padding: const EdgeInsets.all(Insets.normal),
           child: Text(
-            context.l10n.shareFoundDevices(widget.state.discoveredPeers.length),
+            context.l10n.shareStatusFoundDevices(
+              widget.state.discoveredPeers.length,
+            ),
             style: AppTextStyle.titleSmall.copyWith(
               color: context.colorScheme.onSurface,
             ),
@@ -113,8 +122,8 @@ class _PeerDiscoveryViewState extends State<PeerDiscoveryView> {
           peer: peer,
           onTap: () {
             context.read<ShareRecordsBloc>().add(
-                  ShareRecordsEvent.peerSelected(peer.deviceId),
-                );
+              ShareRecordsEvent.peerSelected(peer.deviceId),
+            );
           },
         );
       },
@@ -134,8 +143,8 @@ class _PeerDiscoveryViewState extends State<PeerDiscoveryView> {
         child: AppButton(
           onPressed: () {
             context.read<ShareRecordsBloc>().add(
-                  const ShareRecordsEvent.sendModeSelected(),
-                );
+              const ShareRecordsEvent.sendModeSelected(),
+            );
           },
           label: context.l10n.cancel,
           variant: AppButtonVariant.outlined,
@@ -187,7 +196,7 @@ class _PeerDeviceTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      peer.displayName,
+                      peer.displayName(context.l10n),
                       style: AppTextStyle.titleSmall.copyWith(
                         color: context.colorScheme.onSurface,
                         fontWeight: FontWeight.w600,
@@ -197,8 +206,9 @@ class _PeerDeviceTile extends StatelessWidget {
                     Text(
                       context.l10n.shareHealthWalletDevice,
                       style: AppTextStyle.labelMedium.copyWith(
-                        color: context.colorScheme.onSurface
-                            .withValues(alpha: 0.6),
+                        color: context.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                     ),
                   ],

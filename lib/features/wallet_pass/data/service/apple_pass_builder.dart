@@ -1,25 +1,32 @@
 import 'dart:typed_data';
 
+import 'package:csslib/parser.dart' as css;
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:health_wallet/core/config/env/env.dart';
+import 'package:health_wallet/core/utils/phone_formatter.dart';
+import 'package:health_wallet/features/wallet_pass/data/service/emergency_qr_encoder.dart';
+import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
+import 'package:health_wallet/features/wallet_pass/domain/entity/wallet_pass_labels.dart';
 import 'package:injectable/injectable.dart';
 import 'package:intl/intl.dart';
-import 'package:csslib/parser.dart' as css;
 import 'package:passkit/passkit.dart';
-import 'package:health_wallet/core/config/env/env.dart';
-import 'package:health_wallet/features/wallet_pass/data/service/emergency_qr_encoder.dart';
-import 'package:health_wallet/core/utils/phone_formatter.dart';
-import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
 
 @injectable
 class ApplePassBuilder {
   static const _certPath = 'assets/certs/pass_certificate.pem';
   static const _keyPath = 'assets/certs/private_key.pem';
 
-  Future<Uint8List> build(EmergencyCardData cardData, {required String patientId}) async {
+  Future<Uint8List> build(
+    EmergencyCardData cardData, {
+    required String patientId,
+    required WalletPassLabels labels,
+  }) async {
     final certificatePem = await _loadAssetString(_certPath);
     final privateKeyPem = await _loadAssetString(_keyPath);
 
-    final iconBytes = await _loadAssetBytes('assets/icons/app-icon-transparent.png');
+    final iconBytes = await _loadAssetBytes(
+      'assets/icons/app-icon-transparent.png',
+    );
     final icon = PkImage(image1: iconBytes);
 
     final emergencyDeepLink = EmergencyQrEncoder.encode(cardData);
@@ -30,12 +37,12 @@ class ApplePassBuilder {
       serialNumber: 'emergency_$patientId',
       teamIdentifier: Env.appleTeamId,
       organizationName: 'HealthWallet.me',
-      description: 'Emergency Medical ID',
+      description: labels.cardTitle,
       foregroundColor: css.Color.createRgba(255, 255, 255),
       backgroundColor: css.Color.createRgba(87, 103, 255),
       labelColor: css.Color.createRgba(200, 210, 255),
       logoText: 'HealthWallet.me',
-      generic: _buildPassStructure(cardData),
+      generic: _buildPassStructure(cardData, labels),
       barcodes: [
         Barcode(
           format: PkPassBarcodeType.qr,
@@ -63,38 +70,60 @@ class ApplePassBuilder {
     return bytes;
   }
 
-  PassStructure _buildPassStructure(EmergencyCardData cardData) {
+  PassStructure _buildPassStructure(
+    EmergencyCardData cardData,
+    WalletPassLabels labels,
+  ) {
     final primaryFields = <FieldDict>[
-      FieldDict(key: 'patient-name', label: 'Patient', value: cardData.patientName),
+      FieldDict(
+        key: 'patient-name',
+        label: labels.patient,
+        value: cardData.patientName,
+      ),
     ];
 
     final headerFields = <FieldDict>[];
     if (cardData.bloodType != null) {
       headerFields.add(
-        FieldDict(key: 'blood-type', label: 'Blood Type', value: cardData.bloodType!),
+        FieldDict(
+          key: 'blood-type',
+          label: labels.bloodType,
+          value: cardData.bloodType!,
+        ),
       );
     }
 
     final secondaryFields = <FieldDict>[];
     if (cardData.allergies.isNotEmpty) {
       secondaryFields.add(
-        FieldDict(key: 'allergies', label: 'Allergies', value: cardData.allergies.join(', ')),
+        FieldDict(
+          key: 'allergies',
+          label: labels.allergies,
+          value: cardData.allergies.join(', '),
+        ),
       );
     }
     if (cardData.gender != null) {
       secondaryFields.add(
-        FieldDict(key: 'gender', label: 'Gender', value: cardData.gender!),
+        FieldDict(
+          key: 'gender',
+          label: labels.gender,
+          value: labels.genderName(cardData.gender!),
+        ),
       );
     }
 
     final auxiliaryFields = <FieldDict>[];
     if (cardData.dateOfBirth != null) {
-      final age = DateTime.now().difference(cardData.dateOfBirth!).inDays ~/ 365;
+      final age =
+          DateTime.now().difference(cardData.dateOfBirth!).inDays ~/ 365;
       auxiliaryFields.add(
         FieldDict(
           key: 'dob',
-          label: 'Date of Birth',
-          value: '${DateFormat('MMM d, yyyy').format(cardData.dateOfBirth!)} (Age $age)',
+          label: labels.dateOfBirth,
+          value:
+              '${DateFormat.yMMMd(labels.localeName).format(cardData.dateOfBirth!)} '
+              '(${labels.age(age)})',
         ),
       );
     }
@@ -102,7 +131,7 @@ class ApplePassBuilder {
       auxiliaryFields.add(
         FieldDict(
           key: 'emergency-contact',
-          label: 'Emergency Phone',
+          label: labels.emergencyPhone,
           value: PhoneDisplayFormatter.format(cardData.emergencyContactPhone!),
         ),
       );
@@ -111,12 +140,20 @@ class ApplePassBuilder {
     final backFields = <FieldDict>[];
     if (cardData.conditions.isNotEmpty) {
       backFields.add(
-        FieldDict(key: 'conditions', label: 'Conditions', value: cardData.conditions.join(', ')),
+        FieldDict(
+          key: 'conditions',
+          label: labels.conditions,
+          value: cardData.conditions.join(', '),
+        ),
       );
     }
     if (cardData.medications.isNotEmpty) {
       backFields.add(
-        FieldDict(key: 'medications', label: 'Medications', value: cardData.medications.join(', ')),
+        FieldDict(
+          key: 'medications',
+          label: labels.medications,
+          value: cardData.medications.join(', '),
+        ),
       );
     }
 

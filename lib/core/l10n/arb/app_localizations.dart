@@ -102,54 +102,6 @@ abstract class AppLocalizations {
     Locale('ro'),
   ];
 
-  /// The title of the application
-  ///
-  /// In en, this message translates to:
-  /// **'HealthWallet.me'**
-  String get appTitle;
-
-  /// The title of the home screen
-  ///
-  /// In en, this message translates to:
-  /// **'Home'**
-  String get homeTitle;
-
-  /// The title of the profile screen
-  ///
-  /// In en, this message translates to:
-  /// **'Profile'**
-  String get profileTitle;
-
-  /// The title of the settings screen
-  ///
-  /// In en, this message translates to:
-  /// **'Settings'**
-  String get settingsTitle;
-
-  /// The welcome message shown to users
-  ///
-  /// In en, this message translates to:
-  /// **'Welcome to HealthWallet.me!'**
-  String get welcomeMessage;
-
-  /// No description provided for @onboardingBack.
-  ///
-  /// In en, this message translates to:
-  /// **'Back'**
-  String get onboardingBack;
-
-  /// No description provided for @onboardingGetStarted.
-  ///
-  /// In en, this message translates to:
-  /// **'Get Started'**
-  String get onboardingGetStarted;
-
-  /// No description provided for @onboardingNext.
-  ///
-  /// In en, this message translates to:
-  /// **'Next'**
-  String get onboardingNext;
-
   /// No description provided for @onboardingWelcomeTitle.
   ///
   /// In en, this message translates to:
@@ -228,29 +180,11 @@ abstract class AppLocalizations {
   /// **'View your health history in airplane mode, abroad, or without internet, your records stay with you wherever you go. Add an extra layer of security by enabling biometric authentication.'**
   String get onboardingSyncDescription;
 
-  /// No description provided for @onboardingBiometricText.
-  ///
-  /// In en, this message translates to:
-  /// **'You can lock your HealthWallet with biometric security like Face ID or a fingerprint scan.'**
-  String get onboardingBiometricText;
-
   /// No description provided for @homeHi.
   ///
   /// In en, this message translates to:
   /// **'Hi, '**
   String get homeHi;
-
-  /// No description provided for @homeLastSynced.
-  ///
-  /// In en, this message translates to:
-  /// **'Last synced: '**
-  String get homeLastSynced;
-
-  /// No description provided for @homeNever.
-  ///
-  /// In en, this message translates to:
-  /// **'Never'**
-  String get homeNever;
 
   /// No description provided for @homeVitalSigns.
   ///
@@ -258,47 +192,17 @@ abstract class AppLocalizations {
   /// **'Vitals'**
   String get homeVitalSigns;
 
-  /// No description provided for @homeOverview.
-  ///
-  /// In en, this message translates to:
-  /// **'Medical Records'**
-  String get homeOverview;
-
   /// No description provided for @homeSource.
   ///
   /// In en, this message translates to:
   /// **'Source:'**
   String get homeSource;
 
-  /// No description provided for @homeAll.
-  ///
-  /// In en, this message translates to:
-  /// **'All'**
-  String get homeAll;
-
-  /// No description provided for @homeRecentRecords.
-  ///
-  /// In en, this message translates to:
-  /// **'Recent Records'**
-  String get homeRecentRecords;
-
-  /// No description provided for @homeViewAll.
-  ///
-  /// In en, this message translates to:
-  /// **'View All'**
-  String get homeViewAll;
-
   /// No description provided for @homeNA.
   ///
   /// In en, this message translates to:
   /// **'N/A'**
   String get homeNA;
-
-  /// No description provided for @bluetoothRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Please turn on Bluetooth to use Share Proximity'**
-  String get bluetoothRequired;
 
   /// No description provided for @dashboardTitle.
   ///
@@ -360,71 +264,17 @@ abstract class AppLocalizations {
   /// **'Continue Sync'**
   String get continueSync;
 
-  /// No description provided for @syncAgain.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync Again'**
-  String get syncAgain;
-
-  /// No description provided for @syncFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync failed: '**
-  String get syncFailed;
-
   /// No description provided for @tryAgain.
   ///
   /// In en, this message translates to:
   /// **'Try Again'**
   String get tryAgain;
 
-  /// No description provided for @syncedAt.
-  ///
-  /// In en, this message translates to:
-  /// **'Synced at: '**
-  String get syncedAt;
-
-  /// No description provided for @pasteSyncData.
-  ///
-  /// In en, this message translates to:
-  /// **'Paste Sync Data'**
-  String get pasteSyncData;
-
-  /// No description provided for @submit.
-  ///
-  /// In en, this message translates to:
-  /// **'Submit'**
-  String get submit;
-
-  /// No description provided for @hideManualEntry.
-  ///
-  /// In en, this message translates to:
-  /// **'Hide Manual Entry'**
-  String get hideManualEntry;
-
-  /// No description provided for @enterDataManually.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter data manually'**
-  String get enterDataManually;
-
-  /// No description provided for @medicalRecords.
-  ///
-  /// In en, this message translates to:
-  /// **'Medical Records'**
-  String get medicalRecords;
-
   /// No description provided for @searchRecordsHint.
   ///
   /// In en, this message translates to:
   /// **'Search records, doctors, locations...'**
   String get searchRecordsHint;
-
-  /// No description provided for @detailsFor.
-  ///
-  /// In en, this message translates to:
-  /// **'Details for '**
-  String get detailsFor;
 
   /// No description provided for @patientId.
   ///
@@ -450,71 +300,17 @@ abstract class AppLocalizations {
   /// **'Blood Type'**
   String get bloodType;
 
-  /// No description provided for @lastSyncedProfile.
-  ///
-  /// In en, this message translates to:
-  /// **'Last synced: 2 hours ago'**
-  String get lastSyncedProfile;
-
-  /// No description provided for @syncLatestRecords.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync your latest medical records from your healthcare provider.'**
-  String get syncLatestRecords;
-
-  /// No description provided for @scanToSync.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan to Sync'**
-  String get scanToSync;
-
   /// No description provided for @theme.
   ///
   /// In en, this message translates to:
   /// **'Theme'**
   String get theme;
 
-  /// No description provided for @pleaseAuthenticate.
-  ///
-  /// In en, this message translates to:
-  /// **'Please authenticate to continue'**
-  String get pleaseAuthenticate;
-
   /// No description provided for @authenticate.
   ///
   /// In en, this message translates to:
   /// **'Authenticate'**
   String get authenticate;
-
-  /// No description provided for @bypass.
-  ///
-  /// In en, this message translates to:
-  /// **'Bypass'**
-  String get bypass;
-
-  /// No description provided for @onboardingAuthTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Enable Biometric Authentication'**
-  String get onboardingAuthTitle;
-
-  /// No description provided for @onboardingAuthDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Add an extra layer of security to your account by enabling biometric authentication.'**
-  String get onboardingAuthDescription;
-
-  /// No description provided for @onboardingAuthEnable.
-  ///
-  /// In en, this message translates to:
-  /// **'Enable Now'**
-  String get onboardingAuthEnable;
-
-  /// No description provided for @onboardingAuthSkip.
-  ///
-  /// In en, this message translates to:
-  /// **'Skip for Now'**
-  String get onboardingAuthSkip;
 
   /// No description provided for @biometricAuthentication.
   ///
@@ -600,29 +396,11 @@ abstract class AppLocalizations {
   /// **'OK'**
   String get ok;
 
-  /// No description provided for @scanCode.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan code'**
-  String get scanCode;
-
   /// No description provided for @or.
   ///
   /// In en, this message translates to:
   /// **'or'**
   String get or;
-
-  /// No description provided for @manualSyncMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Raw QR Code'**
-  String get manualSyncMessage;
-
-  /// No description provided for @pasteSyncDataHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Paste the raw QR code'**
-  String get pasteSyncDataHint;
 
   /// No description provided for @connect.
   ///
@@ -630,23 +408,11 @@ abstract class AppLocalizations {
   /// **'Connect'**
   String get connect;
 
-  /// No description provided for @scanNewQRCode.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan New QR Code'**
-  String get scanNewQRCode;
-
   /// No description provided for @loadDemoData.
   ///
   /// In en, this message translates to:
   /// **'Load Demo Data'**
   String get loadDemoData;
-
-  /// No description provided for @syncData.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync Data'**
-  String get syncData;
 
   /// No description provided for @noMedicalRecordsYet.
   ///
@@ -654,23 +420,11 @@ abstract class AppLocalizations {
   /// **'No medical records yet'**
   String get noMedicalRecordsYet;
 
-  /// No description provided for @noRecordTypeYet.
-  ///
-  /// In en, this message translates to:
-  /// **'No {recordType} yet'**
-  String noRecordTypeYet(Object recordType);
-
   /// No description provided for @loadDemoDataMessage.
   ///
   /// In en, this message translates to:
   /// **'Load demo data to explore the app or sync your real medical records'**
   String get loadDemoDataMessage;
-
-  /// No description provided for @syncDataMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync or update your data to view {recordType} records'**
-  String syncDataMessage(Object recordType);
 
   /// No description provided for @retry.
   ///
@@ -720,40 +474,10 @@ abstract class AppLocalizations {
   /// **'Error updating source label'**
   String get errorUpdatingSourceLabel;
 
-  /// No description provided for @noChangesDetected.
-  ///
-  /// In en, this message translates to:
-  /// **'No changes detected'**
-  String get noChangesDetected;
-
-  /// No description provided for @pleaseSelectBirthDate.
-  ///
-  /// In en, this message translates to:
-  /// **'Please select a birth date'**
-  String get pleaseSelectBirthDate;
-
-  /// No description provided for @errorSavingPatientData.
-  ///
-  /// In en, this message translates to:
-  /// **'Error saving patient data'**
-  String get errorSavingPatientData;
-
-  /// No description provided for @walletHolder.
-  ///
-  /// In en, this message translates to:
-  /// **'Wallet Holder'**
-  String get walletHolder;
-
-  /// No description provided for @walletHolderDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'This patient is the primary owner of this health wallet'**
-  String get walletHolderDescription;
-
   /// No description provided for @getStarted.
   ///
   /// In en, this message translates to:
-  /// **'Get started'**
+  /// **'Get Started'**
   String get getStarted;
 
   /// No description provided for @failedToUpdateDisplayName.
@@ -767,6 +491,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This action cannot be undone.'**
   String get actionCannotBeUndone;
+
+  /// No description provided for @deleteSourceConfirmPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'This will permanently delete '**
+  String get deleteSourceConfirmPrefix;
+
+  /// No description provided for @deleteSourceConfirmSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **' and all its records. To confirm, type the source name below.'**
+  String get deleteSourceConfirmSuffix;
 
   /// No description provided for @deleteRecordConfirm.
   ///
@@ -791,18 +527,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to delete {count} items?'**
   String deleteRecordsConfirm(int count);
-
-  /// No description provided for @confirmDeleteFile.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to delete \"{filename}\"?'**
-  String confirmDeleteFile(Object filename);
-
-  /// No description provided for @selectAtLeastOne.
-  ///
-  /// In en, this message translates to:
-  /// **'Select at least one {type} to continue.'**
-  String selectAtLeastOne(Object type);
 
   /// No description provided for @editSourceLabel.
   ///
@@ -870,83 +594,11 @@ abstract class AppLocalizations {
   /// **'Recent records'**
   String get recentRecords;
 
-  /// No description provided for @chooseToDisplay.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose the {type} you want to see on your dashboard.'**
-  String chooseToDisplay(Object type);
-
   /// No description provided for @displayName.
   ///
   /// In en, this message translates to:
   /// **'Display name'**
   String get displayName;
-
-  /// No description provided for @bloodTypeAPositive.
-  ///
-  /// In en, this message translates to:
-  /// **'A positive'**
-  String get bloodTypeAPositive;
-
-  /// No description provided for @bloodTypeANegative.
-  ///
-  /// In en, this message translates to:
-  /// **'A negative'**
-  String get bloodTypeANegative;
-
-  /// No description provided for @bloodTypeBPositive.
-  ///
-  /// In en, this message translates to:
-  /// **'B positive'**
-  String get bloodTypeBPositive;
-
-  /// No description provided for @bloodTypeBNegative.
-  ///
-  /// In en, this message translates to:
-  /// **'B negative'**
-  String get bloodTypeBNegative;
-
-  /// No description provided for @bloodTypeABPositive.
-  ///
-  /// In en, this message translates to:
-  /// **'AB positive'**
-  String get bloodTypeABPositive;
-
-  /// No description provided for @bloodTypeABNegative.
-  ///
-  /// In en, this message translates to:
-  /// **'AB negative'**
-  String get bloodTypeABNegative;
-
-  /// No description provided for @bloodTypeOPositive.
-  ///
-  /// In en, this message translates to:
-  /// **'O positive'**
-  String get bloodTypeOPositive;
-
-  /// No description provided for @bloodTypeONegative.
-  ///
-  /// In en, this message translates to:
-  /// **'O negative'**
-  String get bloodTypeONegative;
-
-  /// No description provided for @serverError.
-  ///
-  /// In en, this message translates to:
-  /// **'Something went wrong on the server'**
-  String get serverError;
-
-  /// No description provided for @serverTimeout.
-  ///
-  /// In en, this message translates to:
-  /// **'Server timeout'**
-  String get serverTimeout;
-
-  /// No description provided for @connectionError.
-  ///
-  /// In en, this message translates to:
-  /// **'Connection error'**
-  String get connectionError;
 
   /// No description provided for @unknownSource.
   ///
@@ -954,29 +606,47 @@ abstract class AppLocalizations {
   /// **'Unknown Source'**
   String get unknownSource;
 
-  /// No description provided for @synchronization.
+  /// No description provided for @desktopSyncAndBackup.
   ///
   /// In en, this message translates to:
-  /// **'Synchronization'**
-  String get synchronization;
+  /// **'Data Sync & Backup'**
+  String get desktopSyncAndBackup;
+
+  /// No description provided for @desktopSyncDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync & Backup your health records.\nHand over documents to be digitally processed on your desktop.'**
+  String get desktopSyncDescription;
+
+  /// No description provided for @processOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Process on Desktop'**
+  String get processOnDesktop;
+
+  /// No description provided for @continueImporting.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue Importing'**
+  String get continueImporting;
+
+  /// No description provided for @noAiModel.
+  ///
+  /// In en, this message translates to:
+  /// **'No AI model'**
+  String get noAiModel;
+
+  /// No description provided for @noAiModelOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'No AI model on Desktop. Please download the AI model on your desktop app first.'**
+  String get noAiModelOnDesktop;
 
   /// No description provided for @syncMedicalRecords.
   ///
   /// In en, this message translates to:
   /// **'Sync Medical records'**
   String get syncMedicalRecords;
-
-  /// No description provided for @syncLatestMedicalRecords.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync your latest medical records from your healthcare provider using a secure JWT token.'**
-  String get syncLatestMedicalRecords;
-
-  /// No description provided for @neverSynced.
-  ///
-  /// In en, this message translates to:
-  /// **'Never synced'**
-  String get neverSynced;
 
   /// No description provided for @lastSynced.
   ///
@@ -1080,12 +750,6 @@ abstract class AppLocalizations {
   /// **'Source'**
   String get source;
 
-  /// No description provided for @showAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Show All'**
-  String get showAll;
-
   /// No description provided for @records.
   ///
   /// In en, this message translates to:
@@ -1109,6 +773,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear all'**
   String get clearAll;
+
+  /// No description provided for @deselectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect all'**
+  String get deselectAll;
 
   /// No description provided for @save.
   ///
@@ -1134,12 +804,6 @@ abstract class AppLocalizations {
   /// **'Try searching with different keywords'**
   String get tryDifferentKeywords;
 
-  /// No description provided for @clearAllFilters.
-  ///
-  /// In en, this message translates to:
-  /// **'Clear all'**
-  String get clearAllFilters;
-
   /// No description provided for @syncingData.
   ///
   /// In en, this message translates to:
@@ -1151,12 +815,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'It might take a while. Please wait.'**
   String get syncingMessage;
-
-  /// No description provided for @scanQRMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan the QR code from your Fasten Health server to create a new sync connection.'**
-  String get scanQRMessage;
 
   /// No description provided for @viewAll.
   ///
@@ -1212,6 +870,12 @@ abstract class AppLocalizations {
   /// **'Attach to Encounter'**
   String get attachToEncounter;
 
+  /// No description provided for @attachToPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach to Patient'**
+  String get attachToPatient;
+
   /// No description provided for @continueProcessing.
   ///
   /// In en, this message translates to:
@@ -1223,12 +887,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Successfully Saved'**
   String get recordsSavedTitle;
-
-  /// No description provided for @recordsSavedMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Your health records have been saved successfully.'**
-  String get recordsSavedMessage;
 
   /// No description provided for @whatNextQuestion.
   ///
@@ -1257,7 +915,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacyDescription.
   ///
   /// In en, this message translates to:
-  /// **'is a simple, secure tool designed to help you organize your health records at ease, directly on your device. This policy explains our commitment to your privacy: we do not collect your data, and we do not track you. You are in complete control.'**
+  /// **'is a simple, secure tool designed to help you organize your health records with ease, directly on your device. This policy explains our commitment to your privacy: we do not collect your data, and we do not track you. You are in complete control.'**
   String get privacyDescription;
 
   /// No description provided for @corePrinciple.
@@ -1362,6 +1020,12 @@ abstract class AppLocalizations {
   /// **'Scan'**
   String get documentScanTitle;
 
+  /// No description provided for @fromPhoneTab.
+  ///
+  /// In en, this message translates to:
+  /// **'From Phone'**
+  String get fromPhoneTab;
+
   /// No description provided for @onboardingAiModelTitle.
   ///
   /// In en, this message translates to:
@@ -1440,53 +1104,11 @@ abstract class AppLocalizations {
   /// **'Setup'**
   String get setup;
 
-  /// No description provided for @patientSetupTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Set Up Your Profile'**
-  String get patientSetupTitle;
-
   /// No description provided for @patientSetupSubtitle.
   ///
   /// In en, this message translates to:
   /// **'Personalize your health wallet with your information'**
   String get patientSetupSubtitle;
-
-  /// No description provided for @onboardingSetupTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Set Up my Health Wallet'**
-  String get onboardingSetupTitle;
-
-  /// No description provided for @onboardingSetupBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Create your personal health profile to get started with HealthWallet'**
-  String get onboardingSetupBody;
-
-  /// No description provided for @onboardingDemoTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Try Demo Data'**
-  String get onboardingDemoTitle;
-
-  /// No description provided for @onboardingDemoBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Explore the app with sample medical records to see how it works'**
-  String get onboardingDemoBody;
-
-  /// No description provided for @onboardingSyncTitle2.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync Your Records'**
-  String get onboardingSyncTitle2;
-
-  /// No description provided for @onboardingSyncBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect to your healthcare providers to import your real medical records'**
-  String get onboardingSyncBody;
 
   /// No description provided for @givenName.
   ///
@@ -1499,24 +1121,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Family Name'**
   String get familyName;
-
-  /// No description provided for @skipForNow.
-  ///
-  /// In en, this message translates to:
-  /// **'Skip for now'**
-  String get skipForNow;
-
-  /// No description provided for @setUpProfile.
-  ///
-  /// In en, this message translates to:
-  /// **'Set Up'**
-  String get setUpProfile;
-
-  /// No description provided for @useDefaults.
-  ///
-  /// In en, this message translates to:
-  /// **'Default'**
-  String get useDefaults;
 
   /// No description provided for @syncPlaceholderTutorialStep1.
   ///
@@ -1571,6 +1175,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Processing failed'**
   String get processingFailed;
+
+  /// No description provided for @modelNotFoundError.
+  ///
+  /// In en, this message translates to:
+  /// **'Model file not found. Please download the AI model first.'**
+  String get modelNotFoundError;
+
+  /// No description provided for @modelCorruptedError.
+  ///
+  /// In en, this message translates to:
+  /// **'Model file is corrupted. Please re-download the AI model.'**
+  String get modelCorruptedError;
+
+  /// No description provided for @processingFailedGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong while processing the document. Please try again.'**
+  String get processingFailedGeneric;
 
   /// No description provided for @processingCancelled.
   ///
@@ -1749,13 +1371,13 @@ abstract class AppLocalizations {
   /// No description provided for @processingFailedCapacity.
   ///
   /// In en, this message translates to:
-  /// **'The document is too large for the current AI context size.'**
+  /// **'The document is too large for the current AI working memory.'**
   String get processingFailedCapacity;
 
   /// No description provided for @processingFailedCapacitySuggestion.
   ///
   /// In en, this message translates to:
-  /// **'Tap the settings icon above and increase the Context Size to 2048 or higher, then retry.'**
+  /// **'Tap the settings icon above and increase the Working memory to 2048 or higher, then retry.'**
   String get processingFailedCapacitySuggestion;
 
   /// No description provided for @increaseAiModelCapacity.
@@ -1803,37 +1425,37 @@ abstract class AppLocalizations {
   /// No description provided for @setAiTokensUsage.
   ///
   /// In en, this message translates to:
-  /// **'Set AI Tokens Usage'**
+  /// **'Maximum answer length'**
   String get setAiTokensUsage;
 
   /// No description provided for @tokenUsageDescription.
   ///
   /// In en, this message translates to:
-  /// **'Control how much processing power the AI can use. Higher capacity allows larger files and more complex tasks, but uses more resources and takes longer.'**
+  /// **'The most the AI may write per step, while it lists the records it found in your document. Too short and some records get cut off; longer takes more time. It always fits inside the working memory.'**
   String get tokenUsageDescription;
 
   /// No description provided for @gpuLayersLabel.
   ///
   /// In en, this message translates to:
-  /// **'GPU Layers'**
+  /// **'Graphics chip (GPU)'**
   String get gpuLayersLabel;
 
   /// No description provided for @gpuLayersDescription.
   ///
   /// In en, this message translates to:
-  /// **'Offload model layers to GPU for faster image processing. More layers = faster but uses more memory. Set to 0 if the app crashes.'**
+  /// **'How much of the AI runs on your device\'s graphics chip, which is faster than the main processor. Higher is faster but uses more memory. If the app closes or crashes during a scan, lower it, or set it to 0.'**
   String get gpuLayersDescription;
 
   /// No description provided for @threadsLabel.
   ///
   /// In en, this message translates to:
-  /// **'CPU Threads'**
+  /// **'Processor cores (CPU)'**
   String get threadsLabel;
 
   /// No description provided for @threadsDescription.
   ///
   /// In en, this message translates to:
-  /// **'Number of CPU threads for inference. More threads = faster but uses more battery.'**
+  /// **'How many processor cores the AI uses at the same time. More is faster, but uses the battery quicker and can make the device warm.'**
   String get threadsDescription;
 
   /// No description provided for @recommended.
@@ -1845,14 +1467,8 @@ abstract class AppLocalizations {
   /// No description provided for @tokenPresetLow.
   ///
   /// In en, this message translates to:
-  /// **'Low'**
+  /// **'Short'**
   String get tokenPresetLow;
-
-  /// No description provided for @tokenPresetLowDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Best for small files and quick tasks.\nUses the least resources and processes fastest.'**
-  String get tokenPresetLowDescription;
 
   /// No description provided for @tokenPresetMedium.
   ///
@@ -1860,23 +1476,11 @@ abstract class AppLocalizations {
   /// **'Medium'**
   String get tokenPresetMedium;
 
-  /// No description provided for @tokenPresetMediumDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Good for most use cases.\nBalances file size, processing time, and resource usage.'**
-  String get tokenPresetMediumDescription;
-
   /// No description provided for @tokenPresetHigh.
   ///
   /// In en, this message translates to:
-  /// **'High'**
+  /// **'Long'**
   String get tokenPresetHigh;
-
-  /// No description provided for @tokenPresetHighDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Best for large files and complex processing.\nUses more resources and battery, and takes longer to complete.'**
-  String get tokenPresetHighDescription;
 
   /// No description provided for @tokenPresetCustom.
   ///
@@ -1884,34 +1488,22 @@ abstract class AppLocalizations {
   /// **'Custom'**
   String get tokenPresetCustom;
 
-  /// No description provided for @tokenPresetCustomDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Set custom amount of tokens you want to use.'**
-  String get tokenPresetCustomDescription;
-
   /// No description provided for @setTokens.
   ///
   /// In en, this message translates to:
   /// **'Set'**
   String get setTokens;
 
-  /// No description provided for @tokens.
-  ///
-  /// In en, this message translates to:
-  /// **'tokens'**
-  String get tokens;
-
   /// No description provided for @contextSizeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Context Size'**
+  /// **'Working memory'**
   String get contextSizeLabel;
 
   /// No description provided for @contextSizeDescription.
   ///
   /// In en, this message translates to:
-  /// **'Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory.'**
+  /// **'The AI\'s workspace for one step: space to read your document and write down what it finds. Bigger fits longer documents, but uses more of your device\'s memory. If scanning fails with \"not enough memory\", lower it.'**
   String get contextSizeDescription;
 
   /// No description provided for @useVisionLabel.
@@ -1968,18 +1560,6 @@ abstract class AppLocalizations {
   /// **'Emergency Phone Contact'**
   String get emergencyContact;
 
-  /// No description provided for @emergencyContactHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Phone number'**
-  String get emergencyContactHint;
-
-  /// No description provided for @searchCountry.
-  ///
-  /// In en, this message translates to:
-  /// **'Search country...'**
-  String get searchCountry;
-
   /// No description provided for @rotatePage.
   ///
   /// In en, this message translates to:
@@ -2004,18 +1584,6 @@ abstract class AppLocalizations {
   /// **'This page will be removed from the document.'**
   String get deletePageConfirmMessage;
 
-  /// No description provided for @cannotDeleteLastPage.
-  ///
-  /// In en, this message translates to:
-  /// **'Cannot delete the last page'**
-  String get cannotDeleteLastPage;
-
-  /// No description provided for @pageRotated.
-  ///
-  /// In en, this message translates to:
-  /// **'Page rotated'**
-  String get pageRotated;
-
   /// No description provided for @regionAndUnits.
   ///
   /// In en, this message translates to:
@@ -2027,12 +1595,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Country'**
   String get country;
-
-  /// No description provided for @patientModifiedNewWillBeCreated.
-  ///
-  /// In en, this message translates to:
-  /// **'Modified — a new patient will be created'**
-  String get patientModifiedNewWillBeCreated;
 
   /// No description provided for @patientModifiedUpdating.
   ///
@@ -2057,18 +1619,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your changes to the patient fields will be discarded.'**
   String get dropModificationsMessage;
-
-  /// No description provided for @modifyPatientTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Modify patient?'**
-  String get modifyPatientTitle;
-
-  /// No description provided for @modifyPatientMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'This will update the existing patient record with your changes.'**
-  String get modifyPatientMessage;
 
   /// No description provided for @scanIdCard.
   ///
@@ -2139,7 +1689,7 @@ abstract class AppLocalizations {
   /// No description provided for @medGemmaIncompatibleDevice.
   ///
   /// In en, this message translates to:
-  /// **'This model requires more memory than your device has available. Use the Standard model instead.'**
+  /// **'This model requires more memory than your device has available. Use the Lite model instead.'**
   String get medGemmaIncompatibleDevice;
 
   /// No description provided for @deepScanDownloadTitle.
@@ -2153,12 +1703,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Deep Scan requires an additional download (~{size} MB). Download now?'**
   String deepScanDownloadMessage(int size);
-
-  /// No description provided for @downloadingVisionModel.
-  ///
-  /// In en, this message translates to:
-  /// **'Downloading vision model...'**
-  String get downloadingVisionModel;
 
   /// No description provided for @shareUnknownDevice.
   ///
@@ -2363,6 +1907,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Receiving records...'**
   String get shareReceivingRecords;
+
+  /// No description provided for @shareVerifyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare codes'**
+  String get shareVerifyTitle;
+
+  /// No description provided for @shareVerifySenderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Check that the other phone shows the same code. Your records stay locked until you confirm.'**
+  String get shareVerifySenderHint;
+
+  /// No description provided for @shareVerifyReceiverHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Check that the other phone shows the same code. The records open once the sender confirms.'**
+  String get shareVerifyReceiverHint;
+
+  /// No description provided for @shareVerifyCodesMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Codes match'**
+  String get shareVerifyCodesMatch;
+
+  /// No description provided for @shareVerifyWaitingForSender.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the sender to confirm...'**
+  String get shareVerifyWaitingForSender;
+
+  /// No description provided for @shareAwaitingViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Codes confirmed. Waiting for the other phone to open the records.'**
+  String get shareAwaitingViewer;
+
+  /// No description provided for @shareEndNotDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'The other phone couldn\'t be reached. It keeps the records until its timer runs out.'**
+  String get shareEndNotDelivered;
 
   /// No description provided for @shareConfirmExit.
   ///
@@ -2580,12 +2166,6 @@ abstract class AppLocalizations {
   /// **'shared from {source}'**
   String shareSharedFrom(String source);
 
-  /// No description provided for @shareFoundDevices.
-  ///
-  /// In en, this message translates to:
-  /// **'Found {count} device(s)'**
-  String shareFoundDevices(int count);
-
   /// No description provided for @shareRetryingCount.
   ///
   /// In en, this message translates to:
@@ -2658,11 +2238,6178 @@ abstract class AppLocalizations {
   /// **'The {peerRole} wants to extend the session by {duration}'**
   String shareExtensionRequestMessage(String peerRole, String duration);
 
-  /// No description provided for @shareExtensionDurationRequested.
+  /// No description provided for @desktopSyncNotYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not yet'**
+  String get desktopSyncNotYet;
+
+  /// No description provided for @desktopSyncTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get desktopSyncTransfer;
+
+  /// No description provided for @desktopSyncTransferValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{sentRows} sent, {receivedRows} received'**
+  String desktopSyncTransferValue(int sentRows, int receivedRows);
+
+  /// No description provided for @desktopSyncPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get desktopSyncPending;
+
+  /// No description provided for @desktopSyncPendingValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 change} other{{count} changes}}'**
+  String desktopSyncPendingValue(int count);
+
+  /// No description provided for @desktopSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing...'**
+  String get desktopSyncing;
+
+  /// No description provided for @desktopSyncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Now'**
+  String get desktopSyncNow;
+
+  /// No description provided for @desktopSyncError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get desktopSyncError;
+
+  /// No description provided for @desktopSyncInSync.
+  ///
+  /// In en, this message translates to:
+  /// **'In Sync'**
+  String get desktopSyncInSync;
+
+  /// No description provided for @desktopSyncReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get desktopSyncReady;
+
+  /// No description provided for @desktopSyncOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get desktopSyncOffline;
+
+  /// No description provided for @desktopConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection'**
+  String get desktopConnection;
+
+  /// No description provided for @desktopGeneratePairingQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate Pairing QR'**
+  String get desktopGeneratePairingQr;
+
+  /// No description provided for @desktopScanFromMobile.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan from mobile Sync page'**
+  String get desktopScanFromMobile;
+
+  /// No description provided for @desktopDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Device'**
+  String get desktopDevice;
+
+  /// No description provided for @desktopTransport.
+  ///
+  /// In en, this message translates to:
+  /// **'Transport'**
+  String get desktopTransport;
+
+  /// No description provided for @desktopIp.
+  ///
+  /// In en, this message translates to:
+  /// **'IP'**
+  String get desktopIp;
+
+  /// No description provided for @desktopPort.
+  ///
+  /// In en, this message translates to:
+  /// **'Port'**
+  String get desktopPort;
+
+  /// No description provided for @desktopNewPairing.
+  ///
+  /// In en, this message translates to:
+  /// **'New Pairing'**
+  String get desktopNewPairing;
+
+  /// No description provided for @desktopTransportTcp.
+  ///
+  /// In en, this message translates to:
+  /// **'TCP over WiFi'**
+  String get desktopTransportTcp;
+
+  /// No description provided for @desktopTransportMpc.
+  ///
+  /// In en, this message translates to:
+  /// **'MultipeerConnectivity (Direct)'**
+  String get desktopTransportMpc;
+
+  /// No description provided for @desktopConnectedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to {name}'**
+  String desktopConnectedTo(String name);
+
+  /// No description provided for @desktopConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get desktopConnected;
+
+  /// No description provided for @desktopReconnectingTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnecting to {name}...'**
+  String desktopReconnectingTo(String name);
+
+  /// No description provided for @desktopReconnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnecting...'**
+  String get desktopReconnecting;
+
+  /// No description provided for @desktopDisconnectedFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected from {name}'**
+  String desktopDisconnectedFrom(String name);
+
+  /// No description provided for @desktopDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected'**
+  String get desktopDisconnected;
+
+  /// No description provided for @desktopDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get desktopDisconnect;
+
+  /// No description provided for @desktopReconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnect'**
+  String get desktopReconnect;
+
+  /// No description provided for @desktopVpnDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'VPN detected. Disconnect VPN to sync with desktop.'**
+  String get desktopVpnDetected;
+
+  /// No description provided for @desktopVpnBlocksPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'A VPN is on for this computer. It can stop your phone from connecting: turn it off or allow local network access in the VPN settings.'**
+  String get desktopVpnBlocksPhone;
+
+  /// No description provided for @desktopPairing.
+  ///
+  /// In en, this message translates to:
+  /// **'Pairing'**
+  String get desktopPairing;
+
+  /// No description provided for @desktopLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Desktop'**
+  String get desktopLabel;
+
+  /// No description provided for @desktopScanFromPhoneToPair.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan from your phone to pair'**
+  String get desktopScanFromPhoneToPair;
+
+  /// No description provided for @desktopNewQrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'New QR Code'**
+  String get desktopNewQrCode;
+
+  /// No description provided for @desktopGenerateQrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate QR Code'**
+  String get desktopGenerateQrCode;
+
+  /// No description provided for @desktopScanQrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan QR Code'**
+  String get desktopScanQrCode;
+
+  /// No description provided for @desktopChooseWhereToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose where to save backups'**
+  String get desktopChooseWhereToSave;
+
+  /// No description provided for @desktopSelectBackupFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a folder on your computer to store backup files'**
+  String get desktopSelectBackupFolder;
+
+  /// No description provided for @desktopChooseLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Location'**
+  String get desktopChooseLocation;
+
+  /// No description provided for @desktopChooseBackupLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Backup Location'**
+  String get desktopChooseBackupLocation;
+
+  /// No description provided for @desktopBackingUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Backing up...'**
+  String get desktopBackingUp;
+
+  /// No description provided for @desktopCreateBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Backup'**
+  String get desktopCreateBackup;
+
+  /// No description provided for @desktopSyncWithPhoneFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync with phone first'**
+  String get desktopSyncWithPhoneFirst;
+
+  /// No description provided for @desktopNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'(not connected)'**
+  String get desktopNotConnected;
+
+  /// No description provided for @desktopStartBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Backup'**
+  String get desktopStartBackup;
+
+  /// No description provided for @desktopNoBackupsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No backups yet'**
+  String get desktopNoBackupsYet;
+
+  /// No description provided for @desktopCreateFirstBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your first backup to keep your health data safe'**
+  String get desktopCreateFirstBackup;
+
+  /// No description provided for @desktopAllBackups.
+  ///
+  /// In en, this message translates to:
+  /// **'All backups'**
+  String get desktopAllBackups;
+
+  /// No description provided for @desktopDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get desktopDate;
+
+  /// No description provided for @desktopSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get desktopSize;
+
+  /// No description provided for @desktopChecksum.
+  ///
+  /// In en, this message translates to:
+  /// **'Checksum'**
+  String get desktopChecksum;
+
+  /// No description provided for @desktopRestoreThisBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore this backup'**
+  String get desktopRestoreThisBackup;
+
+  /// No description provided for @desktopRestoreBackupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Backup?'**
+  String get desktopRestoreBackupTitle;
+
+  /// No description provided for @desktopRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get desktopRestore;
+
+  /// No description provided for @desktopDeleteBackupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Backup?'**
+  String get desktopDeleteBackupTitle;
+
+  /// No description provided for @desktopDeleteBackupMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\"?\n\nThis cannot be undone.'**
+  String desktopDeleteBackupMessage(String name);
+
+  /// No description provided for @desktopDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get desktopDelete;
+
+  /// No description provided for @desktopBackupFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup from'**
+  String get desktopBackupFrom;
+
+  /// No description provided for @desktopBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get desktopBackup;
+
+  /// No description provided for @desktopChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get desktopChange;
+
+  /// No description provided for @desktopProcessingHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing History'**
+  String get desktopProcessingHistory;
+
+  /// No description provided for @desktopScannedOnPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanned on Phone'**
+  String get desktopScannedOnPhone;
+
+  /// No description provided for @desktopProcessedOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Processed on Desktop'**
+  String get desktopProcessedOnDesktop;
+
+  /// No description provided for @desktopImportedOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported on Desktop'**
+  String get desktopImportedOnDesktop;
+
+  /// No description provided for @desktopSyncRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get desktopSyncRecent;
+
+  /// No description provided for @desktopUnknownDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown device'**
+  String get desktopUnknownDevice;
+
+  /// No description provided for @desktopSyncHistoryTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'{sentRows} sent · {receivedRows} received'**
+  String desktopSyncHistoryTransfer(int sentRows, int receivedRows);
+
+  /// No description provided for @desktopNewDeviceConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'New Device Connecting'**
+  String get desktopNewDeviceConnecting;
+
+  /// No description provided for @desktopKeepCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Current'**
+  String get desktopKeepCurrent;
+
+  /// No description provided for @desktopSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch'**
+  String get desktopSwitch;
+
+  /// No description provided for @desktopCurrentDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'current device'**
+  String get desktopCurrentDevice;
+
+  /// No description provided for @desktopHandoverPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing...'**
+  String get desktopHandoverPreparing;
+
+  /// No description provided for @desktopHandoverSendingFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending files...'**
+  String get desktopHandoverSendingFiles;
+
+  /// No description provided for @desktopHandoverSending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending...'**
+  String get desktopHandoverSending;
+
+  /// No description provided for @desktopHandoverSendingToDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending to Desktop'**
+  String get desktopHandoverSendingToDesktop;
+
+  /// No description provided for @desktopHandoverFileCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} files'**
+  String desktopHandoverFileCount(int count);
+
+  /// No description provided for @desktopClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get desktopClose;
+
+  /// No description provided for @desktopContinueImporting.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue Importing'**
+  String get desktopContinueImporting;
+
+  /// No description provided for @desktopHandoverToDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Handover to Desktop'**
+  String get desktopHandoverToDesktop;
+
+  /// No description provided for @desktopHandoverProcessingMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing is in progress. Handover will cancel the current processing and send files to desktop.'**
+  String get desktopHandoverProcessingMessage;
+
+  /// No description provided for @desktopHandover.
+  ///
+  /// In en, this message translates to:
+  /// **'Handover'**
+  String get desktopHandover;
+
+  /// Says which visit a document attached without the AI was filed under, for example "Checkup, 03/11/2026".
+  ///
+  /// In en, this message translates to:
+  /// **'Attached to {visit}.'**
+  String documentAttachedTo(String visit);
+
+  /// No description provided for @cameraPermissionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera Permission Required'**
+  String get cameraPermissionRequired;
+
+  /// No description provided for @cameraPermissionRequiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This app needs camera access to scan. Please grant permission to continue.'**
+  String get cameraPermissionRequiredMessage;
+
+  /// No description provided for @cameraPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera Permission Denied'**
+  String get cameraPermissionDenied;
+
+  /// No description provided for @cameraPermissionDeniedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera permission has been permanently denied. Please enable it in Settings to use the scanner.'**
+  String get cameraPermissionDeniedMessage;
+
+  /// No description provided for @successTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Success!'**
+  String get successTitle;
+
+  /// No description provided for @attachmentSuccessMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully attached {count} documents to the encounter.'**
+  String attachmentSuccessMessage(int count);
+
+  /// No description provided for @encounterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Encounter'**
+  String get encounterLabel;
+
+  /// No description provided for @viewRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'View Records'**
+  String get viewRecords;
+
+  /// No description provided for @errorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get errorTitle;
+
+  /// No description provided for @somethingWentWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get somethingWentWrong;
+
+  /// No description provided for @importDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Document'**
+  String get importDocument;
+
+  /// No description provided for @pickImageFromGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick Image from Gallery'**
+  String get pickImageFromGallery;
+
+  /// No description provided for @scanDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan Document'**
+  String get scanDocument;
+
+  /// No description provided for @deleteSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Session'**
+  String get deleteSession;
+
+  /// No description provided for @deleteSessionConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this session?'**
+  String get deleteSessionConfirmation;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @canceling.
+  ///
+  /// In en, this message translates to:
+  /// **'Canceling...'**
+  String get canceling;
+
+  /// No description provided for @waitingForAiToFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for AI to finish...'**
+  String get waitingForAiToFinish;
+
+  /// No description provided for @logsCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs copied'**
+  String get logsCopied;
+
+  /// No description provided for @download.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get download;
+
+  /// No description provided for @active.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get active;
+
+  /// No description provided for @tapToSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to select'**
+  String get tapToSelect;
+
+  /// No description provided for @deviceInfoChip.
+  ///
+  /// In en, this message translates to:
+  /// **'{platform}  •  {ramGB}GB RAM  •  {cores} cores  •  ~{estimatedMB}MB needed'**
+  String deviceInfoChip(
+    String platform,
+    String ramGB,
+    int cores,
+    int estimatedMB,
+  );
+
+  /// No description provided for @downloadContinuesInBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'You can navigate away - download will continue in background.\nCheck notifications for progress.'**
+  String get downloadContinuesInBackground;
+
+  /// No description provided for @continueWithoutAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue without AI (download in background)'**
+  String get continueWithoutAi;
+
+  /// No description provided for @continueUsingApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue using app'**
+  String get continueUsingApp;
+
+  /// No description provided for @attachWithoutProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'I want to attach the document without processing'**
+  String get attachWithoutProcessing;
+
+  /// No description provided for @currentPatientAndSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Patient & Source'**
+  String get currentPatientAndSource;
+
+  /// No description provided for @createEncounter.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Encounter'**
+  String get createEncounter;
+
+  /// No description provided for @encounterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Encounter name'**
+  String get encounterName;
+
+  /// No description provided for @enterEncounterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter encounter name'**
+  String get enterEncounterName;
+
+  /// No description provided for @pleaseEnterEncounterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter an encounter name'**
+  String get pleaseEnterEncounterName;
+
+  /// No description provided for @date.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get date;
+
+  /// No description provided for @create.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get create;
+
+  /// No description provided for @searchEncounters.
+  ///
+  /// In en, this message translates to:
+  /// **'Search encounters...'**
+  String get searchEncounters;
+
+  /// No description provided for @noEncountersFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No encounters found'**
+  String get noEncountersFound;
+
+  /// No description provided for @noEncountersFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a new encounter first or select a different patient.'**
+  String get noEncountersFoundMessage;
+
+  /// No description provided for @newEncounterPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'New encounter'**
+  String get newEncounterPrefix;
+
+  /// No description provided for @scannedDocumentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanned Documents'**
+  String get scannedDocumentsTitle;
+
+  /// No description provided for @scannedDocumentsPagesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanned Documents ({count} pages)'**
+  String scannedDocumentsPagesTitle(String count);
+
+  /// No description provided for @pdfFileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF: {fileName}'**
+  String pdfFileTitle(String fileName);
+
+  /// No description provided for @labelOrganizationName.
+  ///
+  /// In en, this message translates to:
+  /// **'Organization Name'**
+  String get labelOrganizationName;
+
+  /// No description provided for @labelAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get labelAddress;
+
+  /// No description provided for @labelPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get labelPhone;
+
+  /// No description provided for @labelEncounterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Encounter Name'**
+  String get labelEncounterName;
+
+  /// No description provided for @labelStartDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Date'**
+  String get labelStartDate;
+
+  /// No description provided for @labelFirstName.
+  ///
+  /// In en, this message translates to:
+  /// **'First name'**
+  String get labelFirstName;
+
+  /// No description provided for @labelFamilyName.
+  ///
+  /// In en, this message translates to:
+  /// **'Family name'**
+  String get labelFamilyName;
+
+  /// No description provided for @labelDateOfBirth.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of birth'**
+  String get labelDateOfBirth;
+
+  /// No description provided for @labelGender.
+  ///
+  /// In en, this message translates to:
+  /// **'Gender'**
+  String get labelGender;
+
+  /// No description provided for @labelReportName.
+  ///
+  /// In en, this message translates to:
+  /// **'Report Name'**
+  String get labelReportName;
+
+  /// No description provided for @labelConclusion.
+  ///
+  /// In en, this message translates to:
+  /// **'Conclusion'**
+  String get labelConclusion;
+
+  /// No description provided for @labelIssuedDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Issued Date'**
+  String get labelIssuedDate;
+
+  /// No description provided for @labelPractitionerName.
+  ///
+  /// In en, this message translates to:
+  /// **'Practitioner Name'**
+  String get labelPractitionerName;
+
+  /// No description provided for @labelSpecialty.
+  ///
+  /// In en, this message translates to:
+  /// **'Specialty'**
+  String get labelSpecialty;
+
+  /// No description provided for @labelIdentifier.
+  ///
+  /// In en, this message translates to:
+  /// **'Identifier'**
+  String get labelIdentifier;
+
+  /// No description provided for @labelConditionName.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition Name'**
+  String get labelConditionName;
+
+  /// No description provided for @labelOnsetDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Onset Date'**
+  String get labelOnsetDate;
+
+  /// No description provided for @labelClinicalStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Clinical Status'**
+  String get labelClinicalStatus;
+
+  /// No description provided for @labelSubstance.
+  ///
+  /// In en, this message translates to:
+  /// **'Substance'**
+  String get labelSubstance;
+
+  /// No description provided for @labelManifestation.
+  ///
+  /// In en, this message translates to:
+  /// **'Manifestation'**
+  String get labelManifestation;
+
+  /// No description provided for @labelCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get labelCategory;
+
+  /// No description provided for @labelProcedureName.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedure Name'**
+  String get labelProcedureName;
+
+  /// No description provided for @labelPerformedDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Performed Date'**
+  String get labelPerformedDate;
+
+  /// No description provided for @labelReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get labelReason;
+
+  /// No description provided for @labelMedicationName.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication Name'**
+  String get labelMedicationName;
+
+  /// No description provided for @labelDosage.
+  ///
+  /// In en, this message translates to:
+  /// **'Dosage'**
+  String get labelDosage;
+
+  /// No description provided for @labelObservationName.
+  ///
+  /// In en, this message translates to:
+  /// **'Observation name'**
+  String get labelObservationName;
+
+  /// No description provided for @labelValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get labelValue;
+
+  /// No description provided for @labelUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get labelUnit;
+
+  /// No description provided for @labelReferenceRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference Range'**
+  String get labelReferenceRange;
+
+  /// No description provided for @permissionsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions Required'**
+  String get permissionsRequired;
+
+  /// No description provided for @recordsSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String recordsSelectedCount(int count);
+
+  /// No description provided for @noRecordsSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No records selected'**
+  String get noRecordsSelected;
+
+  /// No description provided for @select.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get select;
+
+  /// No description provided for @selectRecordsBeforeSharing.
+  ///
+  /// In en, this message translates to:
+  /// **'Select records\nbefore sharing'**
+  String get selectRecordsBeforeSharing;
+
+  /// No description provided for @selectRecordToViewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a record to view details'**
+  String get selectRecordToViewDetails;
+
+  /// No description provided for @recordDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Record Details'**
+  String get recordDetails;
+
+  /// No description provided for @viewDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'View Document'**
+  String get viewDocument;
+
+  /// No description provided for @encounterDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Encounter details'**
+  String get encounterDetails;
+
+  /// No description provided for @relatedResources.
+  ///
+  /// In en, this message translates to:
+  /// **'Related resources'**
+  String get relatedResources;
+
+  /// No description provided for @deletePlusRelated.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete + {count} related'**
+  String deletePlusRelated(int count);
+
+  /// No description provided for @relatedResourcesKeptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Related resources are kept unless you select them below.'**
+  String get relatedResourcesKeptHint;
+
+  /// No description provided for @relatedResourcesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Related resources ({count})'**
+  String relatedResourcesCount(int count);
+
+  /// No description provided for @fileNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'File not available on this device'**
+  String get fileNotAvailable;
+
+  /// No description provided for @failedToLoadImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load image'**
+  String get failedToLoadImage;
+
+  /// No description provided for @notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get notes;
+
+  /// No description provided for @noNotesAttached.
+  ///
+  /// In en, this message translates to:
+  /// **'This record has no notes attached'**
+  String get noNotesAttached;
+
+  /// No description provided for @addNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Add note'**
+  String get addNote;
+
+  /// No description provided for @editNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit note'**
+  String get editNote;
+
+  /// No description provided for @filters.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get filters;
+
+  /// No description provided for @timeRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Time Range'**
+  String get timeRange;
+
+  /// No description provided for @applyFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply filters'**
+  String get applyFilters;
+
+  /// No description provided for @recordType.
+  ///
+  /// In en, this message translates to:
+  /// **'Record type'**
+  String get recordType;
+
+  /// No description provided for @specialty.
+  ///
+  /// In en, this message translates to:
+  /// **'Specialty'**
+  String get specialty;
+
+  /// No description provided for @allSpecialties.
+  ///
+  /// In en, this message translates to:
+  /// **'All Specialties'**
+  String get allSpecialties;
+
+  /// No description provided for @selectedRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected Range'**
+  String get selectedRange;
+
+  /// No description provided for @noRangeSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No range selected'**
+  String get noRangeSelected;
+
+  /// No description provided for @clearDateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear date range'**
+  String get clearDateRange;
+
+  /// No description provided for @start.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get start;
+
+  /// No description provided for @end.
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get end;
+
+  /// No description provided for @fromDate.
+  ///
+  /// In en, this message translates to:
+  /// **'From {date}'**
+  String fromDate(String date);
+
+  /// No description provided for @untilDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Until {date}'**
+  String untilDate(String date);
+
+  /// No description provided for @day.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get day;
+
+  /// No description provided for @month.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get month;
+
+  /// No description provided for @year.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get year;
+
+  /// No description provided for @mediaInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Media Info'**
+  String get mediaInfo;
+
+  /// No description provided for @linkToEncounter.
+  ///
+  /// In en, this message translates to:
+  /// **'Link to Encounter'**
+  String get linkToEncounter;
+
+  /// No description provided for @noPdfDataAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No PDF data available'**
+  String get noPdfDataAvailable;
+
+  /// No description provided for @failedToLoadPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load PDF document'**
+  String get failedToLoadPdf;
+
+  /// No description provided for @fileOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open this file. Please try again.'**
+  String get fileOpenFailed;
+
+  /// No description provided for @mediaInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Media Information'**
+  String get mediaInformation;
+
+  /// No description provided for @mediaInfoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title:'**
+  String get mediaInfoTitle;
+
+  /// No description provided for @mediaInfoType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type:'**
+  String get mediaInfoType;
+
+  /// No description provided for @mediaInfoStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status:'**
+  String get mediaInfoStatus;
+
+  /// No description provided for @mediaInfoPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient:'**
+  String get mediaInfoPatient;
+
+  /// No description provided for @mediaInfoEncounter.
+  ///
+  /// In en, this message translates to:
+  /// **'Encounter:'**
+  String get mediaInfoEncounter;
+
+  /// No description provided for @mediaInfoFileSize.
+  ///
+  /// In en, this message translates to:
+  /// **'File Size:'**
+  String get mediaInfoFileSize;
+
+  /// No description provided for @mediaInfoCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created:'**
+  String get mediaInfoCreated;
+
+  /// No description provided for @mediaInfoResourceId.
+  ///
+  /// In en, this message translates to:
+  /// **'Resource ID:'**
+  String get mediaInfoResourceId;
+
+  /// No description provided for @mediaInfoSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source:'**
+  String get mediaInfoSource;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @linkMediaToEncounterDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Link this media resource to an encounter:'**
+  String get linkMediaToEncounterDescription;
+
+  /// No description provided for @encounterId.
+  ///
+  /// In en, this message translates to:
+  /// **'Encounter ID'**
+  String get encounterId;
+
+  /// No description provided for @encounterIdHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., encounter-123'**
+  String get encounterIdHint;
+
+  /// No description provided for @mediaLinkedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Media linked to encounter successfully'**
+  String get mediaLinkedSuccess;
+
+  /// No description provided for @linkMediaFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not link the media to the encounter. Please try again.'**
+  String get linkMediaFailed;
+
+  /// No description provided for @link.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get link;
+
+  /// No description provided for @connectionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection'**
+  String get connectionLabel;
+
+  /// No description provided for @connectionStatusConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get connectionStatusConnected;
+
+  /// No description provided for @connectionStatusConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting...'**
+  String get connectionStatusConnecting;
+
+  /// No description provided for @connectionStatusDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected'**
+  String get connectionStatusDisconnected;
+
+  /// No description provided for @connectionStatusNotPaired.
+  ///
+  /// In en, this message translates to:
+  /// **'Not paired'**
+  String get connectionStatusNotPaired;
+
+  /// No description provided for @syncLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync'**
+  String get syncLabel;
+
+  /// No description provided for @syncStatusSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing...'**
+  String get syncStatusSyncing;
+
+  /// No description provided for @syncStatusNotSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Not synced'**
+  String get syncStatusNotSynced;
+
+  /// No description provided for @syncStatusInSync.
+  ///
+  /// In en, this message translates to:
+  /// **'In sync'**
+  String get syncStatusInSync;
+
+  /// No description provided for @syncStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 change waiting} other{{count} changes waiting}}'**
+  String syncStatusPending(int count);
+
+  /// No description provided for @backupLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get backupLabel;
+
+  /// No description provided for @backupStatusWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Working...'**
+  String get backupStatusWorking;
+
+  /// No description provided for @backupStatusNoBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'No backup'**
+  String get backupStatusNoBackup;
+
+  /// No description provided for @backupStatusBackingUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Backing up...'**
+  String get backupStatusBackingUp;
+
+  /// No description provided for @backupStatusRestoring.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring...'**
+  String get backupStatusRestoring;
+
+  /// No description provided for @backupStatusWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting...'**
+  String get backupStatusWaiting;
+
+  /// No description provided for @backupStatusNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected'**
+  String get backupStatusNotConnected;
+
+  /// No description provided for @backupStatusNoFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'No backup folder'**
+  String get backupStatusNoFolder;
+
+  /// No description provided for @backupStatusNoDesktopFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'No folder on desktop'**
+  String get backupStatusNoDesktopFolder;
+
+  /// No description provided for @backupNoFolderChosen.
+  ///
+  /// In en, this message translates to:
+  /// **'No folder chosen'**
+  String get backupNoFolderChosen;
+
+  /// No description provided for @chooseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose'**
+  String get chooseLabel;
+
+  /// No description provided for @exportIpsPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Export IPS (PDF)'**
+  String get exportIpsPdf;
+
+  /// No description provided for @addIpsToAppleWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Add IPS to Apple Wallet'**
+  String get addIpsToAppleWallet;
+
+  /// No description provided for @addIpsToGoogleWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Add IPS to Google Wallet'**
+  String get addIpsToGoogleWallet;
+
+  /// No description provided for @shareSelectedRecordsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read the selected records. Please try again.'**
+  String get shareSelectedRecordsFailed;
+
+  /// No description provided for @ipsExportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t export your health summary. Please try again.'**
+  String get ipsExportFailed;
+
+  /// No description provided for @walletPassFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t add the pass to your wallet. Please try again.'**
+  String get walletPassFailed;
+
+  /// No description provided for @sourcesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sources'**
+  String get sourcesTitle;
+
+  /// No description provided for @emergencyMedicalId.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Medical ID'**
+  String get emergencyMedicalId;
+
+  /// No description provided for @phoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get phoneLabel;
+
+  /// No description provided for @allergiesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Allergies'**
+  String get allergiesLabel;
+
+  /// No description provided for @medicalConditionsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical Conditions'**
+  String get medicalConditionsLabel;
+
+  /// No description provided for @medicationsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Medications'**
+  String get medicationsLabel;
+
+  /// No description provided for @conditionsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Conditions'**
+  String get conditionsLabel;
+
+  /// No description provided for @dateOfBirthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of Birth'**
+  String get dateOfBirthLabel;
+
+  /// No description provided for @emergencyPhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Phone'**
+  String get emergencyPhoneLabel;
+
+  /// No description provided for @openingScanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening scanner...'**
+  String get openingScanner;
+
+  /// No description provided for @activeScanSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Active scan sessions:'**
+  String get activeScanSessions;
+
+  /// No description provided for @noScansYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No scans yet'**
+  String get noScansYet;
+
+  /// No description provided for @scanOrImportToGetStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan or import documents to get started'**
+  String get scanOrImportToGetStarted;
+
+  /// No description provided for @pageOfTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {total}'**
+  String pageOfTotal(String current, String total);
+
+  /// No description provided for @fileNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'File not found'**
+  String get fileNotFound;
+
+  /// No description provided for @fileIsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'File is empty'**
+  String get fileIsEmpty;
+
+  /// No description provided for @importTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get importTitle;
+
+  /// No description provided for @activeImportSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Active import sessions:'**
+  String get activeImportSessions;
+
+  /// No description provided for @dropToImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop to import'**
+  String get dropToImport;
+
+  /// No description provided for @dropFilesHereToImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop files here to import'**
+  String get dropFilesHereToImport;
+
+  /// No description provided for @supportedFileFormats.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF, JPG, PNG, TIFF'**
+  String get supportedFileFormats;
+
+  /// No description provided for @browseFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse Files'**
+  String get browseFiles;
+
+  /// No description provided for @noImportsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No imports yet'**
+  String get noImportsYet;
+
+  /// No description provided for @importOrScanToGetStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Import or scan documents to get started'**
+  String get importOrScanToGetStarted;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsTitle;
+
+  /// No description provided for @noNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications'**
+  String get noNotifications;
+
+  /// No description provided for @cancelDownloadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Download'**
+  String get cancelDownloadTitle;
+
+  /// No description provided for @cancelDownloadMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to cancel the AI Model download? You can restart it later.'**
+  String get cancelDownloadMessage;
+
+  /// No description provided for @processingDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing done'**
+  String get processingDone;
+
+  /// No description provided for @pairedWithDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Paired with {deviceName}'**
+  String pairedWithDevice(String deviceName);
+
+  /// No description provided for @deviceSyncLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Device Sync'**
+  String get deviceSyncLabel;
+
+  /// No description provided for @disconnectLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get disconnectLabel;
+
+  /// No description provided for @changeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get changeLabel;
+
+  /// No description provided for @minimizeToTray.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimize to tray'**
+  String get minimizeToTray;
+
+  /// No description provided for @changeSpecialty.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Specialty'**
+  String get changeSpecialty;
+
+  /// No description provided for @changeSpecialtyConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to change the specialty to'**
+  String get changeSpecialtyConfirm;
+
+  /// No description provided for @removeSpecialtyConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to remove the specialty from this record?'**
+  String get removeSpecialtyConfirm;
+
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirm;
+
+  /// No description provided for @currentRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Current record'**
+  String get currentRecord;
+
+  /// No description provided for @vitalHeartRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Heart Rate'**
+  String get vitalHeartRate;
+
+  /// No description provided for @vitalBloodPressure.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood Pressure'**
+  String get vitalBloodPressure;
+
+  /// No description provided for @vitalTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature'**
+  String get vitalTemperature;
+
+  /// No description provided for @vitalBloodOxygen.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood Oxygen'**
+  String get vitalBloodOxygen;
+
+  /// No description provided for @vitalRespiratoryRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Respiratory Rate'**
+  String get vitalRespiratoryRate;
+
+  /// No description provided for @vitalWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get vitalWeight;
+
+  /// No description provided for @vitalHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Height'**
+  String get vitalHeight;
+
+  /// No description provided for @vitalBmi.
+  ///
+  /// In en, this message translates to:
+  /// **'BMI'**
+  String get vitalBmi;
+
+  /// No description provided for @vitalBloodGlucose.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood Glucose'**
+  String get vitalBloodGlucose;
+
+  /// No description provided for @vitalSystolicBloodPressure.
+  ///
+  /// In en, this message translates to:
+  /// **'Systolic Blood Pressure'**
+  String get vitalSystolicBloodPressure;
+
+  /// No description provided for @vitalDiastolicBloodPressure.
+  ///
+  /// In en, this message translates to:
+  /// **'Diastolic Blood Pressure'**
+  String get vitalDiastolicBloodPressure;
+
+  /// No description provided for @unitBeatsPerMinute.
+  ///
+  /// In en, this message translates to:
+  /// **'beats/min'**
+  String get unitBeatsPerMinute;
+
+  /// No description provided for @unitBreathsPerMinute.
+  ///
+  /// In en, this message translates to:
+  /// **'breaths/min'**
+  String get unitBreathsPerMinute;
+
+  /// No description provided for @unitPounds.
+  ///
+  /// In en, this message translates to:
+  /// **'pounds'**
+  String get unitPounds;
+
+  /// No description provided for @unitInches.
+  ///
+  /// In en, this message translates to:
+  /// **'inches'**
+  String get unitInches;
+
+  /// No description provided for @unitKilograms.
+  ///
+  /// In en, this message translates to:
+  /// **'kilograms'**
+  String get unitKilograms;
+
+  /// No description provided for @unitCentimeters.
+  ///
+  /// In en, this message translates to:
+  /// **'centimeters'**
+  String get unitCentimeters;
+
+  /// No description provided for @specialtyAllergology.
+  ///
+  /// In en, this message translates to:
+  /// **'Allergology'**
+  String get specialtyAllergology;
+
+  /// No description provided for @specialtyCardiology.
+  ///
+  /// In en, this message translates to:
+  /// **'Cardiology'**
+  String get specialtyCardiology;
+
+  /// No description provided for @specialtyDental.
+  ///
+  /// In en, this message translates to:
+  /// **'Dental'**
+  String get specialtyDental;
+
+  /// No description provided for @specialtyDermatology.
+  ///
+  /// In en, this message translates to:
+  /// **'Dermatology'**
+  String get specialtyDermatology;
+
+  /// No description provided for @specialtyEmergencyMedicine.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Medicine'**
+  String get specialtyEmergencyMedicine;
+
+  /// No description provided for @specialtyEndocrinology.
+  ///
+  /// In en, this message translates to:
+  /// **'Endocrinology'**
+  String get specialtyEndocrinology;
+
+  /// No description provided for @specialtyGastroenterology.
+  ///
+  /// In en, this message translates to:
+  /// **'Gastroenterology'**
+  String get specialtyGastroenterology;
+
+  /// No description provided for @specialtyGeneralCare.
+  ///
+  /// In en, this message translates to:
+  /// **'General Care'**
+  String get specialtyGeneralCare;
+
+  /// No description provided for @specialtyGynecology.
+  ///
+  /// In en, this message translates to:
+  /// **'Gynecology'**
+  String get specialtyGynecology;
+
+  /// No description provided for @specialtyNephrology.
+  ///
+  /// In en, this message translates to:
+  /// **'Nephrology'**
+  String get specialtyNephrology;
+
+  /// No description provided for @specialtyNeurology.
+  ///
+  /// In en, this message translates to:
+  /// **'Neurology'**
+  String get specialtyNeurology;
+
+  /// No description provided for @specialtyOncology.
+  ///
+  /// In en, this message translates to:
+  /// **'Oncology'**
+  String get specialtyOncology;
+
+  /// No description provided for @specialtyOphthalmology.
+  ///
+  /// In en, this message translates to:
+  /// **'Ophthalmology'**
+  String get specialtyOphthalmology;
+
+  /// No description provided for @specialtyOrthopedics.
+  ///
+  /// In en, this message translates to:
+  /// **'Orthopedics'**
+  String get specialtyOrthopedics;
+
+  /// No description provided for @specialtyPsychiatry.
+  ///
+  /// In en, this message translates to:
+  /// **'Psychiatry'**
+  String get specialtyPsychiatry;
+
+  /// No description provided for @specialtyPulmonology.
+  ///
+  /// In en, this message translates to:
+  /// **'Pulmonology'**
+  String get specialtyPulmonology;
+
+  /// No description provided for @specialtyRheumatology.
+  ///
+  /// In en, this message translates to:
+  /// **'Rheumatology'**
+  String get specialtyRheumatology;
+
+  /// No description provided for @specialtyUrology.
+  ///
+  /// In en, this message translates to:
+  /// **'Urology'**
+  String get specialtyUrology;
+
+  /// No description provided for @categoryAllergies.
+  ///
+  /// In en, this message translates to:
+  /// **'Allergies'**
+  String get categoryAllergies;
+
+  /// No description provided for @categoryCareTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'Care Team'**
+  String get categoryCareTeam;
+
+  /// No description provided for @categoryClinicalNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Clinical Notes'**
+  String get categoryClinicalNotes;
+
+  /// No description provided for @categoryFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get categoryFiles;
+
+  /// No description provided for @categoryLabResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Lab Results'**
+  String get categoryLabResults;
+
+  /// No description provided for @categoryHealthIssues.
+  ///
+  /// In en, this message translates to:
+  /// **'Health Issues'**
+  String get categoryHealthIssues;
+
+  /// No description provided for @categoryFacilities.
+  ///
+  /// In en, this message translates to:
+  /// **'Facilities'**
+  String get categoryFacilities;
+
+  /// No description provided for @categoryHealthGoals.
+  ///
+  /// In en, this message translates to:
+  /// **'Health Goals'**
+  String get categoryHealthGoals;
+
+  /// No description provided for @categoryImmunizations.
+  ///
+  /// In en, this message translates to:
+  /// **'Immunizations'**
+  String get categoryImmunizations;
+
+  /// No description provided for @categoryMedications.
+  ///
+  /// In en, this message translates to:
+  /// **'Medications'**
+  String get categoryMedications;
+
+  /// No description provided for @categoryDemographics.
+  ///
+  /// In en, this message translates to:
+  /// **'Demographics'**
+  String get categoryDemographics;
+
+  /// No description provided for @categoryProcedures.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedures'**
+  String get categoryProcedures;
+
+  /// No description provided for @categoryHealthInsurance.
+  ///
+  /// In en, this message translates to:
+  /// **'Health Insurance'**
+  String get categoryHealthInsurance;
+
+  /// No description provided for @fhirTypeAdverseEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Adverse Event'**
+  String get fhirTypeAdverseEvent;
+
+  /// No description provided for @fhirTypeAllergyIntolerance.
+  ///
+  /// In en, this message translates to:
+  /// **'Allergy'**
+  String get fhirTypeAllergyIntolerance;
+
+  /// No description provided for @fhirTypeBinary.
+  ///
+  /// In en, this message translates to:
+  /// **'Binary'**
+  String get fhirTypeBinary;
+
+  /// No description provided for @fhirTypeCareTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'Care Team'**
+  String get fhirTypeCareTeam;
+
+  /// No description provided for @fhirTypeClaim.
+  ///
+  /// In en, this message translates to:
+  /// **'Claim'**
+  String get fhirTypeClaim;
+
+  /// No description provided for @fhirTypeCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition'**
+  String get fhirTypeCondition;
+
+  /// No description provided for @fhirTypeCoverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Coverage'**
+  String get fhirTypeCoverage;
+
+  /// No description provided for @fhirTypeDiagnosticReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostic Report'**
+  String get fhirTypeDiagnosticReport;
+
+  /// No description provided for @fhirTypeDocumentReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Document'**
+  String get fhirTypeDocumentReference;
+
+  /// No description provided for @fhirTypeEncounter.
+  ///
+  /// In en, this message translates to:
+  /// **'Encounter'**
+  String get fhirTypeEncounter;
+
+  /// No description provided for @fhirTypeExplanationOfBenefit.
+  ///
+  /// In en, this message translates to:
+  /// **'Explanation of Benefit'**
+  String get fhirTypeExplanationOfBenefit;
+
+  /// No description provided for @fhirTypeGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal'**
+  String get fhirTypeGoal;
+
+  /// No description provided for @fhirTypeImmunization.
+  ///
+  /// In en, this message translates to:
+  /// **'Immunization'**
+  String get fhirTypeImmunization;
+
+  /// No description provided for @fhirTypeLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get fhirTypeLocation;
+
+  /// No description provided for @fhirTypeMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Media'**
+  String get fhirTypeMedia;
+
+  /// No description provided for @fhirTypeMedication.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication'**
+  String get fhirTypeMedication;
+
+  /// No description provided for @fhirTypeMedicationAdministration.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication Administration'**
+  String get fhirTypeMedicationAdministration;
+
+  /// No description provided for @fhirTypeMedicationDispense.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication Dispense'**
+  String get fhirTypeMedicationDispense;
+
+  /// No description provided for @fhirTypeMedicationRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication Request'**
+  String get fhirTypeMedicationRequest;
+
+  /// No description provided for @fhirTypeMedicationStatement.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication Statement'**
+  String get fhirTypeMedicationStatement;
+
+  /// No description provided for @fhirTypeObservation.
+  ///
+  /// In en, this message translates to:
+  /// **'Observation'**
+  String get fhirTypeObservation;
+
+  /// No description provided for @fhirTypeOrganization.
+  ///
+  /// In en, this message translates to:
+  /// **'Organization'**
+  String get fhirTypeOrganization;
+
+  /// No description provided for @fhirTypePatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient'**
+  String get fhirTypePatient;
+
+  /// No description provided for @fhirTypePractitioner.
+  ///
+  /// In en, this message translates to:
+  /// **'Practitioner'**
+  String get fhirTypePractitioner;
+
+  /// No description provided for @fhirTypePractitionerRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Practitioner Role'**
+  String get fhirTypePractitionerRole;
+
+  /// No description provided for @fhirTypeProcedure.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedure'**
+  String get fhirTypeProcedure;
+
+  /// No description provided for @fhirTypeRelatedPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Related Person'**
+  String get fhirTypeRelatedPerson;
+
+  /// No description provided for @fhirTypeServiceRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Service Request'**
+  String get fhirTypeServiceRequest;
+
+  /// No description provided for @fhirTypeSpecimen.
+  ///
+  /// In en, this message translates to:
+  /// **'Specimen'**
+  String get fhirTypeSpecimen;
+
+  /// No description provided for @fhirTypeGeneralResource.
+  ///
+  /// In en, this message translates to:
+  /// **'Resource'**
+  String get fhirTypeGeneralResource;
+
+  /// No description provided for @processingOriginScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan'**
+  String get processingOriginScan;
+
+  /// No description provided for @processingOriginImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get processingOriginImport;
+
+  /// No description provided for @processingOriginHandover.
+  ///
+  /// In en, this message translates to:
+  /// **'Handover'**
+  String get processingOriginHandover;
+
+  /// No description provided for @processingStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get processingStatusPending;
+
+  /// No description provided for @processingStatusProcessingPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing Patient'**
+  String get processingStatusProcessingPatient;
+
+  /// No description provided for @processingStatusPatientExtracted.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient Extracted'**
+  String get processingStatusPatientExtracted;
+
+  /// No description provided for @processingStatusProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing'**
+  String get processingStatusProcessing;
+
+  /// No description provided for @processingStatusDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get processingStatusDraft;
+
+  /// No description provided for @processingStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get processingStatusCancelled;
+
+  /// No description provided for @showAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Show All'**
+  String get showAll;
+
+  /// No description provided for @showLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Less'**
+  String get showLess;
+
+  /// No description provided for @all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get all;
+
+  /// No description provided for @gotIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get gotIt;
+
+  /// No description provided for @homeSpecialties.
+  ///
+  /// In en, this message translates to:
+  /// **'Specialties'**
+  String get homeSpecialties;
+
+  /// No description provided for @homeResources.
+  ///
+  /// In en, this message translates to:
+  /// **'Resources'**
+  String get homeResources;
+
+  /// No description provided for @homeDefaultUserName.
+  ///
+  /// In en, this message translates to:
+  /// **'User'**
+  String get homeDefaultUserName;
+
+  /// No description provided for @selectSpecialty.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Specialty'**
+  String get selectSpecialty;
+
+  /// No description provided for @removeSpecialty.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Specialty'**
+  String get removeSpecialty;
+
+  /// No description provided for @chooseRecordsForDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the records you want to see on your dashboard.'**
+  String get chooseRecordsForDashboard;
+
+  /// No description provided for @selectAtLeastOneRecordType.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one record type to continue.'**
+  String get selectAtLeastOneRecordType;
+
+  /// No description provided for @chooseVitalsForDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the vitals you want to see on your dashboard.'**
+  String get chooseVitalsForDashboard;
+
+  /// No description provided for @selectAtLeastOneVital.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one vital sign to continue.'**
+  String get selectAtLeastOneVital;
+
+  /// No description provided for @chooseSpecialtiesForDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the specialities you want to see on your dashboard.'**
+  String get chooseSpecialtiesForDashboard;
+
+  /// No description provided for @selectAtLeastOneSpecialty.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one specialty to continue.'**
+  String get selectAtLeastOneSpecialty;
+
+  /// No description provided for @selectAtLeastOneItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one item to continue.'**
+  String get selectAtLeastOneItem;
+
+  /// No description provided for @sourceSectionWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'WALLET'**
+  String get sourceSectionWallet;
+
+  /// No description provided for @sourceSectionEhr.
+  ///
+  /// In en, this message translates to:
+  /// **'EHR SOURCES'**
+  String get sourceSectionEhr;
+
+  /// No description provided for @areYouSure.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure?'**
+  String get areYouSure;
+
+  /// No description provided for @resourceNotViewable.
+  ///
+  /// In en, this message translates to:
+  /// **'This resource is not a viewable file'**
+  String get resourceNotViewable;
+
+  /// No description provided for @noFilePathFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No file path found'**
+  String get noFilePathFound;
+
+  /// No description provided for @desktopDiscovering.
+  ///
+  /// In en, this message translates to:
+  /// **'Discovering...'**
+  String get desktopDiscovering;
+
+  /// No description provided for @desktopTransportWifi.
+  ///
+  /// In en, this message translates to:
+  /// **'WiFi'**
+  String get desktopTransportWifi;
+
+  /// No description provided for @desktopTransportDirect.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct'**
+  String get desktopTransportDirect;
+
+  /// No description provided for @desktopDeviceSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Device Sync'**
+  String get desktopDeviceSync;
+
+  /// No description provided for @desktopBackupLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get desktopBackupLocation;
+
+  /// No description provided for @desktopBackupHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get desktopBackupHistory;
+
+  /// No description provided for @desktopPairedWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Paired with {name}'**
+  String desktopPairedWith(String name);
+
+  /// No description provided for @desktopMobileDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile Device'**
+  String get desktopMobileDevice;
+
+  /// No description provided for @desktopRemoteBackupName.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote {date}'**
+  String desktopRemoteBackupName(String date);
+
+  /// No description provided for @desktopNoBackupLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'No backup location set on desktop. Open the desktop app and choose a backup folder first.'**
+  String get desktopNoBackupLocation;
+
+  /// No description provided for @desktopBackupFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup failed. Please try again.'**
+  String get desktopBackupFailed;
+
+  /// No description provided for @desktopBackupActionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update the backups. Please try again.'**
+  String get desktopBackupActionFailed;
+
+  /// No description provided for @desktopSyncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed. Check the connection and try again.'**
+  String get desktopSyncFailed;
+
+  /// No description provided for @desktopHandoverTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get desktopHandoverTransfer;
+
+  /// No description provided for @desktopHandoverNoActive.
+  ///
+  /// In en, this message translates to:
+  /// **'No active handovers'**
+  String get desktopHandoverNoActive;
+
+  /// No description provided for @desktopHandoverSendFromPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Send documents from your phone.'**
+  String get desktopHandoverSendFromPhone;
+
+  /// No description provided for @desktopHandoverFilesProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{received}/{total} files'**
+  String desktopHandoverFilesProgress(String received, String total);
+
+  /// No description provided for @desktopHandoverTransferComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer complete'**
+  String get desktopHandoverTransferComplete;
+
+  /// No description provided for @desktopHandoverReceivingFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiving files...'**
+  String get desktopHandoverReceivingFiles;
+
+  /// No description provided for @desktopHandoverStatusError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get desktopHandoverStatusError;
+
+  /// No description provided for @desktopHandoverNotAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'The desktop did not answer. Make sure HealthWallet is open and up to date on it.'**
+  String get desktopHandoverNotAccepted;
+
+  /// No description provided for @desktopHandoverFileMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'A document could not be found on this device.'**
+  String get desktopHandoverFileMissing;
+
+  /// No description provided for @desktopHandoverCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get desktopHandoverCancelled;
+
+  /// No description provided for @desktopHandoverFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing failed. Please try again.'**
+  String get desktopHandoverFailed;
+
+  /// No description provided for @trayShowWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Window'**
+  String get trayShowWindow;
+
+  /// No description provided for @trayHideWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Window'**
+  String get trayHideWindow;
+
+  /// No description provided for @trayNoDeviceConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'No device connected'**
+  String get trayNoDeviceConnected;
+
+  /// No description provided for @traySyncStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync: {status}'**
+  String traySyncStatus(String status);
+
+  /// No description provided for @trayUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to date'**
+  String get trayUpToDate;
+
+  /// No description provided for @trayQuit.
+  ///
+  /// In en, this message translates to:
+  /// **'Quit {appName}'**
+  String trayQuit(String appName);
+
+  /// No description provided for @biometricAuthReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Please authenticate to access your HealthWallet.me'**
+  String get biometricAuthReason;
+
+  /// No description provided for @sourceUploadedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded {date}'**
+  String sourceUploadedOn(String date);
+
+  /// No description provided for @shareStatusReadyToShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to share'**
+  String get shareStatusReadyToShare;
+
+  /// No description provided for @shareStatusWaitingForSender.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for sender...'**
+  String get shareStatusWaitingForSender;
+
+  /// No description provided for @shareStatusPermissionsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions required'**
+  String get shareStatusPermissionsRequired;
+
+  /// No description provided for @shareStatusEnablePermissionsInSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enable permissions in Settings'**
+  String get shareStatusEnablePermissionsInSettings;
+
+  /// No description provided for @shareSelectAtLeastOneRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select at least one record'**
+  String get shareSelectAtLeastOneRecord;
+
+  /// No description provided for @shareStatusLookingForDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for nearby devices...'**
+  String get shareStatusLookingForDevices;
+
+  /// No description provided for @shareStatusTransferFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer failed'**
+  String get shareStatusTransferFailed;
+
+  /// No description provided for @shareStatusConfirmExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to exit? Data will be deleted.'**
+  String get shareStatusConfirmExit;
+
+  /// No description provided for @shareStatusViewingRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Viewing 1 record} other{Viewing {count} records}}'**
+  String shareStatusViewingRecords(int count);
+
+  /// No description provided for @shareStatusViewingRecordsFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Viewing 1 record from {deviceName}} other{Viewing {count} records from {deviceName}}}'**
+  String shareStatusViewingRecordsFrom(int count, String deviceName);
+
+  /// No description provided for @shareStatusDataDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Data has been securely deleted'**
+  String get shareStatusDataDeleted;
+
+  /// No description provided for @shareStatusSessionExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Session expired'**
+  String get shareStatusSessionExpired;
+
+  /// No description provided for @shareStatusTerminatingSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminating remote session...'**
+  String get shareStatusTerminatingSession;
+
+  /// No description provided for @shareStatusSessionTerminated.
+  ///
+  /// In en, this message translates to:
+  /// **'Session terminated'**
+  String get shareStatusSessionTerminated;
+
+  /// No description provided for @shareStatusRemoteSessionTerminated.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote session terminated'**
+  String get shareStatusRemoteSessionTerminated;
+
+  /// No description provided for @shareStatusExtensionDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Extension request was declined'**
+  String get shareStatusExtensionDeclined;
+
+  /// No description provided for @shareStatusReceiverViewing.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiver is viewing records - monitoring session'**
+  String get shareStatusReceiverViewing;
+
+  /// No description provided for @shareStatusReceiverDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiver declined invitation'**
+  String get shareStatusReceiverDeclined;
+
+  /// No description provided for @shareStatusReceivingFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiving records from {deviceName}...'**
+  String shareStatusReceivingFrom(String deviceName);
+
+  /// No description provided for @shareNoDataAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No data available'**
+  String get shareNoDataAvailable;
+
+  /// No description provided for @shareStatusDeviceWantsToShare.
+  ///
+  /// In en, this message translates to:
+  /// **'{deviceName} wants to share records'**
+  String shareStatusDeviceWantsToShare(String deviceName);
+
+  /// No description provided for @shareStatusScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning for devices...'**
+  String get shareStatusScanning;
+
+  /// No description provided for @shareStatusFoundDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Found 1 device} other{Found {count} devices}}'**
+  String shareStatusFoundDevices(int count);
+
+  /// No description provided for @shareStatusConnectingTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to {deviceName}...'**
+  String shareStatusConnectingTo(String deviceName);
+
+  /// No description provided for @shareStatusPreparingRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing records...'**
+  String get shareStatusPreparingRecords;
+
+  /// No description provided for @shareErrorPrepareFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to prepare files for sending'**
+  String get shareErrorPrepareFiles;
+
+  /// No description provided for @shareStatusTransferring.
+  ///
+  /// In en, this message translates to:
+  /// **'Transferring {percent}%'**
+  String shareStatusTransferring(int percent);
+
+  /// No description provided for @shareStatusRecordsSentWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Records sent - waiting for receiver to accept'**
+  String get shareStatusRecordsSentWaiting;
+
+  /// No description provided for @shareStatusTransferCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer cancelled'**
+  String get shareStatusTransferCancelled;
+
+  /// No description provided for @shareStatusInvitationRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation rejected'**
+  String get shareStatusInvitationRejected;
+
+  /// No description provided for @shareErrorParseData.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to parse received data'**
+  String get shareErrorParseData;
+
+  /// No description provided for @shareStatusProcessingReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing received records...'**
+  String get shareStatusProcessingReceived;
+
+  /// No description provided for @shareErrorParseFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to parse received file'**
+  String get shareErrorParseFile;
+
+  /// No description provided for @shareStatusCompareWithSender.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare the code with the sender'**
+  String get shareStatusCompareWithSender;
+
+  /// No description provided for @shareStatusCompareWithReceiver.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare the code with the receiver'**
+  String get shareStatusCompareWithReceiver;
+
+  /// No description provided for @shareStatusRecordsSentAwaitingViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Records sent - waiting for receiver to open them'**
+  String get shareStatusRecordsSentAwaitingViewer;
+
+  /// No description provided for @shareErrorOlderVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'This share came from an older version of HealthWallet. Update the app on both phones and try again.'**
+  String get shareErrorOlderVersion;
+
+  /// No description provided for @shareErrorSecureConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t set up a secure connection with the other phone. Try sharing again.'**
+  String get shareErrorSecureConnection;
+
+  /// No description provided for @shareStatusSecureConnectionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Secure connection failed'**
+  String get shareStatusSecureConnectionFailed;
+
+  /// No description provided for @shareIncomingHealthRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming Health Records'**
+  String get shareIncomingHealthRecords;
+
+  /// No description provided for @shareDeviceWantsToShareHealthRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'{deviceName} wants to share health records with you'**
+  String shareDeviceWantsToShareHealthRecords(String deviceName);
+
+  /// No description provided for @sharePermissionExplanationIos.
+  ///
+  /// In en, this message translates to:
+  /// **'To share records with nearby devices, HealthWallet needs access to:\n\n• Bluetooth - to discover and connect to nearby devices\n\nThis allows you to securely share health records with other devices nearby.'**
+  String get sharePermissionExplanationIos;
+
+  /// No description provided for @sharePermissionExplanationAndroid.
+  ///
+  /// In en, this message translates to:
+  /// **'To share records with nearby devices, HealthWallet needs access to:\n\n• Bluetooth - to discover and connect to nearby devices\n• Location/Nearby Devices - required by Android to scan for Bluetooth and WiFi Direct devices\n\nYour location is never stored or transmitted.'**
+  String get sharePermissionExplanationAndroid;
+
+  /// No description provided for @sharePermissionsDeniedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Please grant all permissions to share records with nearby devices.'**
+  String get sharePermissionsDeniedMessage;
+
+  /// No description provided for @sharePermissionsPermanentlyDeniedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Some permissions were denied. Please enable them in Settings to use this feature.'**
+  String get sharePermissionsPermanentlyDeniedMessage;
+
+  /// No description provided for @shareDurationRequested.
   ///
   /// In en, this message translates to:
   /// **'{duration} requested'**
-  String shareExtensionDurationRequested(String duration);
+  String shareDurationRequested(String duration);
+
+  /// No description provided for @noAttachments.
+  ///
+  /// In en, this message translates to:
+  /// **'No attachments'**
+  String get noAttachments;
+
+  /// No description provided for @attachingFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Attaching files...'**
+  String get attachingFiles;
+
+  /// No description provided for @addAttachment.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Attachment'**
+  String get addAttachment;
+
+  /// No description provided for @noFileName.
+  ///
+  /// In en, this message translates to:
+  /// **'No file name'**
+  String get noFileName;
+
+  /// No description provided for @attachmentFileOfTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'( {current} of {total} files )'**
+  String attachmentFileOfTotal(int current, int total);
+
+  /// No description provided for @showDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Details'**
+  String get showDetails;
+
+  /// No description provided for @viewRelated.
+  ///
+  /// In en, this message translates to:
+  /// **'View Related'**
+  String get viewRelated;
+
+  /// No description provided for @hideRelated.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Related'**
+  String get hideRelated;
+
+  /// No description provided for @noRelatedResourcesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No related resources found'**
+  String get noRelatedResourcesFound;
+
+  /// No description provided for @loadingRelatedResources.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading related resources...'**
+  String get loadingRelatedResources;
+
+  /// No description provided for @noRelatedResourcesForEncounter.
+  ///
+  /// In en, this message translates to:
+  /// **'No related resources found for this encounter'**
+  String get noRelatedResourcesForEncounter;
+
+  /// No description provided for @cannotAttachToDocumentReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot attach files to DocumentReference resources'**
+  String get cannotAttachToDocumentReference;
+
+  /// No description provided for @attachToEncounterLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the patients and encounters. Please try again.'**
+  String get attachToEncounterLoadFailed;
+
+  /// No description provided for @attachFileFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The file could not be attached. Please try again.'**
+  String get attachFileFailed;
+
+  /// No description provided for @attachmentDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The attachment could not be deleted. Please try again.'**
+  String get attachmentDeleteFailed;
+
+  /// No description provided for @deleteRecordOfType.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {type}'**
+  String deleteRecordOfType(String type);
+
+  /// No description provided for @dateFilterEndBeforeStart.
+  ///
+  /// In en, this message translates to:
+  /// **'End date must be after start date'**
+  String get dateFilterEndBeforeStart;
+
+  /// No description provided for @dateFilterChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Date: {range}'**
+  String dateFilterChip(String range);
+
+  /// No description provided for @aiModelCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'An error appeared while checking model existence'**
+  String get aiModelCheckFailed;
+
+  /// No description provided for @aiModelDownloadingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading {modelName}'**
+  String aiModelDownloadingTitle(String modelName);
+
+  /// No description provided for @aiModelDownloadStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting download...'**
+  String get aiModelDownloadStarting;
+
+  /// No description provided for @aiModelReadyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{modelName} Ready'**
+  String aiModelReadyTitle(String modelName);
+
+  /// No description provided for @aiModelDownloadedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{modelName} has been downloaded successfully.'**
+  String aiModelDownloadedMessage(String modelName);
+
+  /// No description provided for @aiModelDownloadFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Failed'**
+  String get aiModelDownloadFailedTitle;
+
+  /// No description provided for @aiModelDownloadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'AI model download failed. Please check your connection and try again.'**
+  String get aiModelDownloadFailedMessage;
+
+  /// No description provided for @aiModelDownloadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed'**
+  String get aiModelDownloadFailed;
+
+  /// No description provided for @aiModelDownloadWasCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'AI model download was cancelled'**
+  String get aiModelDownloadWasCancelled;
+
+  /// No description provided for @aiModelDownloadCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Download cancelled'**
+  String get aiModelDownloadCancelled;
+
+  /// No description provided for @aiModelDownloadingPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading... {percent}%'**
+  String aiModelDownloadingPercent(String percent);
+
+  /// No description provided for @processingNoImagesGenerated.
+  ///
+  /// In en, this message translates to:
+  /// **'No images were generated from the scan. Please try scanning again.'**
+  String get processingNoImagesGenerated;
+
+  /// No description provided for @processingPatientMatched.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} patient matched'**
+  String processingPatientMatched(String origin);
+
+  /// No description provided for @processingPatientInfoExtracted.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} patient info extracted'**
+  String processingPatientInfoExtracted(String origin);
+
+  /// No description provided for @processingFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} processing finished'**
+  String processingFinished(String origin);
+
+  /// No description provided for @scanFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The scan failed. Please try again.'**
+  String get scanFailed;
+
+  /// No description provided for @noValidFilesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No valid files found'**
+  String get noValidFilesFound;
+
+  /// No description provided for @importDocumentFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t import the document. Please try again.'**
+  String get importDocumentFailed;
+
+  /// No description provided for @couldNotOpenLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open link. Please try again.'**
+  String get couldNotOpenLink;
+
+  /// No description provided for @importFilesFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the selected files. Please try again.'**
+  String get importFilesFailed;
+
+  /// No description provided for @continueProcessingOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue processing on Desktop'**
+  String get continueProcessingOnDesktop;
+
+  /// No description provided for @handoverSendFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not send the document to the desktop. Please try again.'**
+  String get handoverSendFailed;
+
+  /// No description provided for @deleteResourcesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Resources'**
+  String get deleteResourcesTitle;
+
+  /// No description provided for @switchToDiagnosticReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to Diagnostic Report'**
+  String get switchToDiagnosticReport;
+
+  /// No description provided for @switchToEncounter.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to Encounter'**
+  String get switchToEncounter;
+
+  /// No description provided for @previewDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview document'**
+  String get previewDocument;
+
+  /// No description provided for @summaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get summaryTitle;
+
+  /// No description provided for @pagesAvailableForProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Total: {count} page available for processing} other{Total: {count} pages available for processing}}'**
+  String pagesAvailableForProcessing(int count);
+
+  /// No description provided for @betaBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Beta'**
+  String get betaBadge;
+
+  /// No description provided for @pleaseSelectSpecialty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a specialty'**
+  String get pleaseSelectSpecialty;
+
+  /// No description provided for @patientAndSourceInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient & Source Information'**
+  String get patientAndSourceInformation;
+
+  /// No description provided for @noPatientsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No patients available'**
+  String get noPatientsAvailable;
+
+  /// No description provided for @selectPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Select patient'**
+  String get selectPatient;
+
+  /// No description provided for @unknownPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Patient'**
+  String get unknownPatient;
+
+  /// No description provided for @documentPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Document Preview'**
+  String get documentPreview;
+
+  /// No description provided for @filePathLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Path: {path}'**
+  String filePathLabel(String path);
+
+  /// No description provided for @confidenceMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium confidence'**
+  String get confidenceMedium;
+
+  /// No description provided for @confidenceLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low confidence'**
+  String get confidenceLow;
+
+  /// No description provided for @dateFormatHintIso.
+  ///
+  /// In en, this message translates to:
+  /// **'YYYY-MM-DD'**
+  String get dateFormatHintIso;
+
+  /// No description provided for @retryStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry (Step {step})'**
+  String retryStep(int step);
+
+  /// No description provided for @failedToCreateEncounter.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to create encounter: {error}'**
+  String failedToCreateEncounter(String error);
+
+  /// No description provided for @fieldAccessionNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Accession Number'**
+  String get fieldAccessionNumber;
+
+  /// No description provided for @fieldAchievementStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Achievement Status'**
+  String get fieldAchievementStatus;
+
+  /// No description provided for @fieldActuality.
+  ///
+  /// In en, this message translates to:
+  /// **'Actuality'**
+  String get fieldActuality;
+
+  /// No description provided for @fieldAdditionalInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional Information'**
+  String get fieldAdditionalInformation;
+
+  /// No description provided for @fieldAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get fieldAddress;
+
+  /// No description provided for @fieldAddresses.
+  ///
+  /// In en, this message translates to:
+  /// **'Addresses'**
+  String get fieldAddresses;
+
+  /// No description provided for @fieldAdministeredBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Administered By'**
+  String get fieldAdministeredBy;
+
+  /// No description provided for @fieldAdmissionSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Admission Source'**
+  String get fieldAdmissionSource;
+
+  /// No description provided for @fieldAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert'**
+  String get fieldAlert;
+
+  /// No description provided for @fieldAllergyDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Allergy Details'**
+  String get fieldAllergyDetails;
+
+  /// No description provided for @fieldAlsoKnownAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Also Known As'**
+  String get fieldAlsoKnownAs;
+
+  /// No description provided for @fieldAsserter.
+  ///
+  /// In en, this message translates to:
+  /// **'Asserter'**
+  String get fieldAsserter;
+
+  /// No description provided for @fieldAttachmentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachment Title'**
+  String get fieldAttachmentTitle;
+
+  /// No description provided for @fieldAuthenticatedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Authenticated By'**
+  String get fieldAuthenticatedBy;
+
+  /// No description provided for @fieldAuthor.
+  ///
+  /// In en, this message translates to:
+  /// **'Author'**
+  String get fieldAuthor;
+
+  /// No description provided for @fieldAvailabilityExceptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Availability Exceptions'**
+  String get fieldAvailabilityExceptions;
+
+  /// No description provided for @fieldAvailabilityNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Availability Notes'**
+  String get fieldAvailabilityNotes;
+
+  /// No description provided for @fieldBasedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Based On'**
+  String get fieldBasedOn;
+
+  /// No description provided for @fieldBasicInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic Information'**
+  String get fieldBasicInformation;
+
+  /// No description provided for @fieldBeneficiary.
+  ///
+  /// In en, this message translates to:
+  /// **'Beneficiary'**
+  String get fieldBeneficiary;
+
+  /// No description provided for @fieldBillablePeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Billable Period'**
+  String get fieldBillablePeriod;
+
+  /// No description provided for @fieldBirthDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Birth Date'**
+  String get fieldBirthDate;
+
+  /// No description provided for @fieldBirthPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Birth Place'**
+  String get fieldBirthPlace;
+
+  /// No description provided for @fieldBirthSex.
+  ///
+  /// In en, this message translates to:
+  /// **'Birth Sex'**
+  String get fieldBirthSex;
+
+  /// No description provided for @fieldBodySite.
+  ///
+  /// In en, this message translates to:
+  /// **'Body Site'**
+  String get fieldBodySite;
+
+  /// No description provided for @fieldCareTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'Care Team'**
+  String get fieldCareTeam;
+
+  /// No description provided for @fieldCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get fieldCategory;
+
+  /// No description provided for @fieldClinicalNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Clinical Notes'**
+  String get fieldClinicalNotes;
+
+  /// No description provided for @fieldClinicalStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Clinical Status'**
+  String get fieldClinicalStatus;
+
+  /// No description provided for @fieldCollectedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Collected By'**
+  String get fieldCollectedBy;
+
+  /// No description provided for @fieldCollectionDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection Date'**
+  String get fieldCollectionDate;
+
+  /// No description provided for @fieldCollectionDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection Duration'**
+  String get fieldCollectionDuration;
+
+  /// No description provided for @fieldCollectionInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection Information'**
+  String get fieldCollectionInformation;
+
+  /// No description provided for @fieldCollectionMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection Method'**
+  String get fieldCollectionMethod;
+
+  /// No description provided for @fieldCollectionPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection Period'**
+  String get fieldCollectionPeriod;
+
+  /// No description provided for @fieldComplicationDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Complication Details'**
+  String get fieldComplicationDetails;
+
+  /// No description provided for @fieldComplications.
+  ///
+  /// In en, this message translates to:
+  /// **'Complications'**
+  String get fieldComplications;
+
+  /// No description provided for @fieldConclusion.
+  ///
+  /// In en, this message translates to:
+  /// **'Conclusion'**
+  String get fieldConclusion;
+
+  /// No description provided for @fieldConclusionCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Conclusion Code'**
+  String get fieldConclusionCode;
+
+  /// No description provided for @fieldCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition'**
+  String get fieldCondition;
+
+  /// No description provided for @fieldContactEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Email'**
+  String get fieldContactEmail;
+
+  /// No description provided for @fieldContactInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Information'**
+  String get fieldContactInformation;
+
+  /// No description provided for @fieldContactPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Person'**
+  String get fieldContactPerson;
+
+  /// No description provided for @fieldContactPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Phone'**
+  String get fieldContactPhone;
+
+  /// No description provided for @fieldContainerAdditive.
+  ///
+  /// In en, this message translates to:
+  /// **'Container Additive'**
+  String get fieldContainerAdditive;
+
+  /// No description provided for @fieldContainerCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Container Capacity'**
+  String get fieldContainerCapacity;
+
+  /// No description provided for @fieldContainerType.
+  ///
+  /// In en, this message translates to:
+  /// **'Container Type'**
+  String get fieldContainerType;
+
+  /// No description provided for @fieldContainers.
+  ///
+  /// In en, this message translates to:
+  /// **'Containers'**
+  String get fieldContainers;
+
+  /// No description provided for @fieldContentType.
+  ///
+  /// In en, this message translates to:
+  /// **'Content Type'**
+  String get fieldContentType;
+
+  /// No description provided for @fieldContext.
+  ///
+  /// In en, this message translates to:
+  /// **'Context'**
+  String get fieldContext;
+
+  /// No description provided for @fieldContract.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract'**
+  String get fieldContract;
+
+  /// No description provided for @fieldCostSharing.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost Sharing'**
+  String get fieldCostSharing;
+
+  /// No description provided for @fieldCourseOfTherapy.
+  ///
+  /// In en, this message translates to:
+  /// **'Course of Therapy'**
+  String get fieldCourseOfTherapy;
+
+  /// No description provided for @fieldCoverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Coverage'**
+  String get fieldCoverage;
+
+  /// No description provided for @fieldCoverageClass.
+  ///
+  /// In en, this message translates to:
+  /// **'Coverage Class'**
+  String get fieldCoverageClass;
+
+  /// No description provided for @fieldCoverageDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Coverage Details'**
+  String get fieldCoverageDetails;
+
+  /// No description provided for @fieldCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get fieldCreated;
+
+  /// No description provided for @fieldCriticality.
+  ///
+  /// In en, this message translates to:
+  /// **'Criticality'**
+  String get fieldCriticality;
+
+  /// No description provided for @fieldCustodian.
+  ///
+  /// In en, this message translates to:
+  /// **'Custodian'**
+  String get fieldCustodian;
+
+  /// No description provided for @fieldDataAbsentReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Absent Reason'**
+  String get fieldDataAbsentReason;
+
+  /// No description provided for @fieldDateGiven.
+  ///
+  /// In en, this message translates to:
+  /// **'Date Given'**
+  String get fieldDateGiven;
+
+  /// No description provided for @fieldDatePerformed.
+  ///
+  /// In en, this message translates to:
+  /// **'Date Performed'**
+  String get fieldDatePerformed;
+
+  /// No description provided for @fieldDaysSupply.
+  ///
+  /// In en, this message translates to:
+  /// **'Days Supply'**
+  String get fieldDaysSupply;
+
+  /// No description provided for @fieldDependent.
+  ///
+  /// In en, this message translates to:
+  /// **'Dependent'**
+  String get fieldDependent;
+
+  /// No description provided for @fieldDerivedFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Derived From'**
+  String get fieldDerivedFrom;
+
+  /// No description provided for @fieldDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get fieldDescription;
+
+  /// No description provided for @fieldDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'Detected'**
+  String get fieldDetected;
+
+  /// No description provided for @fieldDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Device'**
+  String get fieldDevice;
+
+  /// No description provided for @fieldDiagnoses.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnoses'**
+  String get fieldDiagnoses;
+
+  /// No description provided for @fieldDietPreference.
+  ///
+  /// In en, this message translates to:
+  /// **'Diet Preference'**
+  String get fieldDietPreference;
+
+  /// No description provided for @fieldDimensions.
+  ///
+  /// In en, this message translates to:
+  /// **'Dimensions'**
+  String get fieldDimensions;
+
+  /// No description provided for @fieldDischargeDisposition.
+  ///
+  /// In en, this message translates to:
+  /// **'Discharge Disposition'**
+  String get fieldDischargeDisposition;
+
+  /// No description provided for @fieldDischargeTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Discharge To'**
+  String get fieldDischargeTo;
+
+  /// No description provided for @fieldDisposition.
+  ///
+  /// In en, this message translates to:
+  /// **'Disposition'**
+  String get fieldDisposition;
+
+  /// No description provided for @fieldDocumentDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Document Details'**
+  String get fieldDocumentDetails;
+
+  /// No description provided for @fieldDocumentId.
+  ///
+  /// In en, this message translates to:
+  /// **'Document ID'**
+  String get fieldDocumentId;
+
+  /// No description provided for @fieldDocumentStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Document Status'**
+  String get fieldDocumentStatus;
+
+  /// No description provided for @fieldDosage.
+  ///
+  /// In en, this message translates to:
+  /// **'Dosage'**
+  String get fieldDosage;
+
+  /// No description provided for @fieldDose.
+  ///
+  /// In en, this message translates to:
+  /// **'Dose'**
+  String get fieldDose;
+
+  /// No description provided for @fieldDoseQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Dose Quantity'**
+  String get fieldDoseQuantity;
+
+  /// No description provided for @fieldDriversLicenseNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver\'s License Number'**
+  String get fieldDriversLicenseNumber;
+
+  /// No description provided for @fieldDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get fieldDuration;
+
+  /// No description provided for @fieldEducationProvided.
+  ///
+  /// In en, this message translates to:
+  /// **'Education Provided'**
+  String get fieldEducationProvided;
+
+  /// No description provided for @fieldEffective.
+  ///
+  /// In en, this message translates to:
+  /// **'Effective'**
+  String get fieldEffective;
+
+  /// No description provided for @fieldEffectiveDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Effective Dates'**
+  String get fieldEffectiveDates;
+
+  /// No description provided for @fieldEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get fieldEmail;
+
+  /// No description provided for @fieldEmergency.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency'**
+  String get fieldEmergency;
+
+  /// No description provided for @fieldEncounterType.
+  ///
+  /// In en, this message translates to:
+  /// **'Encounter Type'**
+  String get fieldEncounterType;
+
+  /// No description provided for @fieldEndpoints.
+  ///
+  /// In en, this message translates to:
+  /// **'Endpoints'**
+  String get fieldEndpoints;
+
+  /// No description provided for @fieldEpisodeOfCare.
+  ///
+  /// In en, this message translates to:
+  /// **'Episode of Care'**
+  String get fieldEpisodeOfCare;
+
+  /// No description provided for @fieldEthnicity.
+  ///
+  /// In en, this message translates to:
+  /// **'Ethnicity'**
+  String get fieldEthnicity;
+
+  /// No description provided for @fieldExpiration.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiration'**
+  String get fieldExpiration;
+
+  /// No description provided for @fieldExpirationDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiration Date'**
+  String get fieldExpirationDate;
+
+  /// No description provided for @fieldFacility.
+  ///
+  /// In en, this message translates to:
+  /// **'Facility'**
+  String get fieldFacility;
+
+  /// No description provided for @fieldFacilityDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Facility Details'**
+  String get fieldFacilityDetails;
+
+  /// No description provided for @fieldFacilityType.
+  ///
+  /// In en, this message translates to:
+  /// **'Facility Type'**
+  String get fieldFacilityType;
+
+  /// No description provided for @fieldFastingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Fasting Status'**
+  String get fieldFastingStatus;
+
+  /// No description provided for @fieldFax.
+  ///
+  /// In en, this message translates to:
+  /// **'Fax'**
+  String get fieldFax;
+
+  /// No description provided for @fieldFocalDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Focal Device'**
+  String get fieldFocalDevice;
+
+  /// No description provided for @fieldFollowUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up'**
+  String get fieldFollowUp;
+
+  /// No description provided for @fieldForm.
+  ///
+  /// In en, this message translates to:
+  /// **'Form'**
+  String get fieldForm;
+
+  /// No description provided for @fieldFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get fieldFormat;
+
+  /// No description provided for @fieldFundingSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Funding Source'**
+  String get fieldFundingSource;
+
+  /// No description provided for @fieldGender.
+  ///
+  /// In en, this message translates to:
+  /// **'Gender'**
+  String get fieldGender;
+
+  /// No description provided for @fieldGeneralPractitioner.
+  ///
+  /// In en, this message translates to:
+  /// **'General Practitioner'**
+  String get fieldGeneralPractitioner;
+
+  /// No description provided for @fieldGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal'**
+  String get fieldGoal;
+
+  /// No description provided for @fieldGoalDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal Details'**
+  String get fieldGoalDetails;
+
+  /// No description provided for @fieldGpsCoordinates.
+  ///
+  /// In en, this message translates to:
+  /// **'GPS Coordinates'**
+  String get fieldGpsCoordinates;
+
+  /// No description provided for @fieldGroupNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Group Number'**
+  String get fieldGroupNumber;
+
+  /// No description provided for @fieldHandedOver.
+  ///
+  /// In en, this message translates to:
+  /// **'Handed Over'**
+  String get fieldHandedOver;
+
+  /// No description provided for @fieldHealthcareFacility.
+  ///
+  /// In en, this message translates to:
+  /// **'Healthcare Facility'**
+  String get fieldHealthcareFacility;
+
+  /// No description provided for @fieldHealthcareService.
+  ///
+  /// In en, this message translates to:
+  /// **'Healthcare Service'**
+  String get fieldHealthcareService;
+
+  /// No description provided for @fieldHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Hours'**
+  String get fieldHours;
+
+  /// No description provided for @fieldHowToTake.
+  ///
+  /// In en, this message translates to:
+  /// **'How to Take'**
+  String get fieldHowToTake;
+
+  /// No description provided for @fieldIdentifiers.
+  ///
+  /// In en, this message translates to:
+  /// **'Identifiers'**
+  String get fieldIdentifiers;
+
+  /// No description provided for @fieldInformationSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Information Source'**
+  String get fieldInformationSource;
+
+  /// No description provided for @fieldIngredients.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredients'**
+  String get fieldIngredients;
+
+  /// No description provided for @fieldInstructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Instructions'**
+  String get fieldInstructions;
+
+  /// No description provided for @fieldInsuranceCompany.
+  ///
+  /// In en, this message translates to:
+  /// **'Insurance Company'**
+  String get fieldInsuranceCompany;
+
+  /// No description provided for @fieldInsurer.
+  ///
+  /// In en, this message translates to:
+  /// **'Insurer'**
+  String get fieldInsurer;
+
+  /// No description provided for @fieldIntent.
+  ///
+  /// In en, this message translates to:
+  /// **'Intent'**
+  String get fieldIntent;
+
+  /// No description provided for @fieldInterpreter.
+  ///
+  /// In en, this message translates to:
+  /// **'Interpreter'**
+  String get fieldInterpreter;
+
+  /// No description provided for @fieldItemsUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Items Used'**
+  String get fieldItemsUsed;
+
+  /// No description provided for @fieldLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get fieldLanguage;
+
+  /// No description provided for @fieldLanguages.
+  ///
+  /// In en, this message translates to:
+  /// **'Languages'**
+  String get fieldLanguages;
+
+  /// No description provided for @fieldLastOccurrence.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Occurrence'**
+  String get fieldLastOccurrence;
+
+  /// No description provided for @fieldLifecycleStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifecycle Status'**
+  String get fieldLifecycleStatus;
+
+  /// No description provided for @fieldLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get fieldLocation;
+
+  /// No description provided for @fieldLocationProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'Location & Provider'**
+  String get fieldLocationProvider;
+
+  /// No description provided for @fieldLotNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Lot Number'**
+  String get fieldLotNumber;
+
+  /// No description provided for @fieldManagingOrganization.
+  ///
+  /// In en, this message translates to:
+  /// **'Managing Organization'**
+  String get fieldManagingOrganization;
+
+  /// No description provided for @fieldManufacturer.
+  ///
+  /// In en, this message translates to:
+  /// **'Manufacturer'**
+  String get fieldManufacturer;
+
+  /// No description provided for @fieldMaritalStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Marital Status'**
+  String get fieldMaritalStatus;
+
+  /// No description provided for @fieldMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Media'**
+  String get fieldMedia;
+
+  /// No description provided for @fieldMedicalRecordNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical Record Number'**
+  String get fieldMedicalRecordNumber;
+
+  /// No description provided for @fieldMedication.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication'**
+  String get fieldMedication;
+
+  /// No description provided for @fieldMedicationDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication Details'**
+  String get fieldMedicationDetails;
+
+  /// No description provided for @fieldMemberId.
+  ///
+  /// In en, this message translates to:
+  /// **'Member ID'**
+  String get fieldMemberId;
+
+  /// No description provided for @fieldMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get fieldMembers;
+
+  /// No description provided for @fieldMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Method'**
+  String get fieldMethod;
+
+  /// No description provided for @fieldModality.
+  ///
+  /// In en, this message translates to:
+  /// **'Modality'**
+  String get fieldModality;
+
+  /// No description provided for @fieldMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Mode'**
+  String get fieldMode;
+
+  /// No description provided for @fieldMothersMaidenName.
+  ///
+  /// In en, this message translates to:
+  /// **'Mother\'s Maiden Name'**
+  String get fieldMothersMaidenName;
+
+  /// No description provided for @fieldMultipleBirth.
+  ///
+  /// In en, this message translates to:
+  /// **'Multiple Birth'**
+  String get fieldMultipleBirth;
+
+  /// No description provided for @fieldNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Network'**
+  String get fieldNetwork;
+
+  /// No description provided for @fieldNextDose.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Dose'**
+  String get fieldNextDose;
+
+  /// No description provided for @fieldNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get fieldNotes;
+
+  /// No description provided for @fieldOccurrence.
+  ///
+  /// In en, this message translates to:
+  /// **'Occurrence'**
+  String get fieldOccurrence;
+
+  /// No description provided for @fieldOnset.
+  ///
+  /// In en, this message translates to:
+  /// **'Onset'**
+  String get fieldOnset;
+
+  /// No description provided for @fieldOperationalStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Operational Status'**
+  String get fieldOperationalStatus;
+
+  /// No description provided for @fieldOperator.
+  ///
+  /// In en, this message translates to:
+  /// **'Operator'**
+  String get fieldOperator;
+
+  /// No description provided for @fieldOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Order'**
+  String get fieldOrder;
+
+  /// No description provided for @fieldOrderedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Ordered By'**
+  String get fieldOrderedBy;
+
+  /// No description provided for @fieldOrganization.
+  ///
+  /// In en, this message translates to:
+  /// **'Organization'**
+  String get fieldOrganization;
+
+  /// No description provided for @fieldOrganizationDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Organization Details'**
+  String get fieldOrganizationDetails;
+
+  /// No description provided for @fieldOutcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Outcome'**
+  String get fieldOutcome;
+
+  /// No description provided for @fieldOutcomeMeasurements.
+  ///
+  /// In en, this message translates to:
+  /// **'Outcome Measurements'**
+  String get fieldOutcomeMeasurements;
+
+  /// No description provided for @fieldPanelComponents.
+  ///
+  /// In en, this message translates to:
+  /// **'Panel Components'**
+  String get fieldPanelComponents;
+
+  /// No description provided for @fieldParentSpecimen.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent Specimen'**
+  String get fieldParentSpecimen;
+
+  /// No description provided for @fieldPartOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Part Of'**
+  String get fieldPartOf;
+
+  /// No description provided for @fieldPassportNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Passport Number'**
+  String get fieldPassportNumber;
+
+  /// No description provided for @fieldPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient'**
+  String get fieldPatient;
+
+  /// No description provided for @fieldPerformedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Performed By'**
+  String get fieldPerformedBy;
+
+  /// No description provided for @fieldPerformer.
+  ///
+  /// In en, this message translates to:
+  /// **'Performer'**
+  String get fieldPerformer;
+
+  /// No description provided for @fieldPerformerType.
+  ///
+  /// In en, this message translates to:
+  /// **'Performer Type'**
+  String get fieldPerformerType;
+
+  /// No description provided for @fieldPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get fieldPeriod;
+
+  /// No description provided for @fieldPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get fieldPhone;
+
+  /// No description provided for @fieldPhysicalType.
+  ///
+  /// In en, this message translates to:
+  /// **'Physical Type'**
+  String get fieldPhysicalType;
+
+  /// No description provided for @fieldPlanName.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan Name'**
+  String get fieldPlanName;
+
+  /// No description provided for @fieldPlanType.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan Type'**
+  String get fieldPlanType;
+
+  /// No description provided for @fieldPolicyHolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Policy Holder'**
+  String get fieldPolicyHolder;
+
+  /// No description provided for @fieldPracticeSetting.
+  ///
+  /// In en, this message translates to:
+  /// **'Practice Setting'**
+  String get fieldPracticeSetting;
+
+  /// No description provided for @fieldPractitioner.
+  ///
+  /// In en, this message translates to:
+  /// **'Practitioner'**
+  String get fieldPractitioner;
+
+  /// No description provided for @fieldPrepared.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepared'**
+  String get fieldPrepared;
+
+  /// No description provided for @fieldPrescribed.
+  ///
+  /// In en, this message translates to:
+  /// **'Prescribed'**
+  String get fieldPrescribed;
+
+  /// No description provided for @fieldPrescribedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Prescribed By'**
+  String get fieldPrescribedBy;
+
+  /// No description provided for @fieldPrimarySource.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary Source'**
+  String get fieldPrimarySource;
+
+  /// No description provided for @fieldPriority.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get fieldPriority;
+
+  /// No description provided for @fieldProcedureCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedure Code'**
+  String get fieldProcedureCode;
+
+  /// No description provided for @fieldProcedureDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedure Details'**
+  String get fieldProcedureDetails;
+
+  /// No description provided for @fieldProcessingStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing & Storage'**
+  String get fieldProcessingStorage;
+
+  /// No description provided for @fieldProfessionalInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Professional Information'**
+  String get fieldProfessionalInformation;
+
+  /// No description provided for @fieldProgramEligibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Program Eligibility'**
+  String get fieldProgramEligibility;
+
+  /// No description provided for @fieldProgressNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress Notes'**
+  String get fieldProgressNotes;
+
+  /// No description provided for @fieldProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'Provider'**
+  String get fieldProvider;
+
+  /// No description provided for @fieldQualification.
+  ///
+  /// In en, this message translates to:
+  /// **'Qualification'**
+  String get fieldQualification;
+
+  /// No description provided for @fieldQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get fieldQuantity;
+
+  /// No description provided for @fieldQuantityCollected.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity Collected'**
+  String get fieldQuantityCollected;
+
+  /// No description provided for @fieldRace.
+  ///
+  /// In en, this message translates to:
+  /// **'Race'**
+  String get fieldRace;
+
+  /// No description provided for @fieldRangeAppliesTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Range Applies To'**
+  String get fieldRangeAppliesTo;
+
+  /// No description provided for @fieldRangeNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Range Notes'**
+  String get fieldRangeNotes;
+
+  /// No description provided for @fieldReAdmission.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-admission'**
+  String get fieldReAdmission;
+
+  /// No description provided for @fieldReaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reaction'**
+  String get fieldReaction;
+
+  /// No description provided for @fieldReactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Reactions'**
+  String get fieldReactions;
+
+  /// No description provided for @fieldReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get fieldReason;
+
+  /// No description provided for @fieldReasonForVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason for Visit'**
+  String get fieldReasonForVisit;
+
+  /// No description provided for @fieldReceivedAtLab.
+  ///
+  /// In en, this message translates to:
+  /// **'Received at Lab'**
+  String get fieldReceivedAtLab;
+
+  /// No description provided for @fieldRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded'**
+  String get fieldRecorded;
+
+  /// No description provided for @fieldRecorder.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorder'**
+  String get fieldRecorder;
+
+  /// No description provided for @fieldReferenceRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference Range'**
+  String get fieldReferenceRange;
+
+  /// No description provided for @fieldRefills.
+  ///
+  /// In en, this message translates to:
+  /// **'Refills'**
+  String get fieldRefills;
+
+  /// No description provided for @fieldRelatedAppointment.
+  ///
+  /// In en, this message translates to:
+  /// **'Related Appointment'**
+  String get fieldRelatedAppointment;
+
+  /// No description provided for @fieldRelatedCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'Related Condition'**
+  String get fieldRelatedCondition;
+
+  /// No description provided for @fieldRelatedDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Related Document'**
+  String get fieldRelatedDocument;
+
+  /// No description provided for @fieldRelationship.
+  ///
+  /// In en, this message translates to:
+  /// **'Relationship'**
+  String get fieldRelationship;
+
+  /// No description provided for @fieldRelationshipToSubscriber.
+  ///
+  /// In en, this message translates to:
+  /// **'Relationship to Subscriber'**
+  String get fieldRelationshipToSubscriber;
+
+  /// No description provided for @fieldReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get fieldReport;
+
+  /// No description provided for @fieldReportedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Reported By'**
+  String get fieldReportedBy;
+
+  /// No description provided for @fieldRequestedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Requested By'**
+  String get fieldRequestedBy;
+
+  /// No description provided for @fieldRequester.
+  ///
+  /// In en, this message translates to:
+  /// **'Requester'**
+  String get fieldRequester;
+
+  /// No description provided for @fieldResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get fieldResolved;
+
+  /// No description provided for @fieldResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Result'**
+  String get fieldResult;
+
+  /// No description provided for @fieldResultDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Result Date'**
+  String get fieldResultDate;
+
+  /// No description provided for @fieldResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Results'**
+  String get fieldResults;
+
+  /// No description provided for @fieldRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get fieldRole;
+
+  /// No description provided for @fieldRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Route'**
+  String get fieldRoute;
+
+  /// No description provided for @fieldSecurityClassification.
+  ///
+  /// In en, this message translates to:
+  /// **'Security Classification'**
+  String get fieldSecurityClassification;
+
+  /// No description provided for @fieldSeries.
+  ///
+  /// In en, this message translates to:
+  /// **'Series'**
+  String get fieldSeries;
+
+  /// No description provided for @fieldSeriousness.
+  ///
+  /// In en, this message translates to:
+  /// **'Seriousness'**
+  String get fieldSeriousness;
+
+  /// No description provided for @fieldServicePeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Service Period'**
+  String get fieldServicePeriod;
+
+  /// No description provided for @fieldServiceType.
+  ///
+  /// In en, this message translates to:
+  /// **'Service Type'**
+  String get fieldServiceType;
+
+  /// No description provided for @fieldSetBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Set By'**
+  String get fieldSetBy;
+
+  /// No description provided for @fieldSeverity.
+  ///
+  /// In en, this message translates to:
+  /// **'Severity'**
+  String get fieldSeverity;
+
+  /// No description provided for @fieldSite.
+  ///
+  /// In en, this message translates to:
+  /// **'Site'**
+  String get fieldSite;
+
+  /// No description provided for @fieldSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get fieldSize;
+
+  /// No description provided for @fieldSpecialArrangements.
+  ///
+  /// In en, this message translates to:
+  /// **'Special Arrangements'**
+  String get fieldSpecialArrangements;
+
+  /// No description provided for @fieldSpecialty.
+  ///
+  /// In en, this message translates to:
+  /// **'Specialty'**
+  String get fieldSpecialty;
+
+  /// No description provided for @fieldSpecimenDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Specimen Details'**
+  String get fieldSpecimenDetails;
+
+  /// No description provided for @fieldSpecimenQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Specimen Quantity'**
+  String get fieldSpecimenQuantity;
+
+  /// No description provided for @fieldSpecimenType.
+  ///
+  /// In en, this message translates to:
+  /// **'Specimen Type'**
+  String get fieldSpecimenType;
+
+  /// No description provided for @fieldSpecimens.
+  ///
+  /// In en, this message translates to:
+  /// **'Specimens'**
+  String get fieldSpecimens;
+
+  /// No description provided for @fieldStage.
+  ///
+  /// In en, this message translates to:
+  /// **'Stage'**
+  String get fieldStage;
+
+  /// No description provided for @fieldStartDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Date'**
+  String get fieldStartDate;
+
+  /// No description provided for @fieldStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get fieldStatus;
+
+  /// No description provided for @fieldStatusDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Status Date'**
+  String get fieldStatusDate;
+
+  /// No description provided for @fieldStatusHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Status History'**
+  String get fieldStatusHistory;
+
+  /// No description provided for @fieldStatusReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Status Reason'**
+  String get fieldStatusReason;
+
+  /// FHIR status code 'active' of a record (condition, allergy, medication)
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get fhirStatusActive;
+
+  /// FHIR status code 'inactive'
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get fhirStatusInactive;
+
+  /// FHIR clinical status 'resolved' of a condition or allergy
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get fhirStatusResolved;
+
+  /// FHIR clinical status 'recurrence' of a condition
+  ///
+  /// In en, this message translates to:
+  /// **'Recurrence'**
+  String get fhirStatusRecurrence;
+
+  /// FHIR clinical status 'relapse' of a condition
+  ///
+  /// In en, this message translates to:
+  /// **'Relapse'**
+  String get fhirStatusRelapse;
+
+  /// FHIR clinical status 'remission' of a condition
+  ///
+  /// In en, this message translates to:
+  /// **'Remission'**
+  String get fhirStatusRemission;
+
+  /// FHIR verification status 'unconfirmed'
+  ///
+  /// In en, this message translates to:
+  /// **'Unconfirmed'**
+  String get fhirStatusUnconfirmed;
+
+  /// FHIR verification status 'provisional' of a condition
+  ///
+  /// In en, this message translates to:
+  /// **'Provisional'**
+  String get fhirStatusProvisional;
+
+  /// FHIR verification status 'differential' of a condition
+  ///
+  /// In en, this message translates to:
+  /// **'Differential'**
+  String get fhirStatusDifferential;
+
+  /// FHIR verification status 'confirmed'
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get fhirStatusConfirmed;
+
+  /// FHIR verification status 'refuted': the condition or allergy was ruled out
+  ///
+  /// In en, this message translates to:
+  /// **'Refuted'**
+  String get fhirStatusRefuted;
+
+  /// FHIR status 'entered-in-error': the record is not valid
+  ///
+  /// In en, this message translates to:
+  /// **'Entered in error'**
+  String get fhirStatusEnteredInError;
+
+  /// FHIR status 'on-hold'
+  ///
+  /// In en, this message translates to:
+  /// **'On hold'**
+  String get fhirStatusOnHold;
+
+  /// FHIR status 'cancelled'
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get fhirStatusCancelled;
+
+  /// FHIR status 'completed'
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get fhirStatusCompleted;
+
+  /// FHIR status 'stopped', e.g. a medication that is no longer taken
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get fhirStatusStopped;
+
+  /// FHIR status 'draft'
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get fhirStatusDraft;
+
+  /// FHIR status 'unknown'
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get fhirStatusUnknown;
+
+  /// FHIR medication statement status 'intended'
+  ///
+  /// In en, this message translates to:
+  /// **'Intended'**
+  String get fhirStatusIntended;
+
+  /// FHIR medication statement status 'not-taken'
+  ///
+  /// In en, this message translates to:
+  /// **'Not taken'**
+  String get fhirStatusNotTaken;
+
+  /// FHIR status 'in-progress'
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get fhirStatusInProgress;
+
+  /// FHIR status 'not-done', e.g. an immunization that was not given
+  ///
+  /// In en, this message translates to:
+  /// **'Not done'**
+  String get fhirStatusNotDone;
+
+  /// FHIR status 'preparation'
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation'**
+  String get fhirStatusPreparation;
+
+  /// FHIR medication dispense status 'declined'
+  ///
+  /// In en, this message translates to:
+  /// **'Declined'**
+  String get fhirStatusDeclined;
+
+  /// FHIR observation status 'registered'
+  ///
+  /// In en, this message translates to:
+  /// **'Registered'**
+  String get fhirStatusRegistered;
+
+  /// FHIR observation status 'preliminary'
+  ///
+  /// In en, this message translates to:
+  /// **'Preliminary'**
+  String get fhirStatusPreliminary;
+
+  /// FHIR observation status 'final'
+  ///
+  /// In en, this message translates to:
+  /// **'Final'**
+  String get fhirStatusFinal;
+
+  /// FHIR observation status 'amended'
+  ///
+  /// In en, this message translates to:
+  /// **'Amended'**
+  String get fhirStatusAmended;
+
+  /// FHIR observation status 'corrected'
+  ///
+  /// In en, this message translates to:
+  /// **'Corrected'**
+  String get fhirStatusCorrected;
+
+  /// Label of an observation's interpretation flag (high, low, critical)
+  ///
+  /// In en, this message translates to:
+  /// **'Interpretation'**
+  String get fieldInterpretation;
+
+  /// Observation interpretation code H
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get interpretationHigh;
+
+  /// Observation interpretation code L
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get interpretationLow;
+
+  /// Observation interpretation code N
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get interpretationNormal;
+
+  /// Observation interpretation code A
+  ///
+  /// In en, this message translates to:
+  /// **'Abnormal'**
+  String get interpretationAbnormal;
+
+  /// Observation interpretation code AA
+  ///
+  /// In en, this message translates to:
+  /// **'Critically abnormal'**
+  String get interpretationCriticallyAbnormal;
+
+  /// Observation interpretation code HH
+  ///
+  /// In en, this message translates to:
+  /// **'Critically high'**
+  String get interpretationCriticallyHigh;
+
+  /// Observation interpretation code LL
+  ///
+  /// In en, this message translates to:
+  /// **'Critically low'**
+  String get interpretationCriticallyLow;
+
+  /// Observation interpretation code HU
+  ///
+  /// In en, this message translates to:
+  /// **'Significantly high'**
+  String get interpretationSignificantlyHigh;
+
+  /// Observation interpretation code LU
+  ///
+  /// In en, this message translates to:
+  /// **'Significantly low'**
+  String get interpretationSignificantlyLow;
+
+  /// Observation interpretation code I (antimicrobial susceptibility)
+  ///
+  /// In en, this message translates to:
+  /// **'Intermediate'**
+  String get interpretationIntermediate;
+
+  /// Observation interpretation code R (antimicrobial susceptibility)
+  ///
+  /// In en, this message translates to:
+  /// **'Resistant'**
+  String get interpretationResistant;
+
+  /// Observation interpretation code S (antimicrobial susceptibility)
+  ///
+  /// In en, this message translates to:
+  /// **'Susceptible'**
+  String get interpretationSusceptible;
+
+  /// Observation interpretation code POS
+  ///
+  /// In en, this message translates to:
+  /// **'Positive'**
+  String get interpretationPositive;
+
+  /// Observation interpretation code NEG
+  ///
+  /// In en, this message translates to:
+  /// **'Negative'**
+  String get interpretationNegative;
+
+  /// Observation interpretation code DET
+  ///
+  /// In en, this message translates to:
+  /// **'Detected'**
+  String get interpretationDetected;
+
+  /// Observation interpretation code ND
+  ///
+  /// In en, this message translates to:
+  /// **'Not detected'**
+  String get interpretationNotDetected;
+
+  /// Observation interpretation code IND
+  ///
+  /// In en, this message translates to:
+  /// **'Indeterminate'**
+  String get interpretationIndeterminate;
+
+  /// Observation interpretation code E
+  ///
+  /// In en, this message translates to:
+  /// **'Equivocal'**
+  String get interpretationEquivocal;
+
+  /// No description provided for @fieldStrength.
+  ///
+  /// In en, this message translates to:
+  /// **'Strength'**
+  String get fieldStrength;
+
+  /// No description provided for @fieldSubpotent.
+  ///
+  /// In en, this message translates to:
+  /// **'Subpotent'**
+  String get fieldSubpotent;
+
+  /// No description provided for @fieldSubrogation.
+  ///
+  /// In en, this message translates to:
+  /// **'Subrogation'**
+  String get fieldSubrogation;
+
+  /// No description provided for @fieldSubscriber.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscriber'**
+  String get fieldSubscriber;
+
+  /// No description provided for @fieldSubstitution.
+  ///
+  /// In en, this message translates to:
+  /// **'Substitution'**
+  String get fieldSubstitution;
+
+  /// No description provided for @fieldSupplies.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplies'**
+  String get fieldSupplies;
+
+  /// No description provided for @fieldTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target'**
+  String get fieldTarget;
+
+  /// No description provided for @fieldTestDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Test Date'**
+  String get fieldTestDate;
+
+  /// No description provided for @fieldTimePeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Time Period'**
+  String get fieldTimePeriod;
+
+  /// No description provided for @fieldTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get fieldTotal;
+
+  /// No description provided for @fieldType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get fieldType;
+
+  /// No description provided for @fieldUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Use'**
+  String get fieldUse;
+
+  /// No description provided for @fieldVaccinationDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Vaccination Details'**
+  String get fieldVaccinationDetails;
+
+  /// No description provided for @fieldVaccine.
+  ///
+  /// In en, this message translates to:
+  /// **'Vaccine'**
+  String get fieldVaccine;
+
+  /// No description provided for @fieldValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get fieldValue;
+
+  /// No description provided for @fieldVerification.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification'**
+  String get fieldVerification;
+
+  /// No description provided for @fieldVerifiedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified By'**
+  String get fieldVerifiedBy;
+
+  /// No description provided for @fieldView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get fieldView;
+
+  /// No description provided for @fieldVisitDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit Details'**
+  String get fieldVisitDetails;
+
+  /// No description provided for @fieldVisitType.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit Type'**
+  String get fieldVisitType;
+
+  /// No description provided for @fieldWebsite.
+  ///
+  /// In en, this message translates to:
+  /// **'Website'**
+  String get fieldWebsite;
+
+  /// No description provided for @fieldDateOfBirth.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of Birth'**
+  String get fieldDateOfBirth;
+
+  /// No description provided for @fieldAge.
+  ///
+  /// In en, this message translates to:
+  /// **'Age'**
+  String get fieldAge;
+
+  /// No description provided for @fieldLastUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Updated'**
+  String get fieldLastUpdated;
+
+  /// No description provided for @fieldAdditive.
+  ///
+  /// In en, this message translates to:
+  /// **'Additive'**
+  String get fieldAdditive;
+
+  /// No description provided for @fieldTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get fieldTime;
+
+  /// No description provided for @fieldProcessingNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing {number}'**
+  String fieldProcessingNumber(int number);
+
+  /// No description provided for @inactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get inactive;
+
+  /// No description provided for @yes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get yes;
+
+  /// No description provided for @no.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get no;
+
+  /// No description provided for @moreCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} more'**
+  String moreCount(int count);
+
+  /// No description provided for @qualificationIssuedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'{qualification} (issued by {issuer})'**
+  String qualificationIssuedBy(String qualification, String issuer);
+
+  /// No description provided for @qualificationValidPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'{qualification} - Valid: {period}'**
+  String qualificationValidPeriod(String qualification, String period);
+
+  /// No description provided for @doseNumberOfTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Dose {dose} of {total}'**
+  String doseNumberOfTotal(String dose, String total);
+
+  /// No description provided for @doseNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Dose {dose}'**
+  String doseNumber(String dose);
+
+  /// No description provided for @immunizationPrimarySourceYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes (directly administered)'**
+  String get immunizationPrimarySourceYes;
+
+  /// No description provided for @immunizationPrimarySourceNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No (reported by patient or other source)'**
+  String get immunizationPrimarySourceNo;
+
+  /// No description provided for @immunizationReactionReported.
+  ///
+  /// In en, this message translates to:
+  /// **'Reaction reported'**
+  String get immunizationReactionReported;
+
+  /// No description provided for @immunizationNoReactions.
+  ///
+  /// In en, this message translates to:
+  /// **'No adverse reactions reported'**
+  String get immunizationNoReactions;
+
+  /// No description provided for @immunizationSeriesComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Not scheduled (series complete)'**
+  String get immunizationSeriesComplete;
+
+  /// No description provided for @immunizationSubpotent.
+  ///
+  /// In en, this message translates to:
+  /// **'Vaccine is subpotent'**
+  String get immunizationSubpotent;
+
+  /// No description provided for @documentPublished.
+  ///
+  /// In en, this message translates to:
+  /// **'{document} (published {date})'**
+  String documentPublished(String document, String date);
+
+  /// No description provided for @refillsRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, other{{count} refills remaining}}'**
+  String refillsRemaining(int count);
+
+  /// No description provided for @validUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid until {date}'**
+  String validUntil(String date);
+
+  /// No description provided for @validFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid from {date}'**
+  String validFrom(String date);
+
+  /// No description provided for @substitutionAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Generic substitution allowed'**
+  String get substitutionAllowed;
+
+  /// No description provided for @substitutionNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Brand name required - no substitution'**
+  String get substitutionNotAllowed;
+
+  /// No description provided for @doNotPerformRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Do NOT perform this request'**
+  String get doNotPerformRequest;
+
+  /// No description provided for @complicationsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get complicationsNone;
+
+  /// No description provided for @fastedFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Fasted for {duration}'**
+  String fastedFor(String duration);
+
+  /// No description provided for @containerCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} container} other{{count} containers}}'**
+  String containerCount(int count);
+
+  /// No description provided for @coverageOrderPrimary.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary (1)'**
+  String get coverageOrderPrimary;
+
+  /// No description provided for @coverageOrderSecondary.
+  ///
+  /// In en, this message translates to:
+  /// **'Secondary (2)'**
+  String get coverageOrderSecondary;
+
+  /// No description provided for @coverageOrderTertiary.
+  ///
+  /// In en, this message translates to:
+  /// **'Tertiary (3)'**
+  String get coverageOrderTertiary;
+
+  /// No description provided for @coverageOrderNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Order {order}'**
+  String coverageOrderNumber(int order);
+
+  /// No description provided for @goalDueBy.
+  ///
+  /// In en, this message translates to:
+  /// **'by {date}'**
+  String goalDueBy(String date);
+
+  /// No description provided for @durationSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds} seconds'**
+  String durationSeconds(String seconds);
+
+  /// No description provided for @ingredientCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, other{{count} ingredient(s)}}'**
+  String ingredientCount(int count);
+
+  /// No description provided for @resultCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, other{{count} result(s)}}'**
+  String resultCount(int count);
+
+  /// No description provided for @specimenCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, other{{count} specimen(s)}}'**
+  String specimenCount(int count);
+
+  /// No description provided for @imageCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, other{{count} image(s)}}'**
+  String imageCount(int count);
+
+  /// No description provided for @ageYears.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} year} other{{count} years}}'**
+  String ageYears(int count);
+
+  /// No description provided for @identifierPassport.
+  ///
+  /// In en, this message translates to:
+  /// **'Passport'**
+  String get identifierPassport;
+
+  /// No description provided for @multipleBirthOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes (Birth order: {order})'**
+  String multipleBirthOrder(String order);
+
+  /// No description provided for @timeAgoDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} day ago} other{{count} days ago}}'**
+  String timeAgoDays(int count);
+
+  /// No description provided for @timeAgoHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} hour ago} other{{count} hours ago}}'**
+  String timeAgoHours(int count);
+
+  /// No description provided for @timeAgoMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} minute ago} other{{count} minutes ago}}'**
+  String timeAgoMinutes(int count);
+
+  /// No description provided for @justNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Just now'**
+  String get justNow;
+
+  /// No description provided for @bloodTypeNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Available'**
+  String get bloodTypeNotAvailable;
+
+  /// No description provided for @settingsStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get settingsStorage;
+
+  /// No description provided for @settingsStorageDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all records, preferences and cached data'**
+  String get settingsStorageDescription;
+
+  /// No description provided for @settingsReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get settingsReset;
+
+  /// No description provided for @resetDataWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This will permanently delete all your data including synced records, notes, attachments, and preferences.'**
+  String get resetDataWarning;
+
+  /// No description provided for @resetTypeToConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Type {word} to confirm:'**
+  String resetTypeToConfirm(String word);
+
+  /// No description provided for @deleting.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting...'**
+  String get deleting;
+
+  /// No description provided for @aiModelDownloadContinuesInBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Download continues in background'**
+  String get aiModelDownloadContinuesInBackground;
+
+  /// No description provided for @aiModelAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced'**
+  String get aiModelAdvanced;
+
+  /// No description provided for @aiModelMedical.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical'**
+  String get aiModelMedical;
+
+  /// No description provided for @aiModelDescriptionLite.
+  ///
+  /// In en, this message translates to:
+  /// **'Fast and lightweight (~{sizeGb} GB)'**
+  String aiModelDescriptionLite(double sizeGb);
+
+  /// No description provided for @aiModelDescriptionAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Higher accuracy (~{sizeGb} GB)'**
+  String aiModelDescriptionAdvanced(double sizeGb);
+
+  /// No description provided for @aiModelDescriptionUltra.
+  ///
+  /// In en, this message translates to:
+  /// **'Best accuracy for desktop (~{sizeGb} GB)'**
+  String aiModelDescriptionUltra(double sizeGb);
+
+  /// No description provided for @aiModelDescriptionPreviousAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Advanced model (~{sizeGb} GB)'**
+  String aiModelDescriptionPreviousAdvanced(double sizeGb);
+
+  /// No description provided for @settingsEhrSync.
+  ///
+  /// In en, this message translates to:
+  /// **'EHR Sync'**
+  String get settingsEhrSync;
+
+  /// No description provided for @shareProximityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Proximity'**
+  String get shareProximityTitle;
+
+  /// No description provided for @shareProximityDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Advertise to nearby devices'**
+  String get shareProximityDescription;
+
+  /// No description provided for @allow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow'**
+  String get allow;
+
+  /// No description provided for @settingsSendFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Send us your feedback'**
+  String get settingsSendFeedback;
+
+  /// No description provided for @toggleOn.
+  ///
+  /// In en, this message translates to:
+  /// **'ON'**
+  String get toggleOn;
+
+  /// No description provided for @toggleOff.
+  ///
+  /// In en, this message translates to:
+  /// **'OFF'**
+  String get toggleOff;
+
+  /// No description provided for @idScanVerifyDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify the details are correct. Retry scanning if needed.'**
+  String get idScanVerifyDetails;
+
+  /// No description provided for @idScanPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Some fields could not be read. Try a clearer photo.'**
+  String get idScanPartial;
+
+  /// No description provided for @idScanFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read the document. Retake with better lighting.'**
+  String get idScanFailed;
+
+  /// No description provided for @genderOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get genderOther;
+
+  /// No description provided for @genderUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get genderUnknown;
+
+  /// No description provided for @walletPassAge.
+  ///
+  /// In en, this message translates to:
+  /// **'Age {age}'**
+  String walletPassAge(int age);
+
+  /// No description provided for @privacyEffectiveDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Effective Date: {date}'**
+  String privacyEffectiveDate(DateTime date);
+
+  /// No description provided for @privacyCorePrincipleBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The most important thing to know is that we, the developers of **HealthWallet.me**, do not collect, store, or have access to any of your personal or health information. Our app operates entirely on your device.'**
+  String get privacyCorePrincipleBody;
+
+  /// No description provided for @privacyNoCloudProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'✅ No Cloud Processing: All calculations, data organization, and other functions happen locally on your phone or tablet.'**
+  String get privacyNoCloudProcessing;
+
+  /// No description provided for @privacyNoDeveloperAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'✅ No Developer Access: We cannot see, access, or export your data. It is never sent to our servers.'**
+  String get privacyNoDeveloperAccess;
+
+  /// No description provided for @privacyYouAreInControl.
+  ///
+  /// In en, this message translates to:
+  /// **'✅ You Are in Control: Your information is stored securely within the app\'s private storage on your device, which only you can access.'**
+  String get privacyYouAreInControl;
+
+  /// No description provided for @privacyDoNotCollectIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'To be perfectly clear, our app is intentionally built to avoid accessing your personal data. We **do not** collect, store, link, or process any information that can be tied to you.'**
+  String get privacyDoNotCollectIntro;
+
+  /// No description provided for @privacyPersonalIdentifiers.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Identifiers: We do not access or store your name, email address, phone number, contacts, or any other personal account information from your device.'**
+  String get privacyPersonalIdentifiers;
+
+  /// No description provided for @privacyHealthInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Health Information: Any health records, medical conditions, medications, or other data you import remain yours alone. We cannot access them.'**
+  String get privacyHealthInformation;
+
+  /// No description provided for @privacyNoCrossReferencing.
+  ///
+  /// In en, this message translates to:
+  /// **'No Cross-Referencing: The app operates in isolation. It **does not** scan, index, or cross-reference your health data with any other personal information on your phone (like your contacts list, name, or phone number). Its only job is to organize the records you provide to it.'**
+  String get privacyNoCrossReferencing;
+
+  /// No description provided for @privacyUsageAnalytics.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage Analytics: We do not track how you use the app, which buttons you tap, or how long you spend on certain screens.'**
+  String get privacyUsageAnalytics;
+
+  /// No description provided for @privacyYouManageIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'The only data processed by the app is the health information **you choose to import** into it. This can be done in the following ways:'**
+  String get privacyYouManageIntro;
+
+  /// No description provided for @privacyImportingIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'You can add health documents (such as PDFs of lab results or clinic summaries) directly into the app using standard mobile operating system features:'**
+  String get privacyImportingIntro;
+
+  /// No description provided for @privacyScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning: Using your device\'s camera to scan a physical document from within the app.'**
+  String get privacyScanning;
+
+  /// No description provided for @privacyShareActionSheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Action Sheet: Selecting a file from another app (like your email, photos, or file manager) and \"sharing\" it directly to **HealthWallet.me**.'**
+  String get privacyShareActionSheet;
+
+  /// No description provided for @privacyLocalProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Once a document is imported, the app processes it locally on your device in the background. It structures the information according to the **HL7 FHIR (Fast Healthcare Interoperability Resources)** standard to make it useful and organized. This entire process happens on your device; the document and the structured data never leave it.'**
+  String get privacyLocalProcessing;
+
+  /// No description provided for @privacyFastenIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Our app allows you to consolidate your health records by connecting to **FastenHealth OnPrem**, a transparent, open-source platform.'**
+  String get privacyFastenIntro;
+
+  /// No description provided for @privacyFastenOpenSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Open-Source and On-Premises: FastenHealth OnPrem is open-source software that you or a trusted entity controls. This provides an exceptional level of privacy.'**
+  String get privacyFastenOpenSource;
+
+  /// No description provided for @privacyFastenDirectDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct-to-Device Download: When you authorize the connection, your health records are downloaded **directly from your FastenHealth OnPrem instance to your device**. Our app is only a conduit; your data never passes through our servers.'**
+  String get privacyFastenDirectDownload;
+
+  /// No description provided for @privacyUsageIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Since all your data resides on your device, it is only \"used\" by the app to help you organize and view your records. This includes:'**
+  String get privacyUsageIntro;
+
+  /// No description provided for @privacyUsageProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing and structuring imported or scanned documents.'**
+  String get privacyUsageProcessing;
+
+  /// No description provided for @privacyUsageDisplaying.
+  ///
+  /// In en, this message translates to:
+  /// **'Displaying your health records, lab results, and medication history to you.'**
+  String get privacyUsageDisplaying;
+
+  /// No description provided for @privacyNoOtherUse.
+  ///
+  /// In en, this message translates to:
+  /// **'We do not use your information for advertising, research, or any other purpose.'**
+  String get privacyNoOtherUse;
+
+  /// No description provided for @privacyStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage: All your data is stored in the app\'s secure, sandboxed storage on your device. It is as secure as your device itself. We strongly recommend you protect your device with a passcode, Face ID, or other biometric security.'**
+  String get privacyStorage;
+
+  /// No description provided for @privacySharing.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing: We do not and cannot share your data with anyone because we don\'t have it. If you choose to export or share your data from the app, you are in complete control of where it goes.'**
+  String get privacySharing;
+
+  /// No description provided for @privacyDeletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletion: You can delete your information at any time from within the app. Deleting the app from your device will also permanently delete all data it has stored.'**
+  String get privacyDeletion;
+
+  /// No description provided for @privacyChildrenBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Our service is not directed to individuals under the age of 16, in accordance with the General Data Protection Regulation (GDPR) as applicable in Romania and across the EU. We do not knowingly collect personal information from children. If you become aware that a child has provided us with personal information, please contact us.'**
+  String get privacyChildrenBody;
+
+  /// No description provided for @privacyChangesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We may update this policy from time to time. If we make any material changes, we will notify you through the app or by other means so you can review the changes before they take effect.'**
+  String get privacyChangesBody;
+
+  /// No description provided for @privacyContactBody.
+  ///
+  /// In en, this message translates to:
+  /// **'If you have any questions or concerns about this Privacy Policy, please contact us at:'**
+  String get privacyContactBody;
+
+  /// No description provided for @syncQrScanInstructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan a QR code from your **HealthWallet.me** desktop app or **Fasten Health** to sync your data.'**
+  String get syncQrScanInstructions;
+
+  /// No description provided for @syncSuccessMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Data was successfully synced!'**
+  String get syncSuccessMessage;
+
+  /// No description provided for @syncErrorConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection failed. Please check your network and try again.'**
+  String get syncErrorConnection;
+
+  /// No description provided for @syncErrorEndpointNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync endpoint not found. Please check server configuration.'**
+  String get syncErrorEndpointNotFound;
+
+  /// No description provided for @syncErrorAuthentication.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication failed. Please check your token.'**
+  String get syncErrorAuthentication;
+
+  /// No description provided for @syncErrorInvalidFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid sync data format'**
+  String get syncErrorInvalidFormat;
+
+  /// No description provided for @syncErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Data sync failed. Please try again.'**
+  String get syncErrorGeneric;
+
+  /// No description provided for @syncPlaceholderSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync or update your data to view {recordType} records'**
+  String syncPlaceholderSubtitle(String recordType);
+
+  /// No description provided for @appLockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'HealthWallet is locked'**
+  String get appLockTitle;
+
+  /// No description provided for @appLockMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock to view your health records'**
+  String get appLockMessage;
+
+  /// No description provided for @appLockUnlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get appLockUnlock;
+
+  /// No description provided for @desktopRestoreSucceededTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup restored'**
+  String get desktopRestoreSucceededTitle;
+
+  /// No description provided for @desktopRestoreSucceededMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" has been restored. {count} records are now on this device.'**
+  String desktopRestoreSucceededMessage(String name, int count);
+
+  /// Shown in a received share when the receiver taps a file that is neither an image nor a PDF; it is not handed to other apps.
+  ///
+  /// In en, this message translates to:
+  /// **'This type of file can\'t be shown in shared records.'**
+  String get sharedFileNotPreviewable;
+
+  /// No description provided for @desktopWaitingForApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the desktop to accept this phone…'**
+  String get desktopWaitingForApproval;
+
+  /// No description provided for @desktopPairingRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'The desktop no longer recognises this phone. Scan its QR code again.'**
+  String get desktopPairingRejected;
+
+  /// No description provided for @desktopPairingDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'The desktop declined this phone.'**
+  String get desktopPairingDeclined;
+
+  /// No description provided for @desktopUpdateDesktopApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Update HealthWallet on the desktop, then try again.'**
+  String get desktopUpdateDesktopApp;
+
+  /// No description provided for @desktopUpdatePhoneApp.
+  ///
+  /// In en, this message translates to:
+  /// **'A phone with an older version of HealthWallet tried to connect. Update the app on the phone.'**
+  String get desktopUpdatePhoneApp;
+
+  /// No description provided for @desktopQrOutdated.
+  ///
+  /// In en, this message translates to:
+  /// **'This QR code is from an older version of HealthWallet. Update the app on the desktop and scan its new code.'**
+  String get desktopQrOutdated;
+
+  /// No description provided for @desktopQrInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'This QR code can\'t be used for pairing. Show a new one on the desktop.'**
+  String get desktopQrInvalid;
+
+  /// No description provided for @desktopNoNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'This desktop isn\'t connected to a network. Connect it to Wi-Fi to pair a phone.'**
+  String get desktopNoNetwork;
+
+  /// No description provided for @desktopFirewallHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If your phone can\'t find this desktop, allow HealthWallet through Windows Firewall on private networks.'**
+  String get desktopFirewallHint;
+
+  /// No description provided for @desktopFirewallHintLinux.
+  ///
+  /// In en, this message translates to:
+  /// **'If your phone can\'t find this desktop, check that the Avahi daemon is running and that your firewall (ufw or firewalld) allows HealthWallet on your local network.'**
+  String get desktopFirewallHintLinux;
+
+  /// No description provided for @desktopApprovePhoneMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{phone}\" wants to connect to this desktop.\n\nIt will replace \"{current}\" and receive the health records stored here.\n\nAllow it?'**
+  String desktopApprovePhoneMessage(String phone, String current);
+
+  /// No description provided for @desktopPairedPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Paired phone'**
+  String get desktopPairedPhone;
+
+  /// No description provided for @desktopNewQrUnpairsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A new QR code unpairs this phone; use it to pair a different one.'**
+  String get desktopNewQrUnpairsHint;
+
+  /// No description provided for @desktopNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Desktop not found. Make sure HealthWallet is open on it and both devices are on the same network.'**
+  String get desktopNotFound;
+
+  /// No description provided for @desktopBackupSucceededMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" has been saved. It holds {count} records.'**
+  String desktopBackupSucceededMessage(String name, int count);
+
+  /// No description provided for @holderQuestionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Whose records are these?'**
+  String get holderQuestionTitle;
+
+  /// Asked when records arrive for someone who matches no one in the wallet, which has several people.
+  ///
+  /// In en, this message translates to:
+  /// **'Records arrived for {name}, who doesn\'t match anyone in your wallet. Who is this?'**
+  String holderQuestionMessage(String name);
+
+  /// No description provided for @holderQuestionSomeoneElse.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone else'**
+  String get holderQuestionSomeoneElse;
+
+  /// No description provided for @fhirTypeVisionPrescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Vision Prescription'**
+  String get fhirTypeVisionPrescription;
+
+  /// No description provided for @categoryVisionPrescriptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Vision Prescriptions'**
+  String get categoryVisionPrescriptions;
+
+  /// No description provided for @lensTypeMultifocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Multifocal glasses'**
+  String get lensTypeMultifocal;
+
+  /// No description provided for @lensTypeDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance glasses'**
+  String get lensTypeDistance;
+
+  /// No description provided for @lensTypeReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading glasses'**
+  String get lensTypeReading;
+
+  /// No description provided for @lensTypeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Glasses'**
+  String get lensTypeOther;
+
+  /// No description provided for @fieldLensType.
+  ///
+  /// In en, this message translates to:
+  /// **'Lens Type'**
+  String get fieldLensType;
+
+  /// No description provided for @fieldDateWritten.
+  ///
+  /// In en, this message translates to:
+  /// **'Issued on'**
+  String get fieldDateWritten;
+
+  /// No description provided for @fieldRecommendedFollowUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Next check-up'**
+  String get fieldRecommendedFollowUp;
+
+  /// No description provided for @labelSerialNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Serial number'**
+  String get labelSerialNumber;
+
+  /// No description provided for @visionEyeRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Right eye'**
+  String get visionEyeRight;
+
+  /// No description provided for @visionEyeLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left eye'**
+  String get visionEyeLeft;
+
+  /// Column header of a glasses prescription, in plain words: the lens strength (sphere), in dioptres.
+  ///
+  /// In en, this message translates to:
+  /// **'Strength'**
+  String get visionSphere;
+
+  /// Column header of a glasses prescription, in plain words: the astigmatism correction (cylinder), in dioptres.
+  ///
+  /// In en, this message translates to:
+  /// **'Astigmatism'**
+  String get visionCylinder;
+
+  /// Column header of a glasses prescription, in plain words: the angle of the astigmatism correction (axis), in degrees.
+  ///
+  /// In en, this message translates to:
+  /// **'Angle'**
+  String get visionAxis;
+
+  /// Column header of a glasses prescription, in plain words: the extra strength for reading (near addition), in dioptres.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading add'**
+  String get visionAdd;
+
+  /// No description provided for @visionPrism.
+  ///
+  /// In en, this message translates to:
+  /// **'Prism'**
+  String get visionPrism;
+
+  /// No description provided for @visionBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Prism base'**
+  String get visionBase;
+
+  /// Error under a lens strength field of a glasses prescription that is not a dioptre value in quarter steps.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a value like +1.25, in steps of 0.25'**
+  String get visionInvalidDioptre;
+
+  /// Error under the astigmatism angle field of a glasses prescription that is not a whole number of degrees from 0 to 180.
+  ///
+  /// In en, this message translates to:
+  /// **'Use an angle from 0 to 180'**
+  String get visionInvalidAxis;
+
+  /// Shown on a record read from a document when the wallet already holds it.
+  ///
+  /// In en, this message translates to:
+  /// **'Already in your wallet'**
+  String get stagedAlreadyInWallet;
+
+  /// Shown on a record read from a document when the wallet holds it with empty fields the document fills.
+  ///
+  /// In en, this message translates to:
+  /// **'Already in your wallet, will be completed'**
+  String get stagedWillBeCompleted;
+
+  /// Shown above Done when saving a document would add nothing to the wallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything in this document is already in your wallet'**
+  String get documentAlreadyInWallet;
+
+  /// No description provided for @processingStatusHandedOver.
+  ///
+  /// In en, this message translates to:
+  /// **'On the desktop'**
+  String get processingStatusHandedOver;
+
+  /// No description provided for @desktopHandoverSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent to the desktop. You\'ll be told when it\'s ready to review, here or on the desktop.'**
+  String get desktopHandoverSent;
+
+  /// No description provided for @desktopHandoverConnectionLost.
+  ///
+  /// In en, this message translates to:
+  /// **'The connection to the desktop was lost. Try again.'**
+  String get desktopHandoverConnectionLost;
+
+  /// No description provided for @desktopHandoverTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'The document is too large to send to the desktop (over 200 MB).'**
+  String get desktopHandoverTooLarge;
+
+  /// No description provided for @desktopHandoverTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'The desktop stopped receiving the document. Try again.'**
+  String get desktopHandoverTimedOut;
+
+  /// No description provided for @handoverOnDesktopTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Being processed on the desktop'**
+  String get handoverOnDesktopTitle;
+
+  /// No description provided for @handoverOnDesktopMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The draft comes back here to review when the desktop is done. You can also review and save it on the desktop.'**
+  String get handoverOnDesktopMessage;
+
+  /// No description provided for @handoverTakeBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Process on this phone instead'**
+  String get handoverTakeBack;
+
+  /// No description provided for @handoverReadyToReview.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin}: ready to review'**
+  String handoverReadyToReview(String origin);
+
+  /// No description provided for @handoverFailedOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin}: the desktop could not process it. It\'s back on this phone.'**
+  String handoverFailedOnDesktop(String origin);
+
+  /// No description provided for @handoverNoModelOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin}: there is no AI model on the desktop. It\'s back on this phone.'**
+  String handoverNoModelOnDesktop(String origin);
+
+  /// No description provided for @handoverDeletedOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} was deleted on the desktop. It\'s back on this phone.'**
+  String handoverDeletedOnDesktop(String origin);
+
+  /// No description provided for @handoverSavedOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} was saved on the desktop. The records reach this phone with the next sync.'**
+  String handoverSavedOnDesktop(String origin);
+
+  /// No description provided for @handoverSavedOnPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} was saved on the phone.'**
+  String handoverSavedOnPhone(String origin);
+
+  /// No description provided for @handoverDraftSavedOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} was saved on the desktop. Any changes made here to its draft were not kept.'**
+  String handoverDraftSavedOnDesktop(String origin);
+
+  /// No description provided for @handoverDraftSavedOnPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} was saved on the phone. Any changes made here to its draft were not kept.'**
+  String handoverDraftSavedOnPhone(String origin);
+
+  /// No description provided for @failedToSaveSetting.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save “{setting}”. Try again.'**
+  String failedToSaveSetting(String setting);
+
+  /// No description provided for @processingFailedMemory.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough free memory to run the AI model. Close other apps and try again, or turn off Deep Scan in AI Settings.'**
+  String get processingFailedMemory;
+
+  /// No description provided for @tokenPresetLowHint.
+  ///
+  /// In en, this message translates to:
+  /// **'a few values'**
+  String get tokenPresetLowHint;
+
+  /// No description provided for @tokenPresetMediumHint.
+  ///
+  /// In en, this message translates to:
+  /// **'a short report'**
+  String get tokenPresetMediumHint;
+
+  /// No description provided for @tokenPresetHighHint.
+  ///
+  /// In en, this message translates to:
+  /// **'a full report'**
+  String get tokenPresetHighHint;
+
+  /// No description provided for @backupRecordsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Records only'**
+  String get backupRecordsOnly;
+
+  /// No description provided for @backupRestoreConfirmPointInTime.
+  ///
+  /// In en, this message translates to:
+  /// **'This replaces your records on this computer and on your paired phone with the backup from {date}. Records added since then are removed. A “Before restore” copy of your current data is saved first and kept for 30 days, so you can undo this.'**
+  String backupRestoreConfirmPointInTime(String date);
+
+  /// No description provided for @backupOldNoFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup has no files. Records will be restored and your current files kept.'**
+  String get backupOldNoFiles;
+
+  /// No description provided for @backupSafetyName.
+  ///
+  /// In en, this message translates to:
+  /// **'Before restore {date}'**
+  String backupSafetyName(String date);
+
+  /// No description provided for @backupRestoreFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore failed. Your data was not changed; the \"Before restore\" backup is in the list.'**
+  String get backupRestoreFailed;
+
+  /// No description provided for @backupSafetyFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t make a safety backup, so nothing was restored. Check free space and the backup folder.'**
+  String get backupSafetyFailed;
+
+  /// No description provided for @backupFilesNotRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file couldn\'t be restored.} other{{count} files couldn\'t be restored.}}'**
+  String backupFilesNotRestored(int count);
+
+  /// No description provided for @backupRestorePhoneOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone isn\'t connected. Records added on it since its last sync will come back after it reconnects; changes it made to existing records will be replaced by the backup.'**
+  String get backupRestorePhoneOffline;
+
+  /// Restore confirmation: the scans not saved yet on this computer, which the restore removes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 scan waiting for review will be removed.} other{{count} scans waiting for review will be removed.}}'**
+  String backupRestoreRemovesScans(int count);
+
+  /// Asks before deleting a downloaded AI model.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}?'**
+  String aiModelDeleteTitle(String name);
+
+  /// No description provided for @aiModelDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The model and its Deep Scan files are removed from this device. To scan with it again, you\'ll need to download it again (~{size} MB).'**
+  String aiModelDeleteMessage(int size);
+
+  /// Shown on the review when the AI found no patient and the user fills the fields in.
+  ///
+  /// In en, this message translates to:
+  /// **'No patient found in the document. Enter the details.'**
+  String get processingNoPatientFound;
+
+  /// Shown after Cancel while the AI finishes stopping; Continue waits until it has.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopping…'**
+  String get processingStopping;
+
+  /// Shown on the desktop when the phone takes back a document that was open for review.
+  ///
+  /// In en, this message translates to:
+  /// **'The phone took this document back.'**
+  String get handoverTakenBack;
+
+  /// Notification title when the selected AI model is replaced by Lite because the device lacks the memory for it.
+  ///
+  /// In en, this message translates to:
+  /// **'Now using the Lite model'**
+  String get aiModelSwitchedToLiteTitle;
+
+  /// Notification text when the selected AI model is replaced by Lite because the device lacks the memory for it.
+  ///
+  /// In en, this message translates to:
+  /// **'The {modelName} model needs more memory than this device has, so the Lite model is used.'**
+  String aiModelSwitchedToLiteMessage(String modelName);
+
+  /// Desktop Backup card, under the backup folder: how many days the automatic copy made before every restore is kept.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Kept for 1 day} other{Kept for {count} days}}'**
+  String backupSafetyRetention(int count);
+
+  /// Desktop Backup card: heading of the section with how long the copy made before a restore is kept, like the Location heading above it.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy made before a restore'**
+  String get backupSafetyRetentionTitle;
+
+  /// The word after the number of days in the safety copy retention field.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{day} other{days}}'**
+  String backupSafetyRetentionDaysUnit(int count);
+
+  /// Desktop Backup card, under the retention field: the new value counts for copies already made, and copies older than it are deleted as soon as it is saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies to existing copies too. Copies older than this are deleted now.'**
+  String get backupSafetyRetentionHint;
+
+  /// Desktop Backup card: the typed number of days isn't a whole number in the allowed range.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a whole number of days from {min} to {max}.'**
+  String backupSafetyRetentionInvalid(int min, int max);
+
+  /// Desktop Backup card: saving the number of days the copy made before a restore is kept failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save how long to keep the copy made before a restore. Please try again.'**
+  String get backupSafetyRetentionSaveFailed;
 }
 
 class _AppLocalizationsDelegate

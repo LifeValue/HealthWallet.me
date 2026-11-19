@@ -1,20 +1,21 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
 
 part 'claim.freezed.dart';
 
 @freezed
-class Claim with _$Claim implements IFhirResource {
+abstract class Claim with _$Claim implements IFhirResource {
   const Claim._();
 
   const factory Claim({
@@ -26,6 +27,7 @@ class Claim with _$Claim implements IFhirResource {
     @Default({}) Map<String, dynamic> rawResource,
     @Default('') String encounterId,
     @Default('') String subjectId,
+    String? specialtyOverride,
     Narrative? text,
     List<Identifier>? identifier,
     FinancialResourceStatusCodes? status,
@@ -70,6 +72,7 @@ class Claim with _$Claim implements IFhirResource {
       rawResource: resourceJson,
       encounterId: data.encounterId ?? '',
       subjectId: data.subjectId ?? '',
+      specialtyOverride: data.specialtyOverride,
       text: fhirClaim.text,
       identifier: fhirClaim.identifier,
       status: fhirClaim.status,
@@ -101,16 +104,16 @@ class Claim with _$Claim implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'Claim',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'Claim',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -125,45 +128,56 @@ class Claim with _$Claim implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
+    final List<RecordInfoLine> infoLines = [];
 
     // Status
     final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(
+        statusText,
+        prefix: l10n.fieldStatus,
+      ),
     );
 
     // Type
     final typeDisplay = FhirFieldExtractor.extractCodeableConceptText(type);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(typeDisplay, prefix: 'Type'),
+      ResourceFieldMapper.createCategoryLine(
+        typeDisplay,
+        prefix: l10n.fieldType,
+      ),
     );
 
     // Use
     final useDisplay = use?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(useDisplay, prefix: 'Use'),
+      ResourceFieldMapper.createStatusLine(useDisplay, prefix: l10n.fieldUse),
     );
 
     // Provider
-    final providerDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(provider);
+    final providerDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      provider,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createOrganizationLine(providerDisplay,
-          prefix: 'Provider'),
+      ResourceFieldMapper.createOrganizationLine(
+        providerDisplay,
+        prefix: l10n.fieldProvider,
+      ),
     );
 
     // Insurer
     final insurerDisplay = FhirFieldExtractor.extractReferenceDisplay(insurer);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createOrganizationLine(insurerDisplay,
-          prefix: 'Insurer'),
+      ResourceFieldMapper.createOrganizationLine(
+        insurerDisplay,
+        prefix: l10n.fieldInsurer,
+      ),
     );
 
     // Insurance/Coverage
@@ -171,24 +185,35 @@ class Claim with _$Claim implements IFhirResource {
         insurance?.firstOrNull?.coverage.display?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(coverageDisplay, prefix: 'Coverage'),
+      ResourceFieldMapper.createStatusLine(
+        coverageDisplay,
+        prefix: l10n.fieldCoverage,
+      ),
     );
 
     // Priority
-    final priorityDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(priority);
+    final priorityDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      priority,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createWarningLine(priorityDisplay, prefix: 'Priority'),
+      ResourceFieldMapper.createWarningLine(
+        priorityDisplay,
+        prefix: l10n.fieldPriority,
+      ),
     );
 
     // Billable Period
-    final billablePeriodDisplay =
-        FhirFieldExtractor.extractPeriodFormatted(billablePeriod);
+    final billablePeriodDisplay = FhirFieldExtractor.extractPeriodFormatted(
+      billablePeriod,
+      l10n: l10n,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createTimelineLine(billablePeriodDisplay,
-          prefix: 'Billable Period'),
+      ResourceFieldMapper.createTimelineLine(
+        billablePeriodDisplay,
+        prefix: l10n.fieldBillablePeriod,
+      ),
     );
 
     // Total
@@ -198,27 +223,34 @@ class Claim with _$Claim implements IFhirResource {
       if (totalValue != null) {
         ResourceFieldMapper.addIfNotNull(
           infoLines,
-          ResourceFieldMapper.createValueLine('$currency $totalValue',
-              prefix: 'Total'),
+          ResourceFieldMapper.createValueLine(
+            '$currency $totalValue',
+            prefix: l10n.fieldTotal,
+          ),
         );
       }
     }
 
     // Facility
-    final facilityDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(facility);
+    final facilityDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      facility,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createLocationLine(facilityDisplay,
-          prefix: 'Facility'),
+      ResourceFieldMapper.createLocationLine(
+        facilityDisplay,
+        prefix: l10n.fieldFacility,
+      ),
     );
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: FhirFieldExtractor.formatRecordDate(date!, l10n.localeName),
+        ),
+      );
     }
 
     return infoLines;

@@ -1,0 +1,31 @@
+generated: 2026-03-17
+last_updated: 2026-04-14
+project: HealthWallet.me
+project_key: HM
+tracking_system: youtrack
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # Epic 1: Desktop App v1.0
+  epic-1: in-progress
+  # Phase 0: Build Validation
+  1-1-validate-desktop-builds: done
+  # Phase 1: Desktop Shell
+  1-2-desktop-shell: done
+  1-3-schema-migration-v9: done
+  # Phase 2: Communication
+  1-4-communication: done
+  # Phase 3a: Backup & Restore
+  1-5-backup-restore: done
+  # Phase 3b: Processing
+  1-6-processing-handover: in-progress
+  1-7-desktop-import-processing: backlog
+  # Phase 3c: LWW Sync
+  1-8-lww-sync: done
+  # Phase 3d: UI Polish
+  1-9-desktop-ui-polish: in-progress
+  # CI/CD
+  ci-macos-testflight: done
+  ci-windows-github-releases: done
+  # Retrospective
+  epic-1-retrospective: optional

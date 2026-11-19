@@ -5,6 +5,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+
 import 'phone_input_field.dart';
 
 class CountryPickerDialog extends StatefulWidget {
@@ -39,13 +40,14 @@ class _CountryPickerDialogState extends State<CountryPickerDialog> {
 
   void _onSearch(String query) {
     final q = query.trim().toLowerCase();
+    final folded = foldCountryName(q);
     setState(() {
       if (q.isEmpty) {
         _filtered = widget.countries;
         return;
       }
       _filtered = widget.countries.where((c) {
-        return c.name.toLowerCase().contains(q) ||
+        return foldCountryName(c.name).contains(folded) ||
             c.isoCode.name.toLowerCase().contains(q) ||
             c.dialCode.contains(q) ||
             '+${c.dialCode}'.contains(q);
@@ -111,8 +113,11 @@ class _CountryPickerDialogState extends State<CountryPickerDialog> {
                   ? AppColors.textSecondaryDark
                   : AppColors.textSecondary,
             ),
-            prefixIcon: Icon(Icons.search,
-                size: 20, color: tColor.withValues(alpha: 0.5)),
+            prefixIcon: Icon(
+              Icons.search,
+              size: 20,
+              color: tColor.withValues(alpha: 0.5),
+            ),
             prefixIconConstraints: const BoxConstraints(minWidth: 36),
           ),
         ),

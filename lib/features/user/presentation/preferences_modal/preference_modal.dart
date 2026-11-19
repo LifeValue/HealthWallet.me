@@ -2,23 +2,30 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
+import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
-import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/ai-model/ai_model_section.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/user/user_section.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/patient_section.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/sync/sync_section.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/user/user_section.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/settings_section.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class PreferenceModal extends StatelessWidget {
   const PreferenceModal({super.key});
 
   static void show(BuildContext context) {
+    // The VPN can change while the app runs; refresh it for the Sync section.
+    getIt<CommunicationBloc>().add(const CommunicationVpnChecked());
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -40,104 +47,161 @@ class PreferenceModal extends StatelessWidget {
     );
   }
 
+  /// Key of the transparent [Scaffold] the modal's snackbars show in.
+  static const Key scaffoldKey = Key('preference_modal_scaffold');
+
   @override
   Widget build(BuildContext context) {
+    // Its own messenger shows the modal's snackbars above the blur, inside
+    // the modal, instead of behind it on the page underneath.
+    return ScaffoldMessenger(
+      child: Scaffold(
+        key: scaffoldKey,
+        backgroundColor: Colors.transparent,
+        body: BlocListener<UserBloc, UserState>(
+          listenWhen: (previous, current) =>
+              previous.status != current.status &&
+              _failedSetting(current.status) != null,
+          listener: (context, state) => AppSnackBar.show(
+            context,
+            message: context.l10n.failedToSaveSetting(
+              _settingLabel(context, _failedSetting(state.status)!),
+            ),
+            type: AppSnackBarType.error,
+          ),
+          child: Stack(
+            children: [
+              // The scaffold covers the dialog's barrier: a tap outside the
+              // dialog still closes it. Screen readers keep the barrier's own
+              // "Dismiss", so this adds no second one.
+              Positioned.fill(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  excludeFromSemantics: true,
+                  onTap: () => context.popDialog(),
+                ),
+              ),
+              _buildDialog(context),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// The setting whose save failed; null for the display name, which the
+  /// user section reports next to its field.
+  static UserSetting? _failedSetting(UserStatus status) => status.maybeWhen(
+    failure: (_, setting) => setting == UserSetting.name ? null : setting,
+    orElse: () => null,
+  );
+
+  static String _settingLabel(BuildContext context, UserSetting setting) =>
+      switch (setting) {
+        UserSetting.theme => context.l10n.theme,
+        UserSetting.receiveMode => context.l10n.shareProximityTitle,
+        UserSetting.biometric => context.l10n.biometricAuthentication,
+        UserSetting.name => context.l10n.displayName,
+      };
+
+  Widget _buildDialog(BuildContext context) {
     final borderColor = context.theme.dividerColor;
 
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(Insets.medium),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 600),
+        constraints: BoxConstraints(maxWidth: context.contentMaxWidth),
         child: Container(
-        decoration: BoxDecoration(
-          color: context.colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: borderColor,
-            width: 1,
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Insets.normal,
-                vertical: Insets.small,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    context.l10n.preferences,
-                    style: AppTextStyle.bodyMedium,
-                  ),
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: IconButton(
-                      icon: Assets.icons.close.svg(
-                        colorFilter: ColorFilter.mode(
-                          context.colorScheme.onSurface,
-                          BlendMode.srcIn,
-                        ),
-                      ),
-                      onPressed: () {
-                        context.popDialog();
-                      },
-                      padding: EdgeInsets.zero,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Divider(
-              height: 1,
+          decoration: BoxDecoration(
+            color: context.colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
               color: borderColor,
+              width: 1,
             ),
-            Flexible(
-              child: SingleChildScrollView(
-                child: Column(
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Insets.normal,
+                  vertical: Insets.small,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const SizedBox(height: Insets.normal),
-                    const UserSection(),
-                    const SizedBox(height: Insets.medium),
-                    const PatientSection(),
-                    const SizedBox(height: Insets.medium),
-                    const SyncSection(),
-                    const SizedBox(height: Insets.medium),
-                    const AiModelSection(),
-                    const SizedBox(height: Insets.medium),
-                    const SettingsSection(),
-                    const SizedBox(height: Insets.medium),
-                    FutureBuilder<PackageInfo>(
-                      future: PackageInfo.fromPlatform(),
-                      builder: (context, snap) => !snap.hasData
-                          ? const SizedBox(height: 40)
-                          : Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: Insets.normal),
-                              child: Text(
-                                '${context.l10n.version}: v${snap.data!.version} (${snap.data!.buildNumber})',
-                                style: AppTextStyle.labelSmall.copyWith(
-                                  color: context.colorScheme.onSurface
-                                      .withOpacity(0.5),
-                                ),
-                              ),
-                            ),
+                    Text(
+                      context.l10n.preferences,
+                      style: AppTextStyle.bodyMedium,
                     ),
-                    const SizedBox(height: Insets.normal),
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: IconButton(
+                        icon: Assets.icons.close.svg(
+                          colorFilter: ColorFilter.mode(
+                            context.colorScheme.onSurface,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                        onPressed: () {
+                          context.popDialog();
+                        },
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
-          ],
+              Divider(
+                height: 1,
+                color: borderColor,
+              ),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: Insets.normal),
+                      const UserSection(),
+                      const SizedBox(height: Insets.medium),
+                      const PatientSection(),
+                      const SizedBox(height: Insets.medium),
+                      const SyncSection(),
+                      const SizedBox(height: Insets.medium),
+                      const AiModelSection(),
+                      const SizedBox(height: Insets.medium),
+                      const SettingsSection(),
+                      const SizedBox(height: Insets.medium),
+                      FutureBuilder<PackageInfo>(
+                        future: PackageInfo.fromPlatform(),
+                        builder: (context, snap) => !snap.hasData
+                            ? const SizedBox(height: 40)
+                            : Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: Insets.normal,
+                                ),
+                                child: Text(
+                                  '${context.l10n.version}: v${snap.data!.version} (${snap.data!.buildNumber})',
+                                  style: AppTextStyle.labelSmall.copyWith(
+                                    color: context.colorScheme.onSurface
+                                        .withValues(alpha: 0.5),
+                                  ),
+                                ),
+                              ),
+                      ),
+                      const SizedBox(height: Insets.normal),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

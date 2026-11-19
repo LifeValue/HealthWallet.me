@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -11,10 +12,12 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
-import 'package:health_wallet/features/scan/presentation/pages/load_model/bloc/load_model_bloc.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/ai_settings/ai_settings_dialog.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/custom_progress_indicator.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/model_management_dialog.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/ai_settings/ai_settings_dialog.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/cancel_download_dialog.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/model_management_dialog.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -55,8 +58,10 @@ class _AiModelSectionState extends State<AiModelSection> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(context.l10n.onboardingAiModelTitle,
-                    style: AppTextStyle.bodySmall),
+                Text(
+                  context.l10n.onboardingAiModelTitle,
+                  style: AppTextStyle.bodySmall,
+                ),
                 const SizedBox(height: Insets.small),
                 Container(
                   padding: const EdgeInsets.all(Insets.smallNormal),
@@ -83,7 +88,7 @@ class _AiModelSectionState extends State<AiModelSection> {
           alignment: Alignment.topRight,
           child: GestureDetector(
             onTap: () => ModelManagementDialog.show(context),
-            child: Icon(
+            child: const Icon(
               Icons.swap_horiz,
               size: 22,
               color: AppColors.primary,
@@ -98,7 +103,7 @@ class _AiModelSectionState extends State<AiModelSection> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.check_circle, size: 18, color: AppColors.success),
+            const Icon(Icons.check_circle, size: 18, color: AppColors.success),
             const SizedBox(width: 6),
             Flexible(
               child: Text(
@@ -149,40 +154,38 @@ class _AiModelSectionState extends State<AiModelSection> {
   }
 
   Widget _buildModelSetupContent(BuildContext context, LoadModelState state) {
-    final hasDownloadedModel = state.medGemmaDownloaded || state.qwenDownloaded;
-
     return Column(
       children: [
         Row(
           children: [
             Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Insets.small,
-                  vertical: Insets.extraSmall,
-                ),
-                decoration: BoxDecoration(
-                  color: _getStatusColor(state.status).withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _getStatusIcon(state.status),
-                    const SizedBox(width: Insets.extraSmall),
-                    Text(
-                      _getModelStatusText(context, state),
-                      style: AppTextStyle.labelSmall.copyWith(
-                        color: _getStatusColor(state.status),
-                      ),
-                    ),
-                  ],
-                ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: Insets.small,
+                vertical: Insets.extraSmall,
               ),
+              decoration: BoxDecoration(
+                color: _getStatusColor(state.status).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _getStatusIcon(state.status),
+                  const SizedBox(width: Insets.extraSmall),
+                  Text(
+                    _getModelStatusText(context, state),
+                    style: AppTextStyle.labelSmall.copyWith(
+                      color: _getStatusColor(state.status),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             if (state.deviceCapability != DeviceAiCapability.unsupported) ...[
               const Spacer(),
               GestureDetector(
                 onTap: () => ModelManagementDialog.show(context),
-                child: Icon(
+                child: const Icon(
                   Icons.swap_horiz,
                   size: 22,
                   color: AppColors.primary,
@@ -196,9 +199,12 @@ class _AiModelSectionState extends State<AiModelSection> {
           width: 140,
           height: 140,
         ),
-        if (!state.medGemmaDownloaded && !state.qwenDownloaded) ...[
+        if (!state.downloadedVariants.values.any((v) => v)) ...[
           const SizedBox(height: Insets.small),
-          _buildRichDescription(context, context.l10n.onboardingAiModelDescription),
+          _buildRichDescription(
+            context,
+            context.l10n.onboardingAiModelDescription,
+          ),
         ],
         const SizedBox(height: Insets.normal),
         if (state.status == LoadModelStatus.modelAbsent ||
@@ -206,20 +212,24 @@ class _AiModelSectionState extends State<AiModelSection> {
           if (state.deviceCapability == DeviceAiCapability.unsupported)
             Container(
               width: double.infinity,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.08),
+                color: AppColors.error.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                border: Border.all(
+                  color: AppColors.error.withValues(alpha: 0.3),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.error_outline,
-                          color: AppColors.error, size: 18),
+                      const Icon(
+                        Icons.error_outline,
+                        color: AppColors.error,
+                        size: 18,
+                      ),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
@@ -238,7 +248,7 @@ class _AiModelSectionState extends State<AiModelSection> {
                     child: Text(
                       context.l10n.aiModelNotAvailableForDeviceDescription,
                       style: AppTextStyle.labelSmall.copyWith(
-                        color: AppColors.error.withOpacity(0.8),
+                        color: AppColors.error.withValues(alpha: 0.8),
                         fontSize: 11,
                       ),
                     ),
@@ -248,12 +258,14 @@ class _AiModelSectionState extends State<AiModelSection> {
             )
           else
             AppButton(
-              label: (state.medGemmaDownloaded || state.qwenDownloaded)
+              label: state.downloadedVariants.values.any((v) => v)
                   ? context.l10n.aiModelSelect
                   : context.l10n.aiModelEnableDownload,
-              icon: Icon((state.medGemmaDownloaded || state.qwenDownloaded)
-                  ? Icons.swap_horiz
-                  : Icons.download),
+              icon: Icon(
+                state.downloadedVariants.values.any((v) => v)
+                    ? Icons.swap_horiz
+                    : Icons.download,
+              ),
               variant: AppButtonVariant.primary,
               onPressed: () => ModelManagementDialog.show(context),
             )
@@ -264,12 +276,17 @@ class _AiModelSectionState extends State<AiModelSection> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Download continues in background',
+            context.l10n.aiModelDownloadContinuesInBackground,
             textAlign: TextAlign.center,
             style: AppTextStyle.labelSmall.copyWith(
               color: context.colorScheme.onSurface.withValues(alpha: 0.6),
               fontStyle: FontStyle.italic,
             ),
+          ),
+          const SizedBox(height: Insets.small),
+          CancelDownloadButton(
+            onCancelConfirmed: () =>
+                _bloc.add(const LoadModelDownloadCancelled()),
           ),
         ],
       ],
@@ -300,7 +317,7 @@ class _AiModelSectionState extends State<AiModelSection> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.wifi_off,
                     size: 40,
                     color: AppColors.error,
@@ -349,24 +366,23 @@ class _AiModelSectionState extends State<AiModelSection> {
   }
 
   void _openAiSettings(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    final currentTokens =
-        prefs.getInt(SharedPrefsConstants.aiMaxTokens) ?? 500;
-
-    if (!context.mounted) return;
-
-    final result = await AiTokenSettingsDialog.show(
-      context,
-      currentTokens: currentTokens,
-    );
-
+    final result = await AiTokenSettingsDialog.show(context);
     if (result == null) return;
 
-    await prefs.setInt(SharedPrefsConstants.aiMaxTokens, result.maxTokens);
-    await prefs.setInt(SharedPrefsConstants.aiGpuLayers, result.gpuLayers);
-    await prefs.setInt(SharedPrefsConstants.aiThreads, result.threads);
-    await prefs.setInt(SharedPrefsConstants.aiContextSize, result.contextSize);
-    await prefs.setBool(SharedPrefsConstants.aiUseVision, result.useVision);
+    // Only what the user changed is saved, so the defaults stay in force.
+    final prefs = await SharedPreferences.getInstance();
+    final maxTokens = result.maxTokens;
+    if (maxTokens != null) {
+      await prefs.setInt(SharedPrefsConstants.aiMaxTokens, maxTokens);
+    }
+    await result.saveLoadSettings(prefs);
+
+    // Deep Scan goes through the bloc, which saves it, so an open Processing
+    // screen follows the change.
+    final useVision = result.useVision;
+    if (useVision != null) {
+      getIt<ProcessingBloc>().add(VisionToggled(useVision: useVision));
+    }
   }
 
   Color _getStatusColor(LoadModelStatus status) {
@@ -385,7 +401,7 @@ class _AiModelSectionState extends State<AiModelSection> {
   Widget _getStatusIcon(LoadModelStatus status) {
     switch (status) {
       case LoadModelStatus.modelLoaded:
-        return Icon(
+        return const Icon(
           Icons.check_circle,
           size: 14,
           color: AppColors.success,
@@ -400,7 +416,7 @@ class _AiModelSectionState extends State<AiModelSection> {
           ),
         );
       case LoadModelStatus.loading:
-        return SizedBox(
+        return const SizedBox(
           width: 14,
           height: 14,
           child: CircularProgressIndicator(
@@ -409,7 +425,7 @@ class _AiModelSectionState extends State<AiModelSection> {
           ),
         );
       case LoadModelStatus.error:
-        return Icon(
+        return const Icon(
           Icons.error_outline,
           size: 14,
           color: AppColors.error,
@@ -422,14 +438,16 @@ class _AiModelSectionState extends State<AiModelSection> {
       final segments = description.split('**');
       final spans = <TextSpan>[];
       for (int i = 0; i < segments.length; i++) {
-        spans.add(TextSpan(
-          text: segments[i],
-          style: i.isOdd
-              ? AppTextStyle.labelLarge.copyWith(
-                  fontWeight: FontWeight.w700,
-                )
-              : null,
-        ));
+        spans.add(
+          TextSpan(
+            text: segments[i],
+            style: i.isOdd
+                ? AppTextStyle.labelLarge.copyWith(
+                    fontWeight: FontWeight.w700,
+                  )
+                : null,
+          ),
+        );
       }
       return Text.rich(
         TextSpan(
@@ -451,7 +469,7 @@ class _AiModelSectionState extends State<AiModelSection> {
       case LoadModelStatus.modelLoaded:
         return context.l10n.aiModelReady;
       case LoadModelStatus.modelAbsent:
-        if (state.medGemmaDownloaded || state.qwenDownloaded) {
+        if (state.downloadedVariants.values.any((v) => v)) {
           return context.l10n.aiModelNotSelected;
         }
         return context.l10n.aiModelMissing;

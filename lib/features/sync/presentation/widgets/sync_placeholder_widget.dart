@@ -3,26 +3,26 @@ import 'dart:async';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
-import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
-import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/utils/responsive.dart';
-import 'package:health_wallet/core/navigation/app_router.dart';
-import 'package:health_wallet/features/user/domain/services/default_patient_service.dart';
-import 'package:health_wallet/core/di/injection.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/core/utils/logger.dart';
-import 'package:health_wallet/core/widgets/patient_setup_dialog.dart';
-import 'package:health_wallet/core/config/constants/country_identifier.dart';
-import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
-import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/overlay_annotations/overlay_annotations.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/import_actions.dart';
+import 'package:health_wallet/core/widgets/patient_setup_dialog.dart';
+import 'package:health_wallet/features/holders/domain/entity/holder_patient.dart';
+import 'package:health_wallet/features/holders/domain/entity/holder_snapshot.dart';
+import 'package:health_wallet/features/holders/domain/services/holder_selection.dart';
+import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/import_actions.dart';
+import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
+import 'package:health_wallet/features/user/domain/services/default_patient_service.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/form_fields.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SyncPlaceholderWidget extends StatefulWidget {
@@ -70,7 +70,8 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
     if (!mounted || _hasShownTutorial) return;
 
     final prefs = await SharedPreferences.getInstance();
-    final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+    final hasSeenOnboarding =
+        prefs.getBool(SharedPrefsConstants.hasSeenOnboarding) ?? false;
     final tutorialShown = prefs.getBool(_tutorialShownKey) ?? false;
 
     if (hasSeenOnboarding && !tutorialShown && mounted) {
@@ -150,9 +151,11 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
     return BlocBuilder<HomeBloc, HomeState>(
       builder: (context, homeState) {
         final hasVitalDataLoaded = homeState.patientVitals.any(
-            (vital) => vital.value != 'N/A' && vital.observationId != null);
-        final hasOverviewDataLoaded =
-            homeState.overviewCards.any((card) => card.count != '0');
+          (vital) => vital.value != 'N/A' && vital.observationId != null,
+        );
+        final hasOverviewDataLoaded = homeState.overviewCards.any(
+          (card) => card.count != '0',
+        );
         final hasRecent = homeState.recentRecords.isNotEmpty;
         final hasAnyMeaningfulData =
             hasVitalDataLoaded || hasOverviewDataLoaded || hasRecent;
@@ -211,7 +214,8 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
   }
 
   Widget _buildActionButtons(BuildContext context, bool hasAnyMeaningfulData) {
-    final hasImportActions = widget.onImportDocument != null ||
+    final hasImportActions =
+        widget.onImportDocument != null ||
         widget.onPickImage != null ||
         widget.onScanDocument != null;
 
@@ -221,108 +225,113 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
           child: Column(
-        children: [
-          if (!hasAnyMeaningfulData) ...[
-            SizedBox(
-              key: _highlightController.setupButtonKey,
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _handleSetUpWallet(context),
-                icon: Assets.icons.user.svg(
-                  width: 16,
-                  height: 16,
-                  colorFilter:
-                      const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                ),
-                label: Text(
-                  context.l10n.setup,
-                  style: AppTextStyle.buttonMedium.copyWith(
-                    color: Colors.white,
+            children: [
+              if (!hasAnyMeaningfulData) ...[
+                SizedBox(
+                  key: _highlightController.setupButtonKey,
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _handleSetUpWallet(context),
+                    icon: Assets.icons.user.svg(
+                      width: 16,
+                      height: 16,
+                      colorFilter: const ColorFilter.mode(
+                        Colors.white,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                    label: Text(
+                      context.l10n.setup,
+                      style: AppTextStyle.buttonMedium.copyWith(
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: context.colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Insets.medium,
+                        vertical: Insets.smallNormal,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(Insets.small),
+                      ),
+                      elevation: 0,
+                    ),
                   ),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: context.colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Insets.medium,
-                    vertical: Insets.smallNormal,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(Insets.small),
-                  ),
-                  elevation: 0,
-                ),
-              ),
-            ),
-            const SizedBox(height: Insets.small),
-            SizedBox(
-              key: _highlightController.loadDemoDataButtonKey,
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _handleLoadDemoData(context),
-                icon: Assets.icons.cloudDownload.svg(
-                  width: 16,
-                  height: 16,
-                  colorFilter:
-                      const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                ),
-                label: Text(
-                  context.l10n.loadDemoData,
-                  style: AppTextStyle.buttonMedium.copyWith(
-                    color: Colors.white,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: context.colorScheme.secondary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Insets.medium,
-                    vertical: Insets.smallNormal,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(Insets.small),
-                  ),
-                  elevation: 0,
-                ),
-              ),
-            ),
-            const SizedBox(height: Insets.small),
-          ],
-          if (hasAnyMeaningfulData && hasImportActions) ...[
-            ImportActions(
-              onImportDocument: widget.onImportDocument,
-              onPickImage: widget.onPickImage,
-              onScanDocument: widget.onScanDocument,
-            ),
-          ],
-          if (!hasAnyMeaningfulData || !hasImportActions)
-            SizedBox(
-              key: _highlightController.syncDataButtonKey,
-              width: double.infinity,
-              child: TextButton.icon(
-                onPressed: widget.onSyncPressed ??
-                    () => _handleSyncRecords(context),
-                icon: Assets.icons.renewSync.svg(
-                  width: 16,
-                  height: 16,
-                  colorFilter: ColorFilter.mode(
-                    context.isDarkMode
-                        ? Colors.white
-                        : context.colorScheme.primary,
-                    BlendMode.srcIn,
+                const SizedBox(height: Insets.small),
+                SizedBox(
+                  key: _highlightController.loadDemoDataButtonKey,
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _handleLoadDemoData(context),
+                    icon: Assets.icons.cloudDownload.svg(
+                      width: 16,
+                      height: 16,
+                      colorFilter: const ColorFilter.mode(
+                        Colors.white,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                    label: Text(
+                      context.l10n.loadDemoData,
+                      style: AppTextStyle.buttonMedium.copyWith(
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: context.colorScheme.secondary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Insets.medium,
+                        vertical: Insets.smallNormal,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(Insets.small),
+                      ),
+                      elevation: 0,
+                    ),
                   ),
                 ),
-                label: Text(
-                  context.l10n.syncTitle,
-                  style: AppTextStyle.buttonMedium.copyWith(
-                    color: context.isDarkMode
-                        ? Colors.white
-                        : context.colorScheme.primary,
+                const SizedBox(height: Insets.small),
+              ],
+              if (hasAnyMeaningfulData && hasImportActions) ...[
+                ImportActions(
+                  onImportDocument: widget.onImportDocument,
+                  onPickImage: widget.onPickImage,
+                  onScanDocument: widget.onScanDocument,
+                ),
+              ],
+              if (!hasAnyMeaningfulData || !hasImportActions)
+                SizedBox(
+                  key: _highlightController.syncDataButtonKey,
+                  width: double.infinity,
+                  child: TextButton.icon(
+                    onPressed:
+                        widget.onSyncPressed ??
+                        () => _handleSyncRecords(context),
+                    icon: Assets.icons.renewSync.svg(
+                      width: 16,
+                      height: 16,
+                      colorFilter: ColorFilter.mode(
+                        context.isDarkMode
+                            ? Colors.white
+                            : context.colorScheme.primary,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                    label: Text(
+                      context.l10n.syncTitle,
+                      style: AppTextStyle.buttonMedium.copyWith(
+                        color: context.isDarkMode
+                            ? Colors.white
+                            : context.colorScheme.primary,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-          ],
+            ],
           ),
         ),
       ),
@@ -338,14 +347,14 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
 
   String _getSubtitle(BuildContext context, bool hasAnyMeaningfulData) {
     if (hasAnyMeaningfulData && widget.recordTypeName != null) {
-      return 'Sync or update your data to view ${widget.recordTypeName} records';
+      return context.l10n.syncPlaceholderSubtitle(widget.recordTypeName!);
     }
     return context.l10n.loadDemoDataMessage;
   }
 
   void _handleLoadDemoData(BuildContext context) {
-    final detectedCountry = WidgetsBinding
-            .instance.platformDispatcher.locale.countryCode
+    final detectedCountry =
+        WidgetsBinding.instance.platformDispatcher.locale.countryCode
             ?.toUpperCase() ??
         'US';
 
@@ -356,8 +365,6 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
     BuildContext outerContext,
     String initialCountry,
   ) {
-    final patientBloc = outerContext.read<PatientBloc>();
-    final homeBloc = outerContext.read<HomeBloc>();
     final syncBloc = outerContext.read<SyncBloc>();
 
     showDialog(
@@ -366,9 +373,8 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
       builder: (_) {
         return _DemoDataFlowDialog(
           initialCountry: initialCountry,
-          onComplete: (dialogContext) => _onDemoDataComplete(
-            dialogContext, patientBloc, homeBloc, syncBloc,
-          ),
+          onComplete: (dialogContext) =>
+              _onDemoDataComplete(dialogContext, syncBloc),
         );
       },
     );
@@ -376,32 +382,16 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
 
   void _onDemoDataComplete(
     BuildContext dialogContext,
-    PatientBloc patientBloc,
-    HomeBloc homeBloc,
     SyncBloc syncBloc,
   ) async {
     _syncBloc?.add(const DemoDataConfirmed());
 
-    patientBloc.add(const PatientInitialised());
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    final patientState = patientBloc.state;
-    final demoPatients = patientState.patients
-        .where((p) => p.sourceId == 'demo_data')
-        .toList();
-
-    if (demoPatients.isNotEmpty) {
-      final demoPatient = demoPatients.first;
-      if (patientState.selectedPatientId != demoPatient.id) {
-        patientBloc.add(PatientSelectionChanged(patientId: demoPatient.id));
-      }
-      homeBloc.add(
-        const HomeSourceChanged('demo_data',
-            patientSourceIds: ['demo_data']),
-      );
-    }
-
-    await Future.delayed(const Duration(milliseconds: 200));
+    // Shows the demo person; PatientBloc and Home follow the selection.
+    final selection = getIt<HolderSelection>();
+    final demo = (await selection.refresh()).directory.ofSource(
+      HolderSource.demoId,
+    );
+    if (demo != null) await selection.select(demo.id);
 
     if (dialogContext.mounted) {
       Navigator.of(dialogContext).pop();
@@ -409,8 +399,11 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
 
     final pageControllerRef = widget.pageController;
     if (pageControllerRef != null) {
-      pageControllerRef.animateToPage(0,
-          duration: const Duration(milliseconds: 300), curve: Curves.ease);
+      pageControllerRef.animateToPage(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.ease,
+      );
     } else if (mounted) {
       context.router.pop();
     }
@@ -422,37 +415,42 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
 
   void _handleSyncRecords(BuildContext context) {
     if (context.mounted) {
-      context.router.push(const SyncRoute());
+      debugPrint('[SYNC] Opening QR scanner from placeholder');
+      context.read<SyncBloc>().add(const SyncScanQRCode());
     }
   }
 
   void _handleSetUpWallet(BuildContext context) async {
     final syncBloc = context.read<SyncBloc>();
-    final homeBloc = context.read<HomeBloc>();
-    final patientBloc = context.read<PatientBloc>();
     final pageController = widget.pageController;
 
     try {
       final defaultPatientService = getIt<DefaultPatientService>();
       await defaultPatientService.createAndSetAsMain();
 
-      homeBloc.add(const HomeSourceChanged('wallet-default_patient'));
-      patientBloc.add(const PatientInitialised());
+      // The new default holder, or the person already in the wallet when
+      // there was one (then no default holder is made).
+      final selection = getIt<HolderSelection>();
+      final scope = await selection.refresh();
+      final holder =
+          scope.directory.byId(HolderPatient.placeholderRowId) ?? scope.holder;
+      if (holder != null) await selection.select(holder.id);
+      final walletPatient = holder?.representativePatient;
 
-      final walletPatient = await _waitForWalletPatient(patientBloc);
-
-      if (!mounted) return;
+      if (!context.mounted) return;
 
       if (walletPatient != null) {
-        if (mounted) {
+        if (context.mounted) {
           PatientSetupDialog.show(
             context,
             walletPatient,
             onDismiss: () {
               if (pageController != null) {
-                pageController.animateToPage(0,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.ease);
+                pageController.animateToPage(
+                  0,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.ease,
+                );
               }
 
               Future.delayed(const Duration(milliseconds: 400), () {
@@ -468,8 +466,11 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
       } else {
         logger.w('No wallet patient found, navigating without dialog');
         if (pageController != null) {
-          pageController.animateToPage(0,
-              duration: const Duration(milliseconds: 300), curve: Curves.ease);
+          pageController.animateToPage(
+            0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.ease,
+          );
         }
 
         Future.delayed(const Duration(milliseconds: 400), () {
@@ -483,43 +484,12 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
     } catch (e) {
       logger.e('Error in _handleSetUpWallet: $e');
       if (pageController != null) {
-        pageController.animateToPage(0,
-            duration: const Duration(milliseconds: 300), curve: Curves.ease);
+        pageController.animateToPage(
+          0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.ease,
+        );
       }
-    }
-  }
-
-  Future<dynamic> _waitForWalletPatient(PatientBloc patientBloc) async {
-    final currentState = patientBloc.state;
-    final existingWalletPatients = currentState.patients
-        .where((p) => p.sourceId.startsWith('wallet'))
-        .toList();
-    if (existingWalletPatients.isNotEmpty) {
-      return existingWalletPatients.first;
-    }
-
-    try {
-      final stateWithPatient = await patientBloc.stream
-          .where((state) =>
-              state.patients.any((p) => p.sourceId.startsWith('wallet')))
-          .first
-          .timeout(const Duration(seconds: 3));
-
-      final walletPatients = stateWithPatient.patients
-          .where((p) => p.sourceId.startsWith('wallet'))
-          .toList();
-
-      return walletPatients.isNotEmpty ? walletPatients.first : null;
-    } on TimeoutException {
-      logger.w('Timeout waiting for wallet patient');
-      final finalState = patientBloc.state;
-      final finalWalletPatients = finalState.patients
-          .where((p) => p.sourceId.startsWith('wallet'))
-          .toList();
-      return finalWalletPatients.isNotEmpty ? finalWalletPatients.first : null;
-    } catch (e) {
-      logger.e('Error waiting for wallet patient: $e');
-      return null;
     }
   }
 }
@@ -570,15 +540,21 @@ class _DemoDataFlowDialogState extends State<_DemoDataFlowDialog> {
         ? AppColors.borderDark
         : AppColors.border;
 
+    // Moves on when this load finishes, whatever was loaded or synced
+    // before; a failure (shown by SyncErrorListener) goes back to the first
+    // step, from which the dialog can be closed.
     return BlocListener<SyncBloc, SyncState>(
-      listenWhen: (prev, curr) => curr.hasDemoData && !curr.hasSyncedData,
+      listenWhen: (prev, curr) =>
+          prev.demoLoads != curr.demoLoads ||
+          (curr.errorMessage != null && prev.errorMessage != curr.errorMessage),
       listener: (ctx, state) {
-        if (_step == 1 && state.hasDemoData) {
-          setState(() => _step = 2);
-        }
+        if (_step != 1) return;
+        setState(
+          () => _step = state.errorMessage == null && state.hasDemoData ? 2 : 0,
+        );
       },
       child: PopScope(
-        canPop: false,
+        canPop: _step == 0,
         child: Dialog(
           backgroundColor: context.colorScheme.surface,
           shape: RoundedRectangleBorder(
@@ -586,15 +562,18 @@ class _DemoDataFlowDialogState extends State<_DemoDataFlowDialog> {
             side: BorderSide(color: borderColor, width: 1),
           ),
           insetPadding: const EdgeInsets.all(Insets.normal),
-          child: Padding(
-            padding: const EdgeInsets.all(Insets.normal),
-            child: AnimatedSize(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOut,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: _buildStepContent(context, textColor, borderColor),
+          child: SizedBox(
+            width: context.dialogWidth,
+            child: Padding(
+              padding: const EdgeInsets.all(Insets.normal),
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: _buildStepContent(context, textColor, borderColor),
+                ),
               ),
             ),
           ),
@@ -626,8 +605,10 @@ class _DemoDataFlowDialogState extends State<_DemoDataFlowDialog> {
           countryItems,
           (value) {
             final code = _countries.entries
-                .firstWhere((e) => e.value == value,
-                    orElse: () => const MapEntry('US', ''))
+                .firstWhere(
+                  (e) => e.value == value,
+                  orElse: () => const MapEntry('US', ''),
+                )
                 .key;
             setState(() => _selectedCountry = code);
           },
@@ -692,7 +673,7 @@ class _DemoDataFlowDialogState extends State<_DemoDataFlowDialog> {
           elevation: 0,
         ),
         child: Text(
-          'OK',
+          context.l10n.ok,
           style: AppTextStyle.buttonSmall.copyWith(color: Colors.white),
         ),
       ),

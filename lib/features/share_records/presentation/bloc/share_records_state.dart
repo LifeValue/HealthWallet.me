@@ -17,14 +17,29 @@ enum SharePhase {
   discoveringPeers,
   connecting,
   transferring,
+  verifyingCode,
+
+  /// Sender: codes confirmed and the key sent; the receiver can open the
+  /// records, so leaving this phase must end the session on both phones.
+  awaitingViewer,
   monitoringSession,
   viewingRecords,
   sessionEnded,
   error,
 }
 
+/// Why a share session reached [SharePhase.sessionEnded]; the ended view
+/// picks its texts from it.
+enum ShareSessionEndReason {
+  expired,
+  terminated,
+  remoteTerminated,
+  invitationDeclined,
+  dataDeleted,
+}
+
 @freezed
-class ShareRecordsState with _$ShareRecordsState {
+abstract class ShareRecordsState with _$ShareRecordsState {
   const ShareRecordsState._();
 
   const factory ShareRecordsState({
@@ -42,6 +57,7 @@ class ShareRecordsState with _$ShareRecordsState {
     String? pendingInvitationDeviceName,
     String? errorMessage,
     String? statusMessage,
+    ShareSessionEndReason? sessionEndReason,
     @Default(false) bool showSettingsDialog,
     @Default(false) bool showExitConfirmationDialog,
     String? connectionMethod,
@@ -56,6 +72,13 @@ class ShareRecordsState with _$ShareRecordsState {
     int? pendingExtendDurationSeconds,
     @Default(false) bool extensionRequestPending,
     @Default([]) List<FhirType> appliedFilters,
+
+    /// Six digits both phones show while the users compare them.
+    String? verificationCode,
+
+    /// Sender: ending the session could not be confirmed with the other
+    /// phone, which keeps the records until its own timer runs out.
+    @Default(false) bool remoteEndUnconfirmed,
   }) = _ShareRecordsState;
 
   factory ShareRecordsState.initial() => const ShareRecordsState();
@@ -81,7 +104,8 @@ class ShareRecordsState with _$ShareRecordsState {
 
   int get receivedCount => receivedData?.recordCount ?? 0;
 
-  bool get isDefaultDuration => selectedViewingDuration == defaultViewingDuration;
+  bool get isDefaultDuration =>
+      selectedViewingDuration == defaultViewingDuration;
 
   double get progressPercentage {
     if (transferProgress == null) return 0.0;

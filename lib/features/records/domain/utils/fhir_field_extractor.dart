@@ -1,7 +1,9 @@
+import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/core/config/constants/region_preset.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
 import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
-import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_observation_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_patient_extractor.dart';
@@ -14,6 +16,11 @@ class FhirFieldExtractor {
   static String? extractCodeableConceptText(dynamic codeableConcept) =>
       FhirCommonExtractor.extractCodeableConceptText(codeableConcept);
 
+  static String? extractMedicationName(
+    dynamic medicationX,
+    Map<String, dynamic> rawResource,
+  ) => FhirCommonExtractor.extractMedicationName(medicationX, rawResource);
+
   static String? extractReferenceDisplay(dynamic reference) =>
       FhirCommonExtractor.extractReferenceDisplay(reference);
 
@@ -21,9 +28,10 @@ class FhirFieldExtractor {
       FhirCommonExtractor.extractDate(date);
 
   static String? extractFirstCodeableConceptFromArray(
-          List<dynamic>? codeableConceptArray) =>
-      FhirCommonExtractor.extractFirstCodeableConceptFromArray(
-          codeableConceptArray);
+    List<dynamic>? codeableConceptArray,
+  ) => FhirCommonExtractor.extractFirstCodeableConceptFromArray(
+    codeableConceptArray,
+  );
 
   static String? joinNullable(List<String?> values, String separator) =>
       FhirCommonExtractor.joinNullable(values, separator);
@@ -35,9 +43,10 @@ class FhirFieldExtractor {
       FhirCommonExtractor.extractQuantity(quantity);
 
   static String? extractAllCodeableConceptsFromArray(
-          List<dynamic>? codeableConceptArray) =>
-      FhirCommonExtractor.extractAllCodeableConceptsFromArray(
-          codeableConceptArray);
+    List<dynamic>? codeableConceptArray,
+  ) => FhirCommonExtractor.extractAllCodeableConceptsFromArray(
+    codeableConceptArray,
+  );
 
   static String? extractFirstAnnotation(List<dynamic>? annotations) =>
       FhirCommonExtractor.extractFirstAnnotation(annotations);
@@ -48,15 +57,11 @@ class FhirFieldExtractor {
   static String? formatAddress(fhir_r4.Address? address) =>
       FhirCommonExtractor.formatAddress(address);
 
-  static String? extractMultipleReferenceDisplays(
-          List<dynamic>? references) =>
+  static String? extractMultipleReferenceDisplays(List<dynamic>? references) =>
       FhirCommonExtractor.extractMultipleReferenceDisplays(references);
 
   static String? extractDosageInstructions(List<dynamic>? dosages) =>
       FhirCommonExtractor.extractDosageInstructions(dosages);
-
-  static String? extractDosage(List<fhir_r4.Dosage>? dosages) =>
-      FhirCommonExtractor.extractDosage(dosages);
 
   static String? extractReasonCodes(List<dynamic>? reasonCodes) =>
       FhirCommonExtractor.extractReasonCodes(reasonCodes);
@@ -65,8 +70,8 @@ class FhirFieldExtractor {
       FhirCommonExtractor.extractReasonReferences(reasonReferences);
 
   static String? extractFirstIdentifier(
-          List<fhir_r4.Identifier>? identifiers) =>
-      FhirCommonExtractor.extractFirstIdentifier(identifiers);
+    List<fhir_r4.Identifier>? identifiers,
+  ) => FhirCommonExtractor.extractFirstIdentifier(identifiers);
 
   static String? extractServiceType(List<dynamic>? serviceTypes) =>
       FhirCommonExtractor.extractServiceType(serviceTypes);
@@ -77,17 +82,40 @@ class FhirFieldExtractor {
   static String? extractIntent(dynamic intent) =>
       FhirCommonExtractor.extractIntent(intent);
 
-  static String? extractObservationValue(dynamic valueX) =>
-      FhirObservationExtractor.extractObservationValue(valueX);
+  static String? extractObservationValue(
+    dynamic valueX, {
+    AppLocalizations? l10n,
+  }) => FhirObservationExtractor.extractObservationValue(valueX, l10n: l10n);
 
   static String? extractObservationValueForRegion(
-          dynamic valueX, RegionPreset region) =>
-      FhirObservationExtractor.extractObservationValueForRegion(
-          valueX, region);
+    dynamic valueX,
+    RegionPreset region, {
+    AppLocalizations? l10n,
+    required PatientVitalType? measured,
+  }) => FhirObservationExtractor.extractObservationValueForRegion(
+    valueX,
+    region,
+    l10n: l10n,
+    measured: measured,
+  );
 
   static ({double value, String unit}) convertQuantityForRegion(
-          double value, String unit, RegionPreset region) =>
-      FhirObservationExtractor.convertQuantityForRegion(value, unit, region);
+    double value,
+    String unit,
+    RegionPreset region, {
+    required PatientVitalType? measured,
+    String? ucumCode,
+  }) => FhirObservationExtractor.convertQuantityForRegion(
+    value,
+    unit,
+    region,
+    measured: measured,
+    ucumCode: ucumCode,
+  );
+
+  static PatientVitalType? regionUnitVitalOf(
+    fhir_r4.CodeableConcept? code,
+  ) => FhirObservationExtractor.regionUnitVitalOf(code);
 
   static bool isVitalSign(Observation observation) =>
       FhirObservationExtractor.isVitalSign(observation);
@@ -107,8 +135,7 @@ class FhirFieldExtractor {
   static String? extractInterpretation(List<dynamic>? interpretations) =>
       FhirObservationExtractor.extractInterpretation(interpretations);
 
-  static String? extractBloodTypeFromObservations(
-          List<dynamic> observations) =>
+  static String? extractBloodTypeFromObservations(List<dynamic> observations) =>
       FhirObservationExtractor.extractBloodTypeFromObservations(observations);
 
   static String? extractHumanName(dynamic name) =>
@@ -132,43 +159,52 @@ class FhirFieldExtractor {
   static String extractPatientId(Patient patient) =>
       FhirPatientExtractor.extractPatientId(patient);
 
-  static String extractPatientAge(Patient patient) =>
-      FhirPatientExtractor.extractPatientAge(patient);
+  static String extractPatientAge(Patient patient, {AppLocalizations? l10n}) =>
+      FhirPatientExtractor.extractPatientAge(patient, l10n: l10n);
 
   static DateTime? extractPatientBirthDate(Patient patient) =>
       FhirPatientExtractor.extractPatientBirthDate(patient);
 
-  static String extractPatientGender(Patient patient) =>
-      FhirPatientExtractor.extractPatientGender(patient);
+  static String extractPatientGender(
+    Patient patient, {
+    AppLocalizations? l10n,
+  }) => FhirPatientExtractor.extractPatientGender(patient, l10n: l10n);
 
-  static String extractPatientIdentifierLabel(Patient patient) =>
-      FhirPatientExtractor.extractPatientIdentifierLabel(patient);
+  static String extractPatientIdentifierLabel(
+    Patient patient, {
+    AppLocalizations? l10n,
+  }) => FhirPatientExtractor.extractPatientIdentifierLabel(patient, l10n: l10n);
 
   static String extractPatientIdentifierValue(Patient patient) =>
       FhirPatientExtractor.extractPatientIdentifierValue(patient);
 
-  static String? extractMultipleBirth(dynamic multipleBirthX) =>
-      FhirPatientExtractor.extractMultipleBirth(multipleBirthX);
+  static String? extractMultipleBirth(
+    dynamic multipleBirthX, {
+    AppLocalizations? l10n,
+  }) => FhirPatientExtractor.extractMultipleBirth(multipleBirthX, l10n: l10n);
 
   static String? extractCommunicationLanguages(
-          List<fhir_r4.PatientCommunication>? communication) =>
-      FhirPatientExtractor.extractCommunicationLanguages(communication);
+    List<fhir_r4.PatientCommunication>? communication,
+  ) => FhirPatientExtractor.extractCommunicationLanguages(communication);
 
   static int? calculateAge(DateTime? birthDate) =>
       FhirPatientExtractor.calculateAge(birthDate);
 
   static String? extractIdentifierByType(
-          List<fhir_r4.Identifier>? identifiers, String typeCode) =>
-      FhirPatientExtractor.extractIdentifierByType(identifiers, typeCode);
+    List<fhir_r4.Identifier>? identifiers,
+    String typeCode,
+  ) => FhirPatientExtractor.extractIdentifierByType(identifiers, typeCode);
 
   static String? extractTelecomBySystem(
-          List<fhir_r4.ContactPoint>? telecom, String system,
-          {String? use}) =>
-      FhirPatientExtractor.extractTelecomBySystem(telecom, system, use: use);
+    List<fhir_r4.ContactPoint>? telecom,
+    String system, {
+    String? use,
+  }) => FhirPatientExtractor.extractTelecomBySystem(telecom, system, use: use);
 
   static List<Map<String, String>> extractAllTelecomBySystem(
-          List<fhir_r4.ContactPoint>? telecom, String system) =>
-      FhirPatientExtractor.extractAllTelecomBySystem(telecom, system);
+    List<fhir_r4.ContactPoint>? telecom,
+    String system,
+  ) => FhirPatientExtractor.extractAllTelecomBySystem(telecom, system);
 
   static String? extractTelecom(List<fhir_r4.ContactPoint>? telecom) =>
       FhirPatientExtractor.extractTelecom(telecom);
@@ -189,18 +225,22 @@ class FhirFieldExtractor {
       FhirCommonExtractor.extractDiagnoses(diagnoses);
 
   static String? extractRaceOrEthnicity(
-          Map<String, dynamic> rawResource, String extensionUrl) =>
-      FhirPatientExtractor.extractRaceOrEthnicity(rawResource, extensionUrl);
+    Map<String, dynamic> rawResource,
+    String extensionUrl,
+  ) => FhirPatientExtractor.extractRaceOrEthnicity(rawResource, extensionUrl);
 
   static String? extractExtensionValue(
-          Map<String, dynamic> rawResource, String extensionUrl) =>
-      FhirPatientExtractor.extractExtensionValue(rawResource, extensionUrl);
+    Map<String, dynamic> rawResource,
+    String extensionUrl,
+  ) => FhirPatientExtractor.extractExtensionValue(rawResource, extensionUrl);
 
   static String? extractBirthPlace(Map<String, dynamic> rawResource) =>
       FhirPatientExtractor.extractBirthPlace(rawResource);
 
-  static String? extractPeriod(fhir_r4.Period? period) =>
-      FhirTemporalExtractor.extractPeriod(period);
+  static String? extractPeriod(
+    fhir_r4.Period? period, {
+    AppLocalizations? l10n,
+  }) => FhirTemporalExtractor.extractPeriod(period, l10n: l10n);
 
   static String? extractPeriodStart(fhir_r4.Period? period) =>
       FhirTemporalExtractor.extractPeriodStart(period);
@@ -208,26 +248,36 @@ class FhirFieldExtractor {
   static String? extractPeriodEnd(fhir_r4.Period? period) =>
       FhirTemporalExtractor.extractPeriodEnd(period);
 
-  static String? extractPeriodFormatted(fhir_r4.Period? period) =>
-      FhirTemporalExtractor.extractPeriodFormatted(period);
+  static String? extractPeriodFormatted(
+    fhir_r4.Period? period, {
+    AppLocalizations? l10n,
+  }) => FhirTemporalExtractor.extractPeriodFormatted(period, l10n: l10n);
 
-  static String? extractOnsetX(dynamic onsetX) =>
-      FhirTemporalExtractor.extractOnsetX(onsetX);
+  static String? extractOnsetX(dynamic onsetX, {AppLocalizations? l10n}) =>
+      FhirTemporalExtractor.extractOnsetX(onsetX, l10n: l10n);
 
-  static String? extractAbatementX(dynamic abatementX) =>
-      FhirTemporalExtractor.extractAbatementX(abatementX);
+  static String? extractAbatementX(
+    dynamic abatementX, {
+    AppLocalizations? l10n,
+  }) => FhirTemporalExtractor.extractAbatementX(abatementX, l10n: l10n);
 
-  static String? extractPerformedX(dynamic performedX) =>
-      FhirTemporalExtractor.extractPerformedX(performedX);
+  static String? extractPerformedX(
+    dynamic performedX, {
+    AppLocalizations? l10n,
+  }) => FhirTemporalExtractor.extractPerformedX(performedX, l10n: l10n);
 
-  static String? extractEffectiveX(dynamic effectiveX) =>
-      FhirTemporalExtractor.extractEffectiveX(effectiveX);
+  static String? extractEffectiveX(
+    dynamic effectiveX, {
+    AppLocalizations? l10n,
+  }) => FhirTemporalExtractor.extractEffectiveX(effectiveX, l10n: l10n);
 
-  static String? extractOccurrenceX(dynamic occurrenceX) =>
-      FhirTemporalExtractor.extractOccurrenceX(occurrenceX);
+  static String? extractOccurrenceX(
+    dynamic occurrenceX, {
+    AppLocalizations? l10n,
+  }) => FhirTemporalExtractor.extractOccurrenceX(occurrenceX, l10n: l10n);
 
-  static String? extractDateTime(dynamic dateX) =>
-      FhirTemporalExtractor.extractDateTime(dateX);
+  static String? extractDateTime(dynamic dateX, {AppLocalizations? l10n}) =>
+      FhirTemporalExtractor.extractDateTime(dateX, l10n: l10n);
 
   static String? formatFhirDateTime(fhir_r4.FhirDateTime? fhirDateTime) =>
       FhirTemporalExtractor.formatFhirDateTime(fhirDateTime);
@@ -241,18 +291,40 @@ class FhirFieldExtractor {
   static String? formatDateTimeString(String? dateTimeString) =>
       FhirTemporalExtractor.formatDateTimeString(dateTimeString);
 
-  static String? extractOnsetXFormatted(dynamic onsetX) =>
-      FhirTemporalExtractor.extractOnsetXFormatted(onsetX);
+  static DateTime recordDay(DateTime date) =>
+      FhirTemporalExtractor.recordDay(date);
 
-  static String? extractAbatementXFormatted(dynamic abatementX) =>
-      FhirTemporalExtractor.extractAbatementXFormatted(abatementX);
+  static String formatRecordDate(DateTime date, String? locale) =>
+      FhirTemporalExtractor.formatRecordDate(date, locale);
 
-  static String? extractPerformedXFormatted(dynamic performedX) =>
-      FhirTemporalExtractor.extractPerformedXFormatted(performedX);
+  static String? extractOnsetXFormatted(
+    dynamic onsetX, {
+    AppLocalizations? l10n,
+  }) => FhirTemporalExtractor.extractOnsetXFormatted(onsetX, l10n: l10n);
 
-  static String? extractEffectiveXFormatted(dynamic effectiveX) =>
-      FhirTemporalExtractor.extractEffectiveXFormatted(effectiveX);
+  static String? extractAbatementXFormatted(
+    dynamic abatementX, {
+    AppLocalizations? l10n,
+  }) =>
+      FhirTemporalExtractor.extractAbatementXFormatted(abatementX, l10n: l10n);
 
-  static String? extractOccurrenceXFormatted(dynamic occurrenceX) =>
-      FhirTemporalExtractor.extractOccurrenceXFormatted(occurrenceX);
+  static String? extractPerformedXFormatted(
+    dynamic performedX, {
+    AppLocalizations? l10n,
+  }) =>
+      FhirTemporalExtractor.extractPerformedXFormatted(performedX, l10n: l10n);
+
+  static String? extractEffectiveXFormatted(
+    dynamic effectiveX, {
+    AppLocalizations? l10n,
+  }) =>
+      FhirTemporalExtractor.extractEffectiveXFormatted(effectiveX, l10n: l10n);
+
+  static String? extractOccurrenceXFormatted(
+    dynamic occurrenceX, {
+    AppLocalizations? l10n,
+  }) => FhirTemporalExtractor.extractOccurrenceXFormatted(
+    occurrenceX,
+    l10n: l10n,
+  );
 }
