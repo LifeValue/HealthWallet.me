@@ -6,7 +6,7 @@
 
 ### Your medical records. On your phone. Under your control.
 
-**Open-source, offline-first health record manager with on-device AI.**
+**Source-available, offline-first health record manager with on-device AI. Free for personal use.**
 Connects to **52,000+ US healthcare providers** via FHIR R4.
 Scans paper documents with a local LLM — **your data never leaves your device.**
 
@@ -15,11 +15,11 @@ Scans paper documents with a local LLM — **your data never leaves your device.
 
 <br>
 
-[![Version](https://img.shields.io/badge/version-1.2.0-blue)](changelog.md)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE.md)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue)](CHANGELOG.md)
+[![License: BUSL 1.1](https://img.shields.io/badge/License-BUSL_1.1-blue.svg)](LICENSE.md)
 [![Flutter](https://img.shields.io/badge/Flutter-3.38-02569B?logo=flutter)](https://flutter.dev)
 [![FHIR R4](https://img.shields.io/badge/FHIR-R4-E44D26)](https://hl7.org/fhir/R4/)
-[![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey)]()
+[![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)]()
 [![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/lifevalue)
 [![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/@TechStackAppsCo)
 [![Facebook](https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white)](https://www.facebook.com/techstackapps/)
@@ -48,6 +48,7 @@ Scans paper documents with a local LLM — **your data never leaves your device.
 - **Proximity sharing** — Share records face-to-face via AirDrop-style transfer. No intermediary server.
 - **International Patient Summary (IPS)** — Export a globally recognized health summary for travel or emergencies.
 - **Emergency wallet card** — Add your critical health info to Apple Wallet or Google Wallet.
+- **Desktop companion** — Back up, sync and process documents faster on macOS, Windows or Linux, over your local network only.
 
 ---
 
@@ -74,6 +75,10 @@ Scans paper documents with a local LLM — **your data never leaves your device.
 [![Get it on Google Play](assets/readme/playstore.svg)](https://play.google.com/store/apps/details?id=com.techstackapps.healthwallet)
 
 </div>
+
+### Install the Desktop App
+
+Download the latest build for **macOS, Windows or Linux** from [GitHub Releases](https://github.com/LifeValue/HealthWallet.me/releases/latest). Then open **Data Sync & Backup** on your phone and scan the pairing QR code shown on the desktop. Both devices need to be on the same network, USB tethering or hotspot.
 
 ### Set Up Your Self-Hosted Backend
 
@@ -218,12 +223,15 @@ flutter test
 - Smart document scanning (AI reads and organizes your medical records)
 - Add IPS (International Patient Summary) to Google / Apple Wallet
 - **Cross-platform** proximity sharing — works between **iOS and Android**, view-only on receiver, no data saved, screenshots blocked
+- Responsive tablet UI
+- **Desktop app** (v1.3.0) for macOS, Windows and Linux — backup & restore, two-way sync, and document processing handed over from the phone. [Download](https://github.com/LifeValue/HealthWallet.me/releases/latest) · [Changelog](CHANGELOG.md)
 
 ### In Progress
-- Desktop app with backup sync and offloaded document processing
+- Share records with your clinic through SMART Health Links ([CMS Kill the Clipboard](https://www.cms.gov/health-technology-ecosystem))
+- Verified patient identity (ID.me / CLEAR)
+- Retrieve your records from CMS Aligned Networks
 
 ### Future Plans
-- Responsive UI
 - Wearable & health provider integration
 - AI health insights
 - AI Note taking prescription
@@ -234,7 +242,7 @@ flutter test
 
 ## Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. Contributions are accepted under our Contributor License Agreement, signed off per commit (`git commit -s`).
 
 ```bash
 # Fork → Branch → Code → PR
@@ -248,7 +256,7 @@ git push origin feature/your-feature
 
 ## Sponsors
 
-**HealthWallet.me** is an open-source project dedicated to improving healthcare accessibility and patient data management.
+**HealthWallet.me** is a source-available project dedicated to improving healthcare accessibility and patient data management.
 
 <div align="center">
 
@@ -276,7 +284,12 @@ Interested in **corporate sponsorship** or **partnership opportunities**? We off
 
 ## License
 
-[GPL-3.0](LICENSE.md) — © Copyright 2026, Life Value
+HealthWallet.me is **source-available** under the [Business Source License 1.1](LICENSE.md) — © Copyright 2025-2026, Life Value.
+
+- **Free for personal use.** Individuals can use, modify and run the app to manage their own health records and those of people in their care.
+- **Commercial use needs a license.** Companies, healthcare providers, payers, networks, government and public bodies, and anyone offering HealthWallet.me (or a modified version) as a product or service need a commercial license from Life Value. [Contact us](https://lifevalue.com/company/contact).
+- **Each version becomes GPL-3.0** four years after it is published.
+- **Earlier versions stay GPL-3.0.** Everything published before v1.3.0, including all `v1.3.0-dev.*` pre-releases, remains under the [GNU GPL v3.0](https://www.gnu.org/licenses/gpl-3.0.html).
 
 ---
 
