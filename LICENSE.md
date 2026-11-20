@@ -3,9 +3,10 @@ License text copyright (c) 2020 MariaDB Corporation Ab, All Rights Reserved.
 
 Parameters
 
-Licensor:             Life Value
+Licensor:             Life Value (legal name: SC TECH STACK APPS SRL)
 Licensed Work:        HealthWallet.me version 1.3.0 or later. The Licensed Work
-                      is (c) 2025-2026 Life Value.
+                      is (c) 2025-2026 Life Value (legal name: SC TECH STACK
+                      APPS SRL).
 Additional Use Grant: You may make production use of the Licensed Work, provided
                       that Your use is Personal Use.
 
@@ -28,7 +29,7 @@ Change Date:          Four years from the date the Licensed Work is published.
 Change License:       GNU General Public License v3.0 (GPL-3.0)
 
 For information about alternative licensing arrangements for the Licensed Work,
-please contact Life Value at https://lifevalue.com/company/contact.
+please contact Life Value at hello@lifevalue.com.
 
 Versions of HealthWallet.me published before version 1.3.0, including all
 v1.3.0-dev.* pre-releases, were published under the GNU General Public License
