@@ -868,6 +868,18 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String patientIsYou(String name) {
+    return 'Das bist du: $name';
+  }
+
+  @override
+  String get patientSavedAsYou => 'Wird als du gespeichert';
+
+  @override
+  String get patientNameRequired =>
+      'Gib den Namen des Patienten ein oder wähle jemanden, der schon in deinem Wallet ist.';
+
+  @override
   String patientMatchFound(String name) {
     return 'Bestehender Patient: $name';
   }

@@ -1393,7 +1393,7 @@ void main() {
           sessions: [
             linked(
               draft: const MappingPatient(
-                id: 'd',
+                id: 'p1',
                 familyName: MappedProperty(value: 'Pop'),
               ),
             ),
@@ -1413,9 +1413,62 @@ void main() {
       await settle();
 
       final draft = session('s').patient.draft!;
-      expect(draft.id, 'd');
+      expect(draft.id, 'p1');
       expect(draft.familyName.value, 'Pop');
       expect(draft.givenName.value, 'Ioana');
+    });
+
+    test('for the unnamed user, a field change edits the details the review '
+        'shows, which name them', () async {
+      const unnamed = Patient(
+        id: 'p-me',
+        rawResource: {
+          'name': [
+            {
+              'family': 'Holder',
+              'given': ['Health Wallet'],
+            },
+          ],
+          'identifier': [
+            {'value': 'default_patient'},
+          ],
+        },
+      );
+      seed(
+        const ProcessingState(
+          sessions: [
+            ProcessingSession(
+              id: 's',
+              status: ProcessingStatus.draft,
+              patient: StagedPatient(
+                existing: unnamed,
+                draft: MappingPatient(
+                  id: 'scan',
+                  familyName: MappedProperty(value: 'Szilagyi'),
+                ),
+                mode: ImportMode.linkExisting,
+              ),
+            ),
+          ],
+        ),
+      );
+
+      bloc.add(
+        const ResourceChanged(
+          sessionId: 's',
+          index: -1,
+          propertyKey: 'givenName',
+          newValue: 'Alexandru',
+          isDraftPatient: true,
+        ),
+      );
+      await settle();
+
+      final patient = session('s').patient;
+      expect(patient.review, PatientReview.you);
+      expect(patient.draft?.id, 'scan');
+      expect(patient.draft?.familyName.value, 'Szilagyi');
+      expect(patient.draft?.givenName.value, 'Alexandru');
     });
 
     test('reverting drops the edits and links the wallet patient', () async {

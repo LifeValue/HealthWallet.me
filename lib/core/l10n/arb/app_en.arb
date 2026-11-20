@@ -292,6 +292,16 @@
       }
     }
   },
+  "patientIsYou": "This is you: {name}",
+  "@patientIsYou": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "patientSavedAsYou": "Saved as you",
+  "patientNameRequired": "Enter the patient's name, or choose someone already in your wallet.",
   "patientMatchFound": "Existing patient: {name}",
   "@patientMatchFound": {
     "placeholders": {

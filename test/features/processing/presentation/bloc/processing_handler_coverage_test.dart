@@ -284,8 +284,19 @@ class _FakeHolderService extends Fake implements HolderService {
           );
   }
 
+  /// The holders still unnamed, by holder id.
+  final unnamed = <String>{};
+
   @override
-  bool isUnnamed(Holder holder) => false;
+  bool isUnnamed(Holder holder) => unnamed.contains(holder.id);
+
+  @override
+  Holder? soleUnnamedHolder(HolderDirectory directory) {
+    final people = directory.holders;
+    return people.length == 1 && isUnnamed(people.single)
+        ? people.single
+        : null;
+  }
 
   @override
   Future<Source> walletSourceOf(String holderId) async {
@@ -329,7 +340,7 @@ typedef _DocumentsCall = ({
   String sessionId,
   List<String> filePaths,
   String patientId,
-  Encounter? encounter,
+  IFhirResource container,
   String sourceId,
   String? title,
 });
@@ -344,7 +355,7 @@ class _FakeDocumentReferenceService extends Fake
     required String sessionId,
     required List<String> filePaths,
     required String patientId,
-    Encounter? encounter,
+    required IFhirResource container,
     required String sourceId,
     String? title,
   }) async {
@@ -353,13 +364,33 @@ class _FakeDocumentReferenceService extends Fake
       sessionId: sessionId,
       filePaths: filePaths,
       patientId: patientId,
-      encounter: encounter,
+      container: container,
       sourceId: sourceId,
       title: title,
     ));
     return const [];
   }
 }
+
+/// The default holder no one has named yet.
+const _unnamed = Patient(
+  id: 'p-me',
+  sourceId: 'wallet-p-me',
+  title: 'Health Wallet Holder',
+  rawResource: {
+    'resourceType': 'Patient',
+    'id': 'p-me',
+    'name': [
+      {
+        'family': 'Holder',
+        'given': ['Health Wallet'],
+      },
+    ],
+    'identifier': [
+      {'value': 'default_patient'},
+    ],
+  },
+);
 
 Patient _patient(String id, {String? identifier, String title = ''}) => Patient(
   id: id,
@@ -720,6 +751,26 @@ void main() {
       expect(staged.patient.mode, ImportMode.createNew);
       expect(holders.candidates, isEmpty);
       expect(bloc.state.status, isNot(isA<Failure>()));
+    });
+
+    test('a document without a patient is the user\'s while they are the '
+        'only, unnamed person', () async {
+      repository.extractedPatient = const MappingPatient(
+        id: 'p-none',
+        dateOfBirth: MappedProperty(value: '1980-01-01'),
+      );
+      records.patients = [_unnamed];
+      holders.unnamed.add(_FakeHolderService.holderOf(_unnamed.id));
+      seed(withPages);
+
+      bloc.add(const MappingInitiated(sessionId: 's'));
+      await settle();
+
+      final patient = session('s').patient;
+      expect(patient.mode, ImportMode.linkExisting);
+      expect(patient.existing, _unnamed);
+      expect(patient.draft?.id, 'p-none');
+      expect(patient.review, PatientReview.you);
     });
 
     test('a session removed while its patient is matched is neither staged '
@@ -1393,7 +1444,8 @@ void main() {
       expect(docs.filePaths, ['/a.jpg', '/b.jpg']);
       expect(docs.patientId, 'p-new');
       expect(docs.sourceId, 'wallet-p-new');
-      expect(docs.encounter?.id, 'enc');
+      expect(docs.container, isA<Encounter>());
+      expect(docs.container.id, 'enc');
       expect(docs.title, 'Checkup');
       // The 200 dpi pages are no longer needed once the records are saved.
       expect(ocr.discarded, ['s']);
@@ -1471,6 +1523,66 @@ void main() {
       expect(bloc.state.status, const PipelineStatus.success(sessionId: 's'));
     });
 
+    group('the user, proposed while they were unnamed,', () {
+      const alex = MappingPatient(
+        id: 'p-scan',
+        givenName: MappedProperty(value: 'Alexandru'),
+        familyName: MappedProperty(value: 'Szilagyi'),
+      );
+
+      ProcessingSession you(MappingPatient? draft) => ProcessingSession(
+        id: 's',
+        status: ProcessingStatus.draft,
+        patient: StagedPatient(
+          existing: _unnamed,
+          draft: draft,
+          mode: ImportMode.linkExisting,
+        ),
+        encounter: const StagedEncounter(draft: MappingEncounter(id: 'enc')),
+      );
+
+      setUp(() => records.patients = [_unnamed]);
+
+      test('are named with the document\'s details', () async {
+        holders.unnamed.add(_FakeHolderService.holderOf(_unnamed.id));
+
+        await save(you(alex));
+
+        final written = holders.linked.single;
+        expect(written.patientId, 'p-me');
+        expect(written.scanned, alex);
+        expect(selection.selected, ['holder-p-me']);
+      });
+
+      test('but named since, are not renamed: someone else in the document '
+          'is saved as a new person', () async {
+        await save(you(alex));
+
+        expect(holders.linked, isEmpty);
+        final patient = sync.saved.first.first;
+        expect(patient.fhirType, FhirType.Patient);
+        expect(patient.id, 'p-scan');
+        expect(selection.selected, ['p-scan']);
+      });
+
+      test('but named since, still get the document when it is them', () async {
+        holders.match = _unnamed;
+
+        await save(you(alex));
+
+        final written = holders.linked.single;
+        expect(written.patientId, 'p-me');
+        // Named: the scan fills nothing in.
+        expect(written.scanned, isNull);
+      });
+
+      test('but named since, still get a document that names no one', () async {
+        await save(you(null));
+
+        expect(holders.linked.single.patientId, 'p-me');
+      });
+    });
+
     test('a linked patient and encounter save no new primary records, and '
         'the resources point at the existing encounter', () async {
       final existing = _patient('p-old');
@@ -1497,7 +1609,7 @@ void main() {
       expect(saved.subjectId, 'p-old');
       expect(saved.rawResource['meta'], isNull);
       final docs = documents.calls.single;
-      expect(docs.encounter, encounter);
+      expect(docs.container, encounter);
       expect(docs.title, 'Old visit');
       expect(bloc.state.status, const PipelineStatus.success(sessionId: 's'));
     });
@@ -1524,8 +1636,8 @@ void main() {
       expect(bloc.state.status, const PipelineStatus.success(sessionId: 's'));
     });
 
-    test('a report container is saved as the report and the documents get '
-        'no encounter', () async {
+    test('a report container is saved as the report and the documents are '
+        'attached to it', () async {
       await save(
         const ProcessingSession(
           id: 's',
@@ -1548,7 +1660,7 @@ void main() {
       ]);
       expect(primaries.last.subjectId, 'p-new');
       final docs = documents.calls.single;
-      expect(docs.encounter, isNull);
+      expect(docs.container, primaries.last);
       expect(docs.title, 'CBC');
     });
 

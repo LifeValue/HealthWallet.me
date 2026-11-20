@@ -438,14 +438,14 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
   }
 
   Future<StagedPatient> _matchOrCreatePatient(MappingPatient patient) async {
-    // No patient found in the document: nobody to match, the user enters
-    // the details in the review.
-    if (!patient.isIdentified) {
-      return StagedPatient(draft: patient, mode: ImportMode.createNew);
-    }
     try {
       final directory = await holderService.load();
-      final holder = holderService.matchScanned(patient, directory);
+      // No patient found in the document: nobody to match. It is the user's
+      // while they are the only, unnamed person; else the review asks for
+      // the details.
+      final holder = patient.isIdentified
+          ? holderService.matchScanned(patient, directory)
+          : holderService.soleUnnamedHolder(directory);
       if (holder != null) {
         // The unnamed default holder is proposed, not matched: the scan's
         // details are kept to name them.
@@ -797,14 +797,13 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       if (fhirResources.isNotEmpty) {
         await syncRepository.saveResources(fhirResources);
       }
-      final encounterForDoc = finalContainer is Encounter
-          ? finalContainer
-          : null;
+      // The scan is attached to the record it was filed as, whether a visit
+      // or a report.
       await documentReferenceService.replaceSessionDocuments(
         sessionId: activeSession.id,
         filePaths: activeSession.filePaths,
         patientId: subjectId,
-        encounter: encounterForDoc,
+        container: finalContainer,
         sourceId: sourceId,
         title: finalContainer.displayTitle,
       );
@@ -922,21 +921,21 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     String sourceId;
     String holderId;
     final List<IFhirResource> resourcesToSave = [];
-    if (activeSession.patient.mode == ImportMode.linkExisting &&
-        activeSession.patient.existing != null) {
+    final patient = await _currentPatient(activeSession.patient);
+    if (patient.mode == ImportMode.linkExisting && patient.existing != null) {
       // The person's own wallet Patient, never the row the match found
       // (it may be a provider's); the scanned fields fill only what it
       // leaves empty.
       final written = await holderService.walletPatientOf(
-        activeSession.patient.existing!.id,
-        scanned: activeSession.patient.draft,
+        patient.existing!.id,
+        scanned: patient.draft,
       );
       subjectId = written.patient.id;
       sourceId = written.patient.sourceId;
       holderId = written.holderId;
     } else {
       // Someone new: a holder of their own, named after their Patient row.
-      final MappingPatient draftPatient = activeSession.patient.draft!;
+      final MappingPatient draftPatient = patient.draft!;
       final walletSource = await holderService.walletSourceOf(draftPatient.id);
       subjectId = draftPatient.id;
       sourceId = walletSource.id;
@@ -976,5 +975,32 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     }
 
     return (subjectId, sourceId, finalContainer, holderId);
+  }
+
+  /// [staged] as it stands when saved. The unnamed default holder was
+  /// proposed when the document was read; if someone has named them since
+  /// (another scan, the profile, the paired device), the document's patient
+  /// joins them only when it is them, and is someone new otherwise.
+  Future<StagedPatient> _currentPatient(StagedPatient staged) async {
+    if (staged.review != PatientReview.you) return staged;
+    final directory = await holderService.load();
+    final holder = directory.ofPatientId(staged.existing!.id);
+    if (holder != null && holderService.isUnnamed(holder)) return staged;
+    final scanned = staged.draft;
+    // Nothing that says who it is: still the user, under their new name.
+    if (scanned == null || !scanned.isIdentified) {
+      return holder != null
+          ? staged.copyWith(existing: holder.representativePatient)
+          : staged.swapped;
+    }
+    final match = holderService.matchScanned(scanned, directory);
+    if (match != null) {
+      return StagedPatient(
+        existing: match.representativePatient,
+        draft: holderService.isUnnamed(match) ? scanned : null,
+        mode: ImportMode.linkExisting,
+      );
+    }
+    return staged.swapped;
   }
 }

@@ -267,11 +267,16 @@ class HolderService {
         }
       }
     }
+    return soleUnnamedHolder(directory);
+  }
+
+  /// The unnamed default holder when they are the only person (demo
+  /// holders aside): the user, before they have named themselves.
+  Holder? soleUnnamedHolder(HolderDirectory directory) {
     final people = directory.holders.where((h) => !h.isDemo).toList();
-    if (people.length == 1 && isUnnamed(people.single)) {
-      return people.single;
-    }
-    return null;
+    return people.length == 1 && isUnnamed(people.single)
+        ? people.single
+        : null;
   }
 
   /// Whether [holder] is still the unnamed default holder.

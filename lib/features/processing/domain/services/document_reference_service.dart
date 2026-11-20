@@ -10,6 +10,7 @@ import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/processing/data/services/pdf_generation_service.dart';
 import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
 
@@ -27,23 +28,24 @@ class DocumentReferenceService {
 
   static const _sessionSystem = 'http://healthwallet.me/processing-session';
 
-  /// Saves a processing session's files as DocumentReferences, then deletes
-  /// the ones an earlier save of the same session created. Only documents
-  /// tagged with [sessionId] are replaced: other scans and files attached by
-  /// hand to the same encounter stay, and if the new PDFs fail the earlier
-  /// documents are kept.
+  /// Saves a processing session's files as DocumentReferences attached to
+  /// the session's [container] (its Encounter or DiagnosticReport), then
+  /// deletes the ones an earlier save of the same session created. Only
+  /// documents tagged with [sessionId] are replaced: other scans and files
+  /// attached by hand to the same record stay, and if the new PDFs fail the
+  /// earlier documents are kept.
   Future<List<String>> replaceSessionDocuments({
     required String sessionId,
     required List<String> filePaths,
     required String patientId,
-    Encounter? encounter,
+    required IFhirResource container,
     required String sourceId,
     String? title,
   }) async {
     final saved = await saveGroupedDocumentsAsFhirRecords(
       filePaths: filePaths,
       patientId: patientId,
-      encounter: encounter,
+      container: container,
       sourceId: sourceId,
       title: title,
       sessionId: sessionId,
@@ -84,10 +86,15 @@ class DocumentReferenceService {
     return null;
   }
 
+  /// Saves [filePaths] as DocumentReferences, attached to [container] when
+  /// there is one: an Encounter through `context.encounter`, any other record
+  /// through `context.related`, as files attached by hand are. Either way the
+  /// row's encounter id is the container's id, which is how an Encounter or a
+  /// DiagnosticReport finds, counts and deletes the records filed under it.
   Future<List<String>> saveGroupedDocumentsAsFhirRecords({
     required List<String> filePaths,
     required String patientId,
-    Encounter? encounter,
+    IFhirResource? container,
     required String sourceId,
     String? title,
     String? sessionId,
@@ -105,7 +112,7 @@ class DocumentReferenceService {
             await _createFhirR4DocumentReferenceFromPdf(
               pdfPath: group.pdfPath,
               patientId: patientId,
-              encounter: encounter,
+              container: container,
               title: group.title,
               sessionId: sessionId,
               index: i,
@@ -115,6 +122,7 @@ class DocumentReferenceService {
           fhirDocumentReference: fhirDocumentReference,
           sourceId: sourceId,
           title: group.title,
+          containerId: container?.resourceId,
         );
 
         savedResourceIds.add(resourceId);
@@ -132,7 +140,7 @@ class DocumentReferenceService {
   Future<fhir_r4.DocumentReference> _createFhirR4DocumentReferenceFromPdf({
     required String pdfPath,
     required String patientId,
-    Encounter? encounter,
+    IFhirResource? container,
     required String title,
     String? sessionId,
     int index = 0,
@@ -150,16 +158,27 @@ class DocumentReferenceService {
         ? const Uuid().v4()
         : sessionDocumentId(sessionId, index);
 
-    final List<fhir_r4.Reference>? encounterReferences = encounter != null
-        ? [
-            fhir_r4.Reference(
-              reference: fhir_r4.FhirString(
-                'Encounter/${encounter.resourceId}',
-              ),
-              display: fhir_r4.FhirString('Encounter ${encounter.resourceId}'),
+    final context = switch (container) {
+      null => null,
+      Encounter(:final resourceId) => fhir_r4.DocumentReferenceContext(
+        encounter: [
+          fhir_r4.Reference(
+            reference: fhir_r4.FhirString('Encounter/$resourceId'),
+            display: fhir_r4.FhirString('Encounter $resourceId'),
+          ),
+        ],
+      ),
+      _ => fhir_r4.DocumentReferenceContext(
+        related: [
+          fhir_r4.Reference(
+            reference: fhir_r4.FhirString(
+              '${container.fhirType.name}/${container.resourceId}',
             ),
-          ]
-        : null;
+            display: fhir_r4.FhirString('Related ${container.fhirType.name}'),
+          ),
+        ],
+      ),
+    };
 
     final subjectReference = fhir_r4.Reference(
       reference: fhir_r4.FhirString('Patient/$patientId'),
@@ -191,11 +210,7 @@ class DocumentReferenceService {
           ),
         ),
       ],
-      context: encounterReferences != null
-          ? fhir_r4.DocumentReferenceContext(
-              encounter: encounterReferences,
-            )
-          : null,
+      context: context,
       identifier: [
         fhir_r4.Identifier(
           system: fhir_r4.FhirUri('http://healthwallet.me/document-id'),
@@ -216,25 +231,15 @@ class DocumentReferenceService {
     required fhir_r4.DocumentReference fhirDocumentReference,
     required String sourceId,
     required String title,
+    String? containerId,
   }) async {
     final resourceJson = fhirDocumentReference.toJson();
     final resourceId = fhirDocumentReference.id!.valueString!;
 
-    String? encounterId;
+    final encounterId = containerId == null || containerId.isEmpty
+        ? null
+        : containerId;
     String? subjectId;
-
-    if (fhirDocumentReference.context?.encounter != null &&
-        fhirDocumentReference.context!.encounter!.isNotEmpty) {
-      final encounterRef = fhirDocumentReference
-          .context!
-          .encounter!
-          .first
-          .reference
-          ?.valueString;
-      if (encounterRef != null) {
-        encounterId = FhirReferenceUtils.extractReferenceId(encounterRef);
-      }
-    }
 
     if (fhirDocumentReference.subject?.reference?.valueString != null) {
       subjectId = FhirReferenceUtils.extractReferenceId(

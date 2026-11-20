@@ -1650,6 +1650,24 @@ abstract class AppLocalizations {
   /// **'Changed to: {name}'**
   String patientChangedTo(String name);
 
+  /// No description provided for @patientIsYou.
+  ///
+  /// In en, this message translates to:
+  /// **'This is you: {name}'**
+  String patientIsYou(String name);
+
+  /// No description provided for @patientSavedAsYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved as you'**
+  String get patientSavedAsYou;
+
+  /// No description provided for @patientNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the patient\'s name, or choose someone already in your wallet.'**
+  String get patientNameRequired;
+
   /// No description provided for @patientMatchFound.
   ///
   /// In en, this message translates to:

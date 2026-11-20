@@ -853,6 +853,18 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String patientIsYou(String name) {
+    return 'This is you: $name';
+  }
+
+  @override
+  String get patientSavedAsYou => 'Saved as you';
+
+  @override
+  String get patientNameRequired =>
+      'Enter the patient\'s name, or choose someone already in your wallet.';
+
+  @override
   String patientMatchFound(String name) {
     return 'Existing patient: $name';
   }

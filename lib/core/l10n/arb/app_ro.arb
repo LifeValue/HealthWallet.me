@@ -261,6 +261,9 @@
   "newLabel": "Nou",
   "newPatient": "Pacient nou",
   "patientChangedTo": "Schimbat la: {name}",
+  "patientIsYou": "Acesta ești tu: {name}",
+  "patientSavedAsYou": "Se salvează ca tine",
+  "patientNameRequired": "Introdu numele pacientului sau alege pe cineva care este deja în portofelul tău.",
   "patientMatchFound": "Pacient existent: {name}",
   "@patientMatchFound": {
     "placeholders": {

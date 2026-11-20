@@ -150,12 +150,26 @@ class _ProcessingPageState extends State<ProcessingPage> {
       (session) => session.id == widget.sessionId,
     );
 
+    // A new person the document does not name would be saved nameless.
+    if (activeSession.patient.needsName) {
+      _scrollToFormErrors();
+      AppSnackBar.show(
+        context,
+        message: context.l10n.patientNameRequired,
+        type: AppSnackBarType.error,
+      );
+      return;
+    }
+
     if (activeSession.patient.hasSelection &&
         (activeSession.encounter.hasSelection ||
             activeSession.isDiagnosticReportContainer)) {
-      final isPatientModified =
-          activeSession.patient.draft != null &&
-          activeSession.patient.existing != null;
+      // Saving changes the details of someone already in the wallet; naming
+      // the unnamed default holder is what the review says it does.
+      final isPatientModified = switch (activeSession.patient.review) {
+        PatientReview.existingEdited || PatientReview.changedTo => true,
+        _ => false,
+      };
 
       if (isPatientModified) {
         final confirmed = await AppSimpleDialog.showDestructiveConfirmation(

@@ -638,8 +638,8 @@ void main() {
       ]);
     });
 
-    testWidgets('a nameless new patient next to a stored one is just a new '
-        'patient', (tester) async {
+    testWidgets('a nameless new patient next to a stored one needs the '
+        'details, and can go back to the stored one', (tester) async {
       await pump(
         tester,
         form(
@@ -654,7 +654,74 @@ void main() {
         ),
       );
 
-      expect(find.text(l10n.newPatient), findsOne);
+      expect(find.text(l10n.processingNoPatientFound), findsOne);
+      expect(find.byIcon(Icons.swap_horiz), findsOne);
+    });
+
+    group('the unnamed user', () {
+      const unnamed = Patient(
+        id: 'p-me',
+        title: 'Health Wallet Holder',
+        rawResource: {
+          'name': [
+            {
+              'family': 'Holder',
+              'given': ['Health Wallet'],
+            },
+          ],
+          'identifier': [
+            {'value': 'default_patient'},
+          ],
+        },
+      );
+
+      testWidgets('is shown with the document\'s details, which name them, '
+          'and can be swapped for a new person', (tester) async {
+        final bloc = await pump(
+          tester,
+          form(
+            patient: const StagedPatient(
+              draft: _named,
+              existing: unnamed,
+              mode: ImportMode.linkExisting,
+            ),
+          ),
+        );
+
+        expect(find.text(l10n.patientIsYou('Ana Pop')), findsOne);
+        expect(find.text('Ana'), findsOne);
+        expect(find.text('Health Wallet'), findsNothing);
+        await tap(tester, find.byIcon(Icons.swap_horiz));
+
+        expect(bloc.added, [
+          const EncounterAttached(
+            sessionId: 's',
+            patient: StagedPatient(
+              draft: _named,
+              existing: unnamed,
+              mode: ImportMode.createNew,
+            ),
+            encounter: StagedEncounter(),
+          ),
+        ]);
+      });
+
+      testWidgets('without a patient in the document, gets it as they are', (
+        tester,
+      ) async {
+        await pump(
+          tester,
+          form(
+            patient: const StagedPatient(
+              existing: unnamed,
+              mode: ImportMode.linkExisting,
+            ),
+          ),
+        );
+
+        expect(find.text(l10n.patientSavedAsYou), findsOne);
+        expect(find.text('Health Wallet'), findsNothing);
+      });
     });
 
     testWidgets('an edited stored patient can be reverted', (tester) async {
