@@ -284,10 +284,10 @@ Interested in **corporate sponsorship** or **partnership opportunities**? We off
 
 ## License
 
-HealthWallet.me is **source-available** under the [Business Source License 1.1](LICENSE.md) — © Copyright 2025-2026, Life Value.
+HealthWallet.me is **source-available** under the [Business Source License 1.1](LICENSE.md) — © Copyright 2025-2026, Life Value (legal name: SC TECH STACK APPS SRL).
 
 - **Free for personal use.** Individuals can use, modify and run the app to manage their own health records and those of people in their care.
-- **Commercial use needs a license.** Companies, healthcare providers, payers, networks, government and public bodies, and anyone offering HealthWallet.me (or a modified version) as a product or service need a commercial license from Life Value. [Contact us](https://lifevalue.com/company/contact).
+- **Commercial use needs a license.** Companies, healthcare providers, payers, networks, government and public bodies, and anyone offering HealthWallet.me (or a modified version) as a product or service need a commercial license from Life Value: [hello@lifevalue.com](mailto:hello@lifevalue.com).
 - **Each version becomes GPL-3.0** four years after it is published.
 - **Earlier versions stay GPL-3.0.** Everything published before v1.3.0, including all `v1.3.0-dev.*` pre-releases, remains under the [GNU GPL v3.0](https://www.gnu.org/licenses/gpl-3.0.html).
 
